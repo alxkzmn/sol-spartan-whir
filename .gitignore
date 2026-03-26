@@ -1,0 +1,9 @@
+# Compiler output
+out/
+cache/
+
+# Dependencies (installed via forge install)
+lib/
+
+# OS
+.DS_Store
