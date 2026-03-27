@@ -41,11 +41,21 @@ contract FixtureDecodeTest is Test {
         assertEq(keccak256(abi.encode(statement)), keccak256(statementRaw));
 
         // For small-num-variable fixtures, WHIR may have zero explicit round entries.
-        assertGt(config.foldingFactor, 0);
+        assertGt(config.finalRoundConfig.foldingFactor, 0);
+        assertGt(config.finalRoundConfig.domainSize, 0);
         assertGt(config.finalSumcheckRounds, 0);
         assertGt(config.whirFsPattern.length, 0);
         assertGt(proof.initialSumcheck.polynomialEvals.length, 0);
         assertGt(proof.finalPoly.length, 0);
+        assertLt(config.finalSumcheckRounds, 256);
+        uint256 expectedFinalPolyLength = uint256(1) <<
+            config.finalSumcheckRounds;
+        assertEq(proof.finalPoly.length, expectedFinalPolyLength);
+        assertEq(
+            proof.finalQueryBatchPresent,
+            config.finalRoundConfig.numQueries > 0
+        );
+        assertEq(proof.finalSumcheckPresent, config.finalSumcheckRounds > 0);
         assertEq(statement.points.length, statement.evaluations.length);
     }
 

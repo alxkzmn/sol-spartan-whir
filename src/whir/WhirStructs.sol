@@ -54,17 +54,14 @@ library WhirStructs {
         uint256 commitmentOodSamples;
         uint256 startingLogInvRate;
         uint256 startingFoldingPowBits;
-        uint256 foldingFactor;
         uint256 rsDomainInitialReductionFactor;
-        uint256 finalQueries;
-        uint256 finalPowBits;
         uint256 finalSumcheckRounds;
-        uint256 finalFoldingPowBits;
         uint8 soundnessAssumption;
         uint32 merkleSecurityBits;
         uint8 effectiveDigestBytes;
         uint256[] whirFsPattern;
         RoundConfig[] roundParameters;
+        RoundConfig finalRoundConfig;
     }
 
     struct WhirStatement {
