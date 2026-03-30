@@ -5,9 +5,11 @@ pragma solidity ^0.8.28;
 // https://github.com/privacy-scaling-explorations/sol-whir/src/merkle/MerkleVerifier.sol.
 library MerkleVerifier {
     uint256 internal constant KOALABEAR_MODULUS = 0x7f000001;
+    uint256 internal constant COEFF_MASK = 0xffffffff;
 
     error EmptyIndices();
     error LengthMismatch(uint256 indices, uint256 openings);
+    error FlattenedRowLengthMismatch(uint256 values, uint256 expected);
     error IndicesNotStrictlyIncreasing(uint256 prev, uint256 next);
     error InsufficientDecommitments(uint256 expectedAtLeast, uint256 got);
     error TrailingDecommitments(uint256 consumed, uint256 total);
@@ -69,6 +71,102 @@ library MerkleVerifier {
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
+    function hashLeafBaseSlice(
+        uint256[] calldata values,
+        uint256 start,
+        uint256 rowLen,
+        uint256 effectiveDigestBytes
+    ) internal pure returns (bytes32 digest) {
+        unchecked {
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 value = values[start + i];
+                if (value >= KOALABEAR_MODULUS) {
+                    revert FieldElementOutOfRange(value);
+                }
+            }
+        }
+
+        assembly ("memory-safe") {
+            let size := add(1, shl(2, rowLen))
+            let ptr := mload(0x40)
+            let free := and(add(add(ptr, size), 31), not(31))
+            mstore(0x40, free)
+
+            mstore8(ptr, 0x00)
+
+            let src := add(values.offset, shl(5, start))
+            let dst := add(ptr, 1)
+            let end := add(src, shl(5, rowLen))
+            for {
+
+            } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 4)
+            } {
+                mstore(dst, shl(224, calldataload(src)))
+            }
+
+            digest := keccak256(ptr, size)
+        }
+
+        return _maskDigestTail(digest, effectiveDigestBytes);
+    }
+
+    function hashLeafExtensionSlice(
+        uint256[] calldata values,
+        uint256 start,
+        uint256 rowLen,
+        uint256 effectiveDigestBytes
+    ) internal pure returns (bytes32 digest) {
+        bytes memory preimage = new bytes(1 + rowLen * 16);
+        preimage[0] = 0x00;
+
+        unchecked {
+            uint256 dst = 1;
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 packed = values[start + i];
+                uint256 c0 = packed >> 224;
+                uint256 c1 = (packed >> 192) & COEFF_MASK;
+                uint256 c2 = (packed >> 160) & COEFF_MASK;
+                uint256 c3 = (packed >> 128) & COEFF_MASK;
+
+                if (
+                    c0 >= KOALABEAR_MODULUS ||
+                    c1 >= KOALABEAR_MODULUS ||
+                    c2 >= KOALABEAR_MODULUS ||
+                    c3 >= KOALABEAR_MODULUS
+                ) {
+                    revert FieldElementOutOfRange(packed);
+                }
+
+                preimage[dst] = bytes1(uint8(c0 >> 24));
+                preimage[dst + 1] = bytes1(uint8(c0 >> 16));
+                preimage[dst + 2] = bytes1(uint8(c0 >> 8));
+                preimage[dst + 3] = bytes1(uint8(c0));
+
+                preimage[dst + 4] = bytes1(uint8(c1 >> 24));
+                preimage[dst + 5] = bytes1(uint8(c1 >> 16));
+                preimage[dst + 6] = bytes1(uint8(c1 >> 8));
+                preimage[dst + 7] = bytes1(uint8(c1));
+
+                preimage[dst + 8] = bytes1(uint8(c2 >> 24));
+                preimage[dst + 9] = bytes1(uint8(c2 >> 16));
+                preimage[dst + 10] = bytes1(uint8(c2 >> 8));
+                preimage[dst + 11] = bytes1(uint8(c2));
+
+                preimage[dst + 12] = bytes1(uint8(c3 >> 24));
+                preimage[dst + 13] = bytes1(uint8(c3 >> 16));
+                preimage[dst + 14] = bytes1(uint8(c3 >> 8));
+                preimage[dst + 15] = bytes1(uint8(c3));
+
+                dst += 16;
+            }
+        }
+
+        digest = keccak256(preimage);
+        return _maskDigestTail(digest, effectiveDigestBytes);
+    }
+
     function computeRootFromLeafHashes(
         uint256[] calldata indices,
         bytes32[] memory leafHashes,
@@ -76,6 +174,93 @@ library MerkleVerifier {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bytes32) {
+        return
+            _computeRootFromLeafHashes(
+                _copyIndices(indices),
+                leafHashes,
+                depth,
+                decommitments,
+                effectiveDigestBytes
+            );
+    }
+
+    function computeRootFromFlatBaseRows(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 rowLen,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 effectiveDigestBytes
+    ) internal pure returns (bytes32) {
+        uint256 expected = indices.length * rowLen;
+        if (flatValues.length != expected) {
+            revert FlattenedRowLengthMismatch(flatValues.length, expected);
+        }
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                leafHashes[i] = hashLeafBaseSlice(
+                    flatValues,
+                    i * rowLen,
+                    rowLen,
+                    effectiveDigestBytes
+                );
+            }
+        }
+
+        return
+            _computeRootFromLeafHashes(
+                indices,
+                leafHashes,
+                depth,
+                decommitments,
+                effectiveDigestBytes
+            );
+    }
+
+    function computeRootFromFlatExtensionRows(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 rowLen,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 effectiveDigestBytes
+    ) internal pure returns (bytes32) {
+        uint256 expected = indices.length * rowLen;
+        if (flatValues.length != expected) {
+            revert FlattenedRowLengthMismatch(flatValues.length, expected);
+        }
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                leafHashes[i] = hashLeafExtensionSlice(
+                    flatValues,
+                    i * rowLen,
+                    rowLen,
+                    effectiveDigestBytes
+                );
+            }
+        }
+
+        return
+            _computeRootFromLeafHashes(
+                indices,
+                leafHashes,
+                depth,
+                decommitments,
+                effectiveDigestBytes
+            );
+    }
+
+    function _computeRootFromLeafHashes(
+        uint256[] memory indices,
+        bytes32[] memory leafHashes,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 effectiveDigestBytes
+    ) private pure returns (bytes32) {
         _ensureSortedUnique(indices);
         if (indices.length != leafHashes.length) {
             revert LengthMismatch(indices.length, leafHashes.length);
@@ -225,7 +410,18 @@ library MerkleVerifier {
             ) == expectedRoot;
     }
 
-    function _ensureSortedUnique(uint256[] calldata indices) private pure {
+    function _copyIndices(
+        uint256[] calldata indices
+    ) private pure returns (uint256[] memory copied) {
+        copied = new uint256[](indices.length);
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                copied[i] = indices[i];
+            }
+        }
+    }
+
+    function _ensureSortedUnique(uint256[] memory indices) private pure {
         if (indices.length == 0) {
             revert EmptyIndices();
         }

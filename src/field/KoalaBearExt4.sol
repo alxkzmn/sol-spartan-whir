@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { KoalaBear } from "./KoalaBear.sol";
+import {KoalaBear} from "./KoalaBear.sol";
 
 library KoalaBearExt4 {
     uint256 internal constant DEGREE = 4;
@@ -11,14 +11,23 @@ library KoalaBearExt4 {
     uint256 internal constant INV_TWO = 1_065_353_217;
     uint256 internal constant DTH_ROOT = 2_113_994_754;
 
-    function pack(uint256[4] memory coeffs) internal pure returns (uint256 packed) {
+    error BaseScalarOutOfRange(uint256 value);
+
+    function pack(
+        uint256[4] memory coeffs
+    ) internal pure returns (uint256 packed) {
         unchecked {
             packed =
-                (coeffs[0] << 224) | (coeffs[1] << 192) | (coeffs[2] << 160) | (coeffs[3] << 128);
+                (coeffs[0] << 224) |
+                (coeffs[1] << 192) |
+                (coeffs[2] << 160) |
+                (coeffs[3] << 128);
         }
     }
 
-    function unpack(uint256 packed) internal pure returns (uint256[4] memory coeffs) {
+    function unpack(
+        uint256 packed
+    ) internal pure returns (uint256[4] memory coeffs) {
         coeffs[0] = packed >> 224;
         coeffs[1] = (packed >> 192) & COEFF_MASK;
         coeffs[2] = (packed >> 160) & COEFF_MASK;
@@ -57,6 +66,27 @@ library KoalaBearExt4 {
         return pack(_mul_coeffs(unpack(a), unpack(b)));
     }
 
+    function square(uint256 a) internal pure returns (uint256) {
+        return mul(a, a);
+    }
+
+    function fromBase(uint256 value) internal pure returns (uint256) {
+        if (value >= KoalaBear.MODULUS) {
+            revert BaseScalarOutOfRange(value);
+        }
+        return value << 224;
+    }
+
+    function mulBase(
+        uint256 a,
+        uint256 scalar
+    ) internal pure returns (uint256) {
+        if (scalar >= KoalaBear.MODULUS) {
+            revert BaseScalarOutOfRange(scalar);
+        }
+        return _scalar_mul(a, scalar);
+    }
+
     function inv(uint256 a) internal pure returns (uint256) {
         require(a != 0, "ZERO_INV");
 
@@ -76,38 +106,40 @@ library KoalaBearExt4 {
         return _scalar_mul(a, KoalaBear.W);
     }
 
-    function extrapolate_012(uint256 e0, uint256 e1, uint256 e2, uint256 r)
-        internal
-        pure
-        returns (uint256)
-    {
+    function extrapolate_012(
+        uint256 e0,
+        uint256 e1,
+        uint256 e2,
+        uint256 r
+    ) internal pure returns (uint256) {
         uint256 l0 = _scalar_mul(mul(sub(r, ONE), sub(r, TWO)), INV_TWO);
         uint256 l1 = mul(r, sub(TWO, r));
         uint256 l2 = _scalar_mul(mul(r, sub(r, ONE)), INV_TWO);
         return add(add(mul(e0, l0), mul(e1, l1)), mul(e2, l2));
     }
 
-    function eq_poly_eval(uint256[] memory p, uint256[] memory q)
-        internal
-        pure
-        returns (uint256 acc)
-    {
+    function eq_poly_eval(
+        uint256[] memory p,
+        uint256[] memory q
+    ) internal pure returns (uint256 acc) {
         require(p.length == q.length, "LEN");
         acc = ONE;
 
         unchecked {
             for (uint256 i = 0; i < p.length; ++i) {
-                uint256 term = add(ONE, sub(sub(_scalar_mul(mul(p[i], q[i]), 2), p[i]), q[i]));
+                uint256 term = add(
+                    ONE,
+                    sub(sub(_scalar_mul(mul(p[i], q[i]), 2), p[i]), q[i])
+                );
                 acc = mul(acc, term);
             }
         }
     }
 
-    function evaluate_hypercube(uint256[] memory evals, uint256[] memory point)
-        internal
-        pure
-        returns (uint256)
-    {
+    function evaluate_hypercube(
+        uint256[] memory evals,
+        uint256[] memory point
+    ) internal pure returns (uint256) {
         uint256 size = evals.length;
         require(size != 0 && _is_power_of_two(size), "BAD_EVALS");
         require(size == (uint256(1) << point.length), "DIM");
@@ -124,11 +156,18 @@ library KoalaBearExt4 {
         return evals[0];
     }
 
-    function _fold_once(uint256 a0, uint256 a1, uint256 r) internal pure returns (uint256) {
+    function _fold_once(
+        uint256 a0,
+        uint256 a1,
+        uint256 r
+    ) internal pure returns (uint256) {
         return add(a0, mul(r, sub(a1, a0)));
     }
 
-    function _scalar_mul(uint256 a, uint256 scalar) internal pure returns (uint256) {
+    function _scalar_mul(
+        uint256 a,
+        uint256 scalar
+    ) internal pure returns (uint256) {
         uint256[4] memory coeffs = unpack(a);
 
         unchecked {
@@ -144,7 +183,10 @@ library KoalaBearExt4 {
         return _repeated_frobenius(a, 1);
     }
 
-    function _repeated_frobenius(uint256 a, uint256 count) internal pure returns (uint256) {
+    function _repeated_frobenius(
+        uint256 a,
+        uint256 count
+    ) internal pure returns (uint256) {
         uint256 power = count % DEGREE;
         if (power == 0) {
             return a;
@@ -164,31 +206,42 @@ library KoalaBearExt4 {
         return pack(coeffs);
     }
 
-    function _norm(uint256[4] memory a, uint256[4] memory b) internal pure returns (uint256) {
+    function _norm(
+        uint256[4] memory a,
+        uint256[4] memory b
+    ) internal pure returns (uint256) {
         uint256 wCoeff;
 
         unchecked {
             for (uint256 i = 1; i < DEGREE; ++i) {
-                wCoeff = KoalaBear.add(wCoeff, KoalaBear.mul(a[i], b[DEGREE - i]));
+                wCoeff = KoalaBear.add(
+                    wCoeff,
+                    KoalaBear.mul(a[i], b[DEGREE - i])
+                );
             }
         }
 
-        return KoalaBear.add(KoalaBear.mul(a[0], b[0]), KoalaBear.mul(KoalaBear.W, wCoeff));
+        return
+            KoalaBear.add(
+                KoalaBear.mul(a[0], b[0]),
+                KoalaBear.mul(KoalaBear.W, wCoeff)
+            );
     }
 
-    function _mul_coeffs(uint256[4] memory a, uint256[4] memory b)
-        internal
-        pure
-        returns (uint256[4] memory out)
-    {
+    function _mul_coeffs(
+        uint256[4] memory a,
+        uint256[4] memory b
+    ) internal pure returns (uint256[4] memory out) {
         unchecked {
             for (uint256 i = 0; i < DEGREE; ++i) {
                 for (uint256 j = 0; j < DEGREE; ++j) {
                     uint256 term = KoalaBear.mul(a[i], b[j]);
                     uint256 idx = i + j;
                     if (idx >= DEGREE) {
-                        out[idx - DEGREE] =
-                            KoalaBear.add(out[idx - DEGREE], KoalaBear.mul(term, KoalaBear.W));
+                        out[idx - DEGREE] = KoalaBear.add(
+                            out[idx - DEGREE],
+                            KoalaBear.mul(term, KoalaBear.W)
+                        );
                     } else {
                         out[idx] = KoalaBear.add(out[idx], term);
                     }
