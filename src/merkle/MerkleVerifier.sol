@@ -118,11 +118,7 @@ library MerkleVerifier {
         uint256 rowLen,
         uint256 effectiveDigestBytes
     ) internal pure returns (bytes32 digest) {
-        bytes memory preimage = new bytes(1 + rowLen * 16);
-        preimage[0] = 0x00;
-
         unchecked {
-            uint256 dst = 1;
             for (uint256 i = 0; i < rowLen; ++i) {
                 uint256 packed = values[start + i];
                 uint256 c0 = packed >> 224;
@@ -138,32 +134,36 @@ library MerkleVerifier {
                 ) {
                     revert FieldElementOutOfRange(packed);
                 }
-
-                preimage[dst] = bytes1(uint8(c0 >> 24));
-                preimage[dst + 1] = bytes1(uint8(c0 >> 16));
-                preimage[dst + 2] = bytes1(uint8(c0 >> 8));
-                preimage[dst + 3] = bytes1(uint8(c0));
-
-                preimage[dst + 4] = bytes1(uint8(c1 >> 24));
-                preimage[dst + 5] = bytes1(uint8(c1 >> 16));
-                preimage[dst + 6] = bytes1(uint8(c1 >> 8));
-                preimage[dst + 7] = bytes1(uint8(c1));
-
-                preimage[dst + 8] = bytes1(uint8(c2 >> 24));
-                preimage[dst + 9] = bytes1(uint8(c2 >> 16));
-                preimage[dst + 10] = bytes1(uint8(c2 >> 8));
-                preimage[dst + 11] = bytes1(uint8(c2));
-
-                preimage[dst + 12] = bytes1(uint8(c3 >> 24));
-                preimage[dst + 13] = bytes1(uint8(c3 >> 16));
-                preimage[dst + 14] = bytes1(uint8(c3 >> 8));
-                preimage[dst + 15] = bytes1(uint8(c3));
-
-                dst += 16;
             }
         }
 
-        digest = keccak256(preimage);
+        assembly ("memory-safe") {
+            let size := add(1, shl(4, rowLen))
+            let ptr := mload(0x40)
+            // Each mstore writes 32 bytes while the destination advances by 16,
+            // so reserve one extra half-word for the final overlapping tail.
+            let free := and(add(add(ptr, add(size, 0x10)), 31), not(31))
+            mstore(0x40, free)
+
+            mstore8(ptr, 0x00)
+
+            let src := add(values.offset, shl(5, start))
+            let dst := add(ptr, 1)
+            let end := add(src, shl(5, rowLen))
+            for {
+
+            } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 0x10)
+            } {
+                // The packed quartic encoding already stores c0..c3 as four big-endian
+                // u32 words in the high 16 bytes, which is exactly the leaf preimage layout.
+                mstore(dst, calldataload(src))
+            }
+
+            digest := keccak256(ptr, size)
+        }
+
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 

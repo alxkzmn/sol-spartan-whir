@@ -11,6 +11,21 @@ contract MerkleHarness {
         return MerkleVerifier.hashLeafBase(values, effectiveDigestBytes);
     }
 
+    function hashLeafExtensionSlice(
+        uint256[] calldata values,
+        uint256 start,
+        uint256 rowLen,
+        uint256 effectiveDigestBytes
+    ) external pure returns (bytes32) {
+        return
+            MerkleVerifier.hashLeafExtensionSlice(
+                values,
+                start,
+                rowLen,
+                effectiveDigestBytes
+            );
+    }
+
     function compressNode(
         bytes32 left,
         bytes32 right,
