@@ -6,6 +6,8 @@
   "notes": [
     "Fixtures are generated from a real quartic WHIR proving flow.",
     "Failure fixture mutates initial commitment to force commitment mismatch.",
+    "Failure fixture mutates one STIR query opening while keeping commitments and OOD answers intact.",
+    "Failure fixture mutates one initial OOD answer, which also changes the downstream transcript.",
     "Transcript trace records every observe/sample call with challenger states.",
     "Field vectors include base/quartic/octic arithmetic tuples.",
     "Merkle vectors include leaf hashes, node compression, and multiproof root checks."
