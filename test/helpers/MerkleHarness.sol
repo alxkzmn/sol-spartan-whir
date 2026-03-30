@@ -5,7 +5,7 @@ import {MerkleVerifier} from "../../src/merkle/MerkleVerifier.sol";
 
 contract MerkleHarness {
     function hashLeafBase(
-        uint256[] memory values,
+        uint256[] calldata values,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
         return MerkleVerifier.hashLeafBase(values, effectiveDigestBytes);
@@ -20,10 +20,10 @@ contract MerkleHarness {
     }
 
     function computeRootFromLeafHashes(
-        uint256[] memory indices,
+        uint256[] calldata indices,
         bytes32[] memory leafHashes,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
         return
@@ -37,10 +37,10 @@ contract MerkleHarness {
     }
 
     function computeRootFromBaseRows(
-        uint256[] memory indices,
-        uint256[][] memory openedRows,
+        uint256[] calldata indices,
+        uint256[][] calldata openedRows,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
         return
@@ -55,10 +55,10 @@ contract MerkleHarness {
 
     function verifyBaseRows(
         bytes32 expectedRoot,
-        uint256[] memory indices,
-        uint256[][] memory openedRows,
+        uint256[] calldata indices,
+        uint256[][] calldata openedRows,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bool) {
         return

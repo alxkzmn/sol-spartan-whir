@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+// Credits: the calldata hashing layout and queue-style reduction are adapted from
+// https://github.com/privacy-scaling-explorations/sol-whir/src/merkle/MerkleVerifier.sol.
 library MerkleVerifier {
     uint256 internal constant KOALABEAR_MODULUS = 0x7f000001;
 
@@ -13,47 +15,65 @@ library MerkleVerifier {
     error FieldElementOutOfRange(uint256 value);
 
     function hashLeafBase(
-        uint256[] memory values,
+        uint256[] calldata values,
         uint256 effectiveDigestBytes
-    ) internal pure returns (bytes32) {
-        bytes memory preimage = new bytes(1 + values.length * 4);
-        preimage[0] = bytes1(uint8(0));
-
+    ) internal pure returns (bytes32 digest) {
         unchecked {
             for (uint256 i = 0; i < values.length; ++i) {
                 uint256 value = values[i];
                 if (value >= KOALABEAR_MODULUS) {
                     revert FieldElementOutOfRange(value);
                 }
-
-                uint256 offset = 1 + (i * 4);
-                preimage[offset] = bytes1(uint8(value >> 24));
-                preimage[offset + 1] = bytes1(uint8(value >> 16));
-                preimage[offset + 2] = bytes1(uint8(value >> 8));
-                preimage[offset + 3] = bytes1(uint8(value));
             }
         }
 
-        return _maskDigestTail(keccak256(preimage), effectiveDigestBytes);
+        assembly ("memory-safe") {
+            let len := values.length
+            let size := add(1, shl(2, len))
+            let ptr := mload(0x40)
+            let free := and(add(add(ptr, size), 31), not(31))
+            mstore(0x40, free)
+
+            mstore8(ptr, 0x00)
+
+            let src := values.offset
+            let dst := add(ptr, 1)
+            let end := add(src, shl(5, len))
+            for {
+
+            } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 4)
+            } {
+                mstore(dst, shl(224, calldataload(src)))
+            }
+
+            digest := keccak256(ptr, size)
+        }
+
+        return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
     function compressNode(
         bytes32 left,
         bytes32 right,
         uint256 effectiveDigestBytes
-    ) internal pure returns (bytes32) {
-        return
-            _maskDigestTail(
-                keccak256(abi.encodePacked(bytes1(uint8(0x01)), left, right)),
-                effectiveDigestBytes
-            );
+    ) internal pure returns (bytes32 digest) {
+        assembly ("memory-safe") {
+            let ptr := mload(0x40)
+            mstore8(ptr, 0x01)
+            mstore(add(ptr, 0x01), left)
+            mstore(add(ptr, 0x21), right)
+            digest := keccak256(ptr, 65)
+        }
+        return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
     function computeRootFromLeafHashes(
-        uint256[] memory indices,
+        uint256[] calldata indices,
         bytes32[] memory leafHashes,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bytes32) {
         _ensureSortedUnique(indices);
@@ -110,9 +130,17 @@ library MerkleVerifier {
                     cursor += 1;
 
                     if ((node & 1) == 0) {
-                        parentHash = compressNode(hash, siblingHash, effectiveDigestBytes);
+                        parentHash = compressNode(
+                            hash,
+                            siblingHash,
+                            effectiveDigestBytes
+                        );
                     } else {
-                        parentHash = compressNode(siblingHash, hash, effectiveDigestBytes);
+                        parentHash = compressNode(
+                            siblingHash,
+                            hash,
+                            effectiveDigestBytes
+                        );
                     }
                 }
 
@@ -132,7 +160,10 @@ library MerkleVerifier {
         }
 
         if (decommitmentCursor != decommitments.length) {
-            revert TrailingDecommitments(decommitmentCursor, decommitments.length);
+            revert TrailingDecommitments(
+                decommitmentCursor,
+                decommitments.length
+            );
         }
 
         if (frontierLen != 1 || frontierIndices[0] != 0) {
@@ -146,10 +177,10 @@ library MerkleVerifier {
     }
 
     function computeRootFromBaseRows(
-        uint256[] memory indices,
-        uint256[][] memory openedRows,
+        uint256[] calldata indices,
+        uint256[][] calldata openedRows,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bytes32) {
         if (indices.length != openedRows.length) {
@@ -159,7 +190,10 @@ library MerkleVerifier {
         bytes32[] memory leafHashes = new bytes32[](openedRows.length);
         unchecked {
             for (uint256 i = 0; i < openedRows.length; ++i) {
-                leafHashes[i] = hashLeafBase(openedRows[i], effectiveDigestBytes);
+                leafHashes[i] = hashLeafBase(
+                    openedRows[i],
+                    effectiveDigestBytes
+                );
             }
         }
 
@@ -175,10 +209,10 @@ library MerkleVerifier {
 
     function verifyBaseRows(
         bytes32 expectedRoot,
-        uint256[] memory indices,
-        uint256[][] memory openedRows,
+        uint256[] calldata indices,
+        uint256[][] calldata openedRows,
         uint256 depth,
-        bytes32[] memory decommitments,
+        bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bool) {
         return
@@ -191,7 +225,7 @@ library MerkleVerifier {
             ) == expectedRoot;
     }
 
-    function _ensureSortedUnique(uint256[] memory indices) private pure {
+    function _ensureSortedUnique(uint256[] calldata indices) private pure {
         if (indices.length == 0) {
             revert EmptyIndices();
         }
@@ -199,7 +233,10 @@ library MerkleVerifier {
         unchecked {
             for (uint256 i = 1; i < indices.length; ++i) {
                 if (indices[i - 1] >= indices[i]) {
-                    revert IndicesNotStrictlyIncreasing(indices[i - 1], indices[i]);
+                    revert IndicesNotStrictlyIncreasing(
+                        indices[i - 1],
+                        indices[i]
+                    );
                 }
             }
         }

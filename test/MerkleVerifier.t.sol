@@ -99,6 +99,30 @@ contract MerkleVerifierTest is Test {
         );
     }
 
+    function testGasMerkleLeafHash() external view {
+        MerkleVectorFixture memory fixture = _loadMerkleFixture();
+        MerkleLeafHashFixture memory leaf = fixture.leafHashes[0];
+
+        assertEq(
+            harness.hashLeafBase(leaf.values, fixture.effectiveDigestBytes),
+            leaf.digest
+        );
+    }
+
+    function testGasMerkleNodeCompression() external view {
+        MerkleVectorFixture memory fixture = _loadMerkleFixture();
+        MerkleNodeCompressionFixture memory node = fixture.nodeCompressions[0];
+
+        assertEq(
+            harness.compressNode(
+                node.left,
+                node.right,
+                fixture.effectiveDigestBytes
+            ),
+            node.parent
+        );
+    }
+
     function testGasMerkleMultiproofVerify() external view {
         MerkleVectorFixture memory fixture = _loadMerkleFixture();
         MerkleMultiproofFixture memory multiproof = fixture.multiproof;
