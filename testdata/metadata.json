@@ -8,7 +8,8 @@
     "Failure fixture mutates initial commitment to force commitment mismatch.",
     "Failure fixture mutates one STIR query opening while keeping commitments and OOD answers intact.",
     "Failure fixture mutates one initial OOD answer, which also changes the downstream transcript.",
-    "Transcript trace records every observe/sample call with challenger states.",
+    "Transcript trace records every observe/sample call in canonical replay form.",
+    "Spartan transcript fixture records domain-separator preimage, digest, public inputs, and checkpoint.",
     "Field vectors include base/quartic/octic arithmetic tuples.",
     "Merkle vectors include leaf hashes, node compression, and multiproof root checks."
   ]
