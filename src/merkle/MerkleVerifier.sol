@@ -637,7 +637,7 @@ library MerkleVerifier {
                             // revert InsufficientDecommitments(decommCursor+1, decommLen)
                             mstore(
                                 0x00,
-                                0xaad2c4fd00000000000000000000000000000000000000000000000000000000
+                                0x90196ee300000000000000000000000000000000000000000000000000000000
                             )
                             mstore(0x04, add(decommCursor, 1))
                             mstore(0x24, decommLen)
@@ -695,7 +695,7 @@ library MerkleVerifier {
                 // revert TrailingDecommitments(decommCursor, decommLen)
                 mstore(
                     0x00,
-                    0xe03999d100000000000000000000000000000000000000000000000000000000
+                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
                 )
                 mstore(0x04, decommCursor)
                 mstore(0x24, decommLen)
@@ -711,7 +711,7 @@ library MerkleVerifier {
                 }
                 mstore(
                     0x00,
-                    0x9e80064f00000000000000000000000000000000000000000000000000000000
+                    0x1d72965600000000000000000000000000000000000000000000000000000000
                 )
                 mstore(0x04, frontierLen)
                 mstore(0x24, idx)

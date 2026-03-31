@@ -318,6 +318,9 @@ contract WhirVerifier4 {
 
         unchecked {
             for (uint256 i = 0; i < statement.points.length; ++i) {
+                WhirVerifierUtils4.validatePackedExt4Calldata(
+                    statement.points[i]
+                );
                 uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
                     statement.points[i],
                     allRandomness,
