@@ -325,7 +325,26 @@ library WhirVerifierCore4 {
         );
 
         bytes32 computedRoot;
-        if (expectedKind == 0) {
+        if (effectiveDigestBytes == 20) {
+            if (expectedKind == 0) {
+                computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
+                    indices,
+                    queryBatch.values,
+                    queryBatch.rowLen,
+                    depth,
+                    queryBatch.decommitments
+                );
+            } else {
+                computedRoot = MerkleVerifier
+                    .computeRootFromFlatExtensionRows20(
+                        indices,
+                        queryBatch.values,
+                        queryBatch.rowLen,
+                        depth,
+                        queryBatch.decommitments
+                    );
+            }
+        } else if (expectedKind == 0) {
             computedRoot = MerkleVerifier.computeRootFromFlatBaseRows(
                 indices,
                 queryBatch.values,
@@ -505,15 +524,139 @@ library WhirVerifierCore4 {
         uint256 pointOffset,
         uint256 numVariables
     ) internal pure returns (uint256 acc) {
-        acc = EXT4_ONE;
+        uint256 a0 = 1;
+        uint256 a1 = 0;
+        uint256 a2 = 0;
+        uint256 a3 = 0;
+        uint256 modulus = KoalaBear.MODULUS;
 
         unchecked {
             for (uint256 i = 0; i < numVariables; ++i) {
                 uint256 p = flatPoints[pointStart + i];
                 uint256 q = fullPoint[pointOffset + i];
-                acc = _mulByEqTerm(acc, p, q, KoalaBearExt4.mul(p, q));
+                uint256 pq = KoalaBearExt4.mul(p, q);
+
+                uint256 p0 = p >> 224;
+                uint256 p1 = (p >> 192) & 0xffffffff;
+                uint256 p2 = (p >> 160) & 0xffffffff;
+                uint256 p3 = (p >> 128) & 0xffffffff;
+
+                uint256 q0 = q >> 224;
+                uint256 q1 = (q >> 192) & 0xffffffff;
+                uint256 q2 = (q >> 160) & 0xffffffff;
+                uint256 q3 = (q >> 128) & 0xffffffff;
+
+                uint256 pq0 = pq >> 224;
+                uint256 pq1 = (pq >> 192) & 0xffffffff;
+                uint256 pq2 = (pq >> 160) & 0xffffffff;
+                uint256 pq3 = (pq >> 128) & 0xffffffff;
+
+                uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
+                uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
+                uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
+                uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
+
+                uint256 n0 = a0 *
+                    t0 +
+                    KoalaBear.W *
+                    (a1 * t3 + a2 * t2 + a3 * t1);
+                uint256 n1 = a0 *
+                    t1 +
+                    a1 *
+                    t0 +
+                    KoalaBear.W *
+                    (a2 * t3 + a3 * t2);
+                uint256 n2 = a0 *
+                    t2 +
+                    a1 *
+                    t1 +
+                    a2 *
+                    t0 +
+                    KoalaBear.W *
+                    (a3 * t3);
+                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+
+                a0 = n0 % modulus;
+                a1 = n1 % modulus;
+                a2 = n2 % modulus;
+                a3 = n3 % modulus;
             }
         }
+
+        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
+    }
+
+    function _eqPolyEvalAtCalldata(
+        uint256[] calldata point,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        uint256 a0 = 1;
+        uint256 a1 = 0;
+        uint256 a2 = 0;
+        uint256 a3 = 0;
+        uint256 modulus = KoalaBear.MODULUS;
+
+        if (point.length != numVariables) {
+            revert StatementPointArityMismatch(0, numVariables, point.length);
+        }
+
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 p = point[i];
+                WhirVerifierUtils4.validatePackedExt4(p);
+                uint256 q = fullPoint[pointOffset + i];
+                uint256 pq = KoalaBearExt4.mul(p, q);
+
+                uint256 p0 = p >> 224;
+                uint256 p1 = (p >> 192) & 0xffffffff;
+                uint256 p2 = (p >> 160) & 0xffffffff;
+                uint256 p3 = (p >> 128) & 0xffffffff;
+
+                uint256 q0 = q >> 224;
+                uint256 q1 = (q >> 192) & 0xffffffff;
+                uint256 q2 = (q >> 160) & 0xffffffff;
+                uint256 q3 = (q >> 128) & 0xffffffff;
+
+                uint256 pq0 = pq >> 224;
+                uint256 pq1 = (pq >> 192) & 0xffffffff;
+                uint256 pq2 = (pq >> 160) & 0xffffffff;
+                uint256 pq3 = (pq >> 128) & 0xffffffff;
+
+                uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
+                uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
+                uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
+                uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
+
+                uint256 n0 = a0 *
+                    t0 +
+                    KoalaBear.W *
+                    (a1 * t3 + a2 * t2 + a3 * t1);
+                uint256 n1 = a0 *
+                    t1 +
+                    a1 *
+                    t0 +
+                    KoalaBear.W *
+                    (a2 * t3 + a3 * t2);
+                uint256 n2 = a0 *
+                    t2 +
+                    a1 *
+                    t1 +
+                    a2 *
+                    t0 +
+                    KoalaBear.W *
+                    (a3 * t3);
+                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+
+                a0 = n0 % modulus;
+                a1 = n1 % modulus;
+                a2 = n2 % modulus;
+                a3 = n3 % modulus;
+            }
+        }
+
+        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
     }
 
     function _selectPolyEvalAt(
@@ -522,17 +665,42 @@ library WhirVerifierCore4 {
         uint256 pointOffset,
         uint256 numVariables
     ) internal pure returns (uint256 acc) {
-        acc = EXT4_ONE;
+        uint256 a0 = 1;
+        uint256 a1 = 0;
+        uint256 a2 = 0;
+        uint256 a3 = 0;
         uint256 current = var_;
+        uint256 modulus = KoalaBear.MODULUS;
+        uint256 w = KoalaBear.W;
 
         unchecked {
             for (uint256 i = numVariables; i > 0; --i) {
                 uint256 pointValue = fullPoint[pointOffset + (i - 1)];
-                uint256 scalar = KoalaBear.sub(current, 1);
-                acc = _mulBySelectTerm(acc, pointValue, scalar);
+                uint256 scalar = current == 0 ? modulus - 1 : current - 1;
+                uint256 p0 = pointValue >> 224;
+                uint256 p1 = (pointValue >> 192) & 0xffffffff;
+                uint256 p2 = (pointValue >> 160) & 0xffffffff;
+                uint256 p3 = (pointValue >> 128) & 0xffffffff;
+
+                uint256 t0 = 1 + scalar * p0;
+                uint256 t1 = scalar * p1;
+                uint256 t2 = scalar * p2;
+                uint256 t3 = scalar * p3;
+
+                uint256 n0 = a0 * t0 + w * (a1 * t3 + a2 * t2 + a3 * t1);
+                uint256 n1 = a0 * t1 + a1 * t0 + w * (a2 * t3 + a3 * t2);
+                uint256 n2 = a0 * t2 + a1 * t1 + a2 * t0 + w * (a3 * t3);
+                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+
+                a0 = n0 % modulus;
+                a1 = n1 % modulus;
+                a2 = n2 % modulus;
+                a3 = n3 % modulus;
                 current = KoalaBear.mul(current, current);
             }
         }
+
+        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
     }
 
     function _mulByEqTerm(

@@ -60,35 +60,23 @@ contract WhirVerifier4 {
             );
         }
 
-        WhirVerifierCore4.EqStatement memory userStatement = WhirVerifierCore4
-            ._statementFromCalldata(
-                statement,
-                QuarticWhirFixedConfig.NUM_VARIABLES
-            );
-        WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
-            ._concatenateEq(userStatement, parsedCommitment.oodStatement);
-
         WhirVerifierCore4.Constraint[]
             memory constraints = new WhirVerifierCore4.Constraint[](
-                proof.rounds.length + 1
+                proof.rounds.length
             );
         uint256 constraintCount = 0;
         uint256 claimedEval = 0;
         uint256[] memory foldingRandomness;
         uint256[] memory finalSumcheckRandomness;
-
-        constraints[constraintCount] = WhirVerifierCore4.Constraint({
-            challenge: WhirVerifierUtils4.sampleExt4(challenger),
-            eqStatement: initialEq,
-            selStatement: WhirVerifierCore4._emptySelect(
-                QuarticWhirFixedConfig.NUM_VARIABLES
-            )
-        });
-        claimedEval = WhirVerifierCore4._combineConstraintEvals(
-            claimedEval,
-            constraints[constraintCount]
+        uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
+            challenger
         );
-        constraintCount += 1;
+
+        claimedEval = _combineInitialConstraintEvals(
+            initialConstraintChallenge,
+            statement,
+            parsedCommitment
+        );
 
         uint256[] memory allRandomness = new uint256[](
             QuarticWhirFixedConfig.NUM_VARIABLES
@@ -251,6 +239,15 @@ contract WhirVerifier4 {
             constraintCount,
             allRandomness
         );
+        evaluationOfWeights = KoalaBearExt4.add(
+            evaluationOfWeights,
+            _evaluateInitialConstraint(
+                initialConstraintChallenge,
+                statement,
+                parsedCommitment,
+                allRandomness
+            )
+        );
         uint256 finalValue = WhirVerifierCore4._evaluateFinalValue(
             proof.finalPoly,
             finalSumcheckRandomness
@@ -265,5 +262,100 @@ contract WhirVerifier4 {
         }
 
         return true;
+    }
+
+    function _combineInitialConstraintEvals(
+        uint256 challenge,
+        WhirStructs.WhirStatement calldata statement,
+        WhirVerifierCore4.ParsedCommitment memory parsedCommitment
+    ) private pure returns (uint256 updated) {
+        if (statement.points.length != statement.evaluations.length) {
+            revert WhirVerifierCore4.StatementLengthMismatch(
+                statement.points.length,
+                statement.evaluations.length
+            );
+        }
+
+        uint256 gammaPower = KoalaBearExt4.fromBase(1);
+
+        unchecked {
+            for (uint256 i = 0; i < statement.evaluations.length; ++i) {
+                uint256 evalValue = statement.evaluations[i];
+                WhirVerifierUtils4.validatePackedExt4(evalValue);
+                updated = KoalaBearExt4.add(
+                    updated,
+                    KoalaBearExt4.mul(gammaPower, evalValue)
+                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+            }
+
+            for (
+                uint256 i = 0;
+                i < parsedCommitment.oodStatement.evaluations.length;
+                ++i
+            ) {
+                updated = KoalaBearExt4.add(
+                    updated,
+                    KoalaBearExt4.mul(
+                        gammaPower,
+                        parsedCommitment.oodStatement.evaluations[i]
+                    )
+                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+            }
+        }
+    }
+
+    function _evaluateInitialConstraint(
+        uint256 challenge,
+        WhirStructs.WhirStatement calldata statement,
+        WhirVerifierCore4.ParsedCommitment memory parsedCommitment,
+        uint256[] memory allRandomness
+    ) private pure returns (uint256 total) {
+        if (statement.points.length != statement.evaluations.length) {
+            revert WhirVerifierCore4.StatementLengthMismatch(
+                statement.points.length,
+                statement.evaluations.length
+            );
+        }
+
+        uint256 gammaPower = KoalaBearExt4.fromBase(1);
+        uint256 pointOffset = allRandomness.length -
+            QuarticWhirFixedConfig.NUM_VARIABLES;
+
+        unchecked {
+            for (uint256 i = 0; i < statement.points.length; ++i) {
+                uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
+                    statement.points[i],
+                    allRandomness,
+                    pointOffset,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                );
+                total = KoalaBearExt4.add(
+                    total,
+                    KoalaBearExt4.mul(gammaPower, weight)
+                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+            }
+
+            for (
+                uint256 i = 0;
+                i < parsedCommitment.oodStatement.evaluations.length;
+                ++i
+            ) {
+                uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
+                    parsedCommitment.oodStatement.flatPoints,
+                    i * QuarticWhirFixedConfig.NUM_VARIABLES,
+                    allRandomness,
+                    pointOffset,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                );
+                total = KoalaBearExt4.add(
+                    total,
+                    KoalaBearExt4.mul(gammaPower, weight)
+                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+            }
+        }
     }
 }

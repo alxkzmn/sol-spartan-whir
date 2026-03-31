@@ -16,6 +16,19 @@ import {MerkleVerifier} from "../src/merkle/MerkleVerifier.sol";
 contract WhirProfileHarness {
     using KeccakChallenger for KeccakChallenger.State;
 
+    struct StirBreakdown {
+        uint256 total;
+        uint256 sampleQueries;
+        uint256 leafHashing;
+        uint256 merkleReduction;
+        uint256 pow;
+        uint256 rowFolding;
+        uint256 overhead;
+        uint256 queryCount;
+        uint256 rowLen;
+        uint256 depth;
+    }
+
     function profileParseCommitment(
         bytes32 expectedCommitment,
         WhirStructs.WhirProof calldata proof
@@ -648,6 +661,1024 @@ contract WhirProfileHarness {
         bd.finalCheck = g - gasleft();
     }
 
+    function profileStirBreakdowns(
+        bytes32 expectedCommitment,
+        WhirStructs.WhirStatement calldata statement,
+        WhirStructs.WhirProof calldata proof
+    )
+        external
+        view
+        returns (
+            StirBreakdown memory round0,
+            StirBreakdown memory round1,
+            StirBreakdown memory finalBd
+        )
+    {
+        KeccakChallenger.State memory challenger;
+        QuarticWhirFixedConfig.observePattern(challenger);
+
+        WhirVerifierCore4.ParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+                challenger,
+                proof.initialCommitment,
+                proof.initialOodAnswers,
+                QuarticWhirFixedConfig.NUM_VARIABLES,
+                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
+            );
+        require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+
+        WhirVerifierCore4.Constraint[]
+            memory cArr = new WhirVerifierCore4.Constraint[](3);
+        uint256 cCount = 1;
+
+        WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
+            ._concatenateEq(
+                WhirVerifierCore4._statementFromCalldata(
+                    statement,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                ),
+                prevCommitment.oodStatement
+            );
+        cArr[0] = WhirVerifierCore4.Constraint({
+            challenge: WhirVerifierUtils4.sampleExt4(challenger),
+            eqStatement: initialEq,
+            selStatement: WhirVerifierCore4._emptySelect(
+                QuarticWhirFixedConfig.NUM_VARIABLES
+            )
+        });
+
+        uint256 claimedEval = WhirVerifierCore4._combineConstraintEvals(
+            0,
+            cArr[0]
+        );
+        uint256[] memory allRandomness = new uint256[](
+            QuarticWhirFixedConfig.NUM_VARIABLES
+        );
+        uint256 randomnessCursor;
+        uint256[] memory foldingRandomness;
+
+        (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
+            ._verifySumcheck(
+                proof.initialSumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
+                QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+                allRandomness,
+                0
+            );
+
+        {
+            QuarticWhirFixedConfig.RoundConfig
+                memory rc = QuarticWhirFixedConfig.roundConfig(0);
+            WhirStructs.WhirRoundProof calldata rp = proof.rounds[0];
+            WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4
+                ._parseCommitment(
+                    challenger,
+                    rp.commitment,
+                    rp.oodAnswers,
+                    rc.numVariables,
+                    rc.oodSamples
+                );
+            WhirVerifierCore4.SelectStatement memory ss;
+            (ss, round0) = _profileStirChallengesRaw(
+                challenger,
+                prevCommitment.root,
+                rc.powBits,
+                rc.numQueries,
+                rc.numVariables,
+                rc.foldingFactor,
+                rc.domainSize,
+                rc.foldedDomainGen,
+                rp.queryBatch,
+                true,
+                rp.powWitness,
+                foldingRandomness,
+                true,
+                0,
+                uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            );
+
+            cArr[cCount] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: nc.oodStatement,
+                selStatement: ss
+            });
+            claimedEval = WhirVerifierCore4._combineConstraintEvals(
+                claimedEval,
+                cArr[cCount]
+            );
+            cCount += 1;
+
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                rp.sumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
+                rc.foldingPowBits,
+                allRandomness,
+                randomnessCursor
+            );
+
+            prevCommitment = nc;
+        }
+
+        {
+            QuarticWhirFixedConfig.RoundConfig
+                memory rc = QuarticWhirFixedConfig.roundConfig(1);
+            WhirStructs.WhirRoundProof calldata rp = proof.rounds[1];
+            WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4
+                ._parseCommitment(
+                    challenger,
+                    rp.commitment,
+                    rp.oodAnswers,
+                    rc.numVariables,
+                    rc.oodSamples
+                );
+            WhirVerifierCore4.SelectStatement memory ss;
+            (ss, round1) = _profileStirChallengesRaw(
+                challenger,
+                prevCommitment.root,
+                rc.powBits,
+                rc.numQueries,
+                rc.numVariables,
+                rc.foldingFactor,
+                rc.domainSize,
+                rc.foldedDomainGen,
+                rp.queryBatch,
+                true,
+                rp.powWitness,
+                foldingRandomness,
+                true,
+                1,
+                uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            );
+
+            cArr[cCount] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: nc.oodStatement,
+                selStatement: ss
+            });
+            claimedEval = WhirVerifierCore4._combineConstraintEvals(
+                claimedEval,
+                cArr[cCount]
+            );
+            cCount += 1;
+
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                rp.sumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                rc.foldingPowBits,
+                allRandomness,
+                randomnessCursor
+            );
+
+            prevCommitment = nc;
+        }
+
+        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
+        unchecked {
+            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
+                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+            }
+        }
+
+        (, finalBd) = _profileStirChallengesRaw(
+            challenger,
+            prevCommitment.root,
+            QuarticWhirFixedConfig.FINAL_POW_BITS,
+            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+            QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
+            QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            proof.finalQueryBatch,
+            proof.finalQueryBatchPresent,
+            proof.finalPowWitness,
+            foldingRandomness,
+            false,
+            1,
+            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+        );
+    }
+
+    function profileRound0StirOnly(
+        bytes32 expectedCommitment,
+        WhirStructs.WhirStatement calldata statement,
+        WhirStructs.WhirProof calldata proof
+    ) external view returns (uint256 gasRound0Stir) {
+        KeccakChallenger.State memory challenger;
+        QuarticWhirFixedConfig.observePattern(challenger);
+
+        WhirVerifierCore4.ParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+                challenger,
+                proof.initialCommitment,
+                proof.initialOodAnswers,
+                QuarticWhirFixedConfig.NUM_VARIABLES,
+                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
+            );
+        require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+
+        WhirVerifierCore4.Constraint[]
+            memory cArr = new WhirVerifierCore4.Constraint[](1);
+        cArr[0] = WhirVerifierCore4.Constraint({
+            challenge: WhirVerifierUtils4.sampleExt4(challenger),
+            eqStatement: WhirVerifierCore4._concatenateEq(
+                WhirVerifierCore4._statementFromCalldata(
+                    statement,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                ),
+                prevCommitment.oodStatement
+            ),
+            selStatement: WhirVerifierCore4._emptySelect(
+                QuarticWhirFixedConfig.NUM_VARIABLES
+            )
+        });
+
+        uint256 claimedEval = WhirVerifierCore4._combineConstraintEvals(
+            0,
+            cArr[0]
+        );
+        uint256[] memory allRandomness = new uint256[](
+            QuarticWhirFixedConfig.NUM_VARIABLES
+        );
+        uint256[] memory foldingRandomness;
+
+        (claimedEval, foldingRandomness, ) = WhirVerifierCore4._verifySumcheck(
+            proof.initialSumcheck,
+            challenger,
+            claimedEval,
+            QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
+            QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+            allRandomness,
+            0
+        );
+
+        QuarticWhirFixedConfig.RoundConfig memory rc = QuarticWhirFixedConfig
+            .roundConfig(0);
+        WhirStructs.WhirRoundProof calldata rp = proof.rounds[0];
+        WhirVerifierCore4._parseCommitment(
+            challenger,
+            rp.commitment,
+            rp.oodAnswers,
+            rc.numVariables,
+            rc.oodSamples
+        );
+        uint256 g = gasleft();
+        WhirVerifierCore4._verifyStirChallengesRaw(
+            challenger,
+            prevCommitment.root,
+            rc.powBits,
+            rc.numQueries,
+            rc.numVariables,
+            rc.foldingFactor,
+            rc.domainSize,
+            rc.foldedDomainGen,
+            rp.queryBatch,
+            true,
+            rp.powWitness,
+            foldingRandomness,
+            true,
+            0,
+            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+        );
+        gasRound0Stir = g - gasleft();
+        require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
+    }
+
+    function profileRound1StirOnly(
+        bytes32 expectedCommitment,
+        WhirStructs.WhirStatement calldata statement,
+        WhirStructs.WhirProof calldata proof
+    ) external view returns (uint256 gasRound1Stir) {
+        KeccakChallenger.State memory challenger;
+        QuarticWhirFixedConfig.observePattern(challenger);
+
+        WhirVerifierCore4.ParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+                challenger,
+                proof.initialCommitment,
+                proof.initialOodAnswers,
+                QuarticWhirFixedConfig.NUM_VARIABLES,
+                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
+            );
+        require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+
+        WhirVerifierCore4.Constraint[]
+            memory cArr = new WhirVerifierCore4.Constraint[](2);
+        cArr[0] = WhirVerifierCore4.Constraint({
+            challenge: WhirVerifierUtils4.sampleExt4(challenger),
+            eqStatement: WhirVerifierCore4._concatenateEq(
+                WhirVerifierCore4._statementFromCalldata(
+                    statement,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                ),
+                prevCommitment.oodStatement
+            ),
+            selStatement: WhirVerifierCore4._emptySelect(
+                QuarticWhirFixedConfig.NUM_VARIABLES
+            )
+        });
+
+        uint256 claimedEval = WhirVerifierCore4._combineConstraintEvals(
+            0,
+            cArr[0]
+        );
+        uint256[] memory allRandomness = new uint256[](
+            QuarticWhirFixedConfig.NUM_VARIABLES
+        );
+        uint256 randomnessCursor;
+        uint256[] memory foldingRandomness;
+
+        (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
+            ._verifySumcheck(
+                proof.initialSumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
+                QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+                allRandomness,
+                0
+            );
+
+        {
+            QuarticWhirFixedConfig.RoundConfig
+                memory rc0 = QuarticWhirFixedConfig.roundConfig(0);
+            WhirStructs.WhirRoundProof calldata rp0 = proof.rounds[0];
+            WhirVerifierCore4.ParsedCommitment memory nc0 = WhirVerifierCore4
+                ._parseCommitment(
+                    challenger,
+                    rp0.commitment,
+                    rp0.oodAnswers,
+                    rc0.numVariables,
+                    rc0.oodSamples
+                );
+            WhirVerifierCore4.SelectStatement memory ss0 = WhirVerifierCore4
+                ._verifyStirChallengesRaw(
+                    challenger,
+                    prevCommitment.root,
+                    rc0.powBits,
+                    rc0.numQueries,
+                    rc0.numVariables,
+                    rc0.foldingFactor,
+                    rc0.domainSize,
+                    rc0.foldedDomainGen,
+                    rp0.queryBatch,
+                    true,
+                    rp0.powWitness,
+                    foldingRandomness,
+                    true,
+                    0,
+                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                );
+
+            cArr[1] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: nc0.oodStatement,
+                selStatement: ss0
+            });
+            claimedEval = WhirVerifierCore4._combineConstraintEvals(
+                claimedEval,
+                cArr[1]
+            );
+
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                rp0.sumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
+                rc0.foldingPowBits,
+                allRandomness,
+                randomnessCursor
+            );
+
+            prevCommitment = nc0;
+        }
+
+        QuarticWhirFixedConfig.RoundConfig memory rc1 = QuarticWhirFixedConfig
+            .roundConfig(1);
+        WhirStructs.WhirRoundProof calldata rp1 = proof.rounds[1];
+        WhirVerifierCore4._parseCommitment(
+            challenger,
+            rp1.commitment,
+            rp1.oodAnswers,
+            rc1.numVariables,
+            rc1.oodSamples
+        );
+        uint256 g = gasleft();
+        WhirVerifierCore4._verifyStirChallengesRaw(
+            challenger,
+            prevCommitment.root,
+            rc1.powBits,
+            rc1.numQueries,
+            rc1.numVariables,
+            rc1.foldingFactor,
+            rc1.domainSize,
+            rc1.foldedDomainGen,
+            rp1.queryBatch,
+            true,
+            rp1.powWitness,
+            foldingRandomness,
+            true,
+            1,
+            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+        );
+        gasRound1Stir = g - gasleft();
+        require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
+    }
+
+    function profileFinalStirOnly(
+        bytes32 expectedCommitment,
+        WhirStructs.WhirStatement calldata statement,
+        WhirStructs.WhirProof calldata proof
+    ) external view returns (uint256 gasFinalStir) {
+        KeccakChallenger.State memory challenger;
+        QuarticWhirFixedConfig.observePattern(challenger);
+
+        WhirVerifierCore4.Constraint[]
+            memory cArr = new WhirVerifierCore4.Constraint[](3);
+        uint256[] memory allRandomness = new uint256[](
+            QuarticWhirFixedConfig.NUM_VARIABLES
+        );
+        uint256[] memory foldingRandomness;
+        uint256 claimedEval;
+        uint256 randomnessCursor;
+        WhirVerifierCore4.ParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+                challenger,
+                proof.initialCommitment,
+                proof.initialOodAnswers,
+                QuarticWhirFixedConfig.NUM_VARIABLES,
+                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
+            );
+        require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+
+        cArr[0] = WhirVerifierCore4.Constraint({
+            challenge: WhirVerifierUtils4.sampleExt4(challenger),
+            eqStatement: WhirVerifierCore4._concatenateEq(
+                WhirVerifierCore4._statementFromCalldata(
+                    statement,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                ),
+                prevCommitment.oodStatement
+            ),
+            selStatement: WhirVerifierCore4._emptySelect(
+                QuarticWhirFixedConfig.NUM_VARIABLES
+            )
+        });
+        claimedEval = WhirVerifierCore4._combineConstraintEvals(0, cArr[0]);
+
+        (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
+            ._verifySumcheck(
+                proof.initialSumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
+                QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+                allRandomness,
+                0
+            );
+
+        for (uint256 round = 0; round < 2; ++round) {
+            QuarticWhirFixedConfig.RoundConfig
+                memory rc = QuarticWhirFixedConfig.roundConfig(round);
+            WhirStructs.WhirRoundProof calldata rp = proof.rounds[round];
+            WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4
+                ._parseCommitment(
+                    challenger,
+                    rp.commitment,
+                    rp.oodAnswers,
+                    rc.numVariables,
+                    rc.oodSamples
+                );
+            WhirVerifierCore4.SelectStatement memory ss = WhirVerifierCore4
+                ._verifyStirChallengesRaw(
+                    challenger,
+                    prevCommitment.root,
+                    rc.powBits,
+                    rc.numQueries,
+                    rc.numVariables,
+                    rc.foldingFactor,
+                    rc.domainSize,
+                    rc.foldedDomainGen,
+                    rp.queryBatch,
+                    true,
+                    rp.powWitness,
+                    foldingRandomness,
+                    true,
+                    uint8(round),
+                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                );
+            cArr[round + 1] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: nc.oodStatement,
+                selStatement: ss
+            });
+            claimedEval = WhirVerifierCore4._combineConstraintEvals(
+                claimedEval,
+                cArr[round + 1]
+            );
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                rp.sumcheck,
+                challenger,
+                claimedEval,
+                round == 0
+                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
+                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                rc.foldingPowBits,
+                allRandomness,
+                randomnessCursor
+            );
+            prevCommitment = nc;
+        }
+
+        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
+        unchecked {
+            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
+                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+            }
+        }
+
+        uint256 g = gasleft();
+        WhirVerifierCore4._verifyStirChallengesRaw(
+            challenger,
+            prevCommitment.root,
+            QuarticWhirFixedConfig.FINAL_POW_BITS,
+            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+            QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
+            QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            proof.finalQueryBatch,
+            proof.finalQueryBatchPresent,
+            proof.finalPowWitness,
+            foldingRandomness,
+            false,
+            1,
+            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+        );
+        gasFinalStir = g - gasleft();
+        require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
+    }
+
+    function profileConstraintEvaluationOnly(
+        bytes32 expectedCommitment,
+        WhirStructs.WhirStatement calldata statement,
+        WhirStructs.WhirProof calldata proof
+    ) external view returns (uint256 gasConstraintEval) {
+        KeccakChallenger.State memory challenger;
+        QuarticWhirFixedConfig.observePattern(challenger);
+
+        WhirVerifierCore4.Constraint[]
+            memory cArr = new WhirVerifierCore4.Constraint[](3);
+        uint256 cCount;
+        uint256 claimedEval;
+        uint256[] memory foldingRandomness;
+        uint256[] memory finalSumcheckRandomness;
+        uint256[] memory allRandomness = new uint256[](
+            QuarticWhirFixedConfig.NUM_VARIABLES
+        );
+        uint256 randomnessCursor;
+        WhirVerifierCore4.ParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+                challenger,
+                proof.initialCommitment,
+                proof.initialOodAnswers,
+                QuarticWhirFixedConfig.NUM_VARIABLES,
+                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
+            );
+        require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+
+        {
+            WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
+                ._concatenateEq(
+                    WhirVerifierCore4._statementFromCalldata(
+                        statement,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    ),
+                    prevCommitment.oodStatement
+                );
+            cArr[0] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: initialEq,
+                selStatement: WhirVerifierCore4._emptySelect(
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                )
+            });
+        }
+        claimedEval = WhirVerifierCore4._combineConstraintEvals(0, cArr[0]);
+        cCount = 1;
+
+        (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
+            ._verifySumcheck(
+                proof.initialSumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
+                QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+                allRandomness,
+                0
+            );
+
+        for (uint256 round = 0; round < 2; ++round) {
+            QuarticWhirFixedConfig.RoundConfig
+                memory rc = QuarticWhirFixedConfig.roundConfig(round);
+            WhirStructs.WhirRoundProof calldata rp = proof.rounds[round];
+            WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4
+                ._parseCommitment(
+                    challenger,
+                    rp.commitment,
+                    rp.oodAnswers,
+                    rc.numVariables,
+                    rc.oodSamples
+                );
+            WhirVerifierCore4.SelectStatement memory ss = WhirVerifierCore4
+                ._verifyStirChallengesRaw(
+                    challenger,
+                    prevCommitment.root,
+                    rc.powBits,
+                    rc.numQueries,
+                    rc.numVariables,
+                    rc.foldingFactor,
+                    rc.domainSize,
+                    rc.foldedDomainGen,
+                    rp.queryBatch,
+                    true,
+                    rp.powWitness,
+                    foldingRandomness,
+                    true,
+                    uint8(round),
+                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                );
+            cArr[cCount] = WhirVerifierCore4.Constraint({
+                challenge: WhirVerifierUtils4.sampleExt4(challenger),
+                eqStatement: nc.oodStatement,
+                selStatement: ss
+            });
+            claimedEval = WhirVerifierCore4._combineConstraintEvals(
+                claimedEval,
+                cArr[cCount]
+            );
+            cCount += 1;
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                rp.sumcheck,
+                challenger,
+                claimedEval,
+                round == 0
+                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
+                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                rc.foldingPowBits,
+                allRandomness,
+                randomnessCursor
+            );
+            prevCommitment = nc;
+        }
+
+        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
+        unchecked {
+            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
+                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+            }
+        }
+
+        WhirVerifierCore4.SelectStatement memory finalSS = WhirVerifierCore4
+            ._verifyStirChallengesRaw(
+                challenger,
+                prevCommitment.root,
+                QuarticWhirFixedConfig.FINAL_POW_BITS,
+                QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+                QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+                QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+                proof.finalQueryBatch,
+                proof.finalQueryBatchPresent,
+                proof.finalPowWitness,
+                foldingRandomness,
+                false,
+                1,
+                uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            );
+        WhirVerifierCore4._verifySelectStatement(finalSS, proof.finalPoly);
+        (
+            claimedEval,
+            finalSumcheckRandomness,
+            randomnessCursor
+        ) = WhirVerifierCore4._verifySumcheck(
+            proof.finalSumcheck,
+            challenger,
+            claimedEval,
+            QuarticWhirFixedConfig.FINAL_SUMCHECK_ROUNDS,
+            QuarticWhirFixedConfig.FINAL_FOLDING_POW_BITS,
+            allRandomness,
+            randomnessCursor
+        );
+
+        uint256 g = gasleft();
+        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraints(
+            cArr,
+            cCount,
+            allRandomness
+        );
+        gasConstraintEval = g - gasleft();
+
+        require(evaluationOfWeights != 0, "PROFILE_ZERO_WEIGHTS");
+        require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
+        require(
+            finalSumcheckRandomness.length != 0,
+            "PROFILE_EMPTY_FINAL_RANDOMNESS"
+        );
+    }
+
+    function _profileStirChallengesRaw(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 numVariables,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        WhirStructs.QueryBatchOpening calldata queryBatch,
+        bool queryBatchPresent,
+        uint256 powWitness,
+        uint256[] memory foldingRandomness,
+        bool checkpointAfterPow,
+        uint8 expectedKind,
+        uint8 effectiveDigestBytes
+    )
+        internal
+        view
+        returns (
+            WhirVerifierCore4.SelectStatement memory statement,
+            StirBreakdown memory bd
+        )
+    {
+        uint256 startGas = gasleft();
+
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert WhirVerifierCore4.InvalidPowWitness();
+        }
+
+        if (checkpointAfterPow) {
+            challenger.sampleBase();
+        }
+
+        statement.numVariables = numVariables;
+
+        if (!queryBatchPresent) {
+            if (numQueries != 0) {
+                revert WhirVerifierCore4.FinalQueryBatchPresenceMismatch(
+                    true,
+                    false
+                );
+            }
+            statement.vars = new uint256[](0);
+            statement.evaluations = new uint256[](0);
+            bd.total = startGas - gasleft();
+            bd.overhead = bd.total;
+            return (statement, bd);
+        }
+
+        uint256 g = gasleft();
+        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
+            challenger,
+            domainSize,
+            foldingFactor,
+            numQueries
+        );
+        bd.sampleQueries = g - gasleft();
+
+        if (queryBatch.kind != expectedKind) {
+            revert WhirVerifierCore4.QueryBatchKindMismatch(
+                expectedKind,
+                queryBatch.kind
+            );
+        }
+        if (queryBatch.numQueries != indices.length) {
+            revert WhirVerifierCore4.QueryBatchCountMismatch(
+                indices.length,
+                queryBatch.numQueries
+            );
+        }
+
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
+        if (queryBatch.rowLen != expectedRowLen) {
+            revert WhirVerifierCore4.QueryBatchRowLengthMismatch(
+                expectedRowLen,
+                queryBatch.rowLen
+            );
+        }
+
+        uint256 depth = WhirVerifierUtils4.log2Strict(
+            domainSize >> foldingFactor
+        );
+        bd.queryCount = indices.length;
+        bd.rowLen = expectedRowLen;
+        bd.depth = depth;
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                if (expectedKind == 0) {
+                    leafHashes[i] = MerkleVerifier.hashLeafBaseSlice(
+                        queryBatch.values,
+                        i * queryBatch.rowLen,
+                        queryBatch.rowLen,
+                        effectiveDigestBytes
+                    );
+                } else {
+                    leafHashes[i] = MerkleVerifier.hashLeafExtensionSlice(
+                        queryBatch.values,
+                        i * queryBatch.rowLen,
+                        queryBatch.rowLen,
+                        effectiveDigestBytes
+                    );
+                }
+            }
+        }
+        bd.leafHashing = g - gasleft();
+
+        g = gasleft();
+        bytes32 computedRoot = _computeRootFromLeafHashesProfile(
+            indices,
+            leafHashes,
+            depth,
+            queryBatch.decommitments,
+            effectiveDigestBytes
+        );
+        bd.merkleReduction = g - gasleft();
+
+        if (computedRoot != expectedRoot) {
+            revert WhirVerifierCore4.MerkleRootMismatch(
+                expectedRoot,
+                computedRoot
+            );
+        }
+
+        statement.vars = new uint256[](indices.length);
+        statement.evaluations = new uint256[](indices.length);
+
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                g = gasleft();
+                statement.vars[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
+                bd.pow += g - gasleft();
+
+                uint256 rowStart = i * queryBatch.rowLen;
+                g = gasleft();
+                statement.evaluations[i] = expectedKind == 0
+                    ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
+                        queryBatch.values,
+                        rowStart,
+                        queryBatch.rowLen,
+                        foldingRandomness
+                    )
+                    : WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                        queryBatch.values,
+                        rowStart,
+                        queryBatch.rowLen,
+                        foldingRandomness
+                    );
+                bd.rowFolding += g - gasleft();
+            }
+        }
+
+        bd.total = startGas - gasleft();
+        uint256 measured = bd.sampleQueries +
+            bd.leafHashing +
+            bd.merkleReduction +
+            bd.pow +
+            bd.rowFolding;
+        bd.overhead = bd.total - measured;
+    }
+
+    function _computeRootFromLeafHashesProfile(
+        uint256[] memory indices,
+        bytes32[] memory leafHashes,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 effectiveDigestBytes
+    ) internal pure returns (bytes32) {
+        require(indices.length != 0, "EMPTY_INDICES");
+        require(indices.length == leafHashes.length, "LEN_MISMATCH");
+
+        unchecked {
+            for (uint256 i = 1; i < indices.length; ++i) {
+                require(indices[i - 1] < indices[i], "UNSORTED");
+            }
+        }
+
+        uint256 frontierLen = indices.length;
+        uint256[] memory frontierIndices = new uint256[](frontierLen);
+        bytes32[] memory frontierHashes = new bytes32[](frontierLen);
+
+        unchecked {
+            for (uint256 i = 0; i < frontierLen; ++i) {
+                frontierIndices[i] = indices[i];
+                frontierHashes[i] = leafHashes[i];
+            }
+        }
+
+        uint256[] memory nextIndices = new uint256[](frontierLen);
+        bytes32[] memory nextHashes = new bytes32[](frontierLen);
+        uint256 decommitmentCursor = 0;
+
+        for (uint256 level = 0; level < depth; ++level) {
+            uint256 nextLen = 0;
+            uint256 cursor = 0;
+
+            while (cursor < frontierLen) {
+                uint256 node = frontierIndices[cursor];
+                bytes32 hash = frontierHashes[cursor];
+                bytes32 parentHash;
+
+                if (
+                    (node & 1) == 0 &&
+                    cursor + 1 < frontierLen &&
+                    frontierIndices[cursor + 1] == node + 1
+                ) {
+                    parentHash = MerkleVerifier.compressNode(
+                        hash,
+                        frontierHashes[cursor + 1],
+                        effectiveDigestBytes
+                    );
+                    cursor += 2;
+                } else {
+                    require(
+                        decommitmentCursor < decommitments.length,
+                        "INSUFFICIENT_DECOMMITMENTS"
+                    );
+                    bytes32 siblingHash = decommitments[decommitmentCursor];
+                    decommitmentCursor += 1;
+                    cursor += 1;
+
+                    parentHash = (node & 1) == 0
+                        ? MerkleVerifier.compressNode(
+                            hash,
+                            siblingHash,
+                            effectiveDigestBytes
+                        )
+                        : MerkleVerifier.compressNode(
+                            siblingHash,
+                            hash,
+                            effectiveDigestBytes
+                        );
+                }
+
+                uint256 parentIndex = node >> 1;
+                if (nextLen > 0 && nextIndices[nextLen - 1] == parentIndex) {
+                    nextHashes[nextLen - 1] = parentHash;
+                } else {
+                    nextIndices[nextLen] = parentIndex;
+                    nextHashes[nextLen] = parentHash;
+                    nextLen += 1;
+                }
+            }
+
+            uint256[] memory tempIndices = frontierIndices;
+            frontierIndices = nextIndices;
+            nextIndices = tempIndices;
+
+            bytes32[] memory tempHashes = frontierHashes;
+            frontierHashes = nextHashes;
+            nextHashes = tempHashes;
+
+            frontierLen = nextLen;
+        }
+
+        require(
+            decommitmentCursor == decommitments.length,
+            "TRAILING_DECOMMITMENTS"
+        );
+        require(frontierLen == 1 && frontierIndices[0] == 0, "INVALID_FINAL");
+        return frontierHashes[0];
+    }
+
     function profileStirMicro(
         uint256[] calldata baseValues16,
         uint256[] calldata extValues16
@@ -1040,6 +2071,27 @@ contract WhirGasProfileTest is Test {
         console.log("Sum of phases:              ", total);
     }
 
+    function testProfileStirBreakdown() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        (
+            WhirProfileHarness.StirBreakdown memory round0,
+            WhirProfileHarness.StirBreakdown memory round1,
+            WhirProfileHarness.StirBreakdown memory finalBd
+        ) = harness.profileStirBreakdowns(
+                proof.initialCommitment,
+                statement,
+                proof
+            );
+
+        _logStirBreakdown("Round0", round0);
+        _logStirBreakdown("Round1", round1);
+        _logStirBreakdown("Final", finalBd);
+    }
+
     function testProfileStirMicro() external view {
         uint256 salt = uint256(uint160(address(this)));
 
@@ -1067,6 +2119,94 @@ contract WhirGasProfileTest is Test {
         console.log("compressNode:               ", gasCompress);
         console.log("KoalaBear.pow(18-bit exp):  ", gasPow);
         console.log("sampleStirQueries(9)+init:  ", gasSampleQueries);
+    }
+
+    function testFlameRound0Stir() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        uint256 gasRound0 = harness.profileRound0StirOnly(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasRound0, 0);
+    }
+
+    function testFlameRound1Stir() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        uint256 gasRound1 = harness.profileRound1StirOnly(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasRound1, 0);
+    }
+
+    function testFlameFinalStir() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        uint256 gasFinal = harness.profileFinalStirOnly(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasFinal, 0);
+    }
+
+    function testFlameConstraintEvaluation() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        uint256 gasConstraint = harness.profileConstraintEvaluationOnly(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasConstraint, 0);
+    }
+
+    function testFlameSyntheticEqConstraint() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        (uint256 gasEq, ) = harness.profileSyntheticEqConstraint(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasEq, 0);
+    }
+
+    function testFlameSyntheticSelectConstraint() external view {
+        (uint256 gasSelect, ) = harness.profileSyntheticSelectConstraint();
+        assertGt(gasSelect, 0);
+    }
+
+    function _logStirBreakdown(
+        string memory label,
+        WhirProfileHarness.StirBreakdown memory bd
+    ) internal pure {
+        console.log("=== STIR Breakdown ===");
+        console.log(label);
+        console.log("total:            ", bd.total);
+        console.log("sampleQueries:    ", bd.sampleQueries);
+        console.log("leafHashing:      ", bd.leafHashing);
+        console.log("merkleReduction:  ", bd.merkleReduction);
+        console.log("pow:              ", bd.pow);
+        console.log("rowFolding:       ", bd.rowFolding);
+        console.log("overhead:         ", bd.overhead);
+        console.log("queryCount:       ", bd.queryCount);
+        console.log("rowLen:           ", bd.rowLen);
+        console.log("depth:            ", bd.depth);
     }
 
     function _makeRuntimeExt4Evals(
