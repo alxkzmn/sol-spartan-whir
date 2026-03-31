@@ -67,15 +67,14 @@ contract FieldArithmeticTest is Test {
     string internal constant TESTDATA = "testdata/";
 
     FieldHarness internal harness;
-    string internal vectorsJson;
     FieldVectorFixture internal vectors;
 
     function setUp() public {
         harness = new FieldHarness();
-        vectorsJson = vm.readFile(
+        string memory raw = vm.readFile(
             string.concat(TESTDATA, "field_vectors.json")
         );
-        vectors = abi.decode(vectorsJson.parseRaw("$"), (FieldVectorFixture));
+        vectors = abi.decode(raw.parseRaw("$"), (FieldVectorFixture));
     }
 
     function testKoalaBearBaseFieldVectors() external view {

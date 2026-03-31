@@ -406,34 +406,179 @@ library KoalaBearExt4 {
         uint256 e2,
         uint256 r
     ) internal pure returns (uint256) {
-        uint256[4] memory c0 = unpack(e0);
-        uint256[4] memory c1 = unpack(e1);
-        uint256[4] memory c2 = unpack(e2);
-        uint256[4] memory q1;
-        uint256[4] memory q2;
+        uint256 q1Packed;
+        uint256 q2Packed;
 
-        unchecked {
-            for (uint256 i = 0; i < DEGREE; ++i) {
-                uint256 twoC1 = KoalaBear.add(c1[i], c1[i]);
-                uint256 fourC1 = KoalaBear.add(twoC1, twoC1);
-                uint256 threeC0 = KoalaBear.add(c0[i], twoC0(c0[i]));
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
+            let invTwo := 1065353217
 
-                q2[i] = KoalaBear.mul(
-                    KoalaBear.add(c0[i], KoalaBear.sub(c2[i], twoC1)),
-                    INV_TWO
-                );
-                q1[i] = KoalaBear.mul(
-                    KoalaBear.sub(KoalaBear.sub(fourC1, c2[i]), threeC0),
-                    INV_TWO
-                );
+            // --- Lane 0 (bits 224-255) ---
+            let c0 := shr(224, e0)
+            let c1 := shr(224, e1)
+            let c2 := shr(224, e2)
+
+            let twoC1 := add(c1, c1)
+            if iszero(lt(twoC1, M)) {
+                twoC1 := sub(twoC1, M)
             }
+
+            let s := add(c0, c2)
+            q2Packed := shl(
+                224,
+                mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+            )
+
+            let fourC1 := add(twoC1, twoC1)
+            if iszero(lt(fourC1, M)) {
+                fourC1 := sub(fourC1, M)
+            }
+            let twoC0 := add(c0, c0)
+            if iszero(lt(twoC0, M)) {
+                twoC0 := sub(twoC0, M)
+            }
+            let threeC0 := add(c0, twoC0)
+            if iszero(lt(threeC0, M)) {
+                threeC0 := sub(threeC0, M)
+            }
+            let d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
+            q1Packed := shl(
+                224,
+                mulmod(sub(add(d, mul(M, lt(d, threeC0))), threeC0), invTwo, M)
+            )
+
+            // --- Lane 1 (bits 192-223) ---
+            c0 := and(shr(192, e0), mask)
+            c1 := and(shr(192, e1), mask)
+            c2 := and(shr(192, e2), mask)
+
+            twoC1 := add(c1, c1)
+            if iszero(lt(twoC1, M)) {
+                twoC1 := sub(twoC1, M)
+            }
+            s := add(c0, c2)
+            q2Packed := or(
+                q2Packed,
+                shl(
+                    192,
+                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                )
+            )
+
+            fourC1 := add(twoC1, twoC1)
+            if iszero(lt(fourC1, M)) {
+                fourC1 := sub(fourC1, M)
+            }
+            twoC0 := add(c0, c0)
+            if iszero(lt(twoC0, M)) {
+                twoC0 := sub(twoC0, M)
+            }
+            threeC0 := add(c0, twoC0)
+            if iszero(lt(threeC0, M)) {
+                threeC0 := sub(threeC0, M)
+            }
+            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
+            q1Packed := or(
+                q1Packed,
+                shl(
+                    192,
+                    mulmod(
+                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        invTwo,
+                        M
+                    )
+                )
+            )
+
+            // --- Lane 2 (bits 160-191) ---
+            c0 := and(shr(160, e0), mask)
+            c1 := and(shr(160, e1), mask)
+            c2 := and(shr(160, e2), mask)
+
+            twoC1 := add(c1, c1)
+            if iszero(lt(twoC1, M)) {
+                twoC1 := sub(twoC1, M)
+            }
+            s := add(c0, c2)
+            q2Packed := or(
+                q2Packed,
+                shl(
+                    160,
+                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                )
+            )
+
+            fourC1 := add(twoC1, twoC1)
+            if iszero(lt(fourC1, M)) {
+                fourC1 := sub(fourC1, M)
+            }
+            twoC0 := add(c0, c0)
+            if iszero(lt(twoC0, M)) {
+                twoC0 := sub(twoC0, M)
+            }
+            threeC0 := add(c0, twoC0)
+            if iszero(lt(threeC0, M)) {
+                threeC0 := sub(threeC0, M)
+            }
+            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
+            q1Packed := or(
+                q1Packed,
+                shl(
+                    160,
+                    mulmod(
+                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        invTwo,
+                        M
+                    )
+                )
+            )
+
+            // --- Lane 3 (bits 128-159) ---
+            c0 := and(shr(128, e0), mask)
+            c1 := and(shr(128, e1), mask)
+            c2 := and(shr(128, e2), mask)
+
+            twoC1 := add(c1, c1)
+            if iszero(lt(twoC1, M)) {
+                twoC1 := sub(twoC1, M)
+            }
+            s := add(c0, c2)
+            q2Packed := or(
+                q2Packed,
+                shl(
+                    128,
+                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                )
+            )
+
+            fourC1 := add(twoC1, twoC1)
+            if iszero(lt(fourC1, M)) {
+                fourC1 := sub(fourC1, M)
+            }
+            twoC0 := add(c0, c0)
+            if iszero(lt(twoC0, M)) {
+                twoC0 := sub(twoC0, M)
+            }
+            threeC0 := add(c0, twoC0)
+            if iszero(lt(threeC0, M)) {
+                threeC0 := sub(threeC0, M)
+            }
+            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
+            q1Packed := or(
+                q1Packed,
+                shl(
+                    128,
+                    mulmod(
+                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        invTwo,
+                        M
+                    )
+                )
+            )
         }
 
-        return add(e0, mul(r, add(pack(q1), mul(r, pack(q2)))));
-    }
-
-    function twoC0(uint256 value) private pure returns (uint256) {
-        return KoalaBear.add(value, value);
+        return add(e0, mul(r, add(q1Packed, mul(r, q2Packed))));
     }
 
     function _is_power_of_two(uint256 x) internal pure returns (bool) {

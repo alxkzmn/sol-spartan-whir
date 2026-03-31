@@ -182,12 +182,7 @@ contract WhirVerifier4 {
                 proof.finalPoly.length
             );
         }
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
-        unchecked {
-            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
-            }
-        }
+        challenger.observePackedExt4Slice(proof.finalPoly);
 
         WhirVerifierCore4.SelectStatement
             memory finalStirStatement = WhirVerifierCore4
@@ -276,34 +271,28 @@ contract WhirVerifier4 {
             );
         }
 
-        uint256 gammaPower = KoalaBearExt4.fromBase(1);
+        uint256[] memory oodEvals = parsedCommitment.oodStatement.evaluations;
+        uint256 oodLen = oodEvals.length;
 
+        // Horner: Σ challenge^i * eval_i, iterate from last to first
+        uint256 horner;
         unchecked {
-            for (uint256 i = 0; i < statement.evaluations.length; ++i) {
-                uint256 evalValue = statement.evaluations[i];
-                WhirVerifierUtils4.validatePackedExt4(evalValue);
-                updated = KoalaBearExt4.add(
-                    updated,
-                    KoalaBearExt4.mul(gammaPower, evalValue)
+            for (uint256 i = oodLen; i > 0; --i) {
+                horner = KoalaBearExt4.add(
+                    oodEvals[i - 1],
+                    KoalaBearExt4.mul(horner, challenge)
                 );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
-
-            for (
-                uint256 i = 0;
-                i < parsedCommitment.oodStatement.evaluations.length;
-                ++i
-            ) {
-                updated = KoalaBearExt4.add(
-                    updated,
-                    KoalaBearExt4.mul(
-                        gammaPower,
-                        parsedCommitment.oodStatement.evaluations[i]
-                    )
+            for (uint256 i = statement.evaluations.length; i > 0; --i) {
+                uint256 evalValue = statement.evaluations[i - 1];
+                WhirVerifierUtils4.validatePackedExt4(evalValue);
+                horner = KoalaBearExt4.add(
+                    evalValue,
+                    KoalaBearExt4.mul(horner, challenge)
                 );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
         }
+        updated = horner;
     }
 
     function _evaluateInitialConstraint(
@@ -322,6 +311,10 @@ contract WhirVerifier4 {
         uint256 gammaPower = KoalaBearExt4.fromBase(1);
         uint256 pointOffset = allRandomness.length -
             QuarticWhirFixedConfig.NUM_VARIABLES;
+        uint256[] memory oodFlatPoints = parsedCommitment
+            .oodStatement
+            .flatPoints;
+        uint256 oodLen = parsedCommitment.oodStatement.evaluations.length;
 
         unchecked {
             for (uint256 i = 0; i < statement.points.length; ++i) {
@@ -338,13 +331,9 @@ contract WhirVerifier4 {
                 gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
 
-            for (
-                uint256 i = 0;
-                i < parsedCommitment.oodStatement.evaluations.length;
-                ++i
-            ) {
+            for (uint256 i = 0; i < oodLen; ++i) {
                 uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
-                    parsedCommitment.oodStatement.flatPoints,
+                    oodFlatPoints,
                     i * QuarticWhirFixedConfig.NUM_VARIABLES,
                     allRandomness,
                     pointOffset,

@@ -69,12 +69,14 @@ library WhirVerifierUtils4 {
     }
 
     function validatePackedExt4(uint256 packed) internal pure {
-        uint256[4] memory coeffs = KoalaBearExt4.unpack(packed);
         unchecked {
-            for (uint256 i = 0; i < 4; ++i) {
-                if (coeffs[i] >= KoalaBear.MODULUS) {
-                    revert PackedExtensionElementOutOfRange(packed);
-                }
+            if (
+                (packed >> 224) >= KoalaBear.MODULUS ||
+                ((packed >> 192) & 0xffffffff) >= KoalaBear.MODULUS ||
+                ((packed >> 160) & 0xffffffff) >= KoalaBear.MODULUS ||
+                ((packed >> 128) & 0xffffffff) >= KoalaBear.MODULUS
+            ) {
+                revert PackedExtensionElementOutOfRange(packed);
             }
         }
     }
@@ -337,53 +339,90 @@ library WhirVerifierUtils4 {
         uint256 start,
         uint256[] memory point
     ) private pure returns (uint256) {
-        uint256 l0 = _foldOnce(
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
+            point[0]
+        );
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13) = _unpackCoeffs(
+            point[1]
+        );
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23) = _unpackCoeffs(
+            point[2]
+        );
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(
+            point[3]
+        );
+
+        uint256 l0 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start),
             _loadBaseAsExt4Unchecked(flatValues, start + 8),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l1 = _foldOnce(
+        uint256 l1 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 1),
             _loadBaseAsExt4Unchecked(flatValues, start + 9),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l2 = _foldOnce(
+        uint256 l2 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 2),
             _loadBaseAsExt4Unchecked(flatValues, start + 10),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l3 = _foldOnce(
+        uint256 l3 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 3),
             _loadBaseAsExt4Unchecked(flatValues, start + 11),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l4 = _foldOnce(
+        uint256 l4 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 4),
             _loadBaseAsExt4Unchecked(flatValues, start + 12),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l5 = _foldOnce(
+        uint256 l5 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 5),
             _loadBaseAsExt4Unchecked(flatValues, start + 13),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l6 = _foldOnce(
+        uint256 l6 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 6),
             _loadBaseAsExt4Unchecked(flatValues, start + 14),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l7 = _foldOnce(
+        uint256 l7 = _foldOnceWithCoeffs(
             _loadBaseAsExt4Unchecked(flatValues, start + 7),
             _loadBaseAsExt4Unchecked(flatValues, start + 15),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 m0 = _foldOnce(l0, l4, point[1]);
-        uint256 m1 = _foldOnce(l1, l5, point[1]);
-        uint256 m2 = _foldOnce(l2, l6, point[1]);
-        uint256 m3 = _foldOnce(l3, l7, point[1]);
-        uint256 n0 = _foldOnce(m0, m2, point[2]);
-        uint256 n1 = _foldOnce(m1, m3, point[2]);
-        return _foldOnce(n0, n1, point[3]);
+        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
+        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
+        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);
+        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13);
+        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
+        return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
     }
 
     function _evaluateExtensionRowDim3(
@@ -421,53 +460,90 @@ library WhirVerifierUtils4 {
         uint256 start,
         uint256[] memory point
     ) private pure returns (uint256) {
-        uint256 l0 = _foldOnce(
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
+            point[0]
+        );
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13) = _unpackCoeffs(
+            point[1]
+        );
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23) = _unpackCoeffs(
+            point[2]
+        );
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(
+            point[3]
+        );
+
+        uint256 l0 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start),
             _loadPackedExt4Unchecked(flatValues, start + 8),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l1 = _foldOnce(
+        uint256 l1 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 1),
             _loadPackedExt4Unchecked(flatValues, start + 9),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l2 = _foldOnce(
+        uint256 l2 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 2),
             _loadPackedExt4Unchecked(flatValues, start + 10),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l3 = _foldOnce(
+        uint256 l3 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 3),
             _loadPackedExt4Unchecked(flatValues, start + 11),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l4 = _foldOnce(
+        uint256 l4 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 4),
             _loadPackedExt4Unchecked(flatValues, start + 12),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l5 = _foldOnce(
+        uint256 l5 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 5),
             _loadPackedExt4Unchecked(flatValues, start + 13),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l6 = _foldOnce(
+        uint256 l6 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 6),
             _loadPackedExt4Unchecked(flatValues, start + 14),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 l7 = _foldOnce(
+        uint256 l7 = _foldOnceWithCoeffs(
             _loadPackedExt4Unchecked(flatValues, start + 7),
             _loadPackedExt4Unchecked(flatValues, start + 15),
-            point[0]
+            r00,
+            r01,
+            r02,
+            r03
         );
-        uint256 m0 = _foldOnce(l0, l4, point[1]);
-        uint256 m1 = _foldOnce(l1, l5, point[1]);
-        uint256 m2 = _foldOnce(l2, l6, point[1]);
-        uint256 m3 = _foldOnce(l3, l7, point[1]);
-        uint256 n0 = _foldOnce(m0, m2, point[2]);
-        uint256 n1 = _foldOnce(m1, m3, point[2]);
-        return _foldOnce(n0, n1, point[3]);
+        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
+        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
+        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);
+        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13);
+        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
+        return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
     }
 
     function _loadBaseAsExt4Unchecked(
@@ -488,12 +564,202 @@ library WhirVerifierUtils4 {
         uint256 a0,
         uint256 a1,
         uint256 r
+    ) private pure returns (uint256 out) {
+        assembly {
+            let M := 0x7f000001
+            let m := 0xffffffff
+
+            let a00 := shr(224, a0)
+            let a01 := and(shr(192, a0), m)
+            let a02 := and(shr(160, a0), m)
+            a0 := and(shr(128, a0), m) // a03
+
+            // d = a1 - a0 (per lane, mod M)
+            let d0 := mod(sub(add(shr(224, a1), M), a00), M)
+            let d1 := mod(sub(add(and(shr(192, a1), m), M), a01), M)
+            let d2 := mod(sub(add(and(shr(160, a1), m), M), a02), M)
+            let d3 := mod(sub(add(and(shr(128, a1), m), M), a0), M)
+
+            // Unpack r
+            let r0 := shr(224, r)
+            let r1 := and(shr(192, r), m)
+            let r2 := and(shr(160, r), m)
+            r := and(shr(128, r), m) // r3
+
+            // c = a0 + r * d (schoolbook over X^4 - 3, r is now r3)
+            out := shl(
+                224,
+                mod(
+                    add(
+                        a00,
+                        add(
+                            mul(r0, d0),
+                            mul(
+                                3,
+                                add(add(mul(r1, d3), mul(r2, d2)), mul(r, d1))
+                            )
+                        )
+                    ),
+                    M
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    192,
+                    mod(
+                        add(
+                            a01,
+                            add(
+                                add(mul(r0, d1), mul(r1, d0)),
+                                mul(3, add(mul(r2, d3), mul(r, d2)))
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    160,
+                    mod(
+                        add(
+                            a02,
+                            add(
+                                add(add(mul(r0, d2), mul(r1, d1)), mul(r2, d0)),
+                                mul(3, mul(r, d3))
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    128,
+                    mod(
+                        add(
+                            a0,
+                            add(
+                                add(add(mul(r0, d3), mul(r1, d2)), mul(r2, d1)),
+                                mul(r, d0)
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+        }
+    }
+
+    function _foldOnceWithCoeffs(
+        uint256 a0,
+        uint256 a1,
+        uint256 r0,
+        uint256 r1,
+        uint256 r2,
+        uint256 r3
+    ) private pure returns (uint256 out) {
+        assembly {
+            let M := 0x7f000001
+            let m := 0xffffffff
+
+            let a00 := shr(224, a0)
+            let a01 := and(shr(192, a0), m)
+            let a02 := and(shr(160, a0), m)
+            a0 := and(shr(128, a0), m) // a03
+
+            // d = a1 - a0 (per lane, mod M)
+            let d0 := mod(sub(add(shr(224, a1), M), a00), M)
+            let d1 := mod(sub(add(and(shr(192, a1), m), M), a01), M)
+            let d2 := mod(sub(add(and(shr(160, a1), m), M), a02), M)
+            let d3 := mod(sub(add(and(shr(128, a1), m), M), a0), M)
+
+            // c = a0 + r * d (schoolbook over X^4 - 3)
+            out := shl(
+                224,
+                mod(
+                    add(
+                        a00,
+                        add(
+                            mul(r0, d0),
+                            mul(
+                                3,
+                                add(add(mul(r1, d3), mul(r2, d2)), mul(r3, d1))
+                            )
+                        )
+                    ),
+                    M
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    192,
+                    mod(
+                        add(
+                            a01,
+                            add(
+                                add(mul(r0, d1), mul(r1, d0)),
+                                mul(3, add(mul(r2, d3), mul(r3, d2)))
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    160,
+                    mod(
+                        add(
+                            a02,
+                            add(
+                                add(add(mul(r0, d2), mul(r1, d1)), mul(r2, d0)),
+                                mul(3, mul(r3, d3))
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+            out := or(
+                out,
+                shl(
+                    128,
+                    mod(
+                        add(
+                            a0,
+                            add(
+                                add(add(mul(r0, d3), mul(r1, d2)), mul(r2, d1)),
+                                mul(r3, d0)
+                            )
+                        ),
+                        M
+                    )
+                )
+            )
+        }
+    }
+
+    function _unpackCoeffs(
+        uint256 packed
+    ) private pure returns (uint256 c0, uint256 c1, uint256 c2, uint256 c3) {
+        c0 = packed >> 224;
+        c1 = (packed >> 192) & 0xffffffff;
+        c2 = (packed >> 160) & 0xffffffff;
+        c3 = (packed >> 128) & 0xffffffff;
+    }
+
+    function _subCoeff(
+        uint256 lhs,
+        uint256 rhs,
+        uint256 modulus
     ) private pure returns (uint256) {
-        return
-            KoalaBearExt4.add(
-                a0,
-                KoalaBearExt4.mul(r, KoalaBearExt4.sub(a1, a0))
-            );
+        return lhs >= rhs ? lhs - rhs : lhs + modulus - rhs;
     }
 
     function log2Strict(uint256 x) internal pure returns (uint256 result) {

@@ -227,11 +227,7 @@ contract WhirProfileHarness {
         );
 
         uint256 g = gasleft();
-        unchecked {
-            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
-            }
-        }
+        challenger.observePackedExt4Slice(proof.finalPoly);
         gasObserveFinalPoly = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
     }
@@ -584,11 +580,7 @@ contract WhirProfileHarness {
         // --- Observe Final Poly ---
         g = gasleft();
         WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
-        unchecked {
-            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
-            }
-        }
+        challenger.observePackedExt4Slice(proof.finalPoly);
         bd.observeFinalPoly = g - gasleft();
 
         // --- Final STIR ---

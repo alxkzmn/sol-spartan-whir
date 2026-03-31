@@ -135,7 +135,6 @@ library WhirVerifierCore4 {
                 }
 
                 uint256 evalValue = oodAnswers[i];
-                WhirVerifierUtils4.validatePackedExt4(evalValue);
                 WhirVerifierUtils4.observeExt4(challenger, evalValue);
                 parsed.oodStatement.evaluations[i] = evalValue;
             }
@@ -228,11 +227,8 @@ library WhirVerifierCore4 {
             for (uint256 i = 0; i < expectedRounds; ++i) {
                 uint256 c0 = sumcheck.polynomialEvals[2 * i];
                 uint256 c2 = sumcheck.polynomialEvals[2 * i + 1];
-                WhirVerifierUtils4.validatePackedExt4(c0);
-                WhirVerifierUtils4.validatePackedExt4(c2);
 
-                WhirVerifierUtils4.observeExt4(challenger, c0);
-                WhirVerifierUtils4.observeExt4(challenger, c2);
+                challenger.observePackedExt4Pair(c0, c2);
 
                 if (powBits > 0) {
                     if (
@@ -398,41 +394,26 @@ library WhirVerifierCore4 {
     ) internal pure returns (uint256 updated) {
         updated = acc;
         uint256 gammaPower = KoalaBearExt4.fromBase(1);
+        uint256 challenge = constraint.challenge;
+        uint256[] memory eqEvals = constraint.eqStatement.evaluations;
+        uint256 eqLen = eqEvals.length;
+        uint256[] memory selEvals = constraint.selStatement.evaluations;
+        uint256 selLen = selEvals.length;
 
         unchecked {
-            for (
-                uint256 i = 0;
-                i < constraint.eqStatement.evaluations.length;
-                ++i
-            ) {
+            for (uint256 i = 0; i < eqLen; ++i) {
                 updated = KoalaBearExt4.add(
                     updated,
-                    KoalaBearExt4.mul(
-                        gammaPower,
-                        constraint.eqStatement.evaluations[i]
-                    )
+                    KoalaBearExt4.mul(gammaPower, eqEvals[i])
                 );
-                gammaPower = KoalaBearExt4.mul(
-                    gammaPower,
-                    constraint.challenge
-                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
-            for (
-                uint256 i = 0;
-                i < constraint.selStatement.evaluations.length;
-                ++i
-            ) {
+            for (uint256 i = 0; i < selLen; ++i) {
                 updated = KoalaBearExt4.add(
                     updated,
-                    KoalaBearExt4.mul(
-                        gammaPower,
-                        constraint.selStatement.evaluations[i]
-                    )
+                    KoalaBearExt4.mul(gammaPower, selEvals[i])
                 );
-                gammaPower = KoalaBearExt4.mul(
-                    gammaPower,
-                    constraint.challenge
-                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
         }
     }
@@ -475,15 +456,16 @@ library WhirVerifierCore4 {
 
         uint256 numVariables = constraint.eqStatement.numVariables;
         uint256 gammaPower = KoalaBearExt4.fromBase(1);
+        uint256 challenge = constraint.challenge;
+        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
+        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
+        uint256[] memory selVars = constraint.selStatement.vars;
+        uint256 selVarCount = selVars.length;
 
         unchecked {
-            for (
-                uint256 i = 0;
-                i < constraint.eqStatement.evaluations.length;
-                ++i
-            ) {
+            for (uint256 i = 0; i < eqEvalCount; ++i) {
                 uint256 weight = _eqPolyEvalAt(
-                    constraint.eqStatement.flatPoints,
+                    flatPoints,
                     i * numVariables,
                     fullPoint,
                     pointOffset,
@@ -493,14 +475,11 @@ library WhirVerifierCore4 {
                     total,
                     KoalaBearExt4.mul(gammaPower, weight)
                 );
-                gammaPower = KoalaBearExt4.mul(
-                    gammaPower,
-                    constraint.challenge
-                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
-            for (uint256 i = 0; i < constraint.selStatement.vars.length; ++i) {
+            for (uint256 i = 0; i < selVarCount; ++i) {
                 uint256 weight = _selectPolyEvalAt(
-                    constraint.selStatement.vars[i],
+                    selVars[i],
                     fullPoint,
                     pointOffset,
                     numVariables
@@ -509,10 +488,7 @@ library WhirVerifierCore4 {
                     total,
                     KoalaBearExt4.mul(gammaPower, weight)
                 );
-                gammaPower = KoalaBearExt4.mul(
-                    gammaPower,
-                    constraint.challenge
-                );
+                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
         }
     }
@@ -530,31 +506,27 @@ library WhirVerifierCore4 {
         uint256 a3 = 0;
         uint256 modulus = KoalaBear.MODULUS;
 
+        uint256 fpBase;
+        uint256 fullBase;
+        assembly ("memory-safe") {
+            fpBase := add(add(flatPoints, 0x20), shl(5, pointStart))
+            fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
+        }
+
         unchecked {
             for (uint256 i = 0; i < numVariables; ++i) {
-                uint256 p = flatPoints[pointStart + i];
-                uint256 q = fullPoint[pointOffset + i];
-                uint256 pq = KoalaBearExt4.mul(p, q);
+                uint256 p;
+                uint256 q;
+                assembly ("memory-safe") {
+                    p := mload(add(fpBase, shl(5, i)))
+                    q := mload(add(fullBase, shl(5, i)))
+                }
+                uint256 eqTerm = _computeEqTerm(p, q);
 
-                uint256 p0 = p >> 224;
-                uint256 p1 = (p >> 192) & 0xffffffff;
-                uint256 p2 = (p >> 160) & 0xffffffff;
-                uint256 p3 = (p >> 128) & 0xffffffff;
-
-                uint256 q0 = q >> 224;
-                uint256 q1 = (q >> 192) & 0xffffffff;
-                uint256 q2 = (q >> 160) & 0xffffffff;
-                uint256 q3 = (q >> 128) & 0xffffffff;
-
-                uint256 pq0 = pq >> 224;
-                uint256 pq1 = (pq >> 192) & 0xffffffff;
-                uint256 pq2 = (pq >> 160) & 0xffffffff;
-                uint256 pq3 = (pq >> 128) & 0xffffffff;
-
-                uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
-                uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
-                uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
-                uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
+                uint256 t0 = eqTerm >> 224;
+                uint256 t1 = (eqTerm >> 192) & 0xffffffff;
+                uint256 t2 = (eqTerm >> 160) & 0xffffffff;
+                uint256 t3 = (eqTerm >> 128) & 0xffffffff;
 
                 uint256 n0 = a0 *
                     t0 +
@@ -602,32 +574,24 @@ library WhirVerifierCore4 {
             revert StatementPointArityMismatch(0, numVariables, point.length);
         }
 
+        uint256 fullBase;
+        assembly ("memory-safe") {
+            fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
+        }
+
         unchecked {
             for (uint256 i = 0; i < numVariables; ++i) {
                 uint256 p = point[i];
-                WhirVerifierUtils4.validatePackedExt4(p);
-                uint256 q = fullPoint[pointOffset + i];
-                uint256 pq = KoalaBearExt4.mul(p, q);
+                uint256 q;
+                assembly ("memory-safe") {
+                    q := mload(add(fullBase, shl(5, i)))
+                }
+                uint256 eqTerm = _computeEqTerm(p, q);
 
-                uint256 p0 = p >> 224;
-                uint256 p1 = (p >> 192) & 0xffffffff;
-                uint256 p2 = (p >> 160) & 0xffffffff;
-                uint256 p3 = (p >> 128) & 0xffffffff;
-
-                uint256 q0 = q >> 224;
-                uint256 q1 = (q >> 192) & 0xffffffff;
-                uint256 q2 = (q >> 160) & 0xffffffff;
-                uint256 q3 = (q >> 128) & 0xffffffff;
-
-                uint256 pq0 = pq >> 224;
-                uint256 pq1 = (pq >> 192) & 0xffffffff;
-                uint256 pq2 = (pq >> 160) & 0xffffffff;
-                uint256 pq3 = (pq >> 128) & 0xffffffff;
-
-                uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
-                uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
-                uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
-                uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
+                uint256 t0 = eqTerm >> 224;
+                uint256 t1 = (eqTerm >> 192) & 0xffffffff;
+                uint256 t2 = (eqTerm >> 160) & 0xffffffff;
+                uint256 t3 = (eqTerm >> 128) & 0xffffffff;
 
                 uint256 n0 = a0 *
                     t0 +
@@ -665,42 +629,90 @@ library WhirVerifierCore4 {
         uint256 pointOffset,
         uint256 numVariables
     ) internal pure returns (uint256 acc) {
-        uint256 a0 = 1;
-        uint256 a1 = 0;
-        uint256 a2 = 0;
-        uint256 a3 = 0;
-        uint256 current = var_;
-        uint256 modulus = KoalaBear.MODULUS;
-        uint256 w = KoalaBear.W;
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let W := 3
 
-        unchecked {
-            for (uint256 i = numVariables; i > 0; --i) {
-                uint256 pointValue = fullPoint[pointOffset + (i - 1)];
-                uint256 scalar = current == 0 ? modulus - 1 : current - 1;
-                uint256 p0 = pointValue >> 224;
-                uint256 p1 = (pointValue >> 192) & 0xffffffff;
-                uint256 p2 = (pointValue >> 160) & 0xffffffff;
-                uint256 p3 = (pointValue >> 128) & 0xffffffff;
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let current := var_
 
-                uint256 t0 = 1 + scalar * p0;
-                uint256 t1 = scalar * p1;
-                uint256 t2 = scalar * p2;
-                uint256 t3 = scalar * p3;
+            // fullPoint base: array data starts at fullPoint + 0x20
+            // We iterate backwards: i from numVariables down to 1
+            // fullPoint[pointOffset + (i-1)] is at base + (pointOffset + i - 1) * 0x20
+            let fpBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
 
-                uint256 n0 = a0 * t0 + w * (a1 * t3 + a2 * t2 + a3 * t1);
-                uint256 n1 = a0 * t1 + a1 * t0 + w * (a2 * t3 + a3 * t2);
-                uint256 n2 = a0 * t2 + a1 * t1 + a2 * t0 + w * (a3 * t3);
-                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+            for {
+                let i := numVariables
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                let pointValue := mload(add(fpBase, shl(5, sub(i, 1))))
 
-                a0 = n0 % modulus;
-                a1 = n1 % modulus;
-                a2 = n2 % modulus;
-                a3 = n3 % modulus;
-                current = KoalaBear.mul(current, current);
+                // scalar = (current == 0) ? modulus - 1 : current - 1
+                let scalar := sub(current, 1)
+                if iszero(current) {
+                    scalar := sub(modulus, 1)
+                }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+
+                // select term: t = 1 + scalar * point (base scalar times ext4 point)
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+
+                // acc = acc * t (schoolbook over X^4 - 3)
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    modulus
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    modulus
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    modulus
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    modulus
+                )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+
+                // current = current^2 (base field squaring)
+                current := mulmod(current, current, modulus)
             }
-        }
 
-        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
     }
 
     function _mulByEqTerm(
@@ -748,6 +760,75 @@ library WhirVerifierCore4 {
             c3 %= modulus;
 
             out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
+        }
+    }
+
+    /// @dev Fused eq term: computes 2*p*q - p - q + (1,0,0,0) in ext4 without
+    ///      intermediate packed pq. Replaces KoalaBearExt4.mul + 4x _eqCoeff.
+    function _computeEqTerm(
+        uint256 p,
+        uint256 q
+    ) private pure returns (uint256 result) {
+        assembly {
+            let M := 0x7f000001
+            let m := 0xffffffff
+
+            let p0 := shr(224, p)
+            let p1 := and(shr(192, p), m)
+            let p2 := and(shr(160, p), m)
+            p := and(shr(128, p), m) // p3
+
+            let q0 := shr(224, q)
+            let q1 := and(shr(192, q), m)
+            let q2 := and(shr(160, q), m)
+            q := and(shr(128, q), m) // q3
+
+            // Lane 0: pq0 = p0*q0 + W*(p1*q3 + p2*q2 + p3*q1)
+            //          t0 = (2*pq0 + 2*M + 1 - p0 - q0) % M
+            let tmp := add(
+                mul(p0, q0),
+                mul(3, add(add(mul(p1, q), mul(p2, q2)), mul(p, q1)))
+            )
+            result := shl(
+                224,
+                mod(sub(add(add(add(tmp, tmp), 0xfe000002), 1), add(p0, q0)), M)
+            )
+
+            // Lane 1: pq1 = p0*q1 + p1*q0 + W*(p2*q3 + p3*q2)
+            tmp := add(
+                add(mul(p0, q1), mul(p1, q0)),
+                mul(3, add(mul(p2, q), mul(p, q2)))
+            )
+            result := or(
+                result,
+                shl(
+                    192,
+                    mod(sub(add(add(tmp, tmp), 0xfe000002), add(p1, q1)), M)
+                )
+            )
+
+            // Lane 2: pq2 = p0*q2 + p1*q1 + p2*q0 + W*(p3*q3)
+            tmp := add(
+                add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                mul(3, mul(p, q))
+            )
+            result := or(
+                result,
+                shl(
+                    160,
+                    mod(sub(add(add(tmp, tmp), 0xfe000002), add(p2, q2)), M)
+                )
+            )
+
+            // Lane 3: pq3 = p0*q3 + p1*q2 + p2*q1 + p3*q0
+            tmp := add(
+                add(add(mul(p0, q), mul(p1, q2)), mul(p2, q1)),
+                mul(p, q0)
+            )
+            result := or(
+                result,
+                shl(128, mod(sub(add(add(tmp, tmp), 0xfe000002), add(p, q)), M))
+            )
         }
     }
 

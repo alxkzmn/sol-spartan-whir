@@ -22,14 +22,23 @@ library KoalaBear {
         return mulmod(a, b, MODULUS);
     }
 
-    function pow(uint256 a, uint256 exponent) internal pure returns (uint256 result) {
-        result = 1;
-        while (exponent != 0) {
-            if (exponent & 1 != 0) {
-                result = mul(result, a);
+    function pow(
+        uint256 a,
+        uint256 exponent
+    ) internal pure returns (uint256 result) {
+        assembly {
+            result := 1
+            let m := 0x7f000001
+            for {
+
+            } gt(exponent, 0) {
+                exponent := shr(1, exponent)
+            } {
+                if and(exponent, 1) {
+                    result := mulmod(result, a, m)
+                }
+                a := mulmod(a, a, m)
             }
-            a = mul(a, a);
-            exponent >>= 1;
         }
     }
 
