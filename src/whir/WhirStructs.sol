@@ -36,34 +36,6 @@ library WhirStructs {
         SumcheckData finalSumcheck;
     }
 
-    struct RoundConfig {
-        uint256 powBits;
-        uint256 foldingPowBits;
-        uint256 numQueries;
-        uint256 oodSamples;
-        uint256 numVariables;
-        uint256 foldingFactor;
-        uint256 domainSize;
-        uint256 foldedDomainGen;
-    }
-
-    struct ExpandedWhirConfig {
-        uint256 numVariables;
-        uint256 securityLevel;
-        uint256 maxPowBits;
-        uint256 commitmentOodSamples;
-        uint256 startingLogInvRate;
-        uint256 startingFoldingPowBits;
-        uint256 rsDomainInitialReductionFactor;
-        uint256 finalSumcheckRounds;
-        uint8 soundnessAssumption;
-        uint32 merkleSecurityBits;
-        uint8 effectiveDigestBytes;
-        uint256[] whirFsPattern;
-        RoundConfig[] roundParameters;
-        RoundConfig finalRoundConfig;
-    }
-
     struct WhirStatement {
         uint256[][] points;
         uint256[] evaluations;
