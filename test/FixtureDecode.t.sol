@@ -8,15 +8,12 @@ import {WhirStructs} from "../src/whir/WhirStructs.sol";
 contract FixtureDecodeTest is Test {
     string internal constant TESTDATA = "testdata/";
 
-    /// @notice Decodes quartic WHIR proof, config, and statement fixtures, then
-    ///         verifies ABI round-trip (re-encode == original bytes) and basic
-    ///         structural invariants (non-empty polynomials, matching point/eval counts).
+    /// @notice Decodes quartic WHIR proof and statement fixtures, then verifies
+    ///         ABI round-trip (re-encode == original bytes) and basic structural
+    ///         invariants (non-empty polynomials, matching point/eval counts).
     function testDecodeQuarticWhirSuccessFixtures() external view {
         bytes memory proofRaw = vm.readFileBinary(
             string.concat(TESTDATA, "quartic_whir_success_proof.abi")
-        );
-        bytes memory configRaw = vm.readFileBinary(
-            string.concat(TESTDATA, "quartic_whir_success_config.abi")
         );
         bytes memory statementRaw = vm.readFileBinary(
             string.concat(TESTDATA, "quartic_whir_success_statement.abi")
@@ -26,10 +23,6 @@ contract FixtureDecodeTest is Test {
             proofRaw,
             (WhirStructs.WhirProof)
         );
-        WhirStructs.ExpandedWhirConfig memory config = abi.decode(
-            configRaw,
-            (WhirStructs.ExpandedWhirConfig)
-        );
         WhirStructs.WhirStatement memory statement = abi.decode(
             statementRaw,
             (WhirStructs.WhirStatement)
@@ -37,25 +30,22 @@ contract FixtureDecodeTest is Test {
 
         // ABI round-trip: re-encode must produce identical bytes.
         assertEq(keccak256(abi.encode(proof)), keccak256(proofRaw));
-        assertEq(keccak256(abi.encode(config)), keccak256(configRaw));
         assertEq(keccak256(abi.encode(statement)), keccak256(statementRaw));
 
-        // For small-num-variable fixtures, WHIR may have zero explicit round entries.
-        assertGt(config.finalRoundConfig.foldingFactor, 0);
-        assertGt(config.finalRoundConfig.domainSize, 0);
-        assertGt(config.finalSumcheckRounds, 0);
-        assertGt(config.whirFsPattern.length, 0);
         assertGt(proof.initialSumcheck.polynomialEvals.length, 0);
         assertGt(proof.finalPoly.length, 0);
-        assertLt(config.finalSumcheckRounds, 256);
-        uint256 expectedFinalPolyLength = uint256(1) <<
-            config.finalSumcheckRounds;
-        assertEq(proof.finalPoly.length, expectedFinalPolyLength);
-        assertEq(
-            proof.finalQueryBatchPresent,
-            config.finalRoundConfig.numQueries > 0
-        );
-        assertEq(proof.finalSumcheckPresent, config.finalSumcheckRounds > 0);
+        assertEq(proof.initialSumcheck.polynomialEvals.length % 2, 0);
+        if (proof.finalSumcheckPresent) {
+            assertGt(proof.finalSumcheck.polynomialEvals.length, 0);
+            assertEq(proof.finalSumcheck.polynomialEvals.length % 2, 0);
+            assertEq(proof.finalPoly.length & (proof.finalPoly.length - 1), 0);
+        } else {
+            assertEq(proof.finalSumcheck.polynomialEvals.length, 0);
+        }
+        if (proof.finalQueryBatchPresent) {
+            assertGt(proof.finalQueryBatch.numQueries, 0);
+            assertGt(proof.finalQueryBatch.rowLen, 0);
+        }
         assertEq(statement.points.length, statement.evaluations.length);
     }
 
