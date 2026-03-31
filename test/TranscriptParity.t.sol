@@ -53,13 +53,15 @@ contract TranscriptParityTest is Test {
         lhs.observeBase(0x01020304);
         rhs.observeBytes(hex"cce9f731");
 
-        assertEq(keccak256(lhs.inputBuffer), keccak256(rhs.inputBuffer));
+        assertEq(
+            KeccakChallenger.debugInputHash(lhs),
+            KeccakChallenger.debugInputHash(rhs)
+        );
         assertEq(lhs.outputIndex, rhs.outputIndex);
     }
 
     function testObserveHashU8DigestMatchesRawDigestBytes() external pure {
-        bytes32 digest =
-            hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+        bytes32 digest = hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
 
         KeccakChallenger.State memory lhs;
         KeccakChallenger.State memory rhs;
@@ -67,13 +69,15 @@ contract TranscriptParityTest is Test {
         lhs.observeHashU8Digest(digest);
         rhs.observeBytes(abi.encodePacked(digest));
 
-        assertEq(keccak256(lhs.inputBuffer), keccak256(rhs.inputBuffer));
+        assertEq(
+            KeccakChallenger.debugInputHash(lhs),
+            KeccakChallenger.debugInputHash(rhs)
+        );
         assertEq(lhs.outputIndex, rhs.outputIndex);
     }
 
     function testObserveHashU64DigestMatchesLittleEndianWords() external pure {
-        bytes32 digest =
-            hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+        bytes32 digest = hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
 
         KeccakChallenger.State memory lhs;
         KeccakChallenger.State memory rhs;
@@ -83,7 +87,10 @@ contract TranscriptParityTest is Test {
             hex"07060504030201000f0e0d0c0b0a090817161514131211101f1e1d1c1b1a1918"
         );
 
-        assertEq(keccak256(lhs.inputBuffer), keccak256(rhs.inputBuffer));
+        assertEq(
+            KeccakChallenger.debugInputHash(lhs),
+            KeccakChallenger.debugInputHash(rhs)
+        );
         assertEq(lhs.outputIndex, rhs.outputIndex);
     }
 
@@ -95,7 +102,9 @@ contract TranscriptParityTest is Test {
 
     function testReplayVerifierTranscriptTrace() external view {
         TranscriptTrace memory trace = _loadTrace();
-        KeccakChallenger.State memory challenger = _replay(trace.verifierEvents);
+        KeccakChallenger.State memory challenger = _replay(
+            trace.verifierEvents
+        );
         _assertCheckpoint(challenger, trace.checkpointVerifier);
     }
 
@@ -119,8 +128,8 @@ contract TranscriptParityTest is Test {
 
     function testReplaySpartanTranscriptContext() external view {
         SpartanContextFixture memory fixture = _loadSpartanContextFixture();
-        SpartanTranscript.DomainSeparator memory domainSeparator = SpartanTranscript
-            .DomainSeparator({
+        SpartanTranscript.DomainSeparator
+            memory domainSeparator = SpartanTranscript.DomainSeparator({
                 numCons: fixture.numCons,
                 numVars: fixture.numVars,
                 numIo: fixture.numIo,
@@ -130,7 +139,8 @@ contract TranscriptParityTest is Test {
                 powBits: fixture.powBits,
                 foldingFactor: fixture.foldingFactor,
                 startingLogInvRate: fixture.startingLogInvRate,
-                rsDomainInitialReductionFactor: fixture.rsDomainInitialReductionFactor
+                rsDomainInitialReductionFactor: fixture
+                    .rsDomainInitialReductionFactor
             });
 
         bytes memory preimage = SpartanTranscript.domainSeparatorPreimage(
@@ -139,7 +149,9 @@ contract TranscriptParityTest is Test {
         assertEq(preimage.length, 76);
         assertEq(keccak256(preimage), keccak256(fixture.preimage));
 
-        bytes32 digest = SpartanTranscript.domainSeparatorDigest(domainSeparator);
+        bytes32 digest = SpartanTranscript.domainSeparatorDigest(
+            domainSeparator
+        );
         assertEq(digest, fixture.digest);
 
         KeccakChallenger.State memory challenger;
@@ -171,11 +183,9 @@ contract TranscriptParityTest is Test {
         return abi.decode(raw, (SpartanContextFixture));
     }
 
-    function _replay(TranscriptEvent[] memory events)
-        internal
-        pure
-        returns (KeccakChallenger.State memory challenger)
-    {
+    function _replay(
+        TranscriptEvent[] memory events
+    ) internal pure returns (KeccakChallenger.State memory challenger) {
         unchecked {
             for (uint256 i = 0; i < events.length; ++i) {
                 TranscriptEvent memory traceEvent = events[i];
@@ -184,9 +194,17 @@ contract TranscriptParityTest is Test {
                 } else if (traceEvent.op == OP_SAMPLE_BASE) {
                     assertEq(challenger.sampleBase(), traceEvent.arg0);
                 } else if (traceEvent.op == OP_SAMPLE_BITS) {
-                    assertEq(challenger.sampleBits(traceEvent.arg0), traceEvent.arg1);
+                    assertEq(
+                        challenger.sampleBits(traceEvent.arg0),
+                        traceEvent.arg1
+                    );
                 } else if (traceEvent.op == OP_GRIND) {
-                    assertTrue(challenger.checkWitness(traceEvent.arg0, traceEvent.arg1));
+                    assertTrue(
+                        challenger.checkWitness(
+                            traceEvent.arg0,
+                            traceEvent.arg1
+                        )
+                    );
                 } else {
                     revert("BAD_TRANSCRIPT_OP");
                 }
@@ -194,10 +212,10 @@ contract TranscriptParityTest is Test {
         }
     }
 
-    function _assertCheckpoint(KeccakChallenger.State memory challenger, uint256[] memory expected)
-        internal
-        pure
-    {
+    function _assertCheckpoint(
+        KeccakChallenger.State memory challenger,
+        uint256[] memory expected
+    ) internal pure {
         uint256[4] memory checkpoint = challenger.sampleExt4Coeffs();
         assertEq(expected.length, 4);
 

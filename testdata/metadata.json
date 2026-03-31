@@ -1,7 +1,7 @@
 {
   "schema_version": "fixtures-v1",
   "koalabear_modulus": 2130706433,
-  "whir_fs_pattern_length": 21,
+  "whir_fs_pattern_length": 69,
   "fixture_family": "quartic-standalone-whir",
   "notes": [
     "Fixtures are generated from a real quartic WHIR proving flow.",

@@ -11,6 +11,8 @@ import {WhirVerifierUtils4} from "./WhirVerifierUtils4.sol";
 library WhirVerifierCore4 {
     using KeccakChallenger for KeccakChallenger.State;
 
+    uint256 internal constant EXT4_ONE = uint256(1) << 224;
+
     struct EqStatement {
         uint256 numVariables;
         uint256[] flatPoints;
@@ -61,265 +63,10 @@ library WhirVerifierCore4 {
     );
     error RandomnessLengthMismatch(uint256 expected, uint256 actual);
 
-    function verify(
-        bytes32 expectedCommitment,
-        WhirStructs.ExpandedWhirConfig calldata config,
-        WhirStructs.WhirStatement calldata statement,
-        WhirStructs.WhirProof calldata proof
-    ) internal pure returns (bool) {
-        _validateProofShape(config, proof);
-
-        KeccakChallenger.State memory challenger;
-        ParsedCommitment memory parsed = parseCommitment(
-            expectedCommitment,
-            config,
-            proof,
-            challenger
-        );
-
-        finalize(config, statement, proof, challenger, parsed);
-        return true;
-    }
-
-    function parseCommitment(
-        bytes32 expectedCommitment,
-        WhirStructs.ExpandedWhirConfig calldata config,
-        WhirStructs.WhirProof calldata proof,
-        KeccakChallenger.State memory challenger
-    ) internal pure returns (ParsedCommitment memory parsed) {
-        WhirVerifierUtils4.observePattern(challenger, config.whirFsPattern);
-        parsed = _parseCommitment(
-            challenger,
-            proof.initialCommitment,
-            proof.initialOodAnswers,
-            config.numVariables,
-            config.commitmentOodSamples
-        );
-
-        if (parsed.root != expectedCommitment) {
-            revert CommitmentMismatch(expectedCommitment, parsed.root);
-        }
-    }
-
-    function finalize(
-        WhirStructs.ExpandedWhirConfig calldata config,
-        WhirStructs.WhirStatement calldata statement,
-        WhirStructs.WhirProof calldata proof,
-        KeccakChallenger.State memory challenger,
-        ParsedCommitment memory parsedCommitment
-    ) internal pure {
-        EqStatement memory userStatement = _statementFromCalldata(
-            statement,
-            config.numVariables
-        );
-        EqStatement memory initialEq = _concatenateEq(
-            userStatement,
-            parsedCommitment.oodStatement
-        );
-
-        Constraint[] memory constraints = new Constraint[](
-            proof.rounds.length + 1
-        );
-        uint256 constraintCount = 0;
-        uint256 claimedEval = 0;
-        uint256[] memory foldingRandomness;
-        uint256[] memory finalSumcheckRandomness;
-
-        constraints[constraintCount] = Constraint({
-            challenge: WhirVerifierUtils4.sampleExt4(challenger),
-            eqStatement: initialEq,
-            selStatement: _emptySelect(config.numVariables)
-        });
-        claimedEval = _combineConstraintEvals(
-            claimedEval,
-            constraints[constraintCount]
-        );
-        constraintCount += 1;
-
-        uint256[] memory allRandomness = new uint256[](config.numVariables);
-        uint256 randomnessCursor = 0;
-
-        (claimedEval, foldingRandomness, randomnessCursor) = _verifySumcheck(
-            proof.initialSumcheck,
-            challenger,
-            claimedEval,
-            _initialSumcheckRounds(config),
-            config.startingFoldingPowBits,
-            allRandomness,
-            randomnessCursor
-        );
-
-        ParsedCommitment memory prevCommitment = parsedCommitment;
-
-        for (
-            uint256 roundIndex = 0;
-            roundIndex < proof.rounds.length;
-            ++roundIndex
-        ) {
-            WhirStructs.RoundConfig calldata roundConfig = config
-                .roundParameters[roundIndex];
-            WhirStructs.WhirRoundProof calldata roundProof = proof.rounds[
-                roundIndex
-            ];
-
-            ParsedCommitment memory newCommitment = _parseCommitment(
-                challenger,
-                roundProof.commitment,
-                roundProof.oodAnswers,
-                roundConfig.numVariables,
-                roundConfig.oodSamples
-            );
-
-            SelectStatement memory stirStatement = _verifyStirChallenges(
-                challenger,
-                prevCommitment.root,
-                roundConfig,
-                roundProof.queryBatch,
-                true,
-                roundProof.powWitness,
-                foldingRandomness,
-                roundIndex == 0 ? 0 : 1,
-                config.effectiveDigestBytes
-            );
-
-            constraints[constraintCount] = Constraint({
-                challenge: WhirVerifierUtils4.sampleExt4(challenger),
-                eqStatement: newCommitment.oodStatement,
-                selStatement: stirStatement
-            });
-            claimedEval = _combineConstraintEvals(
-                claimedEval,
-                constraints[constraintCount]
-            );
-            constraintCount += 1;
-
-            uint256 nextFoldingFactor = roundIndex + 1 <
-                config.roundParameters.length
-                ? config.roundParameters[roundIndex + 1].foldingFactor
-                : config.finalRoundConfig.foldingFactor;
-
-            (
-                claimedEval,
-                foldingRandomness,
-                randomnessCursor
-            ) = _verifySumcheck(
-                roundProof.sumcheck,
-                challenger,
-                claimedEval,
-                nextFoldingFactor,
-                roundConfig.foldingPowBits,
-                allRandomness,
-                randomnessCursor
-            );
-
-            prevCommitment = newCommitment;
-        }
-
-        if (
-            proof.finalPoly.length != (uint256(1) << config.finalSumcheckRounds)
-        ) {
-            revert FinalPolyLengthMismatch(
-                uint256(1) << config.finalSumcheckRounds,
-                proof.finalPoly.length
-            );
-        }
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
-        unchecked {
-            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
-            }
-        }
-
-        SelectStatement memory finalStirStatement = _verifyStirChallenges(
-            challenger,
-            prevCommitment.root,
-            config.finalRoundConfig,
-            proof.finalQueryBatch,
-            proof.finalQueryBatchPresent,
-            proof.finalPowWitness,
-            foldingRandomness,
-            proof.rounds.length == 0 ? 0 : 1,
-            config.effectiveDigestBytes
-        );
-        _verifySelectStatement(finalStirStatement, proof.finalPoly);
-
-        if (config.finalSumcheckRounds == 0) {
-            if (proof.finalSumcheckPresent) {
-                revert FinalSumcheckPresenceMismatch(false, true);
-            }
-        } else if (!proof.finalSumcheckPresent) {
-            revert FinalSumcheckPresenceMismatch(true, false);
-        }
-
-        (
-            claimedEval,
-            finalSumcheckRandomness,
-            randomnessCursor
-        ) = _verifySumcheck(
-            proof.finalSumcheck,
-            challenger,
-            claimedEval,
-            config.finalSumcheckRounds,
-            config.finalRoundConfig.foldingPowBits,
-            allRandomness,
-            randomnessCursor
-        );
-
-        if (randomnessCursor != allRandomness.length) {
-            revert RandomnessLengthMismatch(
-                allRandomness.length,
-                randomnessCursor
-            );
-        }
-
-        uint256 evaluationOfWeights = _evaluateConstraints(
-            constraints,
-            constraintCount,
-            allRandomness
-        );
-        uint256 finalValue = _evaluateFinalValue(
-            proof.finalPoly,
-            finalSumcheckRandomness
-        );
-        uint256 expected = KoalaBearExt4.mul(evaluationOfWeights, finalValue);
-
-        if (claimedEval != expected) {
-            revert FinalConstraintMismatch(expected, claimedEval);
-        }
-    }
-
-    function _validateProofShape(
-        WhirStructs.ExpandedWhirConfig calldata config,
-        WhirStructs.WhirProof calldata proof
-    ) private pure {
-        if (proof.rounds.length != config.roundParameters.length) {
-            revert ProofRoundCountMismatch(
-                config.roundParameters.length,
-                proof.rounds.length
-            );
-        }
-
-        bool expectFinalQueryBatch = config.finalRoundConfig.numQueries > 0;
-        if (proof.finalQueryBatchPresent != expectFinalQueryBatch) {
-            revert FinalQueryBatchPresenceMismatch(
-                expectFinalQueryBatch,
-                proof.finalQueryBatchPresent
-            );
-        }
-
-        bool expectFinalSumcheck = config.finalSumcheckRounds > 0;
-        if (proof.finalSumcheckPresent != expectFinalSumcheck) {
-            revert FinalSumcheckPresenceMismatch(
-                expectFinalSumcheck,
-                proof.finalSumcheckPresent
-            );
-        }
-    }
-
     function _statementFromCalldata(
         WhirStructs.WhirStatement calldata statement,
         uint256 numVariables
-    ) private pure returns (EqStatement memory eqStatement) {
+    ) internal pure returns (EqStatement memory eqStatement) {
         if (statement.points.length != statement.evaluations.length) {
             revert StatementLengthMismatch(
                 statement.points.length,
@@ -362,7 +109,7 @@ library WhirVerifierCore4 {
         uint256[] calldata oodAnswers,
         uint256 numVariables,
         uint256 oodSamples
-    ) private pure returns (ParsedCommitment memory parsed) {
+    ) internal pure returns (ParsedCommitment memory parsed) {
         if (oodAnswers.length != oodSamples) {
             revert OodAnswerCountMismatch(oodSamples, oodAnswers.length);
         }
@@ -398,7 +145,7 @@ library WhirVerifierCore4 {
     function _concatenateEq(
         EqStatement memory lhs,
         EqStatement memory rhs
-    ) private pure returns (EqStatement memory out) {
+    ) internal pure returns (EqStatement memory out) {
         if (lhs.numVariables != rhs.numVariables) {
             revert InconsistentConstraintArity(
                 lhs.numVariables,
@@ -434,7 +181,7 @@ library WhirVerifierCore4 {
 
     function _emptySelect(
         uint256 numVariables
-    ) private pure returns (SelectStatement memory sel) {
+    ) internal pure returns (SelectStatement memory sel) {
         sel.numVariables = numVariables;
         sel.vars = new uint256[](0);
         sel.evaluations = new uint256[](0);
@@ -449,7 +196,7 @@ library WhirVerifierCore4 {
         uint256[] memory allRandomness,
         uint256 randomnessCursor
     )
-        private
+        internal
         pure
         returns (
             uint256 updatedClaimedEval,
@@ -512,28 +259,35 @@ library WhirVerifierCore4 {
         }
     }
 
-    function _verifyStirChallenges(
+    function _verifyStirChallengesRaw(
         KeccakChallenger.State memory challenger,
         bytes32 expectedRoot,
-        WhirStructs.RoundConfig calldata params,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 numVariables,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
         WhirStructs.QueryBatchOpening calldata queryBatch,
         bool queryBatchPresent,
         uint256 powWitness,
         uint256[] memory foldingRandomness,
+        bool checkpointAfterPow,
         uint8 expectedKind,
         uint8 effectiveDigestBytes
-    ) private pure returns (SelectStatement memory statement) {
-        if (
-            params.powBits > 0 &&
-            !challenger.checkWitness(params.powBits, powWitness)
-        ) {
+    ) internal pure returns (SelectStatement memory statement) {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
             revert InvalidPowWitness();
         }
 
-        statement.numVariables = params.numVariables;
+        if (checkpointAfterPow) {
+            challenger.sampleBase();
+        }
+
+        statement.numVariables = numVariables;
 
         if (!queryBatchPresent) {
-            if (params.numQueries != 0) {
+            if (numQueries != 0) {
                 revert FinalQueryBatchPresenceMismatch(true, false);
             }
             statement.vars = new uint256[](0);
@@ -543,9 +297,9 @@ library WhirVerifierCore4 {
 
         uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
             challenger,
-            params.domainSize,
-            params.foldingFactor,
-            params.numQueries
+            domainSize,
+            foldingFactor,
+            numQueries
         );
 
         if (queryBatch.kind != expectedKind) {
@@ -558,7 +312,7 @@ library WhirVerifierCore4 {
             );
         }
 
-        uint256 expectedRowLen = uint256(1) << params.foldingFactor;
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
         if (queryBatch.rowLen != expectedRowLen) {
             revert QueryBatchRowLengthMismatch(
                 expectedRowLen,
@@ -567,7 +321,7 @@ library WhirVerifierCore4 {
         }
 
         uint256 depth = WhirVerifierUtils4.log2Strict(
-            params.domainSize >> params.foldingFactor
+            domainSize >> foldingFactor
         );
 
         bytes32 computedRoot;
@@ -600,10 +354,7 @@ library WhirVerifierCore4 {
 
         unchecked {
             for (uint256 i = 0; i < indices.length; ++i) {
-                statement.vars[i] = KoalaBear.pow(
-                    params.foldedDomainGen,
-                    indices[i]
-                );
+                statement.vars[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
                 uint256 rowStart = i * queryBatch.rowLen;
                 statement.evaluations[i] = expectedKind == 0
                     ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
@@ -625,7 +376,7 @@ library WhirVerifierCore4 {
     function _combineConstraintEvals(
         uint256 acc,
         Constraint memory constraint
-    ) private pure returns (uint256 updated) {
+    ) internal pure returns (uint256 updated) {
         updated = acc;
         uint256 gammaPower = KoalaBearExt4.fromBase(1);
 
@@ -671,7 +422,7 @@ library WhirVerifierCore4 {
         Constraint[] memory constraints,
         uint256 constraintCount,
         uint256[] memory allRandomness
-    ) private pure returns (uint256 acc) {
+    ) internal pure returns (uint256 acc) {
         unchecked {
             for (uint256 i = 0; i < constraintCount; ++i) {
                 uint256 numVariables = constraints[i].eqStatement.numVariables;
@@ -692,7 +443,7 @@ library WhirVerifierCore4 {
         Constraint memory constraint,
         uint256[] memory fullPoint,
         uint256 pointOffset
-    ) private pure returns (uint256 total) {
+    ) internal pure returns (uint256 total) {
         if (
             constraint.eqStatement.numVariables !=
             constraint.selStatement.numVariables
@@ -753,22 +504,14 @@ library WhirVerifierCore4 {
         uint256[] memory fullPoint,
         uint256 pointOffset,
         uint256 numVariables
-    ) private pure returns (uint256 acc) {
-        acc = KoalaBearExt4.fromBase(1);
+    ) internal pure returns (uint256 acc) {
+        acc = EXT4_ONE;
 
         unchecked {
             for (uint256 i = 0; i < numVariables; ++i) {
                 uint256 p = flatPoints[pointStart + i];
                 uint256 q = fullPoint[pointOffset + i];
-                uint256 twoPQ = KoalaBearExt4.mulBase(
-                    KoalaBearExt4.mul(p, q),
-                    2
-                );
-                uint256 term = KoalaBearExt4.add(
-                    KoalaBearExt4.fromBase(1),
-                    KoalaBearExt4.sub(KoalaBearExt4.sub(twoPQ, p), q)
-                );
-                acc = KoalaBearExt4.mul(acc, term);
+                acc = _mulByEqTerm(acc, p, q, KoalaBearExt4.mul(p, q));
             }
         }
     }
@@ -778,28 +521,164 @@ library WhirVerifierCore4 {
         uint256[] memory fullPoint,
         uint256 pointOffset,
         uint256 numVariables
-    ) private pure returns (uint256 acc) {
-        acc = KoalaBearExt4.fromBase(1);
+    ) internal pure returns (uint256 acc) {
+        acc = EXT4_ONE;
         uint256 current = var_;
 
         unchecked {
             for (uint256 i = numVariables; i > 0; --i) {
                 uint256 pointValue = fullPoint[pointOffset + (i - 1)];
                 uint256 scalar = KoalaBear.sub(current, 1);
-                uint256 term = KoalaBearExt4.add(
-                    KoalaBearExt4.fromBase(1),
-                    KoalaBearExt4.mulBase(pointValue, scalar)
-                );
-                acc = KoalaBearExt4.mul(acc, term);
+                acc = _mulBySelectTerm(acc, pointValue, scalar);
                 current = KoalaBear.mul(current, current);
             }
+        }
+    }
+
+    function _mulByEqTerm(
+        uint256 acc,
+        uint256 p,
+        uint256 q,
+        uint256 pq
+    ) private pure returns (uint256 out) {
+        uint256 modulus = KoalaBear.MODULUS;
+
+        uint256 a0 = acc >> 224;
+        uint256 a1 = (acc >> 192) & 0xffffffff;
+        uint256 a2 = (acc >> 160) & 0xffffffff;
+        uint256 a3 = (acc >> 128) & 0xffffffff;
+
+        uint256 p0 = p >> 224;
+        uint256 p1 = (p >> 192) & 0xffffffff;
+        uint256 p2 = (p >> 160) & 0xffffffff;
+        uint256 p3 = (p >> 128) & 0xffffffff;
+
+        uint256 q0 = q >> 224;
+        uint256 q1 = (q >> 192) & 0xffffffff;
+        uint256 q2 = (q >> 160) & 0xffffffff;
+        uint256 q3 = (q >> 128) & 0xffffffff;
+
+        uint256 pq0 = pq >> 224;
+        uint256 pq1 = (pq >> 192) & 0xffffffff;
+        uint256 pq2 = (pq >> 160) & 0xffffffff;
+        uint256 pq3 = (pq >> 128) & 0xffffffff;
+
+        unchecked {
+            uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
+            uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
+            uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
+            uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
+
+            uint256 c0 = a0 * t0 + KoalaBear.W * (a1 * t3 + a2 * t2 + a3 * t1);
+            uint256 c1 = a0 * t1 + a1 * t0 + KoalaBear.W * (a2 * t3 + a3 * t2);
+            uint256 c2 = a0 * t2 + a1 * t1 + a2 * t0 + KoalaBear.W * (a3 * t3);
+            uint256 c3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+
+            c0 %= modulus;
+            c1 %= modulus;
+            c2 %= modulus;
+            c3 %= modulus;
+
+            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
+        }
+    }
+
+    function _eqCoeff(
+        uint256 p,
+        uint256 q,
+        uint256 pq,
+        bool addOne,
+        uint256 modulus
+    ) private pure returns (uint256 t) {
+        unchecked {
+            t = pq + pq;
+            if (t >= modulus) {
+                t -= modulus;
+            }
+
+            if (t < p) {
+                t += modulus;
+            }
+            t -= p;
+
+            if (t < q) {
+                t += modulus;
+            }
+            t -= q;
+
+            if (addOne) {
+                t += 1;
+                if (t >= modulus) {
+                    t -= modulus;
+                }
+            }
+        }
+    }
+
+    function _selectTermPacked(
+        uint256 pointValue,
+        uint256 scalar
+    ) private pure returns (uint256 term) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+
+            let c0 := mulmod(shr(224, pointValue), scalar, modulus)
+            let c1 := mulmod(and(shr(192, pointValue), mask), scalar, modulus)
+            let c2 := mulmod(and(shr(160, pointValue), mask), scalar, modulus)
+            let c3 := mulmod(and(shr(128, pointValue), mask), scalar, modulus)
+
+            let t0 := add(c0, 1)
+            if iszero(lt(t0, modulus)) {
+                t0 := sub(t0, modulus)
+            }
+
+            term := or(
+                or(shl(224, t0), shl(192, c1)),
+                or(shl(160, c2), shl(128, c3))
+            )
+        }
+    }
+
+    function _mulBySelectTerm(
+        uint256 acc,
+        uint256 pointValue,
+        uint256 scalar
+    ) private pure returns (uint256 out) {
+        uint256 a0 = acc >> 224;
+        uint256 a1 = (acc >> 192) & 0xffffffff;
+        uint256 a2 = (acc >> 160) & 0xffffffff;
+        uint256 a3 = (acc >> 128) & 0xffffffff;
+
+        uint256 p0 = pointValue >> 224;
+        uint256 p1 = (pointValue >> 192) & 0xffffffff;
+        uint256 p2 = (pointValue >> 160) & 0xffffffff;
+        uint256 p3 = (pointValue >> 128) & 0xffffffff;
+
+        unchecked {
+            uint256 t0 = 1 + scalar * p0;
+            uint256 t1 = scalar * p1;
+            uint256 t2 = scalar * p2;
+            uint256 t3 = scalar * p3;
+
+            uint256 c0 = a0 * t0 + KoalaBear.W * (a1 * t3 + a2 * t2 + a3 * t1);
+            uint256 c1 = a0 * t1 + a1 * t0 + KoalaBear.W * (a2 * t3 + a3 * t2);
+            uint256 c2 = a0 * t2 + a1 * t1 + a2 * t0 + KoalaBear.W * (a3 * t3);
+            uint256 c3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+
+            c0 %= KoalaBear.MODULUS;
+            c1 %= KoalaBear.MODULUS;
+            c2 %= KoalaBear.MODULUS;
+            c3 %= KoalaBear.MODULUS;
+
+            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
         }
     }
 
     function _verifySelectStatement(
         SelectStatement memory statement,
         uint256[] calldata finalPoly
-    ) private pure {
+    ) internal pure {
         unchecked {
             for (uint256 i = 0; i < statement.vars.length; ++i) {
                 uint256 actual = WhirVerifierUtils4.hornerBase(
@@ -816,26 +695,16 @@ library WhirVerifierCore4 {
     function _evaluateFinalValue(
         uint256[] calldata finalPoly,
         uint256[] memory finalSumcheckRandomness
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         if (finalSumcheckRandomness.length == 0) {
             return finalPoly[0];
         }
-
-        uint256[] memory evals = new uint256[](finalPoly.length);
-        unchecked {
-            for (uint256 i = 0; i < finalPoly.length; ++i) {
-                evals[i] = finalPoly[i];
-            }
-        }
-        return KoalaBearExt4.evaluate_hypercube(evals, finalSumcheckRandomness);
-    }
-
-    function _initialSumcheckRounds(
-        WhirStructs.ExpandedWhirConfig calldata config
-    ) private pure returns (uint256) {
-        if (config.roundParameters.length == 0) {
-            return config.numVariables - config.finalRoundConfig.numVariables;
-        }
-        return config.numVariables - config.roundParameters[0].numVariables;
+        return
+            WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                finalPoly,
+                0,
+                finalPoly.length,
+                finalSumcheckRandomness
+            );
     }
 }

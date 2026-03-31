@@ -276,13 +276,12 @@ library MerkleVerifier {
                 frontierHashes[i] = leafHashes[i];
             }
         }
+        uint256[] memory nextIndices = new uint256[](frontierLen);
+        bytes32[] memory nextHashes = new bytes32[](frontierLen);
 
         uint256 decommitmentCursor = 0;
 
         for (uint256 level = 0; level < depth; ++level) {
-            uint256 nextCapacity = frontierLen;
-            uint256[] memory nextIndices = new uint256[](nextCapacity);
-            bytes32[] memory nextHashes = new bytes32[](nextCapacity);
             uint256 nextLen = 0;
             uint256 cursor = 0;
 
@@ -339,8 +338,14 @@ library MerkleVerifier {
                 }
             }
 
+            uint256[] memory tempIndices = frontierIndices;
             frontierIndices = nextIndices;
+            nextIndices = tempIndices;
+
+            bytes32[] memory tempHashes = frontierHashes;
             frontierHashes = nextHashes;
+            nextHashes = tempHashes;
+
             frontierLen = nextLen;
         }
 

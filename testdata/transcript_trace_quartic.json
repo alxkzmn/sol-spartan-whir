@@ -12,16 +12,16 @@
       "step": 1,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f0ffff0f",
-      "arg0": 8,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 2,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
@@ -100,28 +100,20 @@
       "step": 12,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "ecffff13",
-      "arg0": 10,
+      "observed_bytes_hex": "f6ffff09",
+      "arg0": 5,
       "arg1": 0
     },
     {
       "step": 13,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "47ffff38",
-      "arg0": 92,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 14,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
-      "arg1": 0
-    },
-    {
-      "step": 15,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f8ffff07",
@@ -129,23 +121,55 @@
       "arg1": 0
     },
     {
+      "step": 15,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2ffff3d",
+      "arg0": 31,
+      "arg1": 0
+    },
+    {
       "step": 16,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f4ffff0b",
-      "arg0": 6,
+      "observed_bytes_hex": "fcffff03",
+      "arg0": 2,
       "arg1": 0
     },
     {
       "step": 17,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 18,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 19,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 20,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 21,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f4ffff0b",
@@ -153,7 +177,7 @@
       "arg1": 0
     },
     {
-      "step": 19,
+      "step": 22,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "faffff05",
@@ -161,7 +185,55 @@
       "arg1": 0
     },
     {
-      "step": 20,
+      "step": 23,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 24,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 25,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 26,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 27,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 28,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 29,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f6ffff09",
@@ -169,459 +241,387 @@
       "arg1": 0
     },
     {
-      "step": 21,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "42c840d1c789e81b794548dab5d04bd40000000007de028b0000000000000000",
-      "arg0": 0,
-      "arg1": 0
-    },
-    {
-      "step": 22,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 365070668,
-      "arg1": 0
-    },
-    {
-      "step": 23,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1737373722,
-      "arg1": 0
-    },
-    {
-      "step": 24,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 459018855,
-      "arg1": 0
-    },
-    {
-      "step": 25,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1983766620,
-      "arg1": 0
-    },
-    {
-      "step": 26,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "37989010",
-      "arg0": 469714045,
-      "arg1": 0
-    },
-    {
-      "step": 27,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "6bcd0d74",
-      "arg0": 1339565849,
-      "arg1": 0
-    },
-    {
-      "step": 28,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "fb3a3c64",
-      "arg0": 272703166,
-      "arg1": 0
-    },
-    {
-      "step": 29,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "5b859a22",
-      "arg0": 19945432,
-      "arg1": 0
-    },
-    {
       "step": 30,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 473118502,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 31,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1109690137,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 32,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 799709954,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d4ffff2b",
+      "arg0": 22,
       "arg1": 0
     },
     {
       "step": 33,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 2018601058,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcffff03",
+      "arg0": 2,
       "arg1": 0
     },
     {
       "step": 34,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b2044c5d",
-      "arg0": 2003388845,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 35,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "10aa181d",
-      "arg0": 1755366307,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 36,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "900b3a5f",
-      "arg0": 139605060,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 37,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "68929948",
-      "arg0": 660852831,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 38,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "11607165",
-      "arg0": 79544664,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 39,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "950a9569",
-      "arg0": 1077153729,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 40,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "aaaff51f",
-      "arg0": 449781211,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 41,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "3f087159",
-      "arg0": 1927277802,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 42,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 652865687,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 43,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 219282392,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 44,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 2124594562,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 45,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 782368017,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 46,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "26821a72",
-      "arg0": 864737648,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 47,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e65df001",
-      "arg0": 200261995,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 48,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b57ab472",
-      "arg0": 734885665,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 49,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "6e474a64",
-      "arg0": 380446353,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 50,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "897a846e",
-      "arg0": 1135953719,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 51,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "350dc938",
-      "arg0": 151601779,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 52,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "866e6657",
-      "arg0": 287977260,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 53,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "15d3ea22",
-      "arg0": 599949641,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 54,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 668398195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d4ffff2b",
+      "arg0": 22,
       "arg1": 0
     },
     {
       "step": 55,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1108930694,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 56,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1589450052,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 57,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1321631773,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 58,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "35af0b50",
-      "arg0": 2088711190,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 59,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "8dbfd65e",
-      "arg0": 1233155834,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 60,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "81a4ed76",
-      "arg0": 1132534629,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 61,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e295f139",
-      "arg0": 1898129062,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 62,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "40081c33",
-      "arg0": 1172641769,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 63,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "80d6451c",
-      "arg0": 830036631,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 64,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "8a12d815",
-      "arg0": 800313038,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 65,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "467d0068",
-      "arg0": 682475995,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 66,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1823886062,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 67,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 752902019,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 68,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1114594994,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f6ffff09",
+      "arg0": 5,
       "arg1": 0
     },
     {
       "step": 69,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 131709564,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "202c7d459d0dd4e2691d8a450383c6f00000000007e0c6640000000000000000",
+      "arg0": 0,
       "arg1": 0
     },
     {
       "step": 70,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "f18b3539",
-      "arg0": 714043284,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 245992579,
       "arg1": 0
     },
     {
       "step": 71,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "842bff6c",
-      "arg0": 124873066,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1966409602,
       "arg1": 0
     },
     {
       "step": 72,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "86b43d2c",
-      "arg0": 647193458,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 542497373,
       "arg1": 0
     },
     {
       "step": 73,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "bb44e96f",
-      "arg0": 708200168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1401364010,
       "arg1": 0
     },
     {
       "step": 74,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "bc322f4e",
-      "arg0": 2045941206,
+      "observed_bytes_hex": "5aea4155",
+      "arg0": 672025790,
       "arg1": 0
     },
     {
       "step": 75,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b8a87254",
-      "arg0": 2027101774,
+      "observed_bytes_hex": "8fb6336d",
+      "arg0": 1096964208,
       "arg1": 0
     },
     {
       "step": 76,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "2ca22233",
-      "arg0": 1338888589,
+      "observed_bytes_hex": "7dc98c45",
+      "arg0": 1576806412,
       "arg1": 0
     },
     {
       "step": 77,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "ad673d0e",
-      "arg0": 1637648786,
+      "observed_bytes_hex": "70666c7a",
+      "arg0": 179583279,
       "arg1": 0
     },
     {
@@ -629,7 +629,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1633305002,
+      "arg0": 525563967,
       "arg1": 0
     },
     {
@@ -637,7 +637,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 85468541,
+      "arg0": 946057123,
       "arg1": 0
     },
     {
@@ -645,7 +645,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 20072608,
+      "arg0": 1873443041,
       "arg1": 0
     },
     {
@@ -653,327 +653,327 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 544207773,
+      "arg0": 471882906,
       "arg1": 0
     },
     {
       "step": 82,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "53b9f46f",
-      "arg0": 1573427217,
+      "observed_bytes_hex": "908cd714",
+      "arg0": 758714693,
       "arg1": 0
     },
     {
       "step": 83,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "a1ce3d2c",
+      "arg0": 1487820415,
       "arg1": 0
     },
     {
       "step": 84,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "ce1b321d",
+      "arg0": 173155381,
       "arg1": 0
     },
     {
       "step": 85,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "9c2aeb41",
+      "arg0": 283661789,
       "arg1": 0
     },
     {
       "step": 86,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "51b9f471",
-      "arg0": 1573427218,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 750655072,
       "arg1": 0
     },
     {
       "step": 87,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 960796161,
       "arg1": 0
     },
     {
       "step": 88,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1036189818,
       "arg1": 0
     },
     {
       "step": 89,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1838400258,
       "arg1": 0
     },
     {
       "step": 90,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "4fb9f473",
-      "arg0": 1573427219,
+      "observed_bytes_hex": "e7d4024e",
+      "arg0": 624138338,
       "arg1": 0
     },
     {
       "step": 91,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "e155fb7e",
+      "arg0": 266489958,
       "arg1": 0
     },
     {
       "step": 92,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "2d1ccc6d",
+      "arg0": 1907670535,
       "arg1": 0
     },
     {
       "step": 93,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "fe363c03",
+      "arg0": 2120425657,
       "arg1": 0
     },
     {
       "step": 94,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "4db9f475",
-      "arg0": 1573427220,
+      "observed_bytes_hex": "35ebea48",
+      "arg0": 17331537,
       "arg1": 0
     },
     {
       "step": 95,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "859ca942",
+      "arg0": 1534253915,
       "arg1": 0
     },
     {
       "step": 96,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "883ae072",
+      "arg0": 42648311,
       "arg1": 0
     },
     {
       "step": 97,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "9e69f519",
+      "arg0": 599605403,
       "arg1": 0
     },
     {
       "step": 98,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 82236
+      "arg0": 1988327623,
+      "arg1": 0
     },
     {
       "step": 99,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 246009
+      "arg0": 1118731175,
+      "arg1": 0
     },
     {
       "step": 100,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 135029
+      "arg0": 720455229,
+      "arg1": 0
     },
     {
       "step": 101,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 233041
+      "arg0": 1836131107,
+      "arg1": 0
     },
     {
       "step": 102,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 247034
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "640ae670",
+      "arg0": 358736089,
+      "arg1": 0
     },
     {
       "step": 103,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 127004
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3775d47",
+      "arg0": 845914511,
+      "arg1": 0
     },
     {
       "step": 104,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 119045
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b21cd1c",
+      "arg0": 201407612,
+      "arg1": 0
     },
     {
       "step": 105,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 62261
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ab362f57",
+      "arg0": 1047172066,
+      "arg1": 0
     },
     {
       "step": 106,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 117660
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b546035d",
+      "arg0": 915431405,
+      "arg1": 0
     },
     {
       "step": 107,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 72146
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4d4bef70",
+      "arg0": 1615219110,
+      "arg1": 0
     },
     {
       "step": 108,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 9046
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4d36a310",
+      "arg0": 286001168,
+      "arg1": 0
     },
     {
       "step": 109,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 17109
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df940c4a",
+      "arg0": 723698214,
+      "arg1": 0
     },
     {
       "step": 110,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 48159
+      "arg0": 1836551605,
+      "arg1": 0
     },
     {
       "step": 111,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 43721
+      "arg0": 916944848,
+      "arg1": 0
     },
     {
       "step": 112,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 9,
-      "arg1": 137
+      "arg0": 1247243381,
+      "arg1": 0
     },
     {
       "step": 113,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "8c723964",
-      "arg0": 131301421,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1816305934,
       "arg1": 0
     },
     {
       "step": 114,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "fbca0363",
-      "arg0": 282861134,
+      "observed_bytes_hex": "5e672221",
+      "arg0": 1072557753,
       "arg1": 0
     },
     {
       "step": 115,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "03421366",
-      "arg0": 190804545,
+      "observed_bytes_hex": "e0a11869",
+      "arg0": 1522321331,
       "arg1": 0
     },
     {
       "step": 116,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b933df12",
-      "arg0": 1499219288,
+      "observed_bytes_hex": "c95d4d70",
+      "arg0": 588422778,
       "arg1": 0
     },
     {
       "step": 117,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b002930d",
-      "arg0": 552866219,
+      "observed_bytes_hex": "1b000745",
+      "arg0": 266110707,
       "arg1": 0
     },
     {
       "step": 118,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "bead9616",
-      "arg0": 361316303,
+      "observed_bytes_hex": "3dbd2e05",
+      "arg0": 514510879,
       "arg1": 0
     },
     {
       "step": 119,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e9a67b69",
-      "arg0": 378841139,
+      "observed_bytes_hex": "68eaf455",
+      "arg0": 549683127,
       "arg1": 0
     },
     {
       "step": 120,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b25c6e05",
-      "arg0": 603996164,
+      "observed_bytes_hex": "35de2165",
+      "arg0": 1913205445,
       "arg1": 0
     },
     {
       "step": 121,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 807865846,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5329f816",
+      "arg0": 183362432,
       "arg1": 0
     },
     {
@@ -981,7 +981,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 16986967,
+      "arg0": 281081793,
       "arg1": 0
     },
     {
@@ -989,7 +989,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1583887087,
+      "arg0": 206109796,
       "arg1": 0
     },
     {
@@ -997,79 +997,79 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1539003880,
+      "arg0": 953362787,
       "arg1": 0
     },
     {
       "step": 125,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "ddb9c428",
-      "arg0": 1017341900,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 773633003,
       "arg1": 0
     },
     {
       "step": 126,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "9627fe69",
-      "arg0": 59997,
+      "observed_bytes_hex": "bc520627",
+      "arg0": 241163509,
       "arg1": 0
     },
     {
       "step": 127,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "45893b6d",
-      "arg0": 1712617192,
+      "observed_bytes_hex": "ee419927",
+      "arg0": 1950939212,
       "arg1": 0
     },
     {
       "step": 128,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dce4aa3d",
-      "arg0": 1917073528,
+      "observed_bytes_hex": "acf34f26",
+      "arg0": 380261918,
       "arg1": 0
     },
     {
       "step": 129,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "9ef82748",
-      "arg0": 215100330,
+      "observed_bytes_hex": "0b90f975",
+      "arg0": 2122592652,
       "arg1": 0
     },
     {
       "step": 130,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "3749a311",
-      "arg0": 460783278,
+      "observed_bytes_hex": "91bc5155",
+      "arg0": 1279095669,
       "arg1": 0
     },
     {
       "step": 131,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "eb5c7676",
-      "arg0": 254167016,
+      "observed_bytes_hex": "00be663f",
+      "arg0": 1603012543,
       "arg1": 0
     },
     {
       "step": 132,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f81dfa75",
-      "arg0": 1215359779,
+      "observed_bytes_hex": "7839ec6c",
+      "arg0": 225365886,
       "arg1": 0
     },
     {
       "step": 133,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 207028329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "be6bd55e",
+      "arg0": 1890721678,
       "arg1": 0
     },
     {
@@ -1077,7 +1077,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 84381980,
+      "arg0": 1512812350,
       "arg1": 0
     },
     {
@@ -1085,7 +1085,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 638841633,
+      "arg0": 1591323771,
       "arg1": 0
     },
     {
@@ -1093,7 +1093,2247 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1152903805,
+      "arg0": 1193854527,
+      "arg1": 0
+    },
+    {
+      "step": 137,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 506077653,
+      "arg1": 0
+    },
+    {
+      "step": 138,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f2f631692dd55f7045b929d7f81be3400000000e142ad5a0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 139,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 72480335,
+      "arg1": 0
+    },
+    {
+      "step": 140,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1919346243,
+      "arg1": 0
+    },
+    {
+      "step": 141,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 952525214,
+      "arg1": 0
+    },
+    {
+      "step": 142,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1635345323,
+      "arg1": 0
+    },
+    {
+      "step": 143,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1e01f14a",
+      "arg0": 1257271411,
+      "arg1": 0
+    },
+    {
+      "step": 144,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "71844b3e",
+      "arg0": 1737066829,
+      "arg1": 0
+    },
+    {
+      "step": 145,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9f19896b",
+      "arg0": 977665099,
+      "arg1": 0
+    },
+    {
+      "step": 146,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9edce12e",
+      "arg0": 425456526,
+      "arg1": 0
+    },
+    {
+      "step": 147,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 111909295,
+      "arg1": 0
+    },
+    {
+      "step": 148,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 472393541,
+      "arg1": 0
+    },
+    {
+      "step": 149,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1142283376,
+      "arg1": 0
+    },
+    {
+      "step": 150,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 212007987,
+      "arg1": 0
+    },
+    {
+      "step": 151,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "91162048",
+      "arg0": 1388909775,
+      "arg1": 0
+    },
+    {
+      "step": 152,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02de0674",
+      "arg0": 1148360670,
+      "arg1": 0
+    },
+    {
+      "step": 153,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2f22b5d",
+      "arg0": 1471754875,
+      "arg1": 0
+    },
+    {
+      "step": 154,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "52ade32a",
+      "arg0": 1091243269,
+      "arg1": 0
+    },
+    {
+      "step": 155,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 58346022
+    },
+    {
+      "step": 156,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 917643532,
+      "arg1": 0
+    },
+    {
+      "step": 157,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 117751
+    },
+    {
+      "step": 158,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 133605
+    },
+    {
+      "step": 159,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 122525
+    },
+    {
+      "step": 160,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 88512
+    },
+    {
+      "step": 161,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 258633
+    },
+    {
+      "step": 162,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 91620
+    },
+    {
+      "step": 163,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 141444
+    },
+    {
+      "step": 164,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 139767
+    },
+    {
+      "step": 165,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 40638
+    },
+    {
+      "step": 166,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1455762414,
+      "arg1": 0
+    },
+    {
+      "step": 167,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 245404511,
+      "arg1": 0
+    },
+    {
+      "step": 168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1250143491,
+      "arg1": 0
+    },
+    {
+      "step": 169,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 411617822,
+      "arg1": 0
+    },
+    {
+      "step": 170,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16569233",
+      "arg0": 1518364492,
+      "arg1": 0
+    },
+    {
+      "step": 171,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1c267569",
+      "arg0": 1019929113,
+      "arg1": 0
+    },
+    {
+      "step": 172,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bebb2c7e",
+      "arg0": 1629867742,
+      "arg1": 0
+    },
+    {
+      "step": 173,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3c80d0f",
+      "arg0": 1314597216,
+      "arg1": 0
+    },
+    {
+      "step": 174,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c0894c50",
+      "arg0": 1995048875,
+      "arg1": 0
+    },
+    {
+      "step": 175,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "13892536",
+      "arg0": 456548608,
+      "arg1": 0
+    },
+    {
+      "step": 176,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9d2447e",
+      "arg0": 339008359,
+      "arg1": 0
+    },
+    {
+      "step": 177,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09d3df6c",
+      "arg0": 84276815,
+      "arg1": 0
+    },
+    {
+      "step": 178,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 136065426,
+      "arg1": 0
+    },
+    {
+      "step": 179,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 122663190,
+      "arg1": 0
+    },
+    {
+      "step": 180,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1182797205,
+      "arg1": 0
+    },
+    {
+      "step": 181,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1067125769,
+      "arg1": 0
+    },
+    {
+      "step": 182,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04edcd17",
+      "arg0": 1899288428,
+      "arg1": 0
+    },
+    {
+      "step": 183,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc36a137",
+      "arg0": 2100495826,
+      "arg1": 0
+    },
+    {
+      "step": 184,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "edc9d75c",
+      "arg0": 450753236,
+      "arg1": 0
+    },
+    {
+      "step": 185,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9df9cf58",
+      "arg0": 1150145324,
+      "arg1": 0
+    },
+    {
+      "step": 186,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df7aa62f",
+      "arg0": 943417612,
+      "arg1": 0
+    },
+    {
+      "step": 187,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46f0ea61",
+      "arg0": 733115086,
+      "arg1": 0
+    },
+    {
+      "step": 188,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b33ec910",
+      "arg0": 1566517734,
+      "arg1": 0
+    },
+    {
+      "step": 189,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "90c38819",
+      "arg0": 719660796,
+      "arg1": 0
+    },
+    {
+      "step": 190,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 985343936,
+      "arg1": 0
+    },
+    {
+      "step": 191,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1851150898,
+      "arg1": 0
+    },
+    {
+      "step": 192,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 181129964,
+      "arg1": 0
+    },
+    {
+      "step": 193,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1593714521,
+      "arg1": 0
+    },
+    {
+      "step": 194,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f084f118",
+      "arg0": 2056269582,
+      "arg1": 0
+    },
+    {
+      "step": 195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df5d7e3d",
+      "arg0": 828198767,
+      "arg1": 0
+    },
+    {
+      "step": 196,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97462d24",
+      "arg0": 1638173180,
+      "arg1": 0
+    },
+    {
+      "step": 197,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7c409712",
+      "arg0": 943912707,
+      "arg1": 0
+    },
+    {
+      "step": 198,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2ed7f145",
+      "arg0": 1165690433,
+      "arg1": 0
+    },
+    {
+      "step": 199,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7fe5ae70",
+      "arg0": 1201159207,
+      "arg1": 0
+    },
+    {
+      "step": 200,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e031df72",
+      "arg0": 1440958019,
+      "arg1": 0
+    },
+    {
+      "step": 201,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "15df412c",
+      "arg0": 522211925,
+      "arg1": 0
+    },
+    {
+      "step": 202,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 484244023,
+      "arg1": 0
+    },
+    {
+      "step": 203,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 803528276,
+      "arg1": 0
+    },
+    {
+      "step": 204,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 275315006,
+      "arg1": 0
+    },
+    {
+      "step": 205,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 446368208,
+      "arg1": 0
+    },
+    {
+      "step": 206,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8071fa0d",
+      "arg0": 949010866,
+      "arg1": 0
+    },
+    {
+      "step": 207,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c6941636",
+      "arg0": 32558130,
+      "arg1": 0
+    },
+    {
+      "step": 208,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6e836c4d",
+      "arg0": 570763981,
+      "arg1": 0
+    },
+    {
+      "step": 209,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3eb7c40b",
+      "arg0": 1516726553,
+      "arg1": 0
+    },
+    {
+      "step": 210,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7cccc72a",
+      "arg0": 742580623,
+      "arg1": 0
+    },
+    {
+      "step": 211,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97aefd1c",
+      "arg0": 1697982052,
+      "arg1": 0
+    },
+    {
+      "step": 212,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53934510",
+      "arg0": 239107050,
+      "arg1": 0
+    },
+    {
+      "step": 213,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cd0a9d53",
+      "arg0": 793909157,
+      "arg1": 0
+    },
+    {
+      "step": 214,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 568491676,
+      "arg1": 0
+    },
+    {
+      "step": 215,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 353367094,
+      "arg1": 0
+    },
+    {
+      "step": 216,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1620204202,
+      "arg1": 0
+    },
+    {
+      "step": 217,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 27268643,
+      "arg1": 0
+    },
+    {
+      "step": 218,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "52831f04b1f40655ff1400c96d0b8f9d000000001b7c018c0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 219,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 630675769,
+      "arg1": 0
+    },
+    {
+      "step": 220,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 593254383,
+      "arg1": 0
+    },
+    {
+      "step": 221,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1867472952,
+      "arg1": 0
+    },
+    {
+      "step": 222,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 924649192,
+      "arg1": 0
+    },
+    {
+      "step": 223,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04b7755d",
+      "arg0": 1319541302,
+      "arg1": 0
+    },
+    {
+      "step": 224,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37f0e20e",
+      "arg0": 483683029,
+      "arg1": 0
+    },
+    {
+      "step": 225,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "50e4bb78",
+      "arg0": 459983293,
+      "arg1": 0
+    },
+    {
+      "step": 226,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "19414c32",
+      "arg0": 438643637,
+      "arg1": 0
+    },
+    {
+      "step": 227,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 372326295,
+      "arg1": 0
+    },
+    {
+      "step": 228,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 516252666,
+      "arg1": 0
+    },
+    {
+      "step": 229,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1531103060,
+      "arg1": 0
+    },
+    {
+      "step": 230,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2110700836,
+      "arg1": 0
+    },
+    {
+      "step": 231,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "98739978",
+      "arg0": 1992548265,
+      "arg1": 0
+    },
+    {
+      "step": 232,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "34fd3f6d",
+      "arg0": 788611428,
+      "arg1": 0
+    },
+    {
+      "step": 233,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "95e94434",
+      "arg0": 1520881696,
+      "arg1": 0
+    },
+    {
+      "step": 234,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ecbc6a6c",
+      "arg0": 1394805832,
+      "arg1": 0
+    },
+    {
+      "step": 235,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 67823869
+    },
+    {
+      "step": 236,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 484854354,
+      "arg1": 0
+    },
+    {
+      "step": 237,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 59713
+    },
+    {
+      "step": 238,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 84133
+    },
+    {
+      "step": 239,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 85447
+    },
+    {
+      "step": 240,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 106620
+    },
+    {
+      "step": 241,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 105136
+    },
+    {
+      "step": 242,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 31774
+    },
+    {
+      "step": 243,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1406403015,
+      "arg1": 0
+    },
+    {
+      "step": 244,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1919503316,
+      "arg1": 0
+    },
+    {
+      "step": 245,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1193966000,
+      "arg1": 0
+    },
+    {
+      "step": 246,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 817160166,
+      "arg1": 0
+    },
+    {
+      "step": 247,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37784233",
+      "arg0": 180946525,
+      "arg1": 0
+    },
+    {
+      "step": 248,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8fdf794d",
+      "arg0": 1361021465,
+      "arg1": 0
+    },
+    {
+      "step": 249,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bb1b8b04",
+      "arg0": 1601830207,
+      "arg1": 0
+    },
+    {
+      "step": 250,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7cff602c",
+      "arg0": 729276738,
+      "arg1": 0
+    },
+    {
+      "step": 251,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38e8000b",
+      "arg0": 1573031117,
+      "arg1": 0
+    },
+    {
+      "step": 252,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8f971615",
+      "arg0": 1830341329,
+      "arg1": 0
+    },
+    {
+      "step": 253,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09a31d3f",
+      "arg0": 465128479,
+      "arg1": 0
+    },
+    {
+      "step": 254,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6652e965",
+      "arg0": 433537056,
+      "arg1": 0
+    },
+    {
+      "step": 255,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 7
+    },
+    {
+      "step": 256,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1599535210,
+      "arg1": 0
+    },
+    {
+      "step": 257,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 413801938,
+      "arg1": 0
+    },
+    {
+      "step": 258,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2123117316,
+      "arg1": 0
+    },
+    {
+      "step": 259,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 362745535,
+      "arg1": 0
+    },
+    {
+      "step": 260,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ac9903b",
+      "arg0": 486353925,
+      "arg1": 0
+    },
+    {
+      "step": 261,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e5768a09",
+      "arg0": 1210666757,
+      "arg1": 0
+    },
+    {
+      "step": 262,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e46a423c",
+      "arg0": 1862208762,
+      "arg1": 0
+    },
+    {
+      "step": 263,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6cd76d00",
+      "arg0": 1228243490,
+      "arg1": 0
+    },
+    {
+      "step": 264,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "284f0e39",
+      "arg0": 1322903228,
+      "arg1": 0
+    },
+    {
+      "step": 265,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5b644002",
+      "arg0": 289214007,
+      "arg1": 0
+    },
+    {
+      "step": 266,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4dbc6c47",
+      "arg0": 1960709783,
+      "arg1": 0
+    },
+    {
+      "step": 267,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ea7f9870",
+      "arg0": 1376671884,
+      "arg1": 0
+    },
+    {
+      "step": 268,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 7
+    },
+    {
+      "step": 269,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 579657282,
+      "arg1": 0
+    },
+    {
+      "step": 270,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 49517996,
+      "arg1": 0
+    },
+    {
+      "step": 271,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1820937423,
+      "arg1": 0
+    },
+    {
+      "step": 272,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 7925153,
+      "arg1": 0
+    },
+    {
+      "step": 273,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3ca801d",
+      "arg0": 1194335074,
+      "arg1": 0
+    },
+    {
+      "step": 274,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "541b5a55",
+      "arg0": 721177714,
+      "arg1": 0
+    },
+    {
+      "step": 275,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "873c371a",
+      "arg0": 1854249210,
+      "arg1": 0
+    },
+    {
+      "step": 276,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "872d3107",
+      "arg0": 2012584555,
+      "arg1": 0
+    },
+    {
+      "step": 277,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bc030f7b",
+      "arg0": 1672449319,
+      "arg1": 0
+    },
+    {
+      "step": 278,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c1e2bf33",
+      "arg0": 1158991491,
+      "arg1": 0
+    },
+    {
+      "step": 279,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cffa335a",
+      "arg0": 722417300,
+      "arg1": 0
+    },
+    {
+      "step": 280,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38633b5b",
+      "arg0": 905284040,
+      "arg1": 0
+    },
+    {
+      "step": 281,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 13
+    },
+    {
+      "step": 282,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 942568551,
+      "arg1": 0
+    },
+    {
+      "step": 283,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 884672064,
+      "arg1": 0
+    },
+    {
+      "step": 284,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2022608177,
+      "arg1": 0
+    },
+    {
+      "step": 285,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 543279129,
+      "arg1": 0
+    },
+    {
+      "step": 286,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04dd3409",
+      "arg0": 2020787804,
+      "arg1": 0
+    },
+    {
+      "step": 287,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f32e670",
+      "arg0": 1598868748,
+      "arg1": 0
+    },
+    {
+      "step": 288,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d6d4d376",
+      "arg0": 1491265899,
+      "arg1": 0
+    },
+    {
+      "step": 289,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d7171d2c",
+      "arg0": 1039438125,
+      "arg1": 0
+    },
+    {
+      "step": 290,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6268c326",
+      "arg0": 992415544,
+      "arg1": 0
+    },
+    {
+      "step": 291,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2ca0fa39",
+      "arg0": 1281927819,
+      "arg1": 0
+    },
+    {
+      "step": 292,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcdac23f",
+      "arg0": 1633310046,
+      "arg1": 0
+    },
+    {
+      "step": 293,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5603b10f",
+      "arg0": 1284321113,
+      "arg1": 0
+    },
+    {
+      "step": 294,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 53
+    },
+    {
+      "step": 295,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 426135494,
+      "arg1": 0
+    },
+    {
+      "step": 296,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1925068737,
+      "arg1": 0
+    },
+    {
+      "step": 297,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1803621308,
+      "arg1": 0
+    },
+    {
+      "step": 298,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1581667908,
+      "arg1": 0
+    },
+    {
+      "step": 299,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df661a70",
+      "arg0": 406972152,
+      "arg1": 0
+    },
+    {
+      "step": 300,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 301,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 302,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 303,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dd661a72",
+      "arg0": 406972153,
+      "arg1": 0
+    },
+    {
+      "step": 304,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 305,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 306,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 307,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "db661a74",
+      "arg0": 406972154,
+      "arg1": 0
+    },
+    {
+      "step": 308,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 309,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 310,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 311,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9661a76",
+      "arg0": 406972155,
+      "arg1": 0
+    },
+    {
+      "step": 312,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 313,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 314,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 315,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d7661a78",
+      "arg0": 406972156,
+      "arg1": 0
+    },
+    {
+      "step": 316,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 317,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 318,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 319,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d5661a7a",
+      "arg0": 406972157,
+      "arg1": 0
+    },
+    {
+      "step": 320,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 321,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 322,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 323,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3661a7c",
+      "arg0": 406972158,
+      "arg1": 0
+    },
+    {
+      "step": 324,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 325,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 326,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 327,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d1661a7e",
+      "arg0": 406972159,
+      "arg1": 0
+    },
+    {
+      "step": 328,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 330,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 331,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ce661a01",
+      "arg0": 406972160,
+      "arg1": 0
+    },
+    {
+      "step": 332,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 333,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 334,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 335,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc661a03",
+      "arg0": 406972161,
+      "arg1": 0
+    },
+    {
+      "step": 336,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 337,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 338,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 339,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ca661a05",
+      "arg0": 406972162,
+      "arg1": 0
+    },
+    {
+      "step": 340,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 341,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 342,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 343,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c8661a07",
+      "arg0": 406972163,
+      "arg1": 0
+    },
+    {
+      "step": 344,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 345,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 346,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 347,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c6661a09",
+      "arg0": 406972164,
+      "arg1": 0
+    },
+    {
+      "step": 348,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 349,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 350,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 351,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c4661a0b",
+      "arg0": 406972165,
+      "arg1": 0
+    },
+    {
+      "step": 352,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 353,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 354,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 355,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2661a0d",
+      "arg0": 406972166,
+      "arg1": 0
+    },
+    {
+      "step": 356,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 357,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 358,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 359,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c0661a0f",
+      "arg0": 406972167,
+      "arg1": 0
+    },
+    {
+      "step": 360,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 361,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 362,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 363,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 20,
+      "arg1": 31781
+    },
+    {
+      "step": 364,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 62887
+    },
+    {
+      "step": 365,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 2285
+    },
+    {
+      "step": 366,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 48476
+    },
+    {
+      "step": 367,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 15405
+    },
+    {
+      "step": 368,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 43416
+    },
+    {
+      "step": 369,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ae3ee4f",
+      "arg0": 316833055,
+      "arg1": 0
+    },
+    {
+      "step": 370,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "42acdf7d",
+      "arg0": 533727628,
+      "arg1": 0
+    },
+    {
+      "step": 371,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b1645722",
+      "arg0": 1437050125,
+      "arg1": 0
+    },
+    {
+      "step": 372,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "653c316f",
+      "arg0": 1429967627,
+      "arg1": 0
+    },
+    {
+      "step": 373,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "75df8372",
+      "arg0": 1269142566,
+      "arg1": 0
+    },
+    {
+      "step": 374,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "41cc8267",
+      "arg0": 1793531053,
+      "arg1": 0
+    },
+    {
+      "step": 375,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7c0c2346",
+      "arg0": 514890959,
+      "arg1": 0
+    },
+    {
+      "step": 376,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0dfb2e69",
+      "arg0": 81703285,
+      "arg1": 0
+    },
+    {
+      "step": 377,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1002510105,
+      "arg1": 0
+    },
+    {
+      "step": 378,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1194457476,
+      "arg1": 0
+    },
+    {
+      "step": 379,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2024980535,
+      "arg1": 0
+    },
+    {
+      "step": 380,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1391882881,
+      "arg1": 0
+    },
+    {
+      "step": 381,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8dbcc157",
+      "arg0": 1292100471,
+      "arg1": 0
+    },
+    {
+      "step": 382,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a34afb15",
+      "arg0": 1656444410,
+      "arg1": 0
+    },
+    {
+      "step": 383,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "84a17025",
+      "arg0": 720445408,
+      "arg1": 0
+    },
+    {
+      "step": 384,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8bca9f04",
+      "arg0": 2000665222,
+      "arg1": 0
+    },
+    {
+      "step": 385,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5142d54f",
+      "arg0": 1857434651,
+      "arg1": 0
+    },
+    {
+      "step": 386,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fea2de61",
+      "arg0": 1332776229,
+      "arg1": 0
+    },
+    {
+      "step": 387,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "638c5144",
+      "arg0": 1803455324,
+      "arg1": 0
+    },
+    {
+      "step": 388,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3ae95311",
+      "arg0": 1503747917,
+      "arg1": 0
+    },
+    {
+      "step": 389,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1599504261,
+      "arg1": 0
+    },
+    {
+      "step": 390,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2057131299,
+      "arg1": 0
+    },
+    {
+      "step": 391,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 193831381,
+      "arg1": 0
+    },
+    {
+      "step": 392,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 360639370,
+      "arg1": 0
+    },
+    {
+      "step": 393,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "72b1f032",
+      "arg0": 757897209,
+      "arg1": 0
+    },
+    {
+      "step": 394,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2d4eef67",
+      "arg0": 1956464697,
+      "arg1": 0
+    },
+    {
+      "step": 395,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3c699e12",
+      "arg0": 1476356556,
+      "arg1": 0
+    },
+    {
+      "step": 396,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4c868076",
+      "arg0": 511851873,
+      "arg1": 0
+    },
+    {
+      "step": 397,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed3a5e5b",
+      "arg0": 463028421,
+      "arg1": 0
+    },
+    {
+      "step": 398,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "49ea4537",
+      "arg0": 2128433351,
+      "arg1": 0
+    },
+    {
+      "step": 399,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dee5ac41",
+      "arg0": 1867069944,
+      "arg1": 0
+    },
+    {
+      "step": 400,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0a521616",
+      "arg0": 1863642446,
+      "arg1": 0
+    },
+    {
+      "step": 401,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 233070141,
+      "arg1": 0
+    },
+    {
+      "step": 402,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1823677311,
+      "arg1": 0
+    },
+    {
+      "step": 403,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 328788250,
+      "arg1": 0
+    },
+    {
+      "step": 404,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1213514679,
+      "arg1": 0
+    },
+    {
+      "step": 405,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b59e5014",
+      "arg0": 1520501061,
+      "arg1": 0
+    },
+    {
+      "step": 406,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ba069179",
+      "arg0": 1701514667,
+      "arg1": 0
+    },
+    {
+      "step": 407,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "11f88458",
+      "arg0": 187107568,
+      "arg1": 0
+    },
+    {
+      "step": 408,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "80f2464b",
+      "arg0": 438816179,
+      "arg1": 0
+    },
+    {
+      "step": 409,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f68335d",
+      "arg0": 1629650746,
+      "arg1": 0
+    },
+    {
+      "step": 410,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "62c43100",
+      "arg0": 1313427348,
+      "arg1": 0
+    },
+    {
+      "step": 411,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5cf8fb2f",
+      "arg0": 965607371,
+      "arg1": 0
+    },
+    {
+      "step": 412,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ea79f938",
+      "arg0": 1839611014,
+      "arg1": 0
+    },
+    {
+      "step": 413,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1852147344,
+      "arg1": 0
+    },
+    {
+      "step": 414,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1927963127,
+      "arg1": 0
+    },
+    {
+      "step": 415,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 646449606,
+      "arg1": 0
+    },
+    {
+      "step": 416,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1737423667,
       "arg1": 0
     }
   ],
@@ -1110,16 +3350,16 @@
       "step": 1,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f0ffff0f",
-      "arg0": 8,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 2,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
@@ -1198,28 +3438,20 @@
       "step": 12,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "ecffff13",
-      "arg0": 10,
+      "observed_bytes_hex": "f6ffff09",
+      "arg0": 5,
       "arg1": 0
     },
     {
       "step": 13,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "47ffff38",
-      "arg0": 92,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 14,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
-      "arg1": 0
-    },
-    {
-      "step": 15,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f8ffff07",
@@ -1227,23 +3459,55 @@
       "arg1": 0
     },
     {
+      "step": 15,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2ffff3d",
+      "arg0": 31,
+      "arg1": 0
+    },
+    {
       "step": 16,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f4ffff0b",
-      "arg0": 6,
+      "observed_bytes_hex": "fcffff03",
+      "arg0": 2,
       "arg1": 0
     },
     {
       "step": 17,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "faffff05",
-      "arg0": 3,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 18,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 19,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 20,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 21,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f4ffff0b",
@@ -1251,7 +3515,7 @@
       "arg1": 0
     },
     {
-      "step": 19,
+      "step": 22,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "faffff05",
@@ -1259,7 +3523,55 @@
       "arg1": 0
     },
     {
-      "step": 20,
+      "step": 23,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 24,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 25,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 26,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 27,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 28,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 29,
       "op": "observe_bytes",
       "op_code": 0,
       "observed_bytes_hex": "f6ffff09",
@@ -1267,459 +3579,387 @@
       "arg1": 0
     },
     {
-      "step": 21,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "42c840d1c789e81b794548dab5d04bd40000000007de028b0000000000000000",
-      "arg0": 0,
-      "arg1": 0
-    },
-    {
-      "step": 22,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 365070668,
-      "arg1": 0
-    },
-    {
-      "step": 23,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1737373722,
-      "arg1": 0
-    },
-    {
-      "step": 24,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 459018855,
-      "arg1": 0
-    },
-    {
-      "step": 25,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1983766620,
-      "arg1": 0
-    },
-    {
-      "step": 26,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "37989010",
-      "arg0": 469714045,
-      "arg1": 0
-    },
-    {
-      "step": 27,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "6bcd0d74",
-      "arg0": 1339565849,
-      "arg1": 0
-    },
-    {
-      "step": 28,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "fb3a3c64",
-      "arg0": 272703166,
-      "arg1": 0
-    },
-    {
-      "step": 29,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "5b859a22",
-      "arg0": 19945432,
-      "arg1": 0
-    },
-    {
       "step": 30,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 473118502,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "eeffff11",
+      "arg0": 9,
       "arg1": 0
     },
     {
       "step": 31,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1109690137,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 32,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 799709954,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d4ffff2b",
+      "arg0": 22,
       "arg1": 0
     },
     {
       "step": 33,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 2018601058,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcffff03",
+      "arg0": 2,
       "arg1": 0
     },
     {
       "step": 34,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b2044c5d",
-      "arg0": 2003388845,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 35,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "10aa181d",
-      "arg0": 1755366307,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 36,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "900b3a5f",
-      "arg0": 139605060,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 37,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "68929948",
-      "arg0": 660852831,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 38,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "11607165",
-      "arg0": 79544664,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 39,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "950a9569",
-      "arg0": 1077153729,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 40,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "aaaff51f",
-      "arg0": 449781211,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 41,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "3f087159",
-      "arg0": 1927277802,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 42,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 652865687,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 43,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 219282392,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 44,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 2124594562,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 45,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 782368017,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 46,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "26821a72",
-      "arg0": 864737648,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 47,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e65df001",
-      "arg0": 200261995,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 48,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b57ab472",
-      "arg0": 734885665,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 49,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "6e474a64",
-      "arg0": 380446353,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 50,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "897a846e",
-      "arg0": 1135953719,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 51,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "350dc938",
-      "arg0": 151601779,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 52,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "866e6657",
-      "arg0": 287977260,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 53,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "15d3ea22",
-      "arg0": 599949641,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 54,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 668398195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d4ffff2b",
+      "arg0": 22,
       "arg1": 0
     },
     {
       "step": 55,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1108930694,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 56,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1589450052,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 57,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1321631773,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8ffff07",
+      "arg0": 4,
       "arg1": 0
     },
     {
       "step": 58,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "35af0b50",
-      "arg0": 2088711190,
+      "observed_bytes_hex": "b4ffff4b",
+      "arg0": 38,
       "arg1": 0
     },
     {
       "step": 59,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "8dbfd65e",
-      "arg0": 1233155834,
+      "observed_bytes_hex": "e2ffff1d",
+      "arg0": 15,
       "arg1": 0
     },
     {
       "step": 60,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "81a4ed76",
-      "arg0": 1132534629,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 61,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e295f139",
-      "arg0": 1898129062,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 62,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "40081c33",
-      "arg0": 1172641769,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 63,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "80d6451c",
-      "arg0": 830036631,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 64,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "8a12d815",
-      "arg0": 800313038,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 65,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "467d0068",
-      "arg0": 682475995,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 66,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1823886062,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f4ffff0b",
+      "arg0": 6,
       "arg1": 0
     },
     {
       "step": 67,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 752902019,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "faffff05",
+      "arg0": 3,
       "arg1": 0
     },
     {
       "step": 68,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 1114594994,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f6ffff09",
+      "arg0": 5,
       "arg1": 0
     },
     {
       "step": 69,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 131709564,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "202c7d459d0dd4e2691d8a450383c6f00000000007e0c6640000000000000000",
+      "arg0": 0,
       "arg1": 0
     },
     {
       "step": 70,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "f18b3539",
-      "arg0": 714043284,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 245992579,
       "arg1": 0
     },
     {
       "step": 71,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "842bff6c",
-      "arg0": 124873066,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1966409602,
       "arg1": 0
     },
     {
       "step": 72,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "86b43d2c",
-      "arg0": 647193458,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 542497373,
       "arg1": 0
     },
     {
       "step": 73,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "bb44e96f",
-      "arg0": 708200168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1401364010,
       "arg1": 0
     },
     {
       "step": 74,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "bc322f4e",
-      "arg0": 2045941206,
+      "observed_bytes_hex": "5aea4155",
+      "arg0": 672025790,
       "arg1": 0
     },
     {
       "step": 75,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b8a87254",
-      "arg0": 2027101774,
+      "observed_bytes_hex": "8fb6336d",
+      "arg0": 1096964208,
       "arg1": 0
     },
     {
       "step": 76,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "2ca22233",
-      "arg0": 1338888589,
+      "observed_bytes_hex": "7dc98c45",
+      "arg0": 1576806412,
       "arg1": 0
     },
     {
       "step": 77,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "ad673d0e",
-      "arg0": 1637648786,
+      "observed_bytes_hex": "70666c7a",
+      "arg0": 179583279,
       "arg1": 0
     },
     {
@@ -1727,7 +3967,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1633305002,
+      "arg0": 525563967,
       "arg1": 0
     },
     {
@@ -1735,7 +3975,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 85468541,
+      "arg0": 946057123,
       "arg1": 0
     },
     {
@@ -1743,7 +3983,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 20072608,
+      "arg0": 1873443041,
       "arg1": 0
     },
     {
@@ -1751,327 +3991,327 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 544207773,
+      "arg0": 471882906,
       "arg1": 0
     },
     {
       "step": 82,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "53b9f46f",
-      "arg0": 1573427217,
+      "observed_bytes_hex": "908cd714",
+      "arg0": 758714693,
       "arg1": 0
     },
     {
       "step": 83,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "a1ce3d2c",
+      "arg0": 1487820415,
       "arg1": 0
     },
     {
       "step": 84,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "ce1b321d",
+      "arg0": 173155381,
       "arg1": 0
     },
     {
       "step": 85,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "9c2aeb41",
+      "arg0": 283661789,
       "arg1": 0
     },
     {
       "step": 86,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "51b9f471",
-      "arg0": 1573427218,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 750655072,
       "arg1": 0
     },
     {
       "step": 87,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 960796161,
       "arg1": 0
     },
     {
       "step": 88,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1036189818,
       "arg1": 0
     },
     {
       "step": 89,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1838400258,
       "arg1": 0
     },
     {
       "step": 90,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "4fb9f473",
-      "arg0": 1573427219,
+      "observed_bytes_hex": "e7d4024e",
+      "arg0": 624138338,
       "arg1": 0
     },
     {
       "step": 91,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "e155fb7e",
+      "arg0": 266489958,
       "arg1": 0
     },
     {
       "step": 92,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "2d1ccc6d",
+      "arg0": 1907670535,
       "arg1": 0
     },
     {
       "step": 93,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "fe363c03",
+      "arg0": 2120425657,
       "arg1": 0
     },
     {
       "step": 94,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "4db9f475",
-      "arg0": 1573427220,
+      "observed_bytes_hex": "35ebea48",
+      "arg0": 17331537,
       "arg1": 0
     },
     {
       "step": 95,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "839e6461",
-      "arg0": 1295127902,
+      "observed_bytes_hex": "859ca942",
+      "arg0": 1534253915,
       "arg1": 0
     },
     {
       "step": 96,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dece0311",
-      "arg0": 141368416,
+      "observed_bytes_hex": "883ae072",
+      "arg0": 42648311,
       "arg1": 0
     },
     {
       "step": 97,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "5edb3371",
-      "arg0": 406144557,
+      "observed_bytes_hex": "9e69f519",
+      "arg0": 599605403,
       "arg1": 0
     },
     {
       "step": 98,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 82236
+      "arg0": 1988327623,
+      "arg1": 0
     },
     {
       "step": 99,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 246009
+      "arg0": 1118731175,
+      "arg1": 0
     },
     {
       "step": 100,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 135029
+      "arg0": 720455229,
+      "arg1": 0
     },
     {
       "step": 101,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 233041
+      "arg0": 1836131107,
+      "arg1": 0
     },
     {
       "step": 102,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 247034
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "640ae670",
+      "arg0": 358736089,
+      "arg1": 0
     },
     {
       "step": 103,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 127004
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3775d47",
+      "arg0": 845914511,
+      "arg1": 0
     },
     {
       "step": 104,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 119045
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b21cd1c",
+      "arg0": 201407612,
+      "arg1": 0
     },
     {
       "step": 105,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 62261
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ab362f57",
+      "arg0": 1047172066,
+      "arg1": 0
     },
     {
       "step": 106,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 117660
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b546035d",
+      "arg0": 915431405,
+      "arg1": 0
     },
     {
       "step": 107,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 72146
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4d4bef70",
+      "arg0": 1615219110,
+      "arg1": 0
     },
     {
       "step": 108,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 9046
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4d36a310",
+      "arg0": 286001168,
+      "arg1": 0
     },
     {
       "step": 109,
-      "op": "sample_bits",
-      "op_code": 2,
-      "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 17109
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df940c4a",
+      "arg0": 723698214,
+      "arg1": 0
     },
     {
       "step": 110,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 48159
+      "arg0": 1836551605,
+      "arg1": 0
     },
     {
       "step": 111,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 18,
-      "arg1": 43721
+      "arg0": 916944848,
+      "arg1": 0
     },
     {
       "step": 112,
-      "op": "sample_bits",
-      "op_code": 2,
+      "op": "sample_base",
+      "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 9,
-      "arg1": 137
+      "arg0": 1247243381,
+      "arg1": 0
     },
     {
       "step": 113,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "8c723964",
-      "arg0": 131301421,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1816305934,
       "arg1": 0
     },
     {
       "step": 114,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "fbca0363",
-      "arg0": 282861134,
+      "observed_bytes_hex": "5e672221",
+      "arg0": 1072557753,
       "arg1": 0
     },
     {
       "step": 115,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "03421366",
-      "arg0": 190804545,
+      "observed_bytes_hex": "e0a11869",
+      "arg0": 1522321331,
       "arg1": 0
     },
     {
       "step": 116,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b933df12",
-      "arg0": 1499219288,
+      "observed_bytes_hex": "c95d4d70",
+      "arg0": 588422778,
       "arg1": 0
     },
     {
       "step": 117,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b002930d",
-      "arg0": 552866219,
+      "observed_bytes_hex": "1b000745",
+      "arg0": 266110707,
       "arg1": 0
     },
     {
       "step": 118,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "bead9616",
-      "arg0": 361316303,
+      "observed_bytes_hex": "3dbd2e05",
+      "arg0": 514510879,
       "arg1": 0
     },
     {
       "step": 119,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "e9a67b69",
-      "arg0": 378841139,
+      "observed_bytes_hex": "68eaf455",
+      "arg0": 549683127,
       "arg1": 0
     },
     {
       "step": 120,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "b25c6e05",
-      "arg0": 603996164,
+      "observed_bytes_hex": "35de2165",
+      "arg0": 1913205445,
       "arg1": 0
     },
     {
       "step": 121,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 807865846,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5329f816",
+      "arg0": 183362432,
       "arg1": 0
     },
     {
@@ -2079,7 +4319,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 16986967,
+      "arg0": 281081793,
       "arg1": 0
     },
     {
@@ -2087,7 +4327,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1583887087,
+      "arg0": 206109796,
       "arg1": 0
     },
     {
@@ -2095,79 +4335,79 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1539003880,
+      "arg0": 953362787,
       "arg1": 0
     },
     {
       "step": 125,
-      "op": "observe_bytes",
-      "op_code": 0,
-      "observed_bytes_hex": "ddb9c428",
-      "arg0": 1017341900,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 773633003,
       "arg1": 0
     },
     {
       "step": 126,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "9627fe69",
-      "arg0": 59997,
+      "observed_bytes_hex": "bc520627",
+      "arg0": 241163509,
       "arg1": 0
     },
     {
       "step": 127,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "45893b6d",
-      "arg0": 1712617192,
+      "observed_bytes_hex": "ee419927",
+      "arg0": 1950939212,
       "arg1": 0
     },
     {
       "step": 128,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "dce4aa3d",
-      "arg0": 1917073528,
+      "observed_bytes_hex": "acf34f26",
+      "arg0": 380261918,
       "arg1": 0
     },
     {
       "step": 129,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "9ef82748",
-      "arg0": 215100330,
+      "observed_bytes_hex": "0b90f975",
+      "arg0": 2122592652,
       "arg1": 0
     },
     {
       "step": 130,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "3749a311",
-      "arg0": 460783278,
+      "observed_bytes_hex": "91bc5155",
+      "arg0": 1279095669,
       "arg1": 0
     },
     {
       "step": 131,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "eb5c7676",
-      "arg0": 254167016,
+      "observed_bytes_hex": "00be663f",
+      "arg0": 1603012543,
       "arg1": 0
     },
     {
       "step": 132,
       "op": "observe_bytes",
       "op_code": 0,
-      "observed_bytes_hex": "f81dfa75",
-      "arg0": 1215359779,
+      "observed_bytes_hex": "7839ec6c",
+      "arg0": 225365886,
       "arg1": 0
     },
     {
       "step": 133,
-      "op": "sample_base",
-      "op_code": 1,
-      "observed_bytes_hex": "",
-      "arg0": 207028329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "be6bd55e",
+      "arg0": 1890721678,
       "arg1": 0
     },
     {
@@ -2175,7 +4415,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 84381980,
+      "arg0": 1512812350,
       "arg1": 0
     },
     {
@@ -2183,7 +4423,7 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 638841633,
+      "arg0": 1591323771,
       "arg1": 0
     },
     {
@@ -2191,21 +4431,2307 @@
       "op": "sample_base",
       "op_code": 1,
       "observed_bytes_hex": "",
-      "arg0": 1152903805,
+      "arg0": 1193854527,
+      "arg1": 0
+    },
+    {
+      "step": 137,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 506077653,
+      "arg1": 0
+    },
+    {
+      "step": 138,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f2f631692dd55f7045b929d7f81be3400000000e142ad5a0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 139,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 72480335,
+      "arg1": 0
+    },
+    {
+      "step": 140,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1919346243,
+      "arg1": 0
+    },
+    {
+      "step": 141,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 952525214,
+      "arg1": 0
+    },
+    {
+      "step": 142,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1635345323,
+      "arg1": 0
+    },
+    {
+      "step": 143,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1e01f14a",
+      "arg0": 1257271411,
+      "arg1": 0
+    },
+    {
+      "step": 144,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "71844b3e",
+      "arg0": 1737066829,
+      "arg1": 0
+    },
+    {
+      "step": 145,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9f19896b",
+      "arg0": 977665099,
+      "arg1": 0
+    },
+    {
+      "step": 146,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9edce12e",
+      "arg0": 425456526,
+      "arg1": 0
+    },
+    {
+      "step": 147,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 111909295,
+      "arg1": 0
+    },
+    {
+      "step": 148,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 472393541,
+      "arg1": 0
+    },
+    {
+      "step": 149,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1142283376,
+      "arg1": 0
+    },
+    {
+      "step": 150,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 212007987,
+      "arg1": 0
+    },
+    {
+      "step": 151,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "91162048",
+      "arg0": 1388909775,
+      "arg1": 0
+    },
+    {
+      "step": 152,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02de0674",
+      "arg0": 1148360670,
+      "arg1": 0
+    },
+    {
+      "step": 153,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2f22b5d",
+      "arg0": 1471754875,
+      "arg1": 0
+    },
+    {
+      "step": 154,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "52ade32a",
+      "arg0": 1091243269,
+      "arg1": 0
+    },
+    {
+      "step": 155,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8266fd76",
+      "arg0": 58346022,
+      "arg1": 0
+    },
+    {
+      "step": 156,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 0
+    },
+    {
+      "step": 157,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 917643532,
+      "arg1": 0
+    },
+    {
+      "step": 158,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 117751
+    },
+    {
+      "step": 159,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 133605
+    },
+    {
+      "step": 160,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 122525
+    },
+    {
+      "step": 161,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 88512
+    },
+    {
+      "step": 162,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 258633
+    },
+    {
+      "step": 163,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 91620
+    },
+    {
+      "step": 164,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 141444
+    },
+    {
+      "step": 165,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 139767
+    },
+    {
+      "step": 166,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 40638
+    },
+    {
+      "step": 167,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1455762414,
+      "arg1": 0
+    },
+    {
+      "step": 168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 245404511,
+      "arg1": 0
+    },
+    {
+      "step": 169,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1250143491,
+      "arg1": 0
+    },
+    {
+      "step": 170,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 411617822,
+      "arg1": 0
+    },
+    {
+      "step": 171,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16569233",
+      "arg0": 1518364492,
+      "arg1": 0
+    },
+    {
+      "step": 172,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1c267569",
+      "arg0": 1019929113,
+      "arg1": 0
+    },
+    {
+      "step": 173,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bebb2c7e",
+      "arg0": 1629867742,
+      "arg1": 0
+    },
+    {
+      "step": 174,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3c80d0f",
+      "arg0": 1314597216,
+      "arg1": 0
+    },
+    {
+      "step": 175,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c0894c50",
+      "arg0": 1995048875,
+      "arg1": 0
+    },
+    {
+      "step": 176,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "13892536",
+      "arg0": 456548608,
+      "arg1": 0
+    },
+    {
+      "step": 177,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9d2447e",
+      "arg0": 339008359,
+      "arg1": 0
+    },
+    {
+      "step": 178,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09d3df6c",
+      "arg0": 84276815,
+      "arg1": 0
+    },
+    {
+      "step": 179,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 136065426,
+      "arg1": 0
+    },
+    {
+      "step": 180,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 122663190,
+      "arg1": 0
+    },
+    {
+      "step": 181,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1182797205,
+      "arg1": 0
+    },
+    {
+      "step": 182,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1067125769,
+      "arg1": 0
+    },
+    {
+      "step": 183,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04edcd17",
+      "arg0": 1899288428,
+      "arg1": 0
+    },
+    {
+      "step": 184,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc36a137",
+      "arg0": 2100495826,
+      "arg1": 0
+    },
+    {
+      "step": 185,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "edc9d75c",
+      "arg0": 450753236,
+      "arg1": 0
+    },
+    {
+      "step": 186,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9df9cf58",
+      "arg0": 1150145324,
+      "arg1": 0
+    },
+    {
+      "step": 187,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df7aa62f",
+      "arg0": 943417612,
+      "arg1": 0
+    },
+    {
+      "step": 188,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46f0ea61",
+      "arg0": 733115086,
+      "arg1": 0
+    },
+    {
+      "step": 189,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b33ec910",
+      "arg0": 1566517734,
+      "arg1": 0
+    },
+    {
+      "step": 190,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "90c38819",
+      "arg0": 719660796,
+      "arg1": 0
+    },
+    {
+      "step": 191,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 985343936,
+      "arg1": 0
+    },
+    {
+      "step": 192,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1851150898,
+      "arg1": 0
+    },
+    {
+      "step": 193,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 181129964,
+      "arg1": 0
+    },
+    {
+      "step": 194,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1593714521,
+      "arg1": 0
+    },
+    {
+      "step": 195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f084f118",
+      "arg0": 2056269582,
+      "arg1": 0
+    },
+    {
+      "step": 196,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df5d7e3d",
+      "arg0": 828198767,
+      "arg1": 0
+    },
+    {
+      "step": 197,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97462d24",
+      "arg0": 1638173180,
+      "arg1": 0
+    },
+    {
+      "step": 198,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7c409712",
+      "arg0": 943912707,
+      "arg1": 0
+    },
+    {
+      "step": 199,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2ed7f145",
+      "arg0": 1165690433,
+      "arg1": 0
+    },
+    {
+      "step": 200,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7fe5ae70",
+      "arg0": 1201159207,
+      "arg1": 0
+    },
+    {
+      "step": 201,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e031df72",
+      "arg0": 1440958019,
+      "arg1": 0
+    },
+    {
+      "step": 202,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "15df412c",
+      "arg0": 522211925,
+      "arg1": 0
+    },
+    {
+      "step": 203,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 484244023,
+      "arg1": 0
+    },
+    {
+      "step": 204,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 803528276,
+      "arg1": 0
+    },
+    {
+      "step": 205,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 275315006,
+      "arg1": 0
+    },
+    {
+      "step": 206,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 446368208,
+      "arg1": 0
+    },
+    {
+      "step": 207,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8071fa0d",
+      "arg0": 949010866,
+      "arg1": 0
+    },
+    {
+      "step": 208,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c6941636",
+      "arg0": 32558130,
+      "arg1": 0
+    },
+    {
+      "step": 209,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6e836c4d",
+      "arg0": 570763981,
+      "arg1": 0
+    },
+    {
+      "step": 210,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3eb7c40b",
+      "arg0": 1516726553,
+      "arg1": 0
+    },
+    {
+      "step": 211,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7cccc72a",
+      "arg0": 742580623,
+      "arg1": 0
+    },
+    {
+      "step": 212,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97aefd1c",
+      "arg0": 1697982052,
+      "arg1": 0
+    },
+    {
+      "step": 213,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53934510",
+      "arg0": 239107050,
+      "arg1": 0
+    },
+    {
+      "step": 214,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cd0a9d53",
+      "arg0": 793909157,
+      "arg1": 0
+    },
+    {
+      "step": 215,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 568491676,
+      "arg1": 0
+    },
+    {
+      "step": 216,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 353367094,
+      "arg1": 0
+    },
+    {
+      "step": 217,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1620204202,
+      "arg1": 0
+    },
+    {
+      "step": 218,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 27268643,
+      "arg1": 0
+    },
+    {
+      "step": 219,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "52831f04b1f40655ff1400c96d0b8f9d000000001b7c018c0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 220,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 630675769,
+      "arg1": 0
+    },
+    {
+      "step": 221,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 593254383,
+      "arg1": 0
+    },
+    {
+      "step": 222,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1867472952,
+      "arg1": 0
+    },
+    {
+      "step": 223,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 924649192,
+      "arg1": 0
+    },
+    {
+      "step": 224,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04b7755d",
+      "arg0": 1319541302,
+      "arg1": 0
+    },
+    {
+      "step": 225,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37f0e20e",
+      "arg0": 483683029,
+      "arg1": 0
+    },
+    {
+      "step": 226,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "50e4bb78",
+      "arg0": 459983293,
+      "arg1": 0
+    },
+    {
+      "step": 227,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "19414c32",
+      "arg0": 438643637,
+      "arg1": 0
+    },
+    {
+      "step": 228,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 372326295,
+      "arg1": 0
+    },
+    {
+      "step": 229,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 516252666,
+      "arg1": 0
+    },
+    {
+      "step": 230,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1531103060,
+      "arg1": 0
+    },
+    {
+      "step": 231,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2110700836,
+      "arg1": 0
+    },
+    {
+      "step": 232,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "98739978",
+      "arg0": 1992548265,
+      "arg1": 0
+    },
+    {
+      "step": 233,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "34fd3f6d",
+      "arg0": 788611428,
+      "arg1": 0
+    },
+    {
+      "step": 234,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "95e94434",
+      "arg0": 1520881696,
+      "arg1": 0
+    },
+    {
+      "step": 235,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ecbc6a6c",
+      "arg0": 1394805832,
+      "arg1": 0
+    },
+    {
+      "step": 236,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cae1d92d",
+      "arg0": 67823869,
+      "arg1": 0
+    },
+    {
+      "step": 237,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 0
+    },
+    {
+      "step": 238,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 484854354,
+      "arg1": 0
+    },
+    {
+      "step": 239,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 59713
+    },
+    {
+      "step": 240,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 84133
+    },
+    {
+      "step": 241,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 85447
+    },
+    {
+      "step": 242,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 106620
+    },
+    {
+      "step": 243,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 105136
+    },
+    {
+      "step": 244,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 31774
+    },
+    {
+      "step": 245,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1406403015,
+      "arg1": 0
+    },
+    {
+      "step": 246,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1919503316,
+      "arg1": 0
+    },
+    {
+      "step": 247,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1193966000,
+      "arg1": 0
+    },
+    {
+      "step": 248,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 817160166,
+      "arg1": 0
+    },
+    {
+      "step": 249,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37784233",
+      "arg0": 180946525,
+      "arg1": 0
+    },
+    {
+      "step": 250,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8fdf794d",
+      "arg0": 1361021465,
+      "arg1": 0
+    },
+    {
+      "step": 251,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bb1b8b04",
+      "arg0": 1601830207,
+      "arg1": 0
+    },
+    {
+      "step": 252,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7cff602c",
+      "arg0": 729276738,
+      "arg1": 0
+    },
+    {
+      "step": 253,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38e8000b",
+      "arg0": 1573031117,
+      "arg1": 0
+    },
+    {
+      "step": 254,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8f971615",
+      "arg0": 1830341329,
+      "arg1": 0
+    },
+    {
+      "step": 255,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09a31d3f",
+      "arg0": 465128479,
+      "arg1": 0
+    },
+    {
+      "step": 256,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6652e965",
+      "arg0": 433537056,
+      "arg1": 0
+    },
+    {
+      "step": 257,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2ffff0d",
+      "arg0": 7,
+      "arg1": 0
+    },
+    {
+      "step": 258,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 259,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1599535210,
+      "arg1": 0
+    },
+    {
+      "step": 260,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 413801938,
+      "arg1": 0
+    },
+    {
+      "step": 261,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2123117316,
+      "arg1": 0
+    },
+    {
+      "step": 262,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 362745535,
+      "arg1": 0
+    },
+    {
+      "step": 263,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ac9903b",
+      "arg0": 486353925,
+      "arg1": 0
+    },
+    {
+      "step": 264,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e5768a09",
+      "arg0": 1210666757,
+      "arg1": 0
+    },
+    {
+      "step": 265,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e46a423c",
+      "arg0": 1862208762,
+      "arg1": 0
+    },
+    {
+      "step": 266,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6cd76d00",
+      "arg0": 1228243490,
+      "arg1": 0
+    },
+    {
+      "step": 267,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "284f0e39",
+      "arg0": 1322903228,
+      "arg1": 0
+    },
+    {
+      "step": 268,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5b644002",
+      "arg0": 289214007,
+      "arg1": 0
+    },
+    {
+      "step": 269,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4dbc6c47",
+      "arg0": 1960709783,
+      "arg1": 0
+    },
+    {
+      "step": 270,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ea7f9870",
+      "arg0": 1376671884,
+      "arg1": 0
+    },
+    {
+      "step": 271,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2ffff0d",
+      "arg0": 7,
+      "arg1": 0
+    },
+    {
+      "step": 272,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 273,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 579657282,
+      "arg1": 0
+    },
+    {
+      "step": 274,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 49517996,
+      "arg1": 0
+    },
+    {
+      "step": 275,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1820937423,
+      "arg1": 0
+    },
+    {
+      "step": 276,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 7925153,
+      "arg1": 0
+    },
+    {
+      "step": 277,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3ca801d",
+      "arg0": 1194335074,
+      "arg1": 0
+    },
+    {
+      "step": 278,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "541b5a55",
+      "arg0": 721177714,
+      "arg1": 0
+    },
+    {
+      "step": 279,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "873c371a",
+      "arg0": 1854249210,
+      "arg1": 0
+    },
+    {
+      "step": 280,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "872d3107",
+      "arg0": 2012584555,
+      "arg1": 0
+    },
+    {
+      "step": 281,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bc030f7b",
+      "arg0": 1672449319,
+      "arg1": 0
+    },
+    {
+      "step": 282,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c1e2bf33",
+      "arg0": 1158991491,
+      "arg1": 0
+    },
+    {
+      "step": 283,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cffa335a",
+      "arg0": 722417300,
+      "arg1": 0
+    },
+    {
+      "step": 284,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38633b5b",
+      "arg0": 905284040,
+      "arg1": 0
+    },
+    {
+      "step": 285,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e6ffff19",
+      "arg0": 13,
+      "arg1": 0
+    },
+    {
+      "step": 286,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 287,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 942568551,
+      "arg1": 0
+    },
+    {
+      "step": 288,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 884672064,
+      "arg1": 0
+    },
+    {
+      "step": 289,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2022608177,
+      "arg1": 0
+    },
+    {
+      "step": 290,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 543279129,
+      "arg1": 0
+    },
+    {
+      "step": 291,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04dd3409",
+      "arg0": 2020787804,
+      "arg1": 0
+    },
+    {
+      "step": 292,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f32e670",
+      "arg0": 1598868748,
+      "arg1": 0
+    },
+    {
+      "step": 293,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d6d4d376",
+      "arg0": 1491265899,
+      "arg1": 0
+    },
+    {
+      "step": 294,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d7171d2c",
+      "arg0": 1039438125,
+      "arg1": 0
+    },
+    {
+      "step": 295,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6268c326",
+      "arg0": 992415544,
+      "arg1": 0
+    },
+    {
+      "step": 296,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2ca0fa39",
+      "arg0": 1281927819,
+      "arg1": 0
+    },
+    {
+      "step": 297,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcdac23f",
+      "arg0": 1633310046,
+      "arg1": 0
+    },
+    {
+      "step": 298,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5603b10f",
+      "arg0": 1284321113,
+      "arg1": 0
+    },
+    {
+      "step": 299,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "96ffff69",
+      "arg0": 53,
+      "arg1": 0
+    },
+    {
+      "step": 300,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 301,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 426135494,
+      "arg1": 0
+    },
+    {
+      "step": 302,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1925068737,
+      "arg1": 0
+    },
+    {
+      "step": 303,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1803621308,
+      "arg1": 0
+    },
+    {
+      "step": 304,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1581667908,
+      "arg1": 0
+    },
+    {
+      "step": 305,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "df661a70",
+      "arg0": 406972152,
+      "arg1": 0
+    },
+    {
+      "step": 306,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 307,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 308,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 309,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dd661a72",
+      "arg0": 406972153,
+      "arg1": 0
+    },
+    {
+      "step": 310,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 311,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 312,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 313,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "db661a74",
+      "arg0": 406972154,
+      "arg1": 0
+    },
+    {
+      "step": 314,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 315,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 316,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 317,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9661a76",
+      "arg0": 406972155,
+      "arg1": 0
+    },
+    {
+      "step": 318,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 319,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 320,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 321,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d7661a78",
+      "arg0": 406972156,
+      "arg1": 0
+    },
+    {
+      "step": 322,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 323,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 324,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 325,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d5661a7a",
+      "arg0": 406972157,
+      "arg1": 0
+    },
+    {
+      "step": 326,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 327,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 328,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d3661a7c",
+      "arg0": 406972158,
+      "arg1": 0
+    },
+    {
+      "step": 330,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 331,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 332,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 333,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d1661a7e",
+      "arg0": 406972159,
+      "arg1": 0
+    },
+    {
+      "step": 334,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 335,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 336,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 337,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ce661a01",
+      "arg0": 406972160,
+      "arg1": 0
+    },
+    {
+      "step": 338,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 339,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 340,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 341,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc661a03",
+      "arg0": 406972161,
+      "arg1": 0
+    },
+    {
+      "step": 342,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 343,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 344,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 345,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ca661a05",
+      "arg0": 406972162,
+      "arg1": 0
+    },
+    {
+      "step": 346,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 347,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 348,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 349,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c8661a07",
+      "arg0": 406972163,
+      "arg1": 0
+    },
+    {
+      "step": 350,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 351,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 352,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 353,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c6661a09",
+      "arg0": 406972164,
+      "arg1": 0
+    },
+    {
+      "step": 354,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 355,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 356,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 357,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c4661a0b",
+      "arg0": 406972165,
+      "arg1": 0
+    },
+    {
+      "step": 358,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 359,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 360,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 361,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2661a0d",
+      "arg0": 406972166,
+      "arg1": 0
+    },
+    {
+      "step": 362,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 363,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 364,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 365,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c0661a0f",
+      "arg0": 406972167,
+      "arg1": 0
+    },
+    {
+      "step": 366,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b78e7258",
+      "arg0": 936782644,
+      "arg1": 0
+    },
+    {
+      "step": 367,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8baf0e1d",
+      "arg0": 1797306091,
+      "arg1": 0
+    },
+    {
+      "step": 368,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0040b250",
+      "arg0": 1459065409,
+      "arg1": 0
+    },
+    {
+      "step": 369,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c205ff3d",
+      "arg0": 31781,
+      "arg1": 0
+    },
+    {
+      "step": 370,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 20,
+      "arg1": 0
+    },
+    {
+      "step": 371,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 62887
+    },
+    {
+      "step": 372,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 2285
+    },
+    {
+      "step": 373,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 48476
+    },
+    {
+      "step": 374,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 15405
+    },
+    {
+      "step": 375,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 43416
+    },
+    {
+      "step": 376,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ae3ee4f",
+      "arg0": 316833055,
+      "arg1": 0
+    },
+    {
+      "step": 377,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "42acdf7d",
+      "arg0": 533727628,
+      "arg1": 0
+    },
+    {
+      "step": 378,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b1645722",
+      "arg0": 1437050125,
+      "arg1": 0
+    },
+    {
+      "step": 379,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "653c316f",
+      "arg0": 1429967627,
+      "arg1": 0
+    },
+    {
+      "step": 380,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "75df8372",
+      "arg0": 1269142566,
+      "arg1": 0
+    },
+    {
+      "step": 381,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "41cc8267",
+      "arg0": 1793531053,
+      "arg1": 0
+    },
+    {
+      "step": 382,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7c0c2346",
+      "arg0": 514890959,
+      "arg1": 0
+    },
+    {
+      "step": 383,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0dfb2e69",
+      "arg0": 81703285,
+      "arg1": 0
+    },
+    {
+      "step": 384,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1002510105,
+      "arg1": 0
+    },
+    {
+      "step": 385,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1194457476,
+      "arg1": 0
+    },
+    {
+      "step": 386,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2024980535,
+      "arg1": 0
+    },
+    {
+      "step": 387,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1391882881,
+      "arg1": 0
+    },
+    {
+      "step": 388,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8dbcc157",
+      "arg0": 1292100471,
+      "arg1": 0
+    },
+    {
+      "step": 389,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a34afb15",
+      "arg0": 1656444410,
+      "arg1": 0
+    },
+    {
+      "step": 390,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "84a17025",
+      "arg0": 720445408,
+      "arg1": 0
+    },
+    {
+      "step": 391,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8bca9f04",
+      "arg0": 2000665222,
+      "arg1": 0
+    },
+    {
+      "step": 392,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5142d54f",
+      "arg0": 1857434651,
+      "arg1": 0
+    },
+    {
+      "step": 393,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fea2de61",
+      "arg0": 1332776229,
+      "arg1": 0
+    },
+    {
+      "step": 394,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "638c5144",
+      "arg0": 1803455324,
+      "arg1": 0
+    },
+    {
+      "step": 395,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3ae95311",
+      "arg0": 1503747917,
+      "arg1": 0
+    },
+    {
+      "step": 396,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1599504261,
+      "arg1": 0
+    },
+    {
+      "step": 397,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2057131299,
+      "arg1": 0
+    },
+    {
+      "step": 398,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 193831381,
+      "arg1": 0
+    },
+    {
+      "step": 399,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 360639370,
+      "arg1": 0
+    },
+    {
+      "step": 400,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "72b1f032",
+      "arg0": 757897209,
+      "arg1": 0
+    },
+    {
+      "step": 401,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2d4eef67",
+      "arg0": 1956464697,
+      "arg1": 0
+    },
+    {
+      "step": 402,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3c699e12",
+      "arg0": 1476356556,
+      "arg1": 0
+    },
+    {
+      "step": 403,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4c868076",
+      "arg0": 511851873,
+      "arg1": 0
+    },
+    {
+      "step": 404,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed3a5e5b",
+      "arg0": 463028421,
+      "arg1": 0
+    },
+    {
+      "step": 405,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "49ea4537",
+      "arg0": 2128433351,
+      "arg1": 0
+    },
+    {
+      "step": 406,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dee5ac41",
+      "arg0": 1867069944,
+      "arg1": 0
+    },
+    {
+      "step": 407,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0a521616",
+      "arg0": 1863642446,
+      "arg1": 0
+    },
+    {
+      "step": 408,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 233070141,
+      "arg1": 0
+    },
+    {
+      "step": 409,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1823677311,
+      "arg1": 0
+    },
+    {
+      "step": 410,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 328788250,
+      "arg1": 0
+    },
+    {
+      "step": 411,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1213514679,
+      "arg1": 0
+    },
+    {
+      "step": 412,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b59e5014",
+      "arg0": 1520501061,
+      "arg1": 0
+    },
+    {
+      "step": 413,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ba069179",
+      "arg0": 1701514667,
+      "arg1": 0
+    },
+    {
+      "step": 414,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "11f88458",
+      "arg0": 187107568,
+      "arg1": 0
+    },
+    {
+      "step": 415,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "80f2464b",
+      "arg0": 438816179,
+      "arg1": 0
+    },
+    {
+      "step": 416,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f68335d",
+      "arg0": 1629650746,
+      "arg1": 0
+    },
+    {
+      "step": 417,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "62c43100",
+      "arg0": 1313427348,
+      "arg1": 0
+    },
+    {
+      "step": 418,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5cf8fb2f",
+      "arg0": 965607371,
+      "arg1": 0
+    },
+    {
+      "step": 419,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ea79f938",
+      "arg0": 1839611014,
+      "arg1": 0
+    },
+    {
+      "step": 420,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1852147344,
+      "arg1": 0
+    },
+    {
+      "step": 421,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1927963127,
+      "arg1": 0
+    },
+    {
+      "step": 422,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 646449606,
+      "arg1": 0
+    },
+    {
+      "step": 423,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1737423667,
       "arg1": 0
     }
   ],
-  "checkpoint_prover": [
-    171401706,
-    1447149127,
-    1476482185,
-    1076687016
-  ],
-  "checkpoint_verifier": [
-    171401706,
-    1447149127,
-    1476482185,
-    1076687016
-  ],
+  "checkpoint_prover": [288751561, 934416116, 1183354300, 529926723],
+  "checkpoint_verifier": [288751561, 934416116, 1183354300, 529926723],
   "checkpoint_match": true
 }

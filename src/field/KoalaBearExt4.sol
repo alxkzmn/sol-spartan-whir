@@ -34,40 +34,76 @@ library KoalaBearExt4 {
         coeffs[3] = (packed >> 128) & COEFF_MASK;
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256[4] memory lhs = unpack(a);
-        uint256[4] memory rhs = unpack(b);
-        uint256[4] memory out;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
 
-        unchecked {
-            for (uint256 i = 0; i < DEGREE; ++i) {
-                out[i] = KoalaBear.add(lhs[i], rhs[i]);
+            let a0 := shr(224, a)
+            let a1 := and(shr(192, a), mask)
+            let a2 := and(shr(160, a), mask)
+            let a3 := and(shr(128, a), mask)
+            let b0 := shr(224, b)
+            let b1 := and(shr(192, b), mask)
+            let b2 := and(shr(160, b), mask)
+            let b3 := and(shr(128, b), mask)
+
+            let c0 := add(a0, b0)
+            if iszero(lt(c0, modulus)) {
+                c0 := sub(c0, modulus)
             }
-        }
+            let c1 := add(a1, b1)
+            if iszero(lt(c1, modulus)) {
+                c1 := sub(c1, modulus)
+            }
+            let c2 := add(a2, b2)
+            if iszero(lt(c2, modulus)) {
+                c2 := sub(c2, modulus)
+            }
+            let c3 := add(a3, b3)
+            if iszero(lt(c3, modulus)) {
+                c3 := sub(c3, modulus)
+            }
 
-        return pack(out);
+            out := or(
+                or(shl(224, c0), shl(192, c1)),
+                or(shl(160, c2), shl(128, c3))
+            )
+        }
     }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256[4] memory lhs = unpack(a);
-        uint256[4] memory rhs = unpack(b);
-        uint256[4] memory out;
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
 
-        unchecked {
-            for (uint256 i = 0; i < DEGREE; ++i) {
-                out[i] = KoalaBear.sub(lhs[i], rhs[i]);
-            }
+            let a0 := shr(224, a)
+            let a1 := and(shr(192, a), mask)
+            let a2 := and(shr(160, a), mask)
+            let a3 := and(shr(128, a), mask)
+            let b0 := shr(224, b)
+            let b1 := and(shr(192, b), mask)
+            let b2 := and(shr(160, b), mask)
+            let b3 := and(shr(128, b), mask)
+
+            let c0 := sub(add(a0, mul(modulus, lt(a0, b0))), b0)
+            let c1 := sub(add(a1, mul(modulus, lt(a1, b1))), b1)
+            let c2 := sub(add(a2, mul(modulus, lt(a2, b2))), b2)
+            let c3 := sub(add(a3, mul(modulus, lt(a3, b3))), b3)
+
+            out := or(
+                or(shl(224, c0), shl(192, c1)),
+                or(shl(160, c2), shl(128, c3))
+            )
         }
-
-        return pack(out);
     }
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        return pack(_mul_coeffs(unpack(a), unpack(b)));
+        return _mul_packed(a, b);
     }
 
     function square(uint256 a) internal pure returns (uint256) {
-        return mul(a, a);
+        return _square_packed(a);
     }
 
     function fromBase(uint256 value) internal pure returns (uint256) {
@@ -112,6 +148,15 @@ library KoalaBearExt4 {
         uint256 e2,
         uint256 r
     ) internal pure returns (uint256) {
+        return _extrapolate_012_fast(e0, e1, e2, r);
+    }
+
+    function extrapolate_012_reference(
+        uint256 e0,
+        uint256 e1,
+        uint256 e2,
+        uint256 r
+    ) internal pure returns (uint256) {
         uint256 l0 = _scalar_mul(mul(sub(r, ONE), sub(r, TWO)), INV_TWO);
         uint256 l1 = mul(r, sub(TWO, r));
         uint256 l2 = _scalar_mul(mul(r, sub(r, ONE)), INV_TWO);
@@ -143,6 +188,44 @@ library KoalaBearExt4 {
         uint256 size = evals.length;
         require(size != 0 && _is_power_of_two(size), "BAD_EVALS");
         require(size == (uint256(1) << point.length), "DIM");
+
+        if (point.length == 0) {
+            return evals[0];
+        }
+        if (point.length == 1) {
+            return _fold_once(evals[0], evals[1], point[0]);
+        }
+        if (point.length == 2) {
+            uint256 l0 = _fold_once(evals[0], evals[2], point[0]);
+            uint256 l1 = _fold_once(evals[1], evals[3], point[0]);
+            return _fold_once(l0, l1, point[1]);
+        }
+        if (point.length == 3) {
+            uint256 l0 = _fold_once(evals[0], evals[4], point[0]);
+            uint256 l1 = _fold_once(evals[1], evals[5], point[0]);
+            uint256 l2 = _fold_once(evals[2], evals[6], point[0]);
+            uint256 l3 = _fold_once(evals[3], evals[7], point[0]);
+            uint256 m0 = _fold_once(l0, l2, point[1]);
+            uint256 m1 = _fold_once(l1, l3, point[1]);
+            return _fold_once(m0, m1, point[2]);
+        }
+        if (point.length == 4) {
+            uint256 l0 = _fold_once(evals[0], evals[8], point[0]);
+            uint256 l1 = _fold_once(evals[1], evals[9], point[0]);
+            uint256 l2 = _fold_once(evals[2], evals[10], point[0]);
+            uint256 l3 = _fold_once(evals[3], evals[11], point[0]);
+            uint256 l4 = _fold_once(evals[4], evals[12], point[0]);
+            uint256 l5 = _fold_once(evals[5], evals[13], point[0]);
+            uint256 l6 = _fold_once(evals[6], evals[14], point[0]);
+            uint256 l7 = _fold_once(evals[7], evals[15], point[0]);
+            uint256 m0 = _fold_once(l0, l4, point[1]);
+            uint256 m1 = _fold_once(l1, l5, point[1]);
+            uint256 m2 = _fold_once(l2, l6, point[1]);
+            uint256 m3 = _fold_once(l3, l7, point[1]);
+            uint256 n0 = _fold_once(m0, m2, point[2]);
+            uint256 n1 = _fold_once(m1, m3, point[2]);
+            return _fold_once(n0, n1, point[3]);
+        }
 
         unchecked {
             for (uint256 i = 0; i < point.length; ++i) {
@@ -228,7 +311,74 @@ library KoalaBearExt4 {
             );
     }
 
-    function _mul_coeffs(
+    function mul_reference(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (uint256) {
+        return pack(_mul_coeffs_reference(unpack(a), unpack(b)));
+    }
+
+    function _mul_packed(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (uint256 out) {
+        uint256 a0 = a >> 224;
+        uint256 a1 = (a >> 192) & COEFF_MASK;
+        uint256 a2 = (a >> 160) & COEFF_MASK;
+        uint256 a3 = (a >> 128) & COEFF_MASK;
+        uint256 b0 = b >> 224;
+        uint256 b1 = (b >> 192) & COEFF_MASK;
+        uint256 b2 = (b >> 160) & COEFF_MASK;
+        uint256 b3 = (b >> 128) & COEFF_MASK;
+
+        unchecked {
+            uint256 c0 = a0 * b0 + KoalaBear.W * (a1 * b3 + a2 * b2 + a3 * b1);
+            uint256 c1 = a0 * b1 + a1 * b0 + KoalaBear.W * (a2 * b3 + a3 * b2);
+            uint256 c2 = a0 * b2 + a1 * b1 + a2 * b0 + KoalaBear.W * (a3 * b3);
+            uint256 c3 = a0 * b3 + a1 * b2 + a2 * b1 + a3 * b0;
+
+            c0 %= KoalaBear.MODULUS;
+            c1 %= KoalaBear.MODULUS;
+            c2 %= KoalaBear.MODULUS;
+            c3 %= KoalaBear.MODULUS;
+
+            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
+        }
+    }
+
+    function _square_packed(uint256 a) internal pure returns (uint256 out) {
+        uint256 a0 = a >> 224;
+        uint256 a1 = (a >> 192) & COEFF_MASK;
+        uint256 a2 = (a >> 160) & COEFF_MASK;
+        uint256 a3 = (a >> 128) & COEFF_MASK;
+
+        unchecked {
+            uint256 a0a0 = a0 * a0;
+            uint256 a0a1 = a0 * a1;
+            uint256 a0a2 = a0 * a2;
+            uint256 a0a3 = a0 * a3;
+            uint256 a1a1 = a1 * a1;
+            uint256 a1a2 = a1 * a2;
+            uint256 a1a3 = a1 * a3;
+            uint256 a2a2 = a2 * a2;
+            uint256 a2a3 = a2 * a3;
+            uint256 a3a3 = a3 * a3;
+
+            uint256 c0 = a0a0 + KoalaBear.W * (a2a2 + (2 * a1a3));
+            uint256 c1 = (2 * a0a1) + KoalaBear.W * (2 * a2a3);
+            uint256 c2 = (2 * a0a2) + a1a1 + KoalaBear.W * a3a3;
+            uint256 c3 = (2 * a0a3) + (2 * a1a2);
+
+            c0 %= KoalaBear.MODULUS;
+            c1 %= KoalaBear.MODULUS;
+            c2 %= KoalaBear.MODULUS;
+            c3 %= KoalaBear.MODULUS;
+
+            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
+        }
+    }
+
+    function _mul_coeffs_reference(
         uint256[4] memory a,
         uint256[4] memory b
     ) internal pure returns (uint256[4] memory out) {
@@ -248,6 +398,42 @@ library KoalaBearExt4 {
                 }
             }
         }
+    }
+
+    function _extrapolate_012_fast(
+        uint256 e0,
+        uint256 e1,
+        uint256 e2,
+        uint256 r
+    ) internal pure returns (uint256) {
+        uint256[4] memory c0 = unpack(e0);
+        uint256[4] memory c1 = unpack(e1);
+        uint256[4] memory c2 = unpack(e2);
+        uint256[4] memory q1;
+        uint256[4] memory q2;
+
+        unchecked {
+            for (uint256 i = 0; i < DEGREE; ++i) {
+                uint256 twoC1 = KoalaBear.add(c1[i], c1[i]);
+                uint256 fourC1 = KoalaBear.add(twoC1, twoC1);
+                uint256 threeC0 = KoalaBear.add(c0[i], twoC0(c0[i]));
+
+                q2[i] = KoalaBear.mul(
+                    KoalaBear.add(c0[i], KoalaBear.sub(c2[i], twoC1)),
+                    INV_TWO
+                );
+                q1[i] = KoalaBear.mul(
+                    KoalaBear.sub(KoalaBear.sub(fourC1, c2[i]), threeC0),
+                    INV_TWO
+                );
+            }
+        }
+
+        return add(e0, mul(r, add(pack(q1), mul(r, pack(q2)))));
+    }
+
+    function twoC0(uint256 value) private pure returns (uint256) {
+        return KoalaBear.add(value, value);
     }
 
     function _is_power_of_two(uint256 x) internal pure returns (bool) {
