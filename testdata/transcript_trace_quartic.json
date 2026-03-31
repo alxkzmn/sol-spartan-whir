@@ -1977,7 +1977,17 @@
       "state_after": "SerializingChallenger32 { inner: HashChallenger { input_buffer: [192, 44, 240, 168, 88, 1, 84, 137, 214, 65, 190, 71, 138, 55, 97, 234, 196, 183, 234, 125, 166, 19, 243, 33, 133, 7, 145, 28, 140, 87, 0, 105], output_buffer: [], hasher: Keccak256Hash }, _marker: PhantomData<p3_monty_31::monty_31::MontyField31<p3_koala_bear::koala_bear::KoalaBearParameters>> }"
     }
   ],
-  "checkpoint_prover": [171401706, 1447149127, 1476482185, 1076687016],
-  "checkpoint_verifier": [171401706, 1447149127, 1476482185, 1076687016],
+  "checkpoint_prover": [
+    171401706,
+    1447149127,
+    1476482185,
+    1076687016
+  ],
+  "checkpoint_verifier": [
+    171401706,
+    1447149127,
+    1476482185,
+    1076687016
+  ],
   "checkpoint_match": true
 }
