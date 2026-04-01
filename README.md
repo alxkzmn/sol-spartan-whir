@@ -26,6 +26,40 @@ forge test
 cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 ```
 
+## Gas
+
+### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
+
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`.
+
+|                          | sol-spartan-whir (WHIR-only) | sol-whir  |
+| ------------------------ | ---------------------------- | --------- |
+| **Field**                | KoalaBear + ext4             | BN254     |
+| **Rounds**               | 2                            | 3         |
+| **Execution gas**        | 1,094,539                    | 677,011   |
+| **Total tx gas**         | 1,367,920                    | 1,135,052 |
+| **Calldata + intrinsic** | 273,381                      | 458,041   |
+
+sol-spartan-whir uses ~62% more execution gas but only ~21% more total transaction gas, because its smaller field yields significantly smaller calldata.
+
+### Measurement methodology
+
+**Execution gas** is measured via `forge test --gas-report`, which reports the gas used by the `verify()` function call directly (no calldata or intrinsic cost).
+
+**Total tx gas** is measured by sending a real transaction to an Anvil node:
+
+1. A wrapper contract stores the `verify()` result in state, making the call state-changing.
+2. `forge script` broadcasts the tx to a local Anvil instance.
+3. The `gasUsed` field is read from the broadcast receipt JSON.
+
+The wrapper script for this project is at `script/MeasureTxGas.s.sol`. Run:
+
+```sh
+anvil &
+forge script script/MeasureTxGas.s.sol --tc MeasureTxGas --rpc-url http://localhost:8545 --broadcast
+# gasUsed is in broadcast/MeasureTxGas.s.sol/31337/run-latest.json
+```
+
 ## Dependencies
 
 - [forge-std](https://github.com/foundry-rs/forge-std) — Foundry test framework

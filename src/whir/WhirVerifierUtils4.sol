@@ -352,70 +352,73 @@ library WhirVerifierUtils4 {
             point[3]
         );
 
-        uint256 l0 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start),
-            _loadBaseAsExt4Unchecked(flatValues, start + 8),
+        // Layer 1: fold base-field pairs → ext4. Both inputs have only lane 0
+        // nonzero, so d = (d0, 0, 0, 0) and r * d simplifies to 4 muls.
+        uint256 l0 = _foldOnceBase(
+            flatValues[start],
+            flatValues[start + 8],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l1 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 1),
-            _loadBaseAsExt4Unchecked(flatValues, start + 9),
+        uint256 l1 = _foldOnceBase(
+            flatValues[start + 1],
+            flatValues[start + 9],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l2 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 2),
-            _loadBaseAsExt4Unchecked(flatValues, start + 10),
+        uint256 l2 = _foldOnceBase(
+            flatValues[start + 2],
+            flatValues[start + 10],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l3 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 3),
-            _loadBaseAsExt4Unchecked(flatValues, start + 11),
+        uint256 l3 = _foldOnceBase(
+            flatValues[start + 3],
+            flatValues[start + 11],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l4 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 4),
-            _loadBaseAsExt4Unchecked(flatValues, start + 12),
+        uint256 l4 = _foldOnceBase(
+            flatValues[start + 4],
+            flatValues[start + 12],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l5 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 5),
-            _loadBaseAsExt4Unchecked(flatValues, start + 13),
+        uint256 l5 = _foldOnceBase(
+            flatValues[start + 5],
+            flatValues[start + 13],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l6 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 6),
-            _loadBaseAsExt4Unchecked(flatValues, start + 14),
+        uint256 l6 = _foldOnceBase(
+            flatValues[start + 6],
+            flatValues[start + 14],
             r00,
             r01,
             r02,
             r03
         );
-        uint256 l7 = _foldOnceWithCoeffs(
-            _loadBaseAsExt4Unchecked(flatValues, start + 7),
-            _loadBaseAsExt4Unchecked(flatValues, start + 15),
+        uint256 l7 = _foldOnceBase(
+            flatValues[start + 7],
+            flatValues[start + 15],
             r00,
             r01,
             r02,
             r03
         );
+        // Layers 2-4: ext4 → ext4 (full schoolbook)
         uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
         uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
         uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);
@@ -558,6 +561,30 @@ library WhirVerifierUtils4 {
         uint256 index
     ) private pure returns (uint256 value) {
         value = flatValues[index];
+    }
+
+    /// @dev Fold two base-field values using pre-unpacked ext4 coefficients.
+    /// Both inputs are raw base-field elements (not packed ext4), so
+    /// d = (a1 - a0, 0, 0, 0) and the schoolbook r*d reduces from 16 to 4 muls.
+    function _foldOnceBase(
+        uint256 a0,
+        uint256 a1,
+        uint256 r0,
+        uint256 r1,
+        uint256 r2,
+        uint256 r3
+    ) private pure returns (uint256 out) {
+        assembly {
+            let M := 0x7f000001
+            let d := mod(sub(add(a1, M), a0), M)
+            out := or(
+                or(
+                    shl(224, mod(add(a0, mul(r0, d)), M)),
+                    shl(192, mod(mul(r1, d), M))
+                ),
+                or(shl(160, mod(mul(r2, d), M)), shl(128, mod(mul(r3, d), M)))
+            )
+        }
     }
 
     function _foldOnce(

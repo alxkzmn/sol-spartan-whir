@@ -392,30 +392,29 @@ library WhirVerifierCore4 {
         uint256 acc,
         Constraint memory constraint
     ) internal pure returns (uint256 updated) {
-        updated = acc;
-        uint256 gammaPower = KoalaBearExt4.fromBase(1);
         uint256 challenge = constraint.challenge;
         uint256[] memory eqEvals = constraint.eqStatement.evaluations;
         uint256 eqLen = eqEvals.length;
         uint256[] memory selEvals = constraint.selStatement.evaluations;
         uint256 selLen = selEvals.length;
+        uint256 horner;
 
         unchecked {
-            for (uint256 i = 0; i < eqLen; ++i) {
-                updated = KoalaBearExt4.add(
-                    updated,
-                    KoalaBearExt4.mul(gammaPower, eqEvals[i])
+            for (uint256 i = selLen; i > 0; --i) {
+                horner = KoalaBearExt4.add(
+                    selEvals[i - 1],
+                    KoalaBearExt4.mul(horner, challenge)
                 );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
-            for (uint256 i = 0; i < selLen; ++i) {
-                updated = KoalaBearExt4.add(
-                    updated,
-                    KoalaBearExt4.mul(gammaPower, selEvals[i])
+            for (uint256 i = eqLen; i > 0; --i) {
+                horner = KoalaBearExt4.add(
+                    eqEvals[i - 1],
+                    KoalaBearExt4.mul(horner, challenge)
                 );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
             }
         }
+
+        updated = KoalaBearExt4.add(acc, horner);
     }
 
     function _evaluateConstraints(
@@ -455,40 +454,193 @@ library WhirVerifierCore4 {
         }
 
         uint256 numVariables = constraint.eqStatement.numVariables;
-        uint256 gammaPower = KoalaBearExt4.fromBase(1);
         uint256 challenge = constraint.challenge;
         uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
         uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
         uint256[] memory selVars = constraint.selStatement.vars;
         uint256 selVarCount = selVars.length;
 
+        // Horner form: Σ γ^k × w_k = w_0 + γ·(w_1 + γ·(... + γ·w_{N-1}))
+        // Eliminates one ext4 mul per weight vs explicit gamma-power tracking.
+        // Process weights in reverse: selects last-to-first, then eq last-to-first.
+        // The mulAdd step (total = total * challenge + weight) is fused in inline
+        // assembly to avoid intermediate packing/unpacking of ext4 lanes.
+        // Pre-unpack challenge lanes (constant across all iterations)
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+        }
         unchecked {
-            for (uint256 i = 0; i < eqEvalCount; ++i) {
+            for (uint256 i = selVarCount; i > 0; --i) {
+                uint256 weight = _selectPolyEvalAt(
+                    selVars[i - 1],
+                    fullPoint,
+                    pointOffset,
+                    numVariables
+                );
+                // Fused: total = total * challenge + weight
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
+            }
+            for (uint256 i = eqEvalCount; i > 0; --i) {
                 uint256 weight = _eqPolyEvalAt(
                     flatPoints,
-                    i * numVariables,
+                    (i - 1) * numVariables,
                     fullPoint,
                     pointOffset,
                     numVariables
                 );
-                total = KoalaBearExt4.add(
-                    total,
-                    KoalaBearExt4.mul(gammaPower, weight)
-                );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
-            }
-            for (uint256 i = 0; i < selVarCount; ++i) {
-                uint256 weight = _selectPolyEvalAt(
-                    selVars[i],
-                    fullPoint,
-                    pointOffset,
-                    numVariables
-                );
-                total = KoalaBearExt4.add(
-                    total,
-                    KoalaBearExt4.mul(gammaPower, weight)
-                );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+                // Fused: total = total * challenge + weight
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
             }
         }
     }

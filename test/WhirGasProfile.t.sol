@@ -2126,6 +2126,55 @@ contract WhirGasProfileTest is Test {
         assertGt(gasRound0, 0);
     }
 
+    function testFlameParseCommitment() external view {
+        (, WhirStructs.WhirProof memory proof) = _loadSuccessFixture();
+        uint256 gasParse = harness.profileParseCommitment(
+            proof.initialCommitment,
+            proof
+        );
+        assertGt(gasParse, 0);
+    }
+
+    function testFlameConstraintPreparation() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        (
+            uint256 gasParseCommitment,
+            uint256 gasStatementFromCalldata,
+            uint256 gasConcatEq
+        ) = harness.profileConstraintPreparation(
+                proof.initialCommitment,
+                statement,
+                proof
+            );
+        assertGt(gasParseCommitment, 0);
+        assertGt(gasStatementFromCalldata, 0);
+        assertGt(gasConcatEq, 0);
+    }
+
+    function testFlameInitialSumcheck() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+        uint256 gasInitialSumcheck = harness.profileInitialSumcheck(
+            proof.initialCommitment,
+            statement,
+            proof
+        );
+        assertGt(gasInitialSumcheck, 0);
+    }
+
+    function testFlameStandaloneFinalSumcheck() external view {
+        (, WhirStructs.WhirProof memory proof) = _loadSuccessFixture();
+        uint256 gasFinalSumcheck = harness.profileStandaloneFinalSumcheck(
+            proof
+        );
+        assertGt(gasFinalSumcheck, 0);
+    }
+
     function testFlameRound1Stir() external view {
         (
             WhirStructs.WhirStatement memory statement,

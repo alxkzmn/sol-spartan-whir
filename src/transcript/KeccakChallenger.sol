@@ -318,8 +318,10 @@ library KeccakChallenger {
         assembly ("memory-safe") {
             digest := keccak256(add(buffer, 0x20), mload(add(self, 0x20)))
         }
-        _ensureCapacity(self, DIGEST_BYTES);
-        buffer = self.inputBuffer;
+        if (buffer.length < DIGEST_BYTES) {
+            buffer = new bytes(INITIAL_CAPACITY);
+            self.inputBuffer = buffer;
+        }
         assembly ("memory-safe") {
             mstore(add(buffer, 0x20), digest)
         }
@@ -328,42 +330,23 @@ library KeccakChallenger {
         self.outputIndex = DIGEST_BYTES;
     }
 
-    function _sampleByte(State memory self) private pure returns (uint8) {
+    function _sampleUint32(
+        State memory self
+    ) private pure returns (uint32 value) {
         if (self.outputIndex == 0) {
             _flush(self);
         }
 
         unchecked {
-            self.outputIndex -= 1;
+            uint256 oldIndex = self.outputIndex;
+            self.outputIndex = oldIndex - 4;
             return
-                uint8(
-                    uint256(self.outputBlock >> ((31 - self.outputIndex) << 3))
+                uint32(
+                    uint256(
+                        self.outputBlock >>
+                            (((DIGEST_BYTES - oldIndex) & 0xff) << 3)
+                    )
                 );
-        }
-    }
-
-    function _sampleUint32(
-        State memory self
-    ) private pure returns (uint32 value) {
-        if (self.outputIndex >= 4) {
-            unchecked {
-                uint256 oldIndex = self.outputIndex;
-                self.outputIndex = oldIndex - 4;
-                return
-                    uint32(
-                        uint256(
-                            self.outputBlock >>
-                                (((DIGEST_BYTES - oldIndex) & 0xff) << 3)
-                        )
-                    );
-            }
-        }
-
-        unchecked {
-            value = uint32(_sampleByte(self));
-            value |= uint32(_sampleByte(self)) << 8;
-            value |= uint32(_sampleByte(self)) << 16;
-            value |= uint32(_sampleByte(self)) << 24;
         }
     }
 
