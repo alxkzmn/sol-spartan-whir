@@ -30,34 +30,100 @@ cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 
 ### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
 
-Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`.
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 645` with `WhirVerifier4` runtime bytecode at `24,264` bytes.
 
-|                          | sol-spartan-whir (WHIR-only) | sol-whir  |
-| ------------------------ | ---------------------------- | --------- |
-| **Field**                | KoalaBear + ext4             | BN254     |
-| **Rounds**               | 2                            | 3         |
-| **Execution gas**        | 1,094,539                    | 677,011   |
-| **Total tx gas**         | 1,367,920                    | 1,135,052 |
-| **Calldata + intrinsic** | 273,381                      | 458,041   |
+#### Total verification transaction cost
 
-sol-spartan-whir uses ~62% more execution gas but only ~21% more total transaction gas, because its smaller field yields significantly smaller calldata.
+`sol-whir` only exposes a wrapper-style benchmark transaction (`WhirContract.callVerify(...)`), so the fairest apples-to-apples comparison is wrapper-to-wrapper:
+
+|                          | sol-spartan-whir wrapper tx | sol-whir wrapper tx |
+| ------------------------ | --------------------------- | ------------------- |
+| **Field**                | KoalaBear + ext4            | BN254               |
+| **Total tx gas**         | 1,318,283                   | 1,135,052           |
+| **Intrinsic + calldata** | 234,060                     | 435,876             |
+| **Execution remainder**  | 1,084,223                   | 699,176             |
+| **Wrapper overhead**     | 39,066                      | 22,165              |
+
+Key takeaways:
+
+- `sol-spartan-whir` uses `+385,047` more execution gas.
+- `sol-spartan-whir` saves `201,816` gas on intrinsic + calldata thanks to smaller proof calldata.
+- Net wrapper-tx delta: `+183,231` gas (`+16.1%`).
+
+In production, `WhirVerifier4.verify(...)` would typically be called directly rather than through a wrapper contract. The direct call saves the wrapper overhead (~39k gas):
+
+|                          | sol-spartan-whir direct tx |
+| ------------------------ | -------------------------- |
+| **Total tx gas**         | 1,278,849                  |
+| **Intrinsic + calldata** | 233,692                    |
+| **Execution remainder**  | 1,045,157                  |
+
+#### Execution gas snapshots
+
+|                                     | sol-spartan-whir | sol-whir |
+| ----------------------------------- | ---------------- | -------- |
+| **Verifier execution snapshot**     | 1,199,228        | 677,011  |
+| **Measured tx execution remainder** | 1,045,157        | 699,176  |
+
+Notes:
+
+- `sol-spartan-whir` snapshot: `forge test --match-contract WhirVerifier4Test -vv`
+- `sol-whir` snapshot: checked-in [snapshots/verif.json](./../sol-whir/snapshots/verif.json)
+- The tx execution remainder is `total tx gas - intrinsic - calldata gas`
+
+#### Arithmetic and proof-structure differences
+
+The execution-gas gap comes from both arithmetic cost and proof-structure differences. The table below lists the benchmark parameters that matter most.
+
+| Item                               | sol-spartan-whir | sol-whir |
+| ---------------------------------- | ---------------- | -------- |
+| **Field / arithmetic**             | KoalaBear + ext4 | BN254    |
+| **Configured WHIR rounds**         | 2                | 3        |
+| **Per-round query counts**         | 9, 6             | 9, 6, 5  |
+| **Final query count**              | 5                | 4        |
+| **Total STIR queries incl. final** | 20               | 24       |
+| **Commitment OOD samples**         | 2                | 1        |
+| **Final sumcheck rounds**          | 4                | 0        |
+
+Implications:
+
+- `sol-whir` has one extra configured round and `4` more total STIR queries.
+- `sol-spartan-whir` pays for more OOD sampling and a real final sumcheck.
+- The one structural delta we can price directly is the final sumcheck: ~`27.1k` gas in `sol-spartan-whir`, while the `sol-whir` benchmark config has `finalSumcheckRound = 0`.
+- Proof structure explains part of the gap; the rest is execution cost inside the verifier.
 
 ### Measurement methodology
 
-**Execution gas** is measured via `forge test --gas-report`, which reports the gas used by the `verify()` function call directly (no calldata or intrinsic cost).
+**Execution gas** is measured via `forge test --match-contract WhirVerifier4Test -vv`, which reports the gas used by the verifier call in the Foundry harness.
 
-**Total tx gas** is measured by sending a real transaction to an Anvil node:
+**Total tx gas** is measured from real transaction receipts, then split as:
+
+```text
+total tx gas = intrinsic gas (21,000) + calldata gas + execution remainder
+```
+
+where:
+
+- `calldata gas = 4 * zero_bytes + 16 * nonzero_bytes`
+- `execution remainder = receipt.gasUsed - 21,000 - calldata gas`
+
+For `sol-spartan-whir`, the current tx numbers were remeasured by:
 
 1. A wrapper contract stores the `verify()` result in state, making the call state-changing.
-2. `forge script` broadcasts the tx to a local Anvil instance.
-3. The `gasUsed` field is read from the broadcast receipt JSON.
+2. Deploying the current bytecode to a local Anvil node.
+3. Replaying the benchmark calldata over raw JSON-RPC and reading the receipt.
 
-The wrapper script for this project is at `script/MeasureTxGas.s.sol`. Run:
+The direct-call calldata footprint comes from `script/WhirTxBenchmark.s.sol`, and the wrapper calldata footprint comes from `script/MeasureTxGas.s.sol`.
+
+For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so the checked-in snapshot and broadcast artifact remain the source of truth.
+
+`sol-spartan-whir` current deployable config:
 
 ```sh
-anvil &
-forge script script/MeasureTxGas.s.sol --tc MeasureTxGas --rpc-url http://localhost:8545 --broadcast
-# gasUsed is in broadcast/MeasureTxGas.s.sol/31337/run-latest.json
+via_ir = true
+optimizer = true
+optimizer_runs = 645
+WhirVerifier4 deployed bytecode = 24,264 bytes
 ```
 
 ## Dependencies
