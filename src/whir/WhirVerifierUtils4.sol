@@ -162,7 +162,7 @@ library WhirVerifierUtils4 {
         queries = new uint256[](numQueries);
 
         if (totalBitsNeeded <= maxBitsPerCall) {
-            uint256 allBits = challenger.sampleBits(totalBitsNeeded);
+            uint256 allBits = challenger.sampleBitsUnchecked(totalBitsNeeded);
             uint256 mask = domainBits == 0
                 ? 0
                 : ((uint256(1) << domainBits) - 1);
@@ -183,7 +183,7 @@ library WhirVerifierUtils4 {
                         ? remaining
                         : queriesPerBatch;
                     uint256 batchBits = batchSize * domainBits;
-                    uint256 allBits = challenger.sampleBits(batchBits);
+                    uint256 allBits = challenger.sampleBitsUnchecked(batchBits);
 
                     unchecked {
                         for (uint256 i = 0; i < batchSize; ++i) {
@@ -200,7 +200,7 @@ library WhirVerifierUtils4 {
             } else {
                 unchecked {
                     for (uint256 i = 0; i < numQueries; ++i) {
-                        queries[i] = challenger.sampleBits(domainBits);
+                        queries[i] = challenger.sampleBitsUnchecked(domainBits);
                     }
                 }
             }
@@ -339,6 +339,44 @@ library WhirVerifierUtils4 {
         uint256 start,
         uint256[] memory point
     ) private pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(flatValues.offset, shl(5, start))
+        }
+        uint256 v0;
+        uint256 v1;
+        uint256 v2;
+        uint256 v3;
+        uint256 v4;
+        uint256 v5;
+        uint256 v6;
+        uint256 v7;
+        uint256 v8;
+        uint256 v9;
+        uint256 v10;
+        uint256 v11;
+        uint256 v12;
+        uint256 v13;
+        uint256 v14;
+        uint256 v15;
+        assembly ("memory-safe") {
+            v0 := calldataload(src)
+            v1 := calldataload(add(src, 0x20))
+            v2 := calldataload(add(src, 0x40))
+            v3 := calldataload(add(src, 0x60))
+            v4 := calldataload(add(src, 0x80))
+            v5 := calldataload(add(src, 0xa0))
+            v6 := calldataload(add(src, 0xc0))
+            v7 := calldataload(add(src, 0xe0))
+            v8 := calldataload(add(src, 0x100))
+            v9 := calldataload(add(src, 0x120))
+            v10 := calldataload(add(src, 0x140))
+            v11 := calldataload(add(src, 0x160))
+            v12 := calldataload(add(src, 0x180))
+            v13 := calldataload(add(src, 0x1a0))
+            v14 := calldataload(add(src, 0x1c0))
+            v15 := calldataload(add(src, 0x1e0))
+        }
         (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
             point[0]
         );
@@ -354,70 +392,14 @@ library WhirVerifierUtils4 {
 
         // Layer 1: fold base-field pairs → ext4. Both inputs have only lane 0
         // nonzero, so d = (d0, 0, 0, 0) and r * d simplifies to 4 muls.
-        uint256 l0 = _foldOnceBase(
-            flatValues[start],
-            flatValues[start + 8],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l1 = _foldOnceBase(
-            flatValues[start + 1],
-            flatValues[start + 9],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l2 = _foldOnceBase(
-            flatValues[start + 2],
-            flatValues[start + 10],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l3 = _foldOnceBase(
-            flatValues[start + 3],
-            flatValues[start + 11],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l4 = _foldOnceBase(
-            flatValues[start + 4],
-            flatValues[start + 12],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l5 = _foldOnceBase(
-            flatValues[start + 5],
-            flatValues[start + 13],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l6 = _foldOnceBase(
-            flatValues[start + 6],
-            flatValues[start + 14],
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l7 = _foldOnceBase(
-            flatValues[start + 7],
-            flatValues[start + 15],
-            r00,
-            r01,
-            r02,
-            r03
-        );
+        uint256 l0 = _foldOnceBase(v0, v8, r00, r01, r02, r03);
+        uint256 l1 = _foldOnceBase(v1, v9, r00, r01, r02, r03);
+        uint256 l2 = _foldOnceBase(v2, v10, r00, r01, r02, r03);
+        uint256 l3 = _foldOnceBase(v3, v11, r00, r01, r02, r03);
+        uint256 l4 = _foldOnceBase(v4, v12, r00, r01, r02, r03);
+        uint256 l5 = _foldOnceBase(v5, v13, r00, r01, r02, r03);
+        uint256 l6 = _foldOnceBase(v6, v14, r00, r01, r02, r03);
+        uint256 l7 = _foldOnceBase(v7, v15, r00, r01, r02, r03);
         // Layers 2-4: ext4 → ext4 (full schoolbook)
         uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
         uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
@@ -463,6 +445,44 @@ library WhirVerifierUtils4 {
         uint256 start,
         uint256[] memory point
     ) private pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(flatValues.offset, shl(5, start))
+        }
+        uint256 v0;
+        uint256 v1;
+        uint256 v2;
+        uint256 v3;
+        uint256 v4;
+        uint256 v5;
+        uint256 v6;
+        uint256 v7;
+        uint256 v8;
+        uint256 v9;
+        uint256 v10;
+        uint256 v11;
+        uint256 v12;
+        uint256 v13;
+        uint256 v14;
+        uint256 v15;
+        assembly ("memory-safe") {
+            v0 := calldataload(src)
+            v1 := calldataload(add(src, 0x20))
+            v2 := calldataload(add(src, 0x40))
+            v3 := calldataload(add(src, 0x60))
+            v4 := calldataload(add(src, 0x80))
+            v5 := calldataload(add(src, 0xa0))
+            v6 := calldataload(add(src, 0xc0))
+            v7 := calldataload(add(src, 0xe0))
+            v8 := calldataload(add(src, 0x100))
+            v9 := calldataload(add(src, 0x120))
+            v10 := calldataload(add(src, 0x140))
+            v11 := calldataload(add(src, 0x160))
+            v12 := calldataload(add(src, 0x180))
+            v13 := calldataload(add(src, 0x1a0))
+            v14 := calldataload(add(src, 0x1c0))
+            v15 := calldataload(add(src, 0x1e0))
+        }
         (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
             point[0]
         );
@@ -476,70 +496,14 @@ library WhirVerifierUtils4 {
             point[3]
         );
 
-        uint256 l0 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start),
-            _loadPackedExt4Unchecked(flatValues, start + 8),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l1 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 1),
-            _loadPackedExt4Unchecked(flatValues, start + 9),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l2 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 2),
-            _loadPackedExt4Unchecked(flatValues, start + 10),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l3 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 3),
-            _loadPackedExt4Unchecked(flatValues, start + 11),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l4 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 4),
-            _loadPackedExt4Unchecked(flatValues, start + 12),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l5 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 5),
-            _loadPackedExt4Unchecked(flatValues, start + 13),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l6 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 6),
-            _loadPackedExt4Unchecked(flatValues, start + 14),
-            r00,
-            r01,
-            r02,
-            r03
-        );
-        uint256 l7 = _foldOnceWithCoeffs(
-            _loadPackedExt4Unchecked(flatValues, start + 7),
-            _loadPackedExt4Unchecked(flatValues, start + 15),
-            r00,
-            r01,
-            r02,
-            r03
-        );
+        uint256 l0 = _foldOnceWithCoeffs(v0, v8, r00, r01, r02, r03);
+        uint256 l1 = _foldOnceWithCoeffs(v1, v9, r00, r01, r02, r03);
+        uint256 l2 = _foldOnceWithCoeffs(v2, v10, r00, r01, r02, r03);
+        uint256 l3 = _foldOnceWithCoeffs(v3, v11, r00, r01, r02, r03);
+        uint256 l4 = _foldOnceWithCoeffs(v4, v12, r00, r01, r02, r03);
+        uint256 l5 = _foldOnceWithCoeffs(v5, v13, r00, r01, r02, r03);
+        uint256 l6 = _foldOnceWithCoeffs(v6, v14, r00, r01, r02, r03);
+        uint256 l7 = _foldOnceWithCoeffs(v7, v15, r00, r01, r02, r03);
         uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
         uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
         uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);

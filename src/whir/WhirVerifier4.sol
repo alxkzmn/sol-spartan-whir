@@ -229,11 +229,8 @@ contract WhirVerifier4 {
             );
         }
 
-        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraints(
-            constraints,
-            constraintCount,
-            allRandomness
-        );
+        uint256 evaluationOfWeights = WhirVerifierCore4
+            ._evaluateConstraintsFixedSelect(constraints, allRandomness);
         evaluationOfWeights = KoalaBearExt4.add(
             evaluationOfWeights,
             _evaluateInitialConstraint(
@@ -309,8 +306,6 @@ contract WhirVerifier4 {
         }
 
         uint256 gammaPower = KoalaBearExt4.fromBase(1);
-        uint256 pointOffset = allRandomness.length -
-            QuarticWhirFixedConfig.NUM_VARIABLES;
         uint256[] memory oodFlatPoints = parsedCommitment
             .oodStatement
             .flatPoints;
@@ -324,7 +319,7 @@ contract WhirVerifier4 {
                 uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
                     statement.points[i],
                     allRandomness,
-                    pointOffset,
+                    0,
                     QuarticWhirFixedConfig.NUM_VARIABLES
                 );
                 total = KoalaBearExt4.add(
@@ -339,7 +334,7 @@ contract WhirVerifier4 {
                     oodFlatPoints,
                     i * QuarticWhirFixedConfig.NUM_VARIABLES,
                     allRandomness,
-                    pointOffset,
+                    0,
                     QuarticWhirFixedConfig.NUM_VARIABLES
                 );
                 total = KoalaBearExt4.add(

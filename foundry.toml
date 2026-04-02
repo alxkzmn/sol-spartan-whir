@@ -8,8 +8,8 @@ solc = "0.8.28"
 via_ir = true
 optimizer = true
 # Max value where WhirVerifier4 bytecode fits EIP-170 (24,576 bytes).
-# At 834 the contract is 24,637 bytes and cannot be deployed.
-optimizer_runs = 833
+# At 645 the contract is 24,264 bytes (312 margin). At 646 it jumps to 24,774.
+optimizer_runs = 645
 fs_permissions = [
   { access = "read", path = "./testdata" }
 ]

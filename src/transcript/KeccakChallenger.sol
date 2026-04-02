@@ -267,6 +267,16 @@ library KeccakChallenger {
         }
 
         require((uint256(1) << bits) <= KOALABEAR_MODULUS, "BITS_RANGE");
+        return sampleBitsUnchecked(self, bits);
+    }
+
+    function sampleBitsUnchecked(
+        State memory self,
+        uint256 bits
+    ) internal pure returns (uint256) {
+        if (bits == 0) {
+            return 0;
+        }
         return uint256(_sampleUint32(self)) & ((uint256(1) << bits) - 1);
     }
 
@@ -300,7 +310,7 @@ library KeccakChallenger {
         }
 
         observeBase(self, witness);
-        return sampleBits(self, bits) == 0;
+        return sampleBitsUnchecked(self, bits) == 0;
     }
 
     function debugInputHash(

@@ -321,42 +321,21 @@ library WhirVerifierCore4 {
         );
 
         bytes32 computedRoot;
-        if (effectiveDigestBytes == 20) {
-            if (expectedKind == 0) {
-                computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
-                    indices,
-                    queryBatch.values,
-                    queryBatch.rowLen,
-                    depth,
-                    queryBatch.decommitments
-                );
-            } else {
-                computedRoot = MerkleVerifier
-                    .computeRootFromFlatExtensionRows20(
-                        indices,
-                        queryBatch.values,
-                        queryBatch.rowLen,
-                        depth,
-                        queryBatch.decommitments
-                    );
-            }
-        } else if (expectedKind == 0) {
-            computedRoot = MerkleVerifier.computeRootFromFlatBaseRows(
+        if (expectedKind == 0) {
+            computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
                 indices,
                 queryBatch.values,
                 queryBatch.rowLen,
                 depth,
-                queryBatch.decommitments,
-                effectiveDigestBytes
+                queryBatch.decommitments
             );
         } else {
-            computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows(
+            computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
                 indices,
                 queryBatch.values,
                 queryBatch.rowLen,
                 depth,
-                queryBatch.decommitments,
-                effectiveDigestBytes
+                queryBatch.decommitments
             );
         }
 
@@ -645,6 +624,404 @@ library WhirVerifierCore4 {
         }
     }
 
+    function _evaluateConstraintsFixedSelect(
+        Constraint[] memory constraints,
+        uint256[] memory allRandomness
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt4.add(
+            _evaluateConstraint12Select(constraints[0], allRandomness),
+            _evaluateConstraint8Select(constraints[1], allRandomness)
+        );
+    }
+
+    function _evaluateConstraint12Select(
+        Constraint memory constraint,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        if (
+            constraint.eqStatement.numVariables != 12 ||
+            constraint.selStatement.numVariables != 12
+        ) {
+            revert InconsistentConstraintArity(
+                constraint.eqStatement.numVariables,
+                constraint.selStatement.numVariables
+            );
+        }
+
+        uint256 challenge = constraint.challenge;
+        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
+        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
+        uint256[] memory selVars = constraint.selStatement.vars;
+        uint256 selVarCount = selVars.length;
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+        }
+        unchecked {
+            for (uint256 i = selVarCount; i > 0; --i) {
+                uint256 weight = _selectPolyEvalAt12At4(
+                    selVars[i - 1],
+                    fullPoint
+                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
+            }
+            for (uint256 i = eqEvalCount; i > 0; --i) {
+                uint256 weight = _eqPolyEvalAt(
+                    flatPoints,
+                    (i - 1) * 12,
+                    fullPoint,
+                    4,
+                    12
+                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
+            }
+        }
+    }
+
+    function _evaluateConstraint8Select(
+        Constraint memory constraint,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        if (
+            constraint.eqStatement.numVariables != 8 ||
+            constraint.selStatement.numVariables != 8
+        ) {
+            revert InconsistentConstraintArity(
+                constraint.eqStatement.numVariables,
+                constraint.selStatement.numVariables
+            );
+        }
+
+        uint256 challenge = constraint.challenge;
+        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
+        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
+        uint256[] memory selVars = constraint.selStatement.vars;
+        uint256 selVarCount = selVars.length;
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+        }
+        unchecked {
+            for (uint256 i = selVarCount; i > 0; --i) {
+                uint256 weight = _selectPolyEvalAt8At8(
+                    selVars[i - 1],
+                    fullPoint
+                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
+            }
+            for (uint256 i = eqEvalCount; i > 0; --i) {
+                uint256 weight = _eqPolyEvalAt(
+                    flatPoints,
+                    (i - 1) * 8,
+                    fullPoint,
+                    8,
+                    8
+                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
+            }
+        }
+    }
+
     function _eqPolyEvalAt(
         uint256[] memory flatPoints,
         uint256 pointStart,
@@ -708,6 +1085,166 @@ library WhirVerifierCore4 {
         }
 
         acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
+    }
+
+    function _selectPolyEvalAt12At4(
+        uint256 var_,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 acc) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let W := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let current := var_
+            let fpBase := add(add(fullPoint, 0x20), 0x80)
+
+            for {
+                let i := 12
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                let pointValue := mload(add(fpBase, shl(5, sub(i, 1))))
+                let scalar := sub(current, 1)
+                if iszero(current) {
+                    scalar := sub(modulus, 1)
+                }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    modulus
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    modulus
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    modulus
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    modulus
+                )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+                current := mulmod(current, current, modulus)
+            }
+
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
+    }
+
+    function _selectPolyEvalAt8At8(
+        uint256 var_,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 acc) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let W := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let current := var_
+            let fpBase := add(add(fullPoint, 0x20), 0x100)
+
+            for {
+                let i := 8
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                let pointValue := mload(add(fpBase, shl(5, sub(i, 1))))
+                let scalar := sub(current, 1)
+                if iszero(current) {
+                    scalar := sub(modulus, 1)
+                }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    modulus
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    modulus
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    modulus
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    modulus
+                )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+                current := mulmod(current, current, modulus)
+            }
+
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
     }
 
     function _eqPolyEvalAtCalldata(
