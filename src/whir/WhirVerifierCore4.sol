@@ -1029,62 +1029,116 @@ library WhirVerifierCore4 {
         uint256 pointOffset,
         uint256 numVariables
     ) internal pure returns (uint256 acc) {
-        uint256 a0 = 1;
-        uint256 a1 = 0;
-        uint256 a2 = 0;
-        uint256 a3 = 0;
-        uint256 modulus = KoalaBear.MODULUS;
-
-        uint256 fpBase;
-        uint256 fullBase;
         assembly ("memory-safe") {
-            fpBase := add(add(flatPoints, 0x20), shl(5, pointStart))
-            fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
-        }
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
 
-        unchecked {
-            for (uint256 i = 0; i < numVariables; ++i) {
-                uint256 p;
-                uint256 q;
-                assembly ("memory-safe") {
-                    p := mload(add(fpBase, shl(5, i)))
-                    q := mload(add(fullBase, shl(5, i)))
-                }
-                uint256 eqTerm = _computeEqTerm(p, q);
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
 
-                uint256 t0 = eqTerm >> 224;
-                uint256 t1 = (eqTerm >> 192) & 0xffffffff;
-                uint256 t2 = (eqTerm >> 160) & 0xffffffff;
-                uint256 t3 = (eqTerm >> 128) & 0xffffffff;
+            let fpBase := add(add(flatPoints, 0x20), shl(5, pointStart))
+            let fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
 
-                uint256 n0 = a0 *
-                    t0 +
-                    KoalaBear.W *
-                    (a1 * t3 + a2 * t2 + a3 * t1);
-                uint256 n1 = a0 *
-                    t1 +
-                    a1 *
-                    t0 +
-                    KoalaBear.W *
-                    (a2 * t3 + a3 * t2);
-                uint256 n2 = a0 *
-                    t2 +
-                    a1 *
-                    t1 +
-                    a2 *
-                    t0 +
-                    KoalaBear.W *
-                    (a3 * t3);
-                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+            for {
+                let i := 0
+            } lt(i, numVariables) {
+                i := add(i, 1)
+            } {
+                let off := shl(5, i)
+                let p := mload(add(fpBase, off))
+                let q := mload(add(fullBase, off))
 
-                a0 = n0 % modulus;
-                a1 = n1 % modulus;
-                a2 = n2 % modulus;
-                a3 = n3 % modulus;
+                // Inline _computeEqTerm: eq(p,q) = 2·p·q + 1 - p - q  (per lane)
+                let p0 := shr(224, p)
+                let p1 := and(shr(192, p), m)
+                let p2 := and(shr(160, p), m)
+                let p3 := and(shr(128, p), m)
+
+                let q0 := shr(224, q)
+                let q1 := and(shr(192, q), m)
+                let q2 := and(shr(160, q), m)
+                let q3 := and(shr(128, q), m)
+
+                // pq = p * q  (schoolbook ext4, X^4 - 3)
+                let pq0 := add(
+                    mul(p0, q0),
+                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
+                )
+                let pq1 := add(
+                    add(mul(p0, q1), mul(p1, q0)),
+                    mul(W, add(mul(p2, q3), mul(p3, q2)))
+                )
+                let pq2 := add(
+                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                    mul(W, mul(p3, q3))
+                )
+                let pq3 := add(
+                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
+                    mul(p3, q0)
+                )
+
+                // t = 2*pq + 1 - p - q  (lane 0 gets +1)
+                // Use 2*M as bias to avoid underflow
+                let t0 := mod(
+                    sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0)),
+                    M
+                )
+                let t1 := mod(
+                    sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1)),
+                    M
+                )
+                let t2 := mod(
+                    sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2)),
+                    M
+                )
+                let t3 := mod(
+                    sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3)),
+                    M
+                )
+
+                // acc = acc * t  (schoolbook ext4)
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    M
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    M
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    M
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    M
+                )
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
             }
-        }
 
-        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
     }
 
     function _selectPolyEvalAt12At4(
@@ -1253,63 +1307,118 @@ library WhirVerifierCore4 {
         uint256 pointOffset,
         uint256 numVariables
     ) internal pure returns (uint256 acc) {
-        uint256 a0 = 1;
-        uint256 a1 = 0;
-        uint256 a2 = 0;
-        uint256 a3 = 0;
-        uint256 modulus = KoalaBear.MODULUS;
-
         if (point.length != numVariables) {
             revert StatementPointArityMismatch(0, numVariables, point.length);
         }
 
-        uint256 fullBase;
         assembly ("memory-safe") {
-            fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
-        }
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
 
-        unchecked {
-            for (uint256 i = 0; i < numVariables; ++i) {
-                uint256 p = point[i];
-                uint256 q;
-                assembly ("memory-safe") {
-                    q := mload(add(fullBase, shl(5, i)))
-                }
-                uint256 eqTerm = _computeEqTerm(p, q);
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
 
-                uint256 t0 = eqTerm >> 224;
-                uint256 t1 = (eqTerm >> 192) & 0xffffffff;
-                uint256 t2 = (eqTerm >> 160) & 0xffffffff;
-                uint256 t3 = (eqTerm >> 128) & 0xffffffff;
+            let fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
 
-                uint256 n0 = a0 *
-                    t0 +
-                    KoalaBear.W *
-                    (a1 * t3 + a2 * t2 + a3 * t1);
-                uint256 n1 = a0 *
-                    t1 +
-                    a1 *
-                    t0 +
-                    KoalaBear.W *
-                    (a2 * t3 + a3 * t2);
-                uint256 n2 = a0 *
-                    t2 +
-                    a1 *
-                    t1 +
-                    a2 *
-                    t0 +
-                    KoalaBear.W *
-                    (a3 * t3);
-                uint256 n3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
+            for {
+                let i := 0
+            } lt(i, numVariables) {
+                i := add(i, 1)
+            } {
+                let off := shl(5, i)
+                let p := calldataload(add(point.offset, off))
+                let q := mload(add(fullBase, off))
 
-                a0 = n0 % modulus;
-                a1 = n1 % modulus;
-                a2 = n2 % modulus;
-                a3 = n3 % modulus;
+                // Inline _computeEqTerm: eq(p,q) = 2·p·q + 1 - p - q  (per lane)
+                let p0 := shr(224, p)
+                let p1 := and(shr(192, p), m)
+                let p2 := and(shr(160, p), m)
+                let p3 := and(shr(128, p), m)
+
+                let q0 := shr(224, q)
+                let q1 := and(shr(192, q), m)
+                let q2 := and(shr(160, q), m)
+                let q3 := and(shr(128, q), m)
+
+                // pq = p * q  (schoolbook ext4, X^4 - 3)
+                let pq0 := add(
+                    mul(p0, q0),
+                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
+                )
+                let pq1 := add(
+                    add(mul(p0, q1), mul(p1, q0)),
+                    mul(W, add(mul(p2, q3), mul(p3, q2)))
+                )
+                let pq2 := add(
+                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                    mul(W, mul(p3, q3))
+                )
+                let pq3 := add(
+                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
+                    mul(p3, q0)
+                )
+
+                // t = 2*pq + 1 - p - q  (lane 0 gets +1)
+                let t0 := mod(
+                    sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0)),
+                    M
+                )
+                let t1 := mod(
+                    sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1)),
+                    M
+                )
+                let t2 := mod(
+                    sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2)),
+                    M
+                )
+                let t3 := mod(
+                    sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3)),
+                    M
+                )
+
+                // acc = acc * t  (schoolbook ext4)
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    M
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    M
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    M
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    M
+                )
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
             }
-        }
 
-        acc = (a0 << 224) | (a1 << 192) | (a2 << 160) | (a3 << 128);
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
     }
 
     function _selectPolyEvalAt(

@@ -30,7 +30,7 @@ cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 
 ### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
 
-Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 645` with `WhirVerifier4` runtime bytecode at `24,264` bytes.
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 645` with `WhirVerifier4` runtime bytecode at `24,367` bytes.
 
 #### Total verification transaction cost
 
@@ -39,31 +39,31 @@ Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables
 |                          | sol-spartan-whir wrapper tx | sol-whir wrapper tx |
 | ------------------------ | --------------------------- | ------------------- |
 | **Field**                | KoalaBear + ext4            | BN254               |
-| **Total tx gas**         | 1,318,283                   | 1,135,052           |
+| **Total tx gas**         | 1,220,726                   | 1,135,052           |
 | **Intrinsic + calldata** | 234,060                     | 435,876             |
-| **Execution remainder**  | 1,084,223                   | 699,176             |
+| **Execution remainder**  | 986,666                     | 699,176             |
 | **Wrapper overhead**     | 39,066                      | 22,165              |
 
 Key takeaways:
 
-- `sol-spartan-whir` uses `+385,047` more execution gas.
+- `sol-spartan-whir` uses `+287,490` more execution gas.
 - `sol-spartan-whir` saves `201,816` gas on intrinsic + calldata thanks to smaller proof calldata.
-- Net wrapper-tx delta: `+183,231` gas (`+16.1%`).
+- Net wrapper-tx delta: `+85,674` gas (`+7.5%`).
 
 In production, `WhirVerifier4.verify(...)` would typically be called directly rather than through a wrapper contract. The direct call saves the wrapper overhead (~39k gas):
 
 |                          | sol-spartan-whir direct tx |
 | ------------------------ | -------------------------- |
-| **Total tx gas**         | 1,278,849                  |
+| **Total tx gas**         | 1,181,292                  |
 | **Intrinsic + calldata** | 233,692                    |
-| **Execution remainder**  | 1,045,157                  |
+| **Execution remainder**  | 947,600                    |
 
 #### Execution gas snapshots
 
 |                                     | sol-spartan-whir | sol-whir |
 | ----------------------------------- | ---------------- | -------- |
-| **Verifier execution snapshot**     | 1,199,228        | 677,011  |
-| **Measured tx execution remainder** | 1,045,157        | 699,176  |
+| **Verifier execution snapshot**     | 1,101,671        | 677,011  |
+| **Measured tx execution remainder** | 947,600          | 699,176  |
 
 Notes:
 
@@ -123,7 +123,7 @@ For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [.
 via_ir = true
 optimizer = true
 optimizer_runs = 645
-WhirVerifier4 deployed bytecode = 24,264 bytes
+WhirVerifier4 deployed bytecode = 24,367 bytes
 ```
 
 ## Dependencies
