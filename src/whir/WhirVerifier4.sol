@@ -305,43 +305,40 @@ contract WhirVerifier4 {
             );
         }
 
-        uint256 gammaPower = KoalaBearExt4.fromBase(1);
         uint256[] memory oodFlatPoints = parsedCommitment
             .oodStatement
             .flatPoints;
         uint256 oodLen = parsedCommitment.oodStatement.evaluations.length;
 
         unchecked {
-            for (uint256 i = 0; i < statement.points.length; ++i) {
-                WhirVerifierUtils4.validatePackedExt4Calldata(
-                    statement.points[i]
-                );
-                uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
-                    statement.points[i],
-                    allRandomness,
-                    0,
-                    QuarticWhirFixedConfig.NUM_VARIABLES
-                );
-                total = KoalaBearExt4.add(
-                    total,
-                    KoalaBearExt4.mul(gammaPower, weight)
-                );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
-            }
-
-            for (uint256 i = 0; i < oodLen; ++i) {
+            for (uint256 i = oodLen; i > 0; --i) {
                 uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
                     oodFlatPoints,
-                    i * QuarticWhirFixedConfig.NUM_VARIABLES,
+                    (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
                     allRandomness,
                     0,
                     QuarticWhirFixedConfig.NUM_VARIABLES
                 );
                 total = KoalaBearExt4.add(
-                    total,
-                    KoalaBearExt4.mul(gammaPower, weight)
+                    weight,
+                    KoalaBearExt4.mul(total, challenge)
                 );
-                gammaPower = KoalaBearExt4.mul(gammaPower, challenge);
+            }
+
+            for (uint256 i = statement.points.length; i > 0; --i) {
+                WhirVerifierUtils4.validatePackedExt4Calldata(
+                    statement.points[i - 1]
+                );
+                uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
+                    statement.points[i - 1],
+                    allRandomness,
+                    0,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                );
+                total = KoalaBearExt4.add(
+                    weight,
+                    KoalaBearExt4.mul(total, challenge)
+                );
             }
         }
     }

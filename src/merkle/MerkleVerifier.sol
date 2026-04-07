@@ -619,8 +619,8 @@ library MerkleVerifier {
 
             // Copy inputs into bufA (interleaved) with sorted-unique validation.
             {
-                let idxBase := add(indices, 0x20)
-                let hashBase := add(leafHashes, 0x20)
+                let idxPtr := add(indices, 0x20)
+                let hashPtr := add(leafHashes, 0x20)
                 let dst := bufA
                 let prevIdx := sub(0, 1) // type(uint256).max — always less than any real index
                 for {
@@ -628,8 +628,7 @@ library MerkleVerifier {
                 } lt(i, n) {
                     i := add(i, 1)
                 } {
-                    let off := shl(5, i)
-                    let idx := mload(add(idxBase, off))
+                    let idx := mload(idxPtr)
                     // Check strictly increasing (prevIdx < idx).
                     // On first iteration prevIdx = max, but we skip the check via i > 0.
                     if and(gt(i, 0), iszero(lt(prevIdx, idx))) {
@@ -644,16 +643,20 @@ library MerkleVerifier {
                     }
                     prevIdx := idx
                     mstore(dst, idx)
-                    mstore(add(dst, 0x20), mload(add(hashBase, off)))
+                    mstore(add(dst, 0x20), mload(hashPtr))
                     dst := add(dst, entrySize)
+                    idxPtr := add(idxPtr, 0x20)
+                    hashPtr := add(hashPtr, 0x20)
                 }
             }
 
             let frontierLen := n
             let frontier := bufA
             let nextBuf := bufB
-            let decommCursor := 0
             let decommLen := decommitments.length
+            let decommBase := decommitments.offset
+            let decommPtr := decommBase
+            let decommEnd := add(decommBase, shl(5, decommLen))
 
             for {
                 let level := 0
@@ -664,6 +667,8 @@ library MerkleVerifier {
                 let ep := frontier
                 let frontierEnd := add(frontier, mul(frontierLen, entrySize))
                 let nextPtr := nextBuf
+                let lastParentIndex := 0
+                let hasLastParent := 0
                 for {
 
                 } lt(ep, frontierEnd) {
@@ -696,20 +701,21 @@ library MerkleVerifier {
 
                     if iszero(merged) {
                         // Need a decommitment sibling.
-                        if iszero(lt(decommCursor, decommLen)) {
-                            // revert InsufficientDecommitments(decommCursor+1, decommLen)
+                        if iszero(lt(decommPtr, decommEnd)) {
+                            // revert InsufficientDecommitments(consumed+1, decommLen)
                             mstore(
                                 0x00,
                                 0x90196ee300000000000000000000000000000000000000000000000000000000
                             )
-                            mstore(0x04, add(decommCursor, 1))
+                            mstore(
+                                0x04,
+                                add(shr(5, sub(decommPtr, decommBase)), 1)
+                            )
                             mstore(0x24, decommLen)
                             revert(0x00, 0x44)
                         }
-                        let sibling := calldataload(
-                            add(decommitments.offset, shl(5, decommCursor))
-                        )
-                        decommCursor := add(decommCursor, 1)
+                        let sibling := calldataload(decommPtr)
+                        decommPtr := add(decommPtr, 0x20)
                         ep := add(ep, entrySize)
 
                         switch and(node, 1)
@@ -726,20 +732,20 @@ library MerkleVerifier {
 
                     let parentIndex := shr(1, node)
 
-                    // Dedup: overwrite if last entry has the same parent index.
-                    let isDup := 0
-                    if gt(nextLen, 0) {
-                        let lastPtr := sub(nextPtr, entrySize)
-                        if eq(mload(lastPtr), parentIndex) {
-                            isDup := 1
-                            mstore(add(lastPtr, 0x20), parentHash)
-                        }
+                    // Dedup: if the previous entry had the same parent index,
+                    // overwrite its hash in place instead of appending a new entry.
+                    if and(hasLastParent, eq(lastParentIndex, parentIndex)) {
+                        mstore(sub(nextPtr, 0x20), parentHash)
                     }
-                    if iszero(isDup) {
+                    if iszero(
+                        and(hasLastParent, eq(lastParentIndex, parentIndex))
+                    ) {
                         mstore(nextPtr, parentIndex)
                         mstore(add(nextPtr, 0x20), parentHash)
                         nextPtr := add(nextPtr, entrySize)
                         nextLen := add(nextLen, 1)
+                        lastParentIndex := parentIndex
+                        hasLastParent := 1
                     }
                 }
 
@@ -751,13 +757,13 @@ library MerkleVerifier {
             }
 
             // Verify all decommitments consumed.
-            if iszero(eq(decommCursor, decommLen)) {
-                // revert TrailingDecommitments(decommCursor, decommLen)
+            if iszero(eq(decommPtr, decommEnd)) {
+                // revert TrailingDecommitments(consumed, decommLen)
                 mstore(
                     0x00,
                     0xb48ec3d200000000000000000000000000000000000000000000000000000000
                 )
-                mstore(0x04, decommCursor)
+                mstore(0x04, shr(5, sub(decommPtr, decommBase)))
                 mstore(0x24, decommLen)
                 revert(0x00, 0x44)
             }

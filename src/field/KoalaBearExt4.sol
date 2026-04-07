@@ -6,6 +6,11 @@ import {KoalaBear} from "./KoalaBear.sol";
 library KoalaBearExt4 {
     uint256 internal constant DEGREE = 4;
     uint256 internal constant COEFF_MASK = 0xffffffff;
+    uint256 internal constant PACKED_MODULUS =
+        (uint256(KoalaBear.MODULUS) << 224) |
+            (uint256(KoalaBear.MODULUS) << 192) |
+            (uint256(KoalaBear.MODULUS) << 160) |
+            (uint256(KoalaBear.MODULUS) << 128);
     uint256 internal constant ONE = uint256(1) << 224;
     uint256 internal constant TWO = uint256(2) << 224;
     uint256 internal constant INV_TWO = 1_065_353_217;
@@ -38,29 +43,21 @@ library KoalaBearExt4 {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
+            let sum := add(a, b)
 
-            let a0 := shr(224, a)
-            let a1 := and(shr(192, a), mask)
-            let a2 := and(shr(160, a), mask)
-            let a3 := and(shr(128, a), mask)
-            let b0 := shr(224, b)
-            let b1 := and(shr(192, b), mask)
-            let b2 := and(shr(160, b), mask)
-            let b3 := and(shr(128, b), mask)
-
-            let c0 := add(a0, b0)
+            let c0 := shr(224, sum)
             if iszero(lt(c0, modulus)) {
                 c0 := sub(c0, modulus)
             }
-            let c1 := add(a1, b1)
+            let c1 := and(shr(192, sum), mask)
             if iszero(lt(c1, modulus)) {
                 c1 := sub(c1, modulus)
             }
-            let c2 := add(a2, b2)
+            let c2 := and(shr(160, sum), mask)
             if iszero(lt(c2, modulus)) {
                 c2 := sub(c2, modulus)
             }
-            let c3 := add(a3, b3)
+            let c3 := and(shr(128, sum), mask)
             if iszero(lt(c3, modulus)) {
                 c3 := sub(c3, modulus)
             }
@@ -76,20 +73,30 @@ library KoalaBearExt4 {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
+            let tmp := sub(
+                add(
+                    a,
+                    0x7f0000017f0000017f0000017f00000100000000000000000000000000000000
+                ),
+                b
+            )
 
-            let a0 := shr(224, a)
-            let a1 := and(shr(192, a), mask)
-            let a2 := and(shr(160, a), mask)
-            let a3 := and(shr(128, a), mask)
-            let b0 := shr(224, b)
-            let b1 := and(shr(192, b), mask)
-            let b2 := and(shr(160, b), mask)
-            let b3 := and(shr(128, b), mask)
-
-            let c0 := sub(add(a0, mul(modulus, lt(a0, b0))), b0)
-            let c1 := sub(add(a1, mul(modulus, lt(a1, b1))), b1)
-            let c2 := sub(add(a2, mul(modulus, lt(a2, b2))), b2)
-            let c3 := sub(add(a3, mul(modulus, lt(a3, b3))), b3)
+            let c0 := shr(224, tmp)
+            if iszero(lt(c0, modulus)) {
+                c0 := sub(c0, modulus)
+            }
+            let c1 := and(shr(192, tmp), mask)
+            if iszero(lt(c1, modulus)) {
+                c1 := sub(c1, modulus)
+            }
+            let c2 := and(shr(160, tmp), mask)
+            if iszero(lt(c2, modulus)) {
+                c2 := sub(c2, modulus)
+            }
+            let c3 := and(shr(128, tmp), mask)
+            if iszero(lt(c3, modulus)) {
+                c3 := sub(c3, modulus)
+            }
 
             out := or(
                 or(shl(224, c0), shl(192, c1)),
