@@ -376,21 +376,158 @@ library WhirVerifierCore4 {
         uint256 eqLen = eqEvals.length;
         uint256[] memory selEvals = constraint.selStatement.evaluations;
         uint256 selLen = selEvals.length;
-        uint256 horner;
 
-        unchecked {
-            for (uint256 i = selLen; i > 0; --i) {
-                horner = KoalaBearExt4.add(
-                    selEvals[i - 1],
-                    KoalaBearExt4.mul(horner, challenge)
-                );
+        // Horner: Σ challenge^i * eval_i with fused mulAdd in assembly.
+        // Pre-unpack challenge lanes (constant across all iterations).
+        uint256 horner;
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
+
+            let ch0 := shr(224, challenge)
+            let ch1 := and(shr(192, challenge), m)
+            let ch2 := and(shr(160, challenge), m)
+            let ch3 := and(shr(128, challenge), m)
+
+            let h0 := 0
+            let h1 := 0
+            let h2 := 0
+            let h3 := 0
+
+            // selEvals: array data at selEvals + 0x20
+            let selBase := add(selEvals, 0x20)
+            for {
+                let i := selLen
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                let w := mload(add(selBase, shl(5, sub(i, 1))))
+                let w0 := shr(224, w)
+                let w1 := and(shr(192, w), m)
+                let w2 := and(shr(160, w), m)
+                let w3 := and(shr(128, w), m)
+
+                let r0 := mod(
+                    add(
+                        add(
+                            mul(h0, ch0),
+                            mul(
+                                W,
+                                add(
+                                    add(mul(h1, ch3), mul(h2, ch2)),
+                                    mul(h3, ch1)
+                                )
+                            )
+                        ),
+                        w0
+                    ),
+                    M
+                )
+                let r1 := mod(
+                    add(
+                        add(
+                            add(mul(h0, ch1), mul(h1, ch0)),
+                            mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                        ),
+                        w1
+                    ),
+                    M
+                )
+                let r2 := mod(
+                    add(
+                        add(
+                            add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
+                            mul(W, mul(h3, ch3))
+                        ),
+                        w2
+                    ),
+                    M
+                )
+                let r3 := mod(
+                    add(
+                        add(
+                            add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)),
+                            mul(h3, ch0)
+                        ),
+                        w3
+                    ),
+                    M
+                )
+                h0 := r0
+                h1 := r1
+                h2 := r2
+                h3 := r3
             }
-            for (uint256 i = eqLen; i > 0; --i) {
-                horner = KoalaBearExt4.add(
-                    eqEvals[i - 1],
-                    KoalaBearExt4.mul(horner, challenge)
-                );
+
+            let eqBase := add(eqEvals, 0x20)
+            for {
+                let i := eqLen
+            } gt(i, 0) {
+                i := sub(i, 1)
+            } {
+                let w := mload(add(eqBase, shl(5, sub(i, 1))))
+                let w0 := shr(224, w)
+                let w1 := and(shr(192, w), m)
+                let w2 := and(shr(160, w), m)
+                let w3 := and(shr(128, w), m)
+
+                let r0 := mod(
+                    add(
+                        add(
+                            mul(h0, ch0),
+                            mul(
+                                W,
+                                add(
+                                    add(mul(h1, ch3), mul(h2, ch2)),
+                                    mul(h3, ch1)
+                                )
+                            )
+                        ),
+                        w0
+                    ),
+                    M
+                )
+                let r1 := mod(
+                    add(
+                        add(
+                            add(mul(h0, ch1), mul(h1, ch0)),
+                            mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                        ),
+                        w1
+                    ),
+                    M
+                )
+                let r2 := mod(
+                    add(
+                        add(
+                            add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
+                            mul(W, mul(h3, ch3))
+                        ),
+                        w2
+                    ),
+                    M
+                )
+                let r3 := mod(
+                    add(
+                        add(
+                            add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)),
+                            mul(h3, ch0)
+                        ),
+                        w3
+                    ),
+                    M
+                )
+                h0 := r0
+                h1 := r1
+                h2 := r2
+                h3 := r3
             }
+
+            horner := or(
+                or(shl(224, h0), shl(192, h1)),
+                or(shl(160, h2), shl(128, h3))
+            )
         }
 
         updated = KoalaBearExt4.add(acc, horner);
@@ -1081,23 +1218,17 @@ library WhirVerifierCore4 {
                 )
 
                 // t = 2*pq + 1 - p - q  (lane 0 gets +1)
-                // Use 2*M as bias to avoid underflow
-                let t0 := mod(
-                    sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0)),
-                    M
+                // Use 2*M as bias to avoid underflow.
+                // mod is intentionally omitted: t_i < 2^67 and the subsequent
+                // schoolbook acc*t products (< 2^31 * 2^67 = 2^98) fit in
+                // uint256.  The final mod on acc gives the correct result.
+                let t0 := sub(
+                    add(add(pq0, pq0), add(0xfe000002, 1)),
+                    add(p0, q0)
                 )
-                let t1 := mod(
-                    sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1)),
-                    M
-                )
-                let t2 := mod(
-                    sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2)),
-                    M
-                )
-                let t3 := mod(
-                    sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3)),
-                    M
-                )
+                let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
+                let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
+                let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
                 // acc = acc * t  (schoolbook ext4)
                 let n0 := mod(
@@ -1362,22 +1493,15 @@ library WhirVerifierCore4 {
                 )
 
                 // t = 2*pq + 1 - p - q  (lane 0 gets +1)
-                let t0 := mod(
-                    sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0)),
-                    M
+                // Use 2*M as bias to avoid underflow.
+                // mod is intentionally omitted (see _eqPolyEvalAt).
+                let t0 := sub(
+                    add(add(pq0, pq0), add(0xfe000002, 1)),
+                    add(p0, q0)
                 )
-                let t1 := mod(
-                    sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1)),
-                    M
-                )
-                let t2 := mod(
-                    sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2)),
-                    M
-                )
-                let t3 := mod(
-                    sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3)),
-                    M
-                )
+                let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
+                let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
+                let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
                 // acc = acc * t  (schoolbook ext4)
                 let n0 := mod(

@@ -123,22 +123,11 @@ library WhirVerifierUtils4 {
                 let c2 := and(shr(160, packed), mask)
                 let c3 := and(shr(128, packed), mask)
 
-                let r0 := add(mulmod(a0, var_, modulus), c0)
-                if iszero(lt(r0, modulus)) {
-                    r0 := sub(r0, modulus)
-                }
-                let r1 := add(mulmod(a1, var_, modulus), c1)
-                if iszero(lt(r1, modulus)) {
-                    r1 := sub(r1, modulus)
-                }
-                let r2 := add(mulmod(a2, var_, modulus), c2)
-                if iszero(lt(r2, modulus)) {
-                    r2 := sub(r2, modulus)
-                }
-                let r3 := add(mulmod(a3, var_, modulus), c3)
-                if iszero(lt(r3, modulus)) {
-                    r3 := sub(r3, modulus)
-                }
+                // mulmod ∈ [0,M-1], + c ∈ [0,M-1] → sum ∈ [0,2M-2]. mod reduces.
+                let r0 := mod(add(mulmod(a0, var_, modulus), c0), modulus)
+                let r1 := mod(add(mulmod(a1, var_, modulus), c1), modulus)
+                let r2 := mod(add(mulmod(a2, var_, modulus), c2), modulus)
+                let r3 := mod(add(mulmod(a3, var_, modulus), c3), modulus)
 
                 acc := or(
                     or(shl(224, r0), shl(192, r1)),

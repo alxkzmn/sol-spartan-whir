@@ -45,26 +45,16 @@ library KoalaBearExt4 {
             let mask := 0xffffffff
             let sum := add(a, b)
 
-            let c0 := shr(224, sum)
-            if iszero(lt(c0, modulus)) {
-                c0 := sub(c0, modulus)
-            }
-            let c1 := and(shr(192, sum), mask)
-            if iszero(lt(c1, modulus)) {
-                c1 := sub(c1, modulus)
-            }
-            let c2 := and(shr(160, sum), mask)
-            if iszero(lt(c2, modulus)) {
-                c2 := sub(c2, modulus)
-            }
-            let c3 := and(shr(128, sum), mask)
-            if iszero(lt(c3, modulus)) {
-                c3 := sub(c3, modulus)
-            }
-
+            // Each lane sum ∈ [0, 2M-2]; mod gives the canonical reduction.
             out := or(
-                or(shl(224, c0), shl(192, c1)),
-                or(shl(160, c2), shl(128, c3))
+                or(
+                    shl(224, mod(shr(224, sum), modulus)),
+                    shl(192, mod(and(shr(192, sum), mask), modulus))
+                ),
+                or(
+                    shl(160, mod(and(shr(160, sum), mask), modulus)),
+                    shl(128, mod(and(shr(128, sum), mask), modulus))
+                )
             )
         }
     }
@@ -81,26 +71,16 @@ library KoalaBearExt4 {
                 b
             )
 
-            let c0 := shr(224, tmp)
-            if iszero(lt(c0, modulus)) {
-                c0 := sub(c0, modulus)
-            }
-            let c1 := and(shr(192, tmp), mask)
-            if iszero(lt(c1, modulus)) {
-                c1 := sub(c1, modulus)
-            }
-            let c2 := and(shr(160, tmp), mask)
-            if iszero(lt(c2, modulus)) {
-                c2 := sub(c2, modulus)
-            }
-            let c3 := and(shr(128, tmp), mask)
-            if iszero(lt(c3, modulus)) {
-                c3 := sub(c3, modulus)
-            }
-
+            // Each lane ∈ [1, 2M-1]; mod gives the canonical reduction.
             out := or(
-                or(shl(224, c0), shl(192, c1)),
-                or(shl(160, c2), shl(128, c3))
+                or(
+                    shl(224, mod(shr(224, tmp), modulus)),
+                    shl(192, mod(and(shr(192, tmp), mask), modulus))
+                ),
+                or(
+                    shl(160, mod(and(shr(160, tmp), mask), modulus)),
+                    shl(128, mod(and(shr(128, tmp), mask), modulus))
+                )
             )
         }
     }
@@ -416,43 +396,34 @@ library KoalaBearExt4 {
         uint256 q1Packed;
         uint256 q2Packed;
 
+        // Branchless q1/q2 computation using constant biases.
+        // q2 = (c0 + c2 - 2*c1) / 2 mod M  →  mulmod(c0+c2+2M - 2*c1, invTwo, M)
+        // q1 = (4*c1 - c2 - 3*c0) / 2 mod M →  mulmod(4*c1+4M - c2 - 3*c0, invTwo, M)
+        // The constant biases (2M, 4M) prevent underflow:
+        //   q2 arg ∈ [2, 4M-2], q1 arg ∈ [4, 8M-4]. mulmod handles these.
         assembly ("memory-safe") {
             let M := 0x7f000001
             let mask := 0xffffffff
             let invTwo := 1065353217
+            let twoM := 0xfe000002 // 2 * M
+            let fourM := 0x1fc000004 // 4 * M
 
             // --- Lane 0 (bits 224-255) ---
             let c0 := shr(224, e0)
             let c1 := shr(224, e1)
             let c2 := shr(224, e2)
 
-            let twoC1 := add(c1, c1)
-            if iszero(lt(twoC1, M)) {
-                twoC1 := sub(twoC1, M)
-            }
-
-            let s := add(c0, c2)
             q2Packed := shl(
                 224,
-                mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                mulmod(sub(add(add(c0, c2), twoM), add(c1, c1)), invTwo, M)
             )
-
-            let fourC1 := add(twoC1, twoC1)
-            if iszero(lt(fourC1, M)) {
-                fourC1 := sub(fourC1, M)
-            }
-            let twoC0 := add(c0, c0)
-            if iszero(lt(twoC0, M)) {
-                twoC0 := sub(twoC0, M)
-            }
-            let threeC0 := add(c0, twoC0)
-            if iszero(lt(threeC0, M)) {
-                threeC0 := sub(threeC0, M)
-            }
-            let d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
             q1Packed := shl(
                 224,
-                mulmod(sub(add(d, mul(M, lt(d, threeC0))), threeC0), invTwo, M)
+                mulmod(
+                    sub(add(shl(2, c1), fourM), add(c2, mul(c0, 3))),
+                    invTwo,
+                    M
+                )
             )
 
             // --- Lane 1 (bits 192-223) ---
@@ -460,38 +431,19 @@ library KoalaBearExt4 {
             c1 := and(shr(192, e1), mask)
             c2 := and(shr(192, e2), mask)
 
-            twoC1 := add(c1, c1)
-            if iszero(lt(twoC1, M)) {
-                twoC1 := sub(twoC1, M)
-            }
-            s := add(c0, c2)
             q2Packed := or(
                 q2Packed,
                 shl(
                     192,
-                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                    mulmod(sub(add(add(c0, c2), twoM), add(c1, c1)), invTwo, M)
                 )
             )
-
-            fourC1 := add(twoC1, twoC1)
-            if iszero(lt(fourC1, M)) {
-                fourC1 := sub(fourC1, M)
-            }
-            twoC0 := add(c0, c0)
-            if iszero(lt(twoC0, M)) {
-                twoC0 := sub(twoC0, M)
-            }
-            threeC0 := add(c0, twoC0)
-            if iszero(lt(threeC0, M)) {
-                threeC0 := sub(threeC0, M)
-            }
-            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
             q1Packed := or(
                 q1Packed,
                 shl(
                     192,
                     mulmod(
-                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        sub(add(shl(2, c1), fourM), add(c2, mul(c0, 3))),
                         invTwo,
                         M
                     )
@@ -503,38 +455,19 @@ library KoalaBearExt4 {
             c1 := and(shr(160, e1), mask)
             c2 := and(shr(160, e2), mask)
 
-            twoC1 := add(c1, c1)
-            if iszero(lt(twoC1, M)) {
-                twoC1 := sub(twoC1, M)
-            }
-            s := add(c0, c2)
             q2Packed := or(
                 q2Packed,
                 shl(
                     160,
-                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                    mulmod(sub(add(add(c0, c2), twoM), add(c1, c1)), invTwo, M)
                 )
             )
-
-            fourC1 := add(twoC1, twoC1)
-            if iszero(lt(fourC1, M)) {
-                fourC1 := sub(fourC1, M)
-            }
-            twoC0 := add(c0, c0)
-            if iszero(lt(twoC0, M)) {
-                twoC0 := sub(twoC0, M)
-            }
-            threeC0 := add(c0, twoC0)
-            if iszero(lt(threeC0, M)) {
-                threeC0 := sub(threeC0, M)
-            }
-            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
             q1Packed := or(
                 q1Packed,
                 shl(
                     160,
                     mulmod(
-                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        sub(add(shl(2, c1), fourM), add(c2, mul(c0, 3))),
                         invTwo,
                         M
                     )
@@ -546,38 +479,19 @@ library KoalaBearExt4 {
             c1 := and(shr(128, e1), mask)
             c2 := and(shr(128, e2), mask)
 
-            twoC1 := add(c1, c1)
-            if iszero(lt(twoC1, M)) {
-                twoC1 := sub(twoC1, M)
-            }
-            s := add(c0, c2)
             q2Packed := or(
                 q2Packed,
                 shl(
                     128,
-                    mulmod(sub(add(s, mul(M, lt(s, twoC1))), twoC1), invTwo, M)
+                    mulmod(sub(add(add(c0, c2), twoM), add(c1, c1)), invTwo, M)
                 )
             )
-
-            fourC1 := add(twoC1, twoC1)
-            if iszero(lt(fourC1, M)) {
-                fourC1 := sub(fourC1, M)
-            }
-            twoC0 := add(c0, c0)
-            if iszero(lt(twoC0, M)) {
-                twoC0 := sub(twoC0, M)
-            }
-            threeC0 := add(c0, twoC0)
-            if iszero(lt(threeC0, M)) {
-                threeC0 := sub(threeC0, M)
-            }
-            d := sub(add(fourC1, mul(M, lt(fourC1, c2))), c2)
             q1Packed := or(
                 q1Packed,
                 shl(
                     128,
                     mulmod(
-                        sub(add(d, mul(M, lt(d, threeC0))), threeC0),
+                        sub(add(shl(2, c1), fourM), add(c2, mul(c0, 3))),
                         invTwo,
                         M
                     )
