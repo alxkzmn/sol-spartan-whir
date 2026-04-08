@@ -838,10 +838,12 @@ contract WhirProfileHarness {
             prevCommitment = nc;
         }
 
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
         unchecked {
             for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+                WhirVerifierUtils4.observeValidatedExt4(
+                    challenger,
+                    proof.finalPoly[i]
+                );
             }
         }
 
@@ -1203,10 +1205,12 @@ contract WhirProfileHarness {
             prevCommitment = nc;
         }
 
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
         unchecked {
             for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+                WhirVerifierUtils4.observeValidatedExt4(
+                    challenger,
+                    proof.finalPoly[i]
+                );
             }
         }
 
@@ -1349,10 +1353,12 @@ contract WhirProfileHarness {
             prevCommitment = nc;
         }
 
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
         unchecked {
             for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeExt4(challenger, proof.finalPoly[i]);
+                WhirVerifierUtils4.observeValidatedExt4(
+                    challenger,
+                    proof.finalPoly[i]
+                );
             }
         }
 
@@ -1939,7 +1945,7 @@ contract WhirGasProfileTest is Test {
             observeExt4Challenger.observeBytes(
                 abi.encodePacked(bytes32(uint256(42)))
             );
-            WhirVerifierUtils4.observeExt4(
+            WhirVerifierUtils4.observeValidatedExt4(
                 observeExt4Challenger,
                 packedInputs[i & 7]
             );

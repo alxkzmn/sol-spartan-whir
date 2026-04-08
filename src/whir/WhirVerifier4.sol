@@ -182,7 +182,7 @@ contract WhirVerifier4 {
                 proof.finalPoly.length
             );
         }
-        challenger.observePackedExt4Slice(proof.finalPoly);
+        challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
         WhirVerifierCore4.SelectStatement
             memory finalStirStatement = WhirVerifierCore4

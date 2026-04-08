@@ -29,11 +29,11 @@ library WhirVerifierUtils4 {
         }
     }
 
-    function observeExt4(
+    function observeValidatedExt4(
         KeccakChallenger.State memory challenger,
         uint256 packed
     ) internal pure {
-        challenger.observePackedExt4(packed);
+        challenger.observeValidatedPackedExt4(packed);
     }
 
     function sampleExt4(

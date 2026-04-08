@@ -135,7 +135,7 @@ library WhirVerifierCore4 {
                 }
 
                 uint256 evalValue = oodAnswers[i];
-                WhirVerifierUtils4.observeExt4(challenger, evalValue);
+                WhirVerifierUtils4.observeValidatedExt4(challenger, evalValue);
                 parsed.oodStatement.evaluations[i] = evalValue;
             }
         }
@@ -228,7 +228,7 @@ library WhirVerifierCore4 {
                 uint256 c0 = sumcheck.polynomialEvals[2 * i];
                 uint256 c2 = sumcheck.polynomialEvals[2 * i + 1];
 
-                challenger.observePackedExt4Pair(c0, c2);
+                challenger.observeValidatedPackedExt4Pair(c0, c2);
 
                 if (powBits > 0) {
                     if (
