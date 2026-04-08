@@ -474,8 +474,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    0,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    0
                 );
             bd.round0Stir = g - gasleft();
 
@@ -542,8 +541,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    1,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    1
                 );
             bd.round1Stir = g - gasleft();
 
@@ -600,8 +598,7 @@ contract WhirProfileHarness {
             proof.finalPowWitness,
             foldingRandomness,
             false,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         bd.finalStir = g - gasleft();
 
@@ -942,8 +939,7 @@ contract WhirProfileHarness {
             rp.powWitness,
             foldingRandomness,
             true,
-            0,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            0
         );
         gasRound0Stir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1031,8 +1027,7 @@ contract WhirProfileHarness {
                     rp0.powWitness,
                     foldingRandomness,
                     true,
-                    0,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    0
                 );
 
             cArr[1] = WhirVerifierCore4.Constraint({
@@ -1087,8 +1082,7 @@ contract WhirProfileHarness {
             rp1.powWitness,
             foldingRandomness,
             true,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         gasRound1Stir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1173,8 +1167,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    uint8(round),
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    uint8(round)
                 );
             cArr[round + 1] = WhirVerifierCore4.Constraint({
                 challenge: WhirVerifierUtils4.sampleExt4(challenger),
@@ -1225,8 +1218,7 @@ contract WhirProfileHarness {
             proof.finalPowWitness,
             foldingRandomness,
             false,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         gasFinalStir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1318,8 +1310,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    uint8(round),
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    uint8(round)
                 );
             cArr[cCount] = WhirVerifierCore4.Constraint({
                 challenge: WhirVerifierUtils4.sampleExt4(challenger),
@@ -1371,8 +1362,7 @@ contract WhirProfileHarness {
                 proof.finalPowWitness,
                 foldingRandomness,
                 false,
-                1,
-                uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                1
             );
         WhirVerifierCore4._verifySelectStatement(finalSS, proof.finalPoly);
         (
@@ -1584,52 +1574,22 @@ contract WhirProfileHarness {
                 require(indices[i - 1] < indices[i], "UNSORTED");
             }
         }
+        uint256 expectedDecommitments = indices.length * depth;
+        require(
+            decommitments.length == expectedDecommitments,
+            "DECOMMITMENT_LEN"
+        );
 
-        uint256 frontierLen = indices.length;
-        uint256[] memory frontierIndices = new uint256[](frontierLen);
-        bytes32[] memory frontierHashes = new bytes32[](frontierLen);
-
+        bytes32 root;
         unchecked {
-            for (uint256 i = 0; i < frontierLen; ++i) {
-                frontierIndices[i] = indices[i];
-                frontierHashes[i] = leafHashes[i];
-            }
-        }
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 node = indices[i];
+                bytes32 hash = leafHashes[i];
+                uint256 pathOffset = i * depth;
 
-        uint256[] memory nextIndices = new uint256[](frontierLen);
-        bytes32[] memory nextHashes = new bytes32[](frontierLen);
-        uint256 decommitmentCursor = 0;
-
-        for (uint256 level = 0; level < depth; ++level) {
-            uint256 nextLen = 0;
-            uint256 cursor = 0;
-
-            while (cursor < frontierLen) {
-                uint256 node = frontierIndices[cursor];
-                bytes32 hash = frontierHashes[cursor];
-                bytes32 parentHash;
-
-                if (
-                    (node & 1) == 0 &&
-                    cursor + 1 < frontierLen &&
-                    frontierIndices[cursor + 1] == node + 1
-                ) {
-                    parentHash = MerkleVerifier.compressNode(
-                        hash,
-                        frontierHashes[cursor + 1],
-                        effectiveDigestBytes
-                    );
-                    cursor += 2;
-                } else {
-                    require(
-                        decommitmentCursor < decommitments.length,
-                        "INSUFFICIENT_DECOMMITMENTS"
-                    );
-                    bytes32 siblingHash = decommitments[decommitmentCursor];
-                    decommitmentCursor += 1;
-                    cursor += 1;
-
-                    parentHash = (node & 1) == 0
+                for (uint256 level = 0; level < depth; ++level) {
+                    bytes32 siblingHash = decommitments[pathOffset + level];
+                    hash = (node & 1) == 0
                         ? MerkleVerifier.compressNode(
                             hash,
                             siblingHash,
@@ -1640,35 +1600,18 @@ contract WhirProfileHarness {
                             hash,
                             effectiveDigestBytes
                         );
+                    node >>= 1;
                 }
 
-                uint256 parentIndex = node >> 1;
-                if (nextLen > 0 && nextIndices[nextLen - 1] == parentIndex) {
-                    nextHashes[nextLen - 1] = parentHash;
+                if (i == 0) {
+                    root = hash;
                 } else {
-                    nextIndices[nextLen] = parentIndex;
-                    nextHashes[nextLen] = parentHash;
-                    nextLen += 1;
+                    require(hash == root, "ROOT_MISMATCH");
                 }
             }
-
-            uint256[] memory tempIndices = frontierIndices;
-            frontierIndices = nextIndices;
-            nextIndices = tempIndices;
-
-            bytes32[] memory tempHashes = frontierHashes;
-            frontierHashes = nextHashes;
-            nextHashes = tempHashes;
-
-            frontierLen = nextLen;
         }
 
-        require(
-            decommitmentCursor == decommitments.length,
-            "TRAILING_DECOMMITMENTS"
-        );
-        require(frontierLen == 1 && frontierIndices[0] == 0, "INVALID_FINAL");
-        return frontierHashes[0];
+        return root;
     }
 
     function profileStirMicro(

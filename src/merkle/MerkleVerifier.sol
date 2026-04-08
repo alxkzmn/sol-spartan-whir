@@ -417,170 +417,40 @@ library MerkleVerifier {
         if (indices.length != leafHashes.length) {
             revert LengthMismatch(indices.length, leafHashes.length);
         }
-        uint256 keep = _clampEffectiveDigestBytes(effectiveDigestBytes);
-        uint256 digestMask;
-        unchecked {
-            digestMask = keep == 32
-                ? type(uint256).max
-                : (type(uint256).max << ((32 - keep) * 8));
+        uint256 expectedDecommitments = indices.length * depth;
+        if (decommitments.length < expectedDecommitments) {
+            revert InsufficientDecommitments(
+                expectedDecommitments,
+                decommitments.length
+            );
+        }
+        if (decommitments.length > expectedDecommitments) {
+            revert TrailingDecommitments(
+                expectedDecommitments,
+                decommitments.length
+            );
         }
 
-        // Assembly-optimized frontier-swap Merkle reduction with configurable
-        // digest truncation mask.
-        assembly ("memory-safe") {
-            let n := mload(indices)
-            let entrySize := 0x40
-            let bufBytes := mul(entrySize, n)
-            let base := mload(0x40)
-            let bufA := base
-            let bufB := add(base, bufBytes)
-            let scratch := add(bufB, bufBytes)
-            mstore(0x40, add(scratch, 65))
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 node = indices[i];
+                bytes32 hash = leafHashes[i];
+                uint256 pathOffset = i * depth;
 
-            // Pre-store the 0x01 internal-node domain separator.
-            mstore8(scratch, 0x01)
-
-            // Copy inputs into bufA (interleaved entries: [index | hash]).
-            {
-                let idxBase := add(indices, 0x20)
-                let hashBase := add(leafHashes, 0x20)
-                let dst := bufA
-                for {
-                    let i := 0
-                } lt(i, n) {
-                    i := add(i, 1)
-                } {
-                    let off := shl(5, i)
-                    mstore(dst, mload(add(idxBase, off)))
-                    mstore(add(dst, 0x20), mload(add(hashBase, off)))
-                    dst := add(dst, entrySize)
-                }
-            }
-
-            let frontierLen := n
-            let frontier := bufA
-            let nextBuf := bufB
-            let decommCursor := 0
-            let decommLen := decommitments.length
-
-            for {
-                let level := 0
-            } lt(level, depth) {
-                level := add(level, 1)
-            } {
-                let nextLen := 0
-                let ep := frontier
-                let frontierEnd := add(frontier, mul(frontierLen, entrySize))
-                let nextPtr := nextBuf
-                for {
-
-                } lt(ep, frontierEnd) {
-
-                } {
-                    let node := mload(ep)
-                    let hash := mload(add(ep, 0x20))
-                    let parentHash
-
-                    // Try to merge in-frontier sibling pair.
-                    let merged := 0
-                    if iszero(and(node, 1)) {
-                        let nep := add(ep, entrySize)
-                        if lt(nep, frontierEnd) {
-                            if eq(mload(nep), add(node, 1)) {
-                                mstore(add(scratch, 1), hash)
-                                mstore(
-                                    add(scratch, 0x21),
-                                    mload(add(nep, 0x20))
-                                )
-                                parentHash := and(
-                                    keccak256(scratch, 65),
-                                    digestMask
-                                )
-                                ep := add(nep, entrySize)
-                                merged := 1
-                            }
-                        }
-                    }
-
-                    if iszero(merged) {
-                        if iszero(lt(decommCursor, decommLen)) {
-                            // revert InsufficientDecommitments(decommCursor+1, decommLen)
-                            mstore(
-                                0x00,
-                                0x90196ee300000000000000000000000000000000000000000000000000000000
-                            )
-                            mstore(0x04, add(decommCursor, 1))
-                            mstore(0x24, decommLen)
-                            revert(0x00, 0x44)
-                        }
-                        let sibling := calldataload(
-                            add(decommitments.offset, shl(5, decommCursor))
-                        )
-                        decommCursor := add(decommCursor, 1)
-                        ep := add(ep, entrySize)
-
-                        switch and(node, 1)
-                        case 0 {
-                            mstore(add(scratch, 1), hash)
-                            mstore(add(scratch, 0x21), sibling)
-                        }
-                        default {
-                            mstore(add(scratch, 1), sibling)
-                            mstore(add(scratch, 0x21), hash)
-                        }
-                        parentHash := and(keccak256(scratch, 65), digestMask)
-                    }
-
-                    let parentIndex := shr(1, node)
-                    let isDup := 0
-                    if gt(nextLen, 0) {
-                        let lastPtr := sub(nextPtr, entrySize)
-                        if eq(mload(lastPtr), parentIndex) {
-                            isDup := 1
-                            mstore(add(lastPtr, 0x20), parentHash)
-                        }
-                    }
-                    if iszero(isDup) {
-                        mstore(nextPtr, parentIndex)
-                        mstore(add(nextPtr, 0x20), parentHash)
-                        nextPtr := add(nextPtr, entrySize)
-                        nextLen := add(nextLen, 1)
-                    }
+                for (uint256 level = 0; level < depth; ++level) {
+                    bytes32 siblingHash = decommitments[pathOffset + level];
+                    hash = (node & 1) == 0
+                        ? compressNode(hash, siblingHash, effectiveDigestBytes)
+                        : compressNode(siblingHash, hash, effectiveDigestBytes);
+                    node >>= 1;
                 }
 
-                let tmp := frontier
-                frontier := nextBuf
-                nextBuf := tmp
-                frontierLen := nextLen
-            }
-
-            if iszero(eq(decommCursor, decommLen)) {
-                // revert TrailingDecommitments(decommCursor, decommLen)
-                mstore(
-                    0x00,
-                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
-                )
-                mstore(0x04, decommCursor)
-                mstore(0x24, decommLen)
-                revert(0x00, 0x44)
-            }
-
-            if or(iszero(eq(frontierLen, 1)), iszero(iszero(mload(frontier)))) {
-                // revert InvalidFinalLayer(frontierLen, firstIndex)
-                let idx := sub(0, 1)
-                if gt(frontierLen, 0) {
-                    idx := mload(frontier)
+                if (i == 0) {
+                    root = hash;
+                } else if (hash != root) {
+                    revert InvalidFinalLayer(indices.length, i);
                 }
-                mstore(
-                    0x00,
-                    0x1d72965600000000000000000000000000000000000000000000000000000000
-                )
-                mstore(0x04, frontierLen)
-                mstore(0x24, idx)
-                revert(0x00, 0x44)
             }
-
-            root := mload(add(frontier, 0x20))
         }
     }
 
@@ -590,201 +460,98 @@ library MerkleVerifier {
         uint256 depth,
         bytes32[] calldata decommitments
     ) private pure returns (bytes32 root) {
-        if (indices.length != leafHashes.length) {
-            revert LengthMismatch(indices.length, leafHashes.length);
-        }
-        if (indices.length == 0) {
-            revert EmptyIndices();
-        }
-
-        // Assembly-optimized frontier-swap Merkle reduction.
-        // Sorted-unique validation is inlined into the copy loop.
+        // Assembly-optimized linear authentication path verification.
+        // For each query, walks from leaf to root using per-query sibling paths
+        // from calldata, then checks all queries agree on the same root.
         assembly ("memory-safe") {
             let n := mload(indices)
-            // Mask: top 160 bits set, bottom 96 bits clear  (DIGEST_MASK_20)
-            let digestMask := not(sub(shl(96, 1), 1))
 
-            // Allocate two interleaved buffers and a 65-byte keccak scratch area.
-            // Each buffer entry is 64 bytes: [uint256 index | bytes32 hash].
-            let entrySize := 0x40
-            let bufBytes := mul(entrySize, n)
-            let base := mload(0x40)
-            let bufA := base
-            let bufB := add(base, bufBytes)
-            let scratch := add(bufB, bufBytes)
-            mstore(0x40, add(scratch, 65))
-
-            // Pre-store the 0x01 internal-node domain separator.
-            mstore8(scratch, 0x01)
-
-            // Copy inputs into bufA (interleaved) with sorted-unique validation.
-            {
-                let idxPtr := add(indices, 0x20)
-                let hashPtr := add(leafHashes, 0x20)
-                let dst := bufA
-                let prevIdx := sub(0, 1) // type(uint256).max — always less than any real index
-                for {
-                    let i := 0
-                } lt(i, n) {
-                    i := add(i, 1)
-                } {
-                    let idx := mload(idxPtr)
-                    // Check strictly increasing (prevIdx < idx).
-                    // On first iteration prevIdx = max, but we skip the check via i > 0.
-                    if and(gt(i, 0), iszero(lt(prevIdx, idx))) {
-                        // revert IndicesNotStrictlyIncreasing(prevIdx, idx)
-                        mstore(
-                            0x00,
-                            0x22c3841000000000000000000000000000000000000000000000000000000000
-                        )
-                        mstore(0x04, prevIdx)
-                        mstore(0x24, idx)
-                        revert(0x00, 0x44)
-                    }
-                    prevIdx := idx
-                    mstore(dst, idx)
-                    mstore(add(dst, 0x20), mload(hashPtr))
-                    dst := add(dst, entrySize)
-                    idxPtr := add(idxPtr, 0x20)
-                    hashPtr := add(hashPtr, 0x20)
-                }
-            }
-
-            let frontierLen := n
-            let frontier := bufA
-            let nextBuf := bufB
+            // Validate decommitments.length == n * depth
+            let expected := mul(n, depth)
             let decommLen := decommitments.length
-            let decommBase := decommitments.offset
-            let decommPtr := decommBase
-            let decommEnd := add(decommBase, shl(5, decommLen))
-
-            for {
-                let level := 0
-            } lt(level, depth) {
-                level := add(level, 1)
-            } {
-                let nextLen := 0
-                let ep := frontier
-                let frontierEnd := add(frontier, mul(frontierLen, entrySize))
-                let nextPtr := nextBuf
-                let lastParentIndex := 0
-                let hasLastParent := 0
-                for {
-
-                } lt(ep, frontierEnd) {
-
-                } {
-                    let node := mload(ep)
-                    let hash := mload(add(ep, 0x20))
-                    let parentHash
-
-                    // Try to merge with sibling (both leaves present).
-                    let merged := 0
-                    if iszero(and(node, 1)) {
-                        let nep := add(ep, entrySize)
-                        if lt(nep, frontierEnd) {
-                            if eq(mload(nep), add(node, 1)) {
-                                mstore(add(scratch, 1), hash)
-                                mstore(
-                                    add(scratch, 0x21),
-                                    mload(add(nep, 0x20))
-                                )
-                                parentHash := and(
-                                    keccak256(scratch, 65),
-                                    digestMask
-                                )
-                                ep := add(nep, entrySize)
-                                merged := 1
-                            }
-                        }
-                    }
-
-                    if iszero(merged) {
-                        // Need a decommitment sibling.
-                        if iszero(lt(decommPtr, decommEnd)) {
-                            // revert InsufficientDecommitments(consumed+1, decommLen)
-                            mstore(
-                                0x00,
-                                0x90196ee300000000000000000000000000000000000000000000000000000000
-                            )
-                            mstore(
-                                0x04,
-                                add(shr(5, sub(decommPtr, decommBase)), 1)
-                            )
-                            mstore(0x24, decommLen)
-                            revert(0x00, 0x44)
-                        }
-                        let sibling := calldataload(decommPtr)
-                        decommPtr := add(decommPtr, 0x20)
-                        ep := add(ep, entrySize)
-
-                        switch and(node, 1)
-                        case 0 {
-                            mstore(add(scratch, 1), hash)
-                            mstore(add(scratch, 0x21), sibling)
-                        }
-                        default {
-                            mstore(add(scratch, 1), sibling)
-                            mstore(add(scratch, 0x21), hash)
-                        }
-                        parentHash := and(keccak256(scratch, 65), digestMask)
-                    }
-
-                    let parentIndex := shr(1, node)
-
-                    // Dedup: if the previous entry had the same parent index,
-                    // overwrite its hash in place instead of appending a new entry.
-                    if and(hasLastParent, eq(lastParentIndex, parentIndex)) {
-                        mstore(sub(nextPtr, 0x20), parentHash)
-                    }
-                    if iszero(
-                        and(hasLastParent, eq(lastParentIndex, parentIndex))
-                    ) {
-                        mstore(nextPtr, parentIndex)
-                        mstore(add(nextPtr, 0x20), parentHash)
-                        nextPtr := add(nextPtr, entrySize)
-                        nextLen := add(nextLen, 1)
-                        lastParentIndex := parentIndex
-                        hasLastParent := 1
-                    }
-                }
-
-                // Swap frontier <-> next.
-                let tmp := frontier
-                frontier := nextBuf
-                nextBuf := tmp
-                frontierLen := nextLen
+            if lt(decommLen, expected) {
+                mstore(
+                    0x00,
+                    0x90196ee300000000000000000000000000000000000000000000000000000000
+                )
+                mstore(0x04, expected)
+                mstore(0x24, decommLen)
+                revert(0x00, 0x44)
             }
-
-            // Verify all decommitments consumed.
-            if iszero(eq(decommPtr, decommEnd)) {
-                // revert TrailingDecommitments(consumed, decommLen)
+            if gt(decommLen, expected) {
                 mstore(
                     0x00,
                     0xb48ec3d200000000000000000000000000000000000000000000000000000000
                 )
-                mstore(0x04, shr(5, sub(decommPtr, decommBase)))
+                mstore(0x04, expected)
                 mstore(0x24, decommLen)
                 revert(0x00, 0x44)
             }
 
-            // Verify single root at index 0.
-            if or(iszero(eq(frontierLen, 1)), iszero(iszero(mload(frontier)))) {
-                // revert InvalidFinalLayer(frontierLen, firstIndex)
-                let idx := sub(0, 1) // type(uint256).max
-                if gt(frontierLen, 0) {
-                    idx := mload(frontier)
-                }
-                mstore(
-                    0x00,
-                    0x1d72965600000000000000000000000000000000000000000000000000000000
-                )
-                mstore(0x04, frontierLen)
-                mstore(0x24, idx)
-                revert(0x00, 0x44)
-            }
+            // Mask: top 160 bits set, bottom 96 bits clear (DIGEST_MASK_20)
+            let digestMask := not(sub(shl(96, 1), 1))
 
-            root := mload(add(frontier, 0x20))
+            // Allocate 65-byte keccak scratch area
+            let scratch := mload(0x40)
+            mstore(0x40, add(scratch, 65))
+            // Pre-store the 0x01 internal-node domain separator
+            mstore8(scratch, 0x01)
+
+            let idxPtr := add(indices, 0x20)
+            let hashPtr := add(leafHashes, 0x20)
+            let decommBase := decommitments.offset
+            // stride = depth * 32 bytes per sibling
+            let pathStride := shl(5, depth)
+
+            for {
+                let i := 0
+            } lt(i, n) {
+                i := add(i, 1)
+            } {
+                let node := mload(add(idxPtr, shl(5, i)))
+                let hash := mload(add(hashPtr, shl(5, i)))
+                let sibPtr := add(decommBase, mul(i, pathStride))
+
+                for {
+                    let level := 0
+                } lt(level, depth) {
+                    level := add(level, 1)
+                } {
+                    let sibling := calldataload(sibPtr)
+                    sibPtr := add(sibPtr, 0x20)
+
+                    // If node is even (left child): compress(hash, sibling)
+                    // If node is odd (right child): compress(sibling, hash)
+                    switch and(node, 1)
+                    case 0 {
+                        mstore(add(scratch, 1), hash)
+                        mstore(add(scratch, 0x21), sibling)
+                    }
+                    default {
+                        mstore(add(scratch, 1), sibling)
+                        mstore(add(scratch, 0x21), hash)
+                    }
+                    hash := and(keccak256(scratch, 65), digestMask)
+                    node := shr(1, node)
+                }
+
+                // First query sets the root; subsequent queries must match.
+                switch i
+                case 0 {
+                    root := hash
+                }
+                default {
+                    if iszero(eq(hash, root)) {
+                        mstore(
+                            0x00,
+                            0x1d72965600000000000000000000000000000000000000000000000000000000
+                        )
+                        mstore(0x04, n)
+                        mstore(0x24, i)
+                        revert(0x00, 0x44)
+                    }
+                }
+            }
         }
     }
 

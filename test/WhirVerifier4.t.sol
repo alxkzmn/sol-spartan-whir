@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 
+import {MerkleVerifier} from "../src/merkle/MerkleVerifier.sol";
 import {WhirStructs} from "../src/whir/WhirStructs.sol";
 import {WhirVerifierCore4} from "../src/whir/WhirVerifierCore4.sol";
 import {WhirVerifier4} from "../src/whir/WhirVerifier4.sol";
@@ -134,7 +135,7 @@ contract WhirVerifier4Test is Test {
             (proof.finalQueryBatch.values[0] + 1) %
             0x7f000001;
 
-        vm.expectPartialRevert(WhirVerifierCore4.MerkleRootMismatch.selector);
+        vm.expectPartialRevert(MerkleVerifier.InvalidFinalLayer.selector);
         verifier.verify(proof.initialCommitment, statement, proof);
     }
 

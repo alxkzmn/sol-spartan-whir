@@ -269,8 +269,7 @@ library WhirVerifierCore4 {
         uint256 powWitness,
         uint256[] memory foldingRandomness,
         bool checkpointAfterPow,
-        uint8 expectedKind,
-        uint8 effectiveDigestBytes
+        uint8 expectedKind
     ) internal pure returns (SelectStatement memory statement) {
         if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
             revert InvalidPowWitness();

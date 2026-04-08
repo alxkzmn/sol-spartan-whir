@@ -135,8 +135,7 @@ contract WhirVerifier4 {
                         roundProof.powWitness,
                         foldingRandomness,
                         true,
-                        roundIndex == 0 ? 0 : 1,
-                        uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                        roundIndex == 0 ? 0 : 1
                     );
 
             constraints[constraintCount] = WhirVerifierCore4.Constraint({
@@ -200,8 +199,7 @@ contract WhirVerifier4 {
                     proof.finalPowWitness,
                     foldingRandomness,
                     false,
-                    QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1
                 );
         WhirVerifierCore4._verifySelectStatement(
             finalStirStatement,
