@@ -486,8 +486,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    0,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    0
                 );
             bd.round0Stir = g - gasleft();
 
@@ -554,8 +553,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    1,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    1
                 );
             bd.round1Stir = g - gasleft();
 
@@ -611,8 +609,7 @@ contract WhirProfileHarness {
             proof.finalPowWitness,
             foldingRandomness,
             false,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         bd.finalStir = g - gasleft();
 
@@ -998,8 +995,7 @@ contract WhirProfileHarness {
             rp.powWitness,
             foldingRandomness,
             true,
-            0,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            0
         );
         gasRound0Stir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1087,8 +1083,7 @@ contract WhirProfileHarness {
                     rp0.powWitness,
                     foldingRandomness,
                     true,
-                    0,
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    0
                 );
 
             cArr[1] = WhirVerifierCore4.Constraint({
@@ -1143,8 +1138,7 @@ contract WhirProfileHarness {
             rp1.powWitness,
             foldingRandomness,
             true,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         gasRound1Stir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1229,8 +1223,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    uint8(round),
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    uint8(round)
                 );
             cArr[round + 1] = WhirVerifierCore4.Constraint({
                 challenge: WhirVerifierUtils4.sampleExt4(challenger),
@@ -1283,8 +1276,7 @@ contract WhirProfileHarness {
             proof.finalPowWitness,
             foldingRandomness,
             false,
-            1,
-            uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+            1
         );
         gasFinalStir = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
@@ -1387,8 +1379,7 @@ contract WhirProfileHarness {
                     rp.powWitness,
                     foldingRandomness,
                     true,
-                    uint8(round),
-                    uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                    uint8(round)
                 );
             cArr[cCount] = WhirVerifierCore4.Constraint({
                 challenge: WhirVerifierUtils4.sampleExt4(challenger),
@@ -1435,8 +1426,7 @@ contract WhirProfileHarness {
                 proof.finalPowWitness,
                 foldingRandomness,
                 false,
-                1,
-                uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
+                1
             );
         WhirVerifierCore4._verifySelectStatement(finalSS, proof.finalPoly);
         (
