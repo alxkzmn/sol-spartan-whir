@@ -227,7 +227,7 @@ contract WhirProfileHarness {
         );
 
         uint256 g = gasleft();
-        challenger.observePackedExt4Slice(proof.finalPoly);
+        challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
         gasObserveFinalPoly = g - gasleft();
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
     }
@@ -384,7 +384,7 @@ contract WhirProfileHarness {
         uint256 g;
         KeccakChallenger.State memory challenger;
         WhirVerifierCore4.Constraint[]
-            memory cArr = new WhirVerifierCore4.Constraint[](3);
+            memory cArr = new WhirVerifierCore4.Constraint[](2);
         uint256 cCount;
         uint256 claimedEval;
         uint256[] memory foldingRandomness;
@@ -395,7 +395,7 @@ contract WhirProfileHarness {
         uint256 randomnessCursor;
         WhirVerifierCore4.ParsedCommitment memory prevCommitment;
 
-        // --- Setup: observePattern + parseCommitment + statement + eq + constraint[0] ---
+        // --- Setup: observePattern + parseCommitment + combineInitialConstraintEvals ---
         g = gasleft();
         QuarticWhirFixedConfig.observePattern(challenger);
         prevCommitment = WhirVerifierCore4._parseCommitment(
@@ -406,25 +406,37 @@ contract WhirProfileHarness {
             QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
         );
         require(prevCommitment.root == expectedCommitment, "COMMITMENT");
+        WhirVerifierCore4.ParsedCommitment
+            memory initialParsedCommitment = prevCommitment;
+        uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
+            challenger
+        );
         {
-            WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
-                ._concatenateEq(
-                    WhirVerifierCore4._statementFromCalldata(
-                        statement,
-                        QuarticWhirFixedConfig.NUM_VARIABLES
-                    ),
-                    prevCommitment.oodStatement
-                );
-            cArr[0] = WhirVerifierCore4.Constraint({
-                challenge: WhirVerifierUtils4.sampleExt4(challenger),
-                eqStatement: initialEq,
-                selStatement: WhirVerifierCore4._emptySelect(
-                    QuarticWhirFixedConfig.NUM_VARIABLES
-                )
-            });
+            uint256[] memory oodEvals = prevCommitment.oodStatement.evaluations;
+            uint256 oodLen = oodEvals.length;
+            unchecked {
+                for (uint256 i = oodLen; i > 0; --i) {
+                    claimedEval = KoalaBearExt4.add(
+                        oodEvals[i - 1],
+                        KoalaBearExt4.mul(
+                            claimedEval,
+                            initialConstraintChallenge
+                        )
+                    );
+                }
+                for (uint256 i = statement.evaluations.length; i > 0; --i) {
+                    uint256 evalValue = statement.evaluations[i - 1];
+                    WhirVerifierUtils4.validatePackedExt4(evalValue);
+                    claimedEval = KoalaBearExt4.add(
+                        evalValue,
+                        KoalaBearExt4.mul(
+                            claimedEval,
+                            initialConstraintChallenge
+                        )
+                    );
+                }
+            }
         }
-        claimedEval = WhirVerifierCore4._combineConstraintEvals(0, cArr[0]);
-        cCount = 1;
         bd.setup = g - gasleft();
 
         // --- Initial Sumcheck ---
@@ -579,8 +591,7 @@ contract WhirProfileHarness {
 
         // --- Observe Final Poly ---
         g = gasleft();
-        WhirVerifierUtils4.validatePackedExt4Calldata(proof.finalPoly);
-        challenger.observePackedExt4Slice(proof.finalPoly);
+        challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
         bd.observeFinalPoly = g - gasleft();
 
         // --- Final STIR ---
@@ -630,11 +641,54 @@ contract WhirProfileHarness {
         // --- Evaluate Constraints ---
         uint256 evaluationOfWeights;
         g = gasleft();
-        evaluationOfWeights = WhirVerifierCore4._evaluateConstraints(
-            cArr,
-            cCount,
-            allRandomness
-        );
+        evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelect(
+                cArr,
+                allRandomness
+            );
+        {
+            uint256[] memory oodFlatPoints = initialParsedCommitment
+                .oodStatement
+                .flatPoints;
+            uint256 oodLen = initialParsedCommitment
+                .oodStatement
+                .evaluations
+                .length;
+            uint256 initEval;
+            unchecked {
+                for (uint256 i = oodLen; i > 0; --i) {
+                    uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
+                        oodFlatPoints,
+                        (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    );
+                    initEval = KoalaBearExt4.add(
+                        weight,
+                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
+                    );
+                }
+                for (uint256 i = statement.points.length; i > 0; --i) {
+                    WhirVerifierUtils4.validatePackedExt4Calldata(
+                        statement.points[i - 1]
+                    );
+                    uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
+                        statement.points[i - 1],
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    );
+                    initEval = KoalaBearExt4.add(
+                        weight,
+                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
+                    );
+                }
+            }
+            evaluationOfWeights = KoalaBearExt4.add(
+                evaluationOfWeights,
+                initEval
+            );
+        }
         bd.constraints = g - gasleft();
 
         // --- Final Check ---
@@ -1245,7 +1299,7 @@ contract WhirProfileHarness {
         QuarticWhirFixedConfig.observePattern(challenger);
 
         WhirVerifierCore4.Constraint[]
-            memory cArr = new WhirVerifierCore4.Constraint[](3);
+            memory cArr = new WhirVerifierCore4.Constraint[](2);
         uint256 cCount;
         uint256 claimedEval;
         uint256[] memory foldingRandomness;
@@ -1263,26 +1317,37 @@ contract WhirProfileHarness {
                 QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
             );
         require(prevCommitment.root == expectedCommitment, "COMMITMENT");
-
+        WhirVerifierCore4.ParsedCommitment
+            memory initialParsedCommitment = prevCommitment;
+        uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
+            challenger
+        );
         {
-            WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
-                ._concatenateEq(
-                    WhirVerifierCore4._statementFromCalldata(
-                        statement,
-                        QuarticWhirFixedConfig.NUM_VARIABLES
-                    ),
-                    prevCommitment.oodStatement
-                );
-            cArr[0] = WhirVerifierCore4.Constraint({
-                challenge: WhirVerifierUtils4.sampleExt4(challenger),
-                eqStatement: initialEq,
-                selStatement: WhirVerifierCore4._emptySelect(
-                    QuarticWhirFixedConfig.NUM_VARIABLES
-                )
-            });
+            uint256[] memory oodEvals = prevCommitment.oodStatement.evaluations;
+            uint256 oodLen = oodEvals.length;
+            unchecked {
+                for (uint256 i = oodLen; i > 0; --i) {
+                    claimedEval = KoalaBearExt4.add(
+                        oodEvals[i - 1],
+                        KoalaBearExt4.mul(
+                            claimedEval,
+                            initialConstraintChallenge
+                        )
+                    );
+                }
+                for (uint256 i = statement.evaluations.length; i > 0; --i) {
+                    uint256 evalValue = statement.evaluations[i - 1];
+                    WhirVerifierUtils4.validatePackedExt4(evalValue);
+                    claimedEval = KoalaBearExt4.add(
+                        evalValue,
+                        KoalaBearExt4.mul(
+                            claimedEval,
+                            initialConstraintChallenge
+                        )
+                    );
+                }
+            }
         }
-        claimedEval = WhirVerifierCore4._combineConstraintEvals(0, cArr[0]);
-        cCount = 1;
 
         (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
             ._verifySumcheck(
@@ -1353,14 +1418,7 @@ contract WhirProfileHarness {
             prevCommitment = nc;
         }
 
-        unchecked {
-            for (uint256 i = 0; i < proof.finalPoly.length; ++i) {
-                WhirVerifierUtils4.observeValidatedExt4(
-                    challenger,
-                    proof.finalPoly[i]
-                );
-            }
-        }
+        challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
         WhirVerifierCore4.SelectStatement memory finalSS = WhirVerifierCore4
             ._verifyStirChallengesRaw(
@@ -1396,11 +1454,52 @@ contract WhirProfileHarness {
         );
 
         uint256 g = gasleft();
-        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraints(
-            cArr,
-            cCount,
-            allRandomness
-        );
+        uint256 evaluationOfWeights = WhirVerifierCore4
+            ._evaluateConstraintsFixedSelect(cArr, allRandomness);
+        {
+            uint256[] memory oodFlatPoints = initialParsedCommitment
+                .oodStatement
+                .flatPoints;
+            uint256 oodLen = initialParsedCommitment
+                .oodStatement
+                .evaluations
+                .length;
+            uint256 initEval;
+            unchecked {
+                for (uint256 i = oodLen; i > 0; --i) {
+                    uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
+                        oodFlatPoints,
+                        (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    );
+                    initEval = KoalaBearExt4.add(
+                        weight,
+                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
+                    );
+                }
+                for (uint256 i = statement.points.length; i > 0; --i) {
+                    WhirVerifierUtils4.validatePackedExt4Calldata(
+                        statement.points[i - 1]
+                    );
+                    uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
+                        statement.points[i - 1],
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    );
+                    initEval = KoalaBearExt4.add(
+                        weight,
+                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
+                    );
+                }
+            }
+            evaluationOfWeights = KoalaBearExt4.add(
+                evaluationOfWeights,
+                initEval
+            );
+        }
         gasConstraintEval = g - gasleft();
 
         require(evaluationOfWeights != 0, "PROFILE_ZERO_WEIGHTS");
@@ -2051,7 +2150,7 @@ contract WhirGasProfileTest is Test {
             bd.finalCheck;
 
         console.log("=== Full Verification Breakdown ===");
-        console.log("Setup (pattern+commit+eq):  ", bd.setup);
+        console.log("Setup (pattern+commit+eval):", bd.setup);
         console.log("Initial sumcheck (4r):      ", bd.initialSumcheck);
         console.log("Round0 parse commitment:    ", bd.round0Parse);
         console.log("Round0 STIR (9q d18 base):  ", bd.round0Stir);
