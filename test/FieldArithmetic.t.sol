@@ -162,8 +162,13 @@ contract FieldArithmeticTest is Test {
             (uint256(4) << 128) |
             1;
 
-        vm.expectRevert(bytes("LOW_BITS"));
-        harness.ext4Unpack(packed);
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "PackedExtensionElementOutOfRange(uint256)",
+                packed
+            )
+        );
+        harness.ext4Validate(packed);
     }
 
     function testKoalaBearExt8Vectors() external view {

@@ -71,6 +71,7 @@ library WhirVerifierUtils4 {
     function validatePackedExt4(uint256 packed) internal pure {
         unchecked {
             if (
+                (packed & ((1 << 128) - 1)) != 0 ||
                 (packed >> 224) >= KoalaBear.MODULUS ||
                 ((packed >> 192) & 0xffffffff) >= KoalaBear.MODULUS ||
                 ((packed >> 160) & 0xffffffff) >= KoalaBear.MODULUS ||

@@ -31,13 +31,9 @@ library KoalaBearExt4 {
         }
     }
 
-    // TODO: Enforce `packed & ((1 << 128) - 1) == 0` for all externally supplied
-    // quartic words at the ABI/validation boundary so non-canonical encodings are
-    // rejected before they reach arithmetic helpers.
     function unpack(
         uint256 packed
     ) internal pure returns (uint256[4] memory coeffs) {
-        require(packed & ((1 << 128) - 1) == 0, "LOW_BITS");
         coeffs[0] = packed >> 224;
         coeffs[1] = (packed >> 192) & COEFF_MASK;
         coeffs[2] = (packed >> 160) & COEFF_MASK;
