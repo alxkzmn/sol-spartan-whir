@@ -87,6 +87,28 @@ contract FieldArithmeticTest is Test {
         }
     }
 
+    function testKoalaBearInvRejectsUnreducedZeroRepresentatives() external {
+        vm.expectRevert(bytes("ZERO_INV"));
+        harness.baseInv(0);
+
+        vm.expectRevert(bytes("ZERO_INV"));
+        harness.baseInv(0x7f000001);
+
+        vm.expectRevert(bytes("ZERO_INV"));
+        harness.baseInv(0x7f000001 * 3);
+    }
+
+    function testKoalaBearInvAcceptsUnreducedNonzeroRepresentative()
+        external
+        view
+    {
+        uint256 modulus = 0x7f000001;
+        uint256 canonical = 7;
+        uint256 unreduced = canonical + modulus * 2;
+
+        assertEq(harness.baseInv(unreduced), harness.baseInv(canonical));
+    }
+
     function testKoalaBearExt4Vectors() external view {
         for (uint256 i = 0; i < vectors.quartic.length; ++i) {
             ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
@@ -131,6 +153,17 @@ contract FieldArithmeticTest is Test {
                 harness.ext4Mul(vector.packed_a, vector.packed_a)
             );
         }
+    }
+
+    function testKoalaBearExt4RejectsNonCanonicalLowBits() external {
+        uint256 packed = (uint256(1) << 224) |
+            (uint256(2) << 192) |
+            (uint256(3) << 160) |
+            (uint256(4) << 128) |
+            1;
+
+        vm.expectRevert(bytes("LOW_BITS"));
+        harness.ext4Unpack(packed);
     }
 
     function testKoalaBearExt8Vectors() external view {

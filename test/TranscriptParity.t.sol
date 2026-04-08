@@ -4,9 +4,12 @@ pragma solidity ^0.8.28;
 import {Test} from "forge-std/Test.sol";
 import {KeccakChallenger} from "../src/transcript/KeccakChallenger.sol";
 import {SpartanTranscript} from "../src/transcript/SpartanTranscript.sol";
+import {WhirTranscript} from "../src/transcript/WhirTranscript.sol";
+import {WhirStructs} from "../src/whir/WhirStructs.sol";
 
 contract TranscriptParityTest is Test {
     using KeccakChallenger for KeccakChallenger.State;
+    using WhirTranscript for KeccakChallenger.State;
 
     uint8 internal constant OP_OBSERVE_BYTES = 0;
     uint8 internal constant OP_SAMPLE_BASE = 1;
@@ -126,6 +129,121 @@ contract TranscriptParityTest is Test {
         }
     }
 
+    function testReplayVerifierWhirTranscriptSemantically() external view {
+        TranscriptTrace memory trace = _loadTrace();
+        WhirStructs.WhirProof memory proof = _loadWhirProof();
+
+        KeccakChallenger.State memory challenger;
+        uint256 fsPatternLen = 0;
+        while (
+            fsPatternLen < trace.verifierEvents.length &&
+            trace.verifierEvents[fsPatternLen].op == OP_OBSERVE_BYTES &&
+            trace.verifierEvents[fsPatternLen].observedBytes.length == 4
+        ) {
+            unchecked {
+                ++fsPatternLen;
+            }
+        }
+        uint256[] memory fsPattern = new uint256[](fsPatternLen);
+        unchecked {
+            for (uint256 i = 0; i < fsPatternLen; ++i) {
+                fsPattern[i] = trace.verifierEvents[i].arg0;
+            }
+        }
+
+        challenger.observeWhirFsPattern(fsPattern);
+
+        uint256 cursor = fsPatternLen;
+
+        challenger.observeHashU64Digest(proof.initialCommitment);
+        cursor += 1;
+
+        cursor = _replayOodSemantically(
+            challenger,
+            trace.verifierEvents,
+            cursor,
+            proof.initialOodAnswers
+        );
+
+        cursor = _consumeSampleEventsUntilObserve(
+            challenger,
+            trace.verifierEvents,
+            cursor
+        );
+
+        cursor = _replaySumcheckSemantically(
+            challenger,
+            trace.verifierEvents,
+            cursor,
+            proof.initialSumcheck
+        );
+
+        unchecked {
+            for (uint256 i = 0; i < proof.rounds.length; ++i) {
+                WhirStructs.WhirRoundProof memory round = proof.rounds[i];
+
+                challenger.observeHashU64Digest(round.commitment);
+                cursor += 1;
+
+                cursor = _replayOodSemantically(
+                    challenger,
+                    trace.verifierEvents,
+                    cursor,
+                    round.oodAnswers
+                );
+
+                // STIR pow witness: checkWitness does observeBase(witness) + sampleBits
+                cursor = _replayPowWitnessIfPresent(
+                    challenger,
+                    trace.verifierEvents,
+                    cursor
+                );
+
+                cursor = _consumeSampleEventsUntilObserve(
+                    challenger,
+                    trace.verifierEvents,
+                    cursor
+                );
+
+                cursor = _replaySumcheckSemantically(
+                    challenger,
+                    trace.verifierEvents,
+                    cursor,
+                    round.sumcheck
+                );
+            }
+        }
+
+        challenger.observeExt4Slice(proof.finalPoly);
+        cursor += proof.finalPoly.length * 4;
+
+        // Final STIR pow witness
+        cursor = _replayPowWitnessIfPresent(
+            challenger,
+            trace.verifierEvents,
+            cursor
+        );
+
+        cursor = _consumeSampleEventsUntilObserve(
+            challenger,
+            trace.verifierEvents,
+            cursor
+        );
+
+        if (proof.finalSumcheckPresent) {
+            cursor = _replaySumcheckSemantically(
+                challenger,
+                trace.verifierEvents,
+                cursor,
+                proof.finalSumcheck
+            );
+        }
+
+        assertEq(cursor, trace.verifierEvents.length);
+        _assertSameState(challenger, _replay(trace.verifierEvents));
+        _assertCheckpoint(challenger, trace.checkpointVerifier);
+    }
+
     function testReplaySpartanTranscriptContext() external view {
         SpartanContextFixture memory fixture = _loadSpartanContextFixture();
         SpartanTranscript.DomainSeparator
@@ -172,6 +290,17 @@ contract TranscriptParityTest is Test {
         return abi.decode(raw, (TranscriptTrace));
     }
 
+    function _loadWhirProof()
+        internal
+        view
+        returns (WhirStructs.WhirProof memory)
+    {
+        bytes memory raw = vm.readFileBinary(
+            string.concat(TESTDATA, "quartic_whir_success_proof.abi")
+        );
+        return abi.decode(raw, (WhirStructs.WhirProof));
+    }
+
     function _loadSpartanContextFixture()
         internal
         view
@@ -212,6 +341,132 @@ contract TranscriptParityTest is Test {
         }
     }
 
+    function _replayOodSemantically(
+        KeccakChallenger.State memory challenger,
+        TranscriptEvent[] memory events,
+        uint256 cursor,
+        uint256[] memory oodAnswers
+    ) internal pure returns (uint256) {
+        unchecked {
+            for (uint256 i = 0; i < oodAnswers.length; ++i) {
+                cursor = _consumeSampleEventsUntilObserve(
+                    challenger,
+                    events,
+                    cursor
+                );
+                challenger.observeExt4Element(oodAnswers[i]);
+                cursor += 4;
+            }
+        }
+        return cursor;
+    }
+
+    function _replayPowWitnessIfPresent(
+        KeccakChallenger.State memory challenger,
+        TranscriptEvent[] memory events,
+        uint256 cursor
+    ) internal pure returns (uint256) {
+        if (
+            cursor < events.length &&
+            events[cursor].op == OP_OBSERVE_BYTES &&
+            events[cursor].observedBytes.length == 4
+        ) {
+            challenger.observeBytes(events[cursor].observedBytes);
+            unchecked {
+                ++cursor;
+            }
+        }
+        return cursor;
+    }
+
+    function _replaySumcheckSemantically(
+        KeccakChallenger.State memory challenger,
+        TranscriptEvent[] memory events,
+        uint256 cursor,
+        WhirStructs.SumcheckData memory sumcheck
+    ) internal pure returns (uint256) {
+        assertEq(sumcheck.polynomialEvals.length % 2, 0);
+        uint256 numRounds = sumcheck.polynomialEvals.length / 2;
+
+        unchecked {
+            for (uint256 i = 0; i < numRounds; ++i) {
+                challenger.observeSumcheckRoundPolyExt4(
+                    sumcheck.polynomialEvals[2 * i],
+                    sumcheck.polynomialEvals[2 * i + 1]
+                );
+                cursor += 8;
+
+                // Sumcheck pow witness (checkWitness = observeBase + sampleBits)
+                if (i < sumcheck.powWitnesses.length) {
+                    cursor = _replayPowWitnessIfPresent(
+                        challenger,
+                        events,
+                        cursor
+                    );
+                }
+
+                cursor = _consumeSampleEventsUntilObserve(
+                    challenger,
+                    events,
+                    cursor
+                );
+            }
+        }
+
+        return cursor;
+    }
+
+    function _consumeSampleEventsUntilObserve(
+        KeccakChallenger.State memory challenger,
+        TranscriptEvent[] memory events,
+        uint256 cursor
+    ) internal pure returns (uint256) {
+        while (
+            cursor < events.length && events[cursor].op != OP_OBSERVE_BYTES
+        ) {
+            if (events[cursor].op == OP_SAMPLE_BASE) {
+                assertEq(challenger.sampleBase(), events[cursor].arg0);
+                unchecked {
+                    ++cursor;
+                }
+            } else if (events[cursor].op == OP_SAMPLE_BITS) {
+                cursor = _assertNextSampleBits(
+                    challenger,
+                    events,
+                    cursor,
+                    events[cursor].arg0
+                );
+            } else if (events[cursor].op == OP_GRIND) {
+                assertTrue(
+                    challenger.checkWitness(
+                        events[cursor].arg0,
+                        events[cursor].arg1
+                    )
+                );
+                unchecked {
+                    ++cursor;
+                }
+            } else {
+                revert("BAD_TRANSCRIPT_OP");
+            }
+        }
+
+        return cursor;
+    }
+
+    function _assertNextSampleBits(
+        KeccakChallenger.State memory challenger,
+        TranscriptEvent[] memory events,
+        uint256 cursor,
+        uint256 bits
+    ) internal pure returns (uint256) {
+        assertLt(cursor, events.length);
+        assertEq(events[cursor].op, OP_SAMPLE_BITS);
+        assertEq(events[cursor].arg0, bits);
+        assertEq(challenger.sampleBits(bits), events[cursor].arg1);
+        return cursor + 1;
+    }
+
     function _assertCheckpoint(
         KeccakChallenger.State memory challenger,
         uint256[] memory expected
@@ -224,5 +479,17 @@ contract TranscriptParityTest is Test {
                 assertEq(checkpoint[i], expected[i]);
             }
         }
+    }
+
+    function _assertSameState(
+        KeccakChallenger.State memory lhs,
+        KeccakChallenger.State memory rhs
+    ) internal pure {
+        assertEq(
+            KeccakChallenger.debugInputHash(lhs),
+            KeccakChallenger.debugInputHash(rhs)
+        );
+        assertEq(lhs.outputBlock, rhs.outputBlock);
+        assertEq(lhs.outputIndex, rhs.outputIndex);
     }
 }
