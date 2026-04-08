@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import {KoalaBear} from "./KoalaBear.sol";
-import {KoalaBear} from "./KoalaBear.sol";
 
 library KoalaBearExt4 {
     uint256 internal constant DEGREE = 4;

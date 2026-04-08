@@ -8,15 +8,15 @@ library QuarticWhirFixedConfig {
     using KeccakChallenger for KeccakChallenger.State;
 
     struct RoundConfig {
-	uint256 powBits;
-	uint256 foldingPowBits;
-	uint256 numQueries;
-	uint256 oodSamples;
-	uint256 numVariables;
-	uint256 foldingFactor;
-	uint256 domainSize;
-	uint256 foldedDomainGen;
-	}
+        uint256 powBits;
+        uint256 foldingPowBits;
+        uint256 numQueries;
+        uint256 oodSamples;
+        uint256 numVariables;
+        uint256 foldingFactor;
+        uint256 domainSize;
+        uint256 foldedDomainGen;
+    }
 
     uint256 internal constant NUM_VARIABLES = 16;
     uint256 internal constant COMMITMENT_OOD_SAMPLES = 2;
@@ -36,84 +36,42 @@ library QuarticWhirFixedConfig {
     uint256 internal constant EXPECT_FINAL_QUERY_BATCH = 1;
     uint256 internal constant EXPECT_FINAL_SUMCHECK = 1;
 
-    function observePattern(KeccakChallenger.State memory challenger) internal pure {
-        challenger.observeBase(5);
-        challenger.observeBase(9);
-        challenger.observeBase(4);
-        challenger.observeBase(1);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(5);
-        challenger.observeBase(9);
-        challenger.observeBase(4);
-        challenger.observeBase(31);
-        challenger.observeBase(2);
-        challenger.observeBase(4);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(4);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(5);
-        challenger.observeBase(9);
-        challenger.observeBase(4);
-        challenger.observeBase(22);
-        challenger.observeBase(2);
-        challenger.observeBase(4);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(4);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(22);
-        challenger.observeBase(15);
-        challenger.observeBase(3);
-        challenger.observeBase(4);
-        challenger.observeBase(38);
-        challenger.observeBase(15);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(6);
-        challenger.observeBase(3);
-        challenger.observeBase(5);
+    function observePattern(
+        KeccakChallenger.State memory challenger
+    ) internal pure {
+        challenger.observeBytes(
+            hex"f6ffff09eeffff11f8ffff07feffff01f4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f6ffff09eeffff11f8ffff07c2ffff3dfcffff03f8ffff07b4ffff4be2ffff1df8ffff07f4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f6ffff09eeffff11f8ffff07d4ffff2bfcffff03f8ffff07b4ffff4be2ffff1df8ffff07f4ffff0bfaffff05b4ffff4be2ffff1df4ffff0bfaffff05b4ffff4be2ffff1df4ffff0bfaffff05b4ffff4be2ffff1df4ffff0bfaffff05b4ffff4be2ffff1dd4ffff2be2ffff1dfaffff05f8ffff07b4ffff4be2ffff1df4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f4ffff0bfaffff05f6ffff09"
+        );
     }
 
-    function roundConfig(uint256 index) internal pure returns (RoundConfig memory cfg) {
+    function roundConfig(
+        uint256 index
+    ) internal pure returns (RoundConfig memory cfg) {
         if (index == 0) {
-            return RoundConfig({ powBits: 26, foldingPowBits: 0, numQueries: 9, oodSamples: 2, numVariables: 12, foldingFactor: 4, domainSize: 4194304, foldedDomainGen: 1816824389 });
+            return
+                RoundConfig({
+                    powBits: 26,
+                    foldingPowBits: 0,
+                    numQueries: 9,
+                    oodSamples: 2,
+                    numVariables: 12,
+                    foldingFactor: 4,
+                    domainSize: 4194304,
+                    foldedDomainGen: 1816824389
+                });
         }
         if (index == 1) {
-            return RoundConfig({ powBits: 26, foldingPowBits: 4, numQueries: 6, oodSamples: 2, numVariables: 8, foldingFactor: 4, domainSize: 2097152, foldedDomainGen: 373019801 });
+            return
+                RoundConfig({
+                    powBits: 26,
+                    foldingPowBits: 4,
+                    numQueries: 6,
+                    oodSamples: 2,
+                    numVariables: 8,
+                    foldingFactor: 4,
+                    domainSize: 2097152,
+                    foldedDomainGen: 373019801
+                });
         }
         revert("ROUND_INDEX");
     }
