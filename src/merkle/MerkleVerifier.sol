@@ -13,6 +13,7 @@ library MerkleVerifier {
     error TrailingDecommitments(uint256 consumed, uint256 total);
     error InvalidFinalLayer(uint256 layerSize, uint256 index);
     error FieldElementOutOfRange(uint256 value);
+    error InvalidEffectiveDigestBytes(uint256 value);
 
     function hashLeafBase(
         uint256[] calldata values,
@@ -246,7 +247,7 @@ library MerkleVerifier {
         bytes32 digest,
         uint256 effectiveDigestBytes
     ) private pure returns (bytes32) {
-        uint256 keep = _clampEffectiveDigestBytes(effectiveDigestBytes);
+        uint256 keep = _validateEffectiveDigestBytes(effectiveDigestBytes);
         if (keep == 32) {
             return digest;
         }
@@ -258,14 +259,11 @@ library MerkleVerifier {
         }
     }
 
-    function _clampEffectiveDigestBytes(
+    function _validateEffectiveDigestBytes(
         uint256 effectiveDigestBytes
     ) private pure returns (uint256) {
-        if (effectiveDigestBytes == 0) {
-            return 1;
-        }
-        if (effectiveDigestBytes > 32) {
-            return 32;
+        if (effectiveDigestBytes == 0 || effectiveDigestBytes > 32) {
+            revert InvalidEffectiveDigestBytes(effectiveDigestBytes);
         }
         return effectiveDigestBytes;
     }

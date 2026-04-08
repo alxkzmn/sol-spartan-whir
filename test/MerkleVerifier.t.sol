@@ -227,6 +227,32 @@ contract MerkleVerifierTest is Test {
         );
     }
 
+    function testRejectsZeroEffectiveDigestBytes() external {
+        MerkleVectorFixture memory fixture = _loadMerkleFixture();
+        MerkleLeafHashFixture memory leaf = fixture.leafHashes[0];
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MerkleVerifier.InvalidEffectiveDigestBytes.selector,
+                0
+            )
+        );
+        harness.hashLeafBase(leaf.values, 0);
+    }
+
+    function testRejectsDigestBytesAboveKeccakWidth() external {
+        MerkleVectorFixture memory fixture = _loadMerkleFixture();
+        MerkleNodeCompressionFixture memory node = fixture.nodeCompressions[0];
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MerkleVerifier.InvalidEffectiveDigestBytes.selector,
+                33
+            )
+        );
+        harness.compressNode(node.left, node.right, 33);
+    }
+
     function _loadMerkleFixture()
         internal
         view
