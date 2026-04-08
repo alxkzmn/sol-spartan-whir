@@ -57,7 +57,7 @@ contract FieldHarness {
         uint256 a,
         uint256 b
     ) external pure returns (uint256) {
-        return KoalaBearExt4.mul_reference(a, b);
+        return KoalaBearExt4.mulReference(a, b);
     }
 
     function ext4Inv(uint256 a) external pure returns (uint256) {

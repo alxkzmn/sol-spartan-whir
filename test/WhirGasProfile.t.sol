@@ -593,9 +593,9 @@ contract WhirProfileHarness {
         bd.observeFinalPoly = g - gasleft();
 
         // --- Final STIR ---
-        WhirVerifierCore4.SelectStatement memory finalSS;
+        WhirVerifierCore4.SelectStatement memory finalSs;
         g = gasleft();
-        finalSS = WhirVerifierCore4._verifyStirChallengesRaw(
+        finalSs = WhirVerifierCore4._verifyStirChallengesRaw(
             challenger,
             prevCommitment.root,
             QuarticWhirFixedConfig.FINAL_POW_BITS,
@@ -615,7 +615,7 @@ contract WhirProfileHarness {
 
         // --- Final Select ---
         g = gasleft();
-        WhirVerifierCore4._verifySelectStatement(finalSS, proof.finalPoly);
+        WhirVerifierCore4._verifySelectStatement(finalSs, proof.finalPoly);
         bd.finalSelect = g - gasleft();
 
         // --- Final Sumcheck ---
@@ -1411,7 +1411,7 @@ contract WhirProfileHarness {
 
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
-        WhirVerifierCore4.SelectStatement memory finalSS = WhirVerifierCore4
+        WhirVerifierCore4.SelectStatement memory finalSs = WhirVerifierCore4
             ._verifyStirChallengesRaw(
                 challenger,
                 prevCommitment.root,
@@ -1428,7 +1428,7 @@ contract WhirProfileHarness {
                 false,
                 1
             );
-        WhirVerifierCore4._verifySelectStatement(finalSS, proof.finalPoly);
+        WhirVerifierCore4._verifySelectStatement(finalSs, proof.finalPoly);
         (
             claimedEval,
             finalSumcheckRandomness,
