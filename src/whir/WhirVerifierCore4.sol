@@ -318,6 +318,8 @@ library WhirVerifierCore4 {
         uint256 depth = WhirVerifierUtils4.log2Strict(
             domainSize >> foldingFactor
         );
+        statement.vars = new uint256[](indices.length);
+        statement.evaluations = new uint256[](indices.length);
 
         bytes32 computedRoot;
         if (expectedKind == 0) {
@@ -342,24 +344,19 @@ library WhirVerifierCore4 {
             revert MerkleRootMismatch(expectedRoot, computedRoot);
         }
 
-        statement.vars = new uint256[](indices.length);
-        statement.evaluations = new uint256[](indices.length);
-
         unchecked {
             for (uint256 i = 0; i < indices.length; ++i) {
                 statement.vars[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
                 uint256 rowStart = i * queryBatch.rowLen;
                 statement.evaluations[i] = expectedKind == 0
-                    ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
+                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
                         queryBatch.values,
                         rowStart,
-                        queryBatch.rowLen,
                         foldingRandomness
                     )
-                    : WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
                         queryBatch.values,
                         rowStart,
-                        queryBatch.rowLen,
                         foldingRandomness
                     );
             }
@@ -549,6 +546,108 @@ library WhirVerifierCore4 {
                         pointOffset
                     )
                 );
+            }
+        }
+    }
+
+    function _verifyFinalStirChallengesRaw(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        WhirStructs.QueryBatchOpening calldata queryBatch,
+        bool queryBatchPresent,
+        uint256 powWitness,
+        uint256[] memory foldingRandomness,
+        uint8 expectedKind,
+        uint256[] calldata finalPoly
+    ) internal pure {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        if (!queryBatchPresent) {
+            if (numQueries != 0) {
+                revert FinalQueryBatchPresenceMismatch(true, false);
+            }
+            return;
+        }
+
+        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
+            challenger,
+            domainSize,
+            foldingFactor,
+            numQueries
+        );
+
+        if (queryBatch.kind != expectedKind) {
+            revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
+        }
+        if (queryBatch.numQueries != indices.length) {
+            revert QueryBatchCountMismatch(
+                indices.length,
+                queryBatch.numQueries
+            );
+        }
+
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
+        if (queryBatch.rowLen != expectedRowLen) {
+            revert QueryBatchRowLengthMismatch(
+                expectedRowLen,
+                queryBatch.rowLen
+            );
+        }
+
+        uint256 depth = WhirVerifierUtils4.log2Strict(
+            domainSize >> foldingFactor
+        );
+        bytes32 computedRoot;
+        if (expectedKind == 0) {
+            computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
+                indices,
+                queryBatch.values,
+                queryBatch.rowLen,
+                depth,
+                queryBatch.decommitments
+            );
+        } else {
+            computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
+                indices,
+                queryBatch.values,
+                queryBatch.rowLen,
+                depth,
+                queryBatch.decommitments
+            );
+        }
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                uint256 rowStart = i * queryBatch.rowLen;
+                uint256 expectedEval = expectedKind == 0
+                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
+                        queryBatch.values,
+                        rowStart,
+                        foldingRandomness
+                    )
+                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
+                        queryBatch.values,
+                        rowStart,
+                        foldingRandomness
+                    );
+                if (
+                    WhirVerifierUtils4.hornerBase(finalPoly, point) !=
+                    expectedEval
+                ) {
+                    revert StirConstraintFailed(i);
+                }
             }
         }
     }
@@ -1633,215 +1732,6 @@ library WhirVerifierCore4 {
                 or(shl(224, a0), shl(192, a1)),
                 or(shl(160, a2), shl(128, a3))
             )
-        }
-    }
-
-    function _mulByEqTerm(
-        uint256 acc,
-        uint256 p,
-        uint256 q,
-        uint256 pq
-    ) private pure returns (uint256 out) {
-        uint256 modulus = KoalaBear.MODULUS;
-
-        uint256 a0 = acc >> 224;
-        uint256 a1 = (acc >> 192) & 0xffffffff;
-        uint256 a2 = (acc >> 160) & 0xffffffff;
-        uint256 a3 = (acc >> 128) & 0xffffffff;
-
-        uint256 p0 = p >> 224;
-        uint256 p1 = (p >> 192) & 0xffffffff;
-        uint256 p2 = (p >> 160) & 0xffffffff;
-        uint256 p3 = (p >> 128) & 0xffffffff;
-
-        uint256 q0 = q >> 224;
-        uint256 q1 = (q >> 192) & 0xffffffff;
-        uint256 q2 = (q >> 160) & 0xffffffff;
-        uint256 q3 = (q >> 128) & 0xffffffff;
-
-        uint256 pq0 = pq >> 224;
-        uint256 pq1 = (pq >> 192) & 0xffffffff;
-        uint256 pq2 = (pq >> 160) & 0xffffffff;
-        uint256 pq3 = (pq >> 128) & 0xffffffff;
-
-        unchecked {
-            uint256 t0 = _eqCoeff(p0, q0, pq0, true, modulus);
-            uint256 t1 = _eqCoeff(p1, q1, pq1, false, modulus);
-            uint256 t2 = _eqCoeff(p2, q2, pq2, false, modulus);
-            uint256 t3 = _eqCoeff(p3, q3, pq3, false, modulus);
-
-            uint256 c0 = a0 * t0 + KoalaBear.W * (a1 * t3 + a2 * t2 + a3 * t1);
-            uint256 c1 = a0 * t1 + a1 * t0 + KoalaBear.W * (a2 * t3 + a3 * t2);
-            uint256 c2 = a0 * t2 + a1 * t1 + a2 * t0 + KoalaBear.W * (a3 * t3);
-            uint256 c3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
-
-            c0 %= modulus;
-            c1 %= modulus;
-            c2 %= modulus;
-            c3 %= modulus;
-
-            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
-        }
-    }
-
-    /// @dev Fused eq term: computes 2*p*q - p - q + (1,0,0,0) in ext4 without
-    ///      intermediate packed pq. Replaces KoalaBearExt4.mul + 4x _eqCoeff.
-    function _computeEqTerm(
-        uint256 p,
-        uint256 q
-    ) private pure returns (uint256 result) {
-        assembly {
-            let M := 0x7f000001
-            let m := 0xffffffff
-
-            let p0 := shr(224, p)
-            let p1 := and(shr(192, p), m)
-            let p2 := and(shr(160, p), m)
-            p := and(shr(128, p), m) // p3
-
-            let q0 := shr(224, q)
-            let q1 := and(shr(192, q), m)
-            let q2 := and(shr(160, q), m)
-            q := and(shr(128, q), m) // q3
-
-            // Lane 0: pq0 = p0*q0 + W*(p1*q3 + p2*q2 + p3*q1)
-            //          t0 = (2*pq0 + 2*M + 1 - p0 - q0) % M
-            let tmp := add(
-                mul(p0, q0),
-                mul(3, add(add(mul(p1, q), mul(p2, q2)), mul(p, q1)))
-            )
-            result := shl(
-                224,
-                mod(sub(add(add(add(tmp, tmp), 0xfe000002), 1), add(p0, q0)), M)
-            )
-
-            // Lane 1: pq1 = p0*q1 + p1*q0 + W*(p2*q3 + p3*q2)
-            tmp := add(
-                add(mul(p0, q1), mul(p1, q0)),
-                mul(3, add(mul(p2, q), mul(p, q2)))
-            )
-            result := or(
-                result,
-                shl(
-                    192,
-                    mod(sub(add(add(tmp, tmp), 0xfe000002), add(p1, q1)), M)
-                )
-            )
-
-            // Lane 2: pq2 = p0*q2 + p1*q1 + p2*q0 + W*(p3*q3)
-            tmp := add(
-                add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
-                mul(3, mul(p, q))
-            )
-            result := or(
-                result,
-                shl(
-                    160,
-                    mod(sub(add(add(tmp, tmp), 0xfe000002), add(p2, q2)), M)
-                )
-            )
-
-            // Lane 3: pq3 = p0*q3 + p1*q2 + p2*q1 + p3*q0
-            tmp := add(
-                add(add(mul(p0, q), mul(p1, q2)), mul(p2, q1)),
-                mul(p, q0)
-            )
-            result := or(
-                result,
-                shl(128, mod(sub(add(add(tmp, tmp), 0xfe000002), add(p, q)), M))
-            )
-        }
-    }
-
-    function _eqCoeff(
-        uint256 p,
-        uint256 q,
-        uint256 pq,
-        bool addOne,
-        uint256 modulus
-    ) private pure returns (uint256 t) {
-        unchecked {
-            t = pq + pq;
-            if (t >= modulus) {
-                t -= modulus;
-            }
-
-            if (t < p) {
-                t += modulus;
-            }
-            t -= p;
-
-            if (t < q) {
-                t += modulus;
-            }
-            t -= q;
-
-            if (addOne) {
-                t += 1;
-                if (t >= modulus) {
-                    t -= modulus;
-                }
-            }
-        }
-    }
-
-    function _selectTermPacked(
-        uint256 pointValue,
-        uint256 scalar
-    ) private pure returns (uint256 term) {
-        assembly ("memory-safe") {
-            let modulus := 0x7f000001
-            let mask := 0xffffffff
-
-            let c0 := mulmod(shr(224, pointValue), scalar, modulus)
-            let c1 := mulmod(and(shr(192, pointValue), mask), scalar, modulus)
-            let c2 := mulmod(and(shr(160, pointValue), mask), scalar, modulus)
-            let c3 := mulmod(and(shr(128, pointValue), mask), scalar, modulus)
-
-            let t0 := add(c0, 1)
-            if iszero(lt(t0, modulus)) {
-                t0 := sub(t0, modulus)
-            }
-
-            term := or(
-                or(shl(224, t0), shl(192, c1)),
-                or(shl(160, c2), shl(128, c3))
-            )
-        }
-    }
-
-    function _mulBySelectTerm(
-        uint256 acc,
-        uint256 pointValue,
-        uint256 scalar
-    ) private pure returns (uint256 out) {
-        uint256 a0 = acc >> 224;
-        uint256 a1 = (acc >> 192) & 0xffffffff;
-        uint256 a2 = (acc >> 160) & 0xffffffff;
-        uint256 a3 = (acc >> 128) & 0xffffffff;
-
-        uint256 p0 = pointValue >> 224;
-        uint256 p1 = (pointValue >> 192) & 0xffffffff;
-        uint256 p2 = (pointValue >> 160) & 0xffffffff;
-        uint256 p3 = (pointValue >> 128) & 0xffffffff;
-
-        unchecked {
-            uint256 t0 = 1 + scalar * p0;
-            uint256 t1 = scalar * p1;
-            uint256 t2 = scalar * p2;
-            uint256 t3 = scalar * p3;
-
-            uint256 c0 = a0 * t0 + KoalaBear.W * (a1 * t3 + a2 * t2 + a3 * t1);
-            uint256 c1 = a0 * t1 + a1 * t0 + KoalaBear.W * (a2 * t3 + a3 * t2);
-            uint256 c2 = a0 * t2 + a1 * t1 + a2 * t0 + KoalaBear.W * (a3 * t3);
-            uint256 c3 = a0 * t3 + a1 * t2 + a2 * t1 + a3 * t0;
-
-            c0 %= KoalaBear.MODULUS;
-            c1 %= KoalaBear.MODULUS;
-            c2 %= KoalaBear.MODULUS;
-            c3 %= KoalaBear.MODULUS;
-
-            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128);
         }
     }
 

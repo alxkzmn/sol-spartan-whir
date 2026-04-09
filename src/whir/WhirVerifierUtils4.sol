@@ -328,7 +328,7 @@ library WhirVerifierUtils4 {
         uint256[] calldata flatValues,
         uint256 start,
         uint256[] memory point
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         uint256 src;
         assembly ("memory-safe") {
             src := add(flatValues.offset, shl(5, start))
@@ -434,7 +434,7 @@ library WhirVerifierUtils4 {
         uint256[] calldata flatValues,
         uint256 start,
         uint256[] memory point
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         uint256 src;
         assembly ("memory-safe") {
             src := add(flatValues.offset, shl(5, start))
@@ -733,14 +733,6 @@ library WhirVerifierUtils4 {
         c1 = (packed >> 192) & 0xffffffff;
         c2 = (packed >> 160) & 0xffffffff;
         c3 = (packed >> 128) & 0xffffffff;
-    }
-
-    function _subCoeff(
-        uint256 lhs,
-        uint256 rhs,
-        uint256 modulus
-    ) private pure returns (uint256) {
-        return lhs >= rhs ? lhs - rhs : lhs + modulus - rhs;
     }
 
     function log2Strict(uint256 x) internal pure returns (uint256 result) {

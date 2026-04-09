@@ -319,24 +319,14 @@ library MerkleVerifier {
         if (flatValues.length != expected) {
             revert FlattenedRowLengthMismatch(flatValues.length, expected);
         }
-
-        bytes32[] memory leafHashes = new bytes32[](indices.length);
-        unchecked {
-            for (uint256 i = 0; i < indices.length; ++i) {
-                leafHashes[i] = hashLeafBaseSlice20(
-                    flatValues,
-                    i * rowLen,
-                    rowLen
-                );
-            }
-        }
-
         return
-            _computeRootFromLeafHashes20(
+            _computeRootFromFlatRows20(
                 indices,
-                leafHashes,
+                flatValues,
+                rowLen,
                 depth,
-                decommitments
+                decommitments,
+                false
             );
     }
 
@@ -386,24 +376,14 @@ library MerkleVerifier {
         if (flatValues.length != expected) {
             revert FlattenedRowLengthMismatch(flatValues.length, expected);
         }
-
-        bytes32[] memory leafHashes = new bytes32[](indices.length);
-        unchecked {
-            for (uint256 i = 0; i < indices.length; ++i) {
-                leafHashes[i] = hashLeafExtensionSlice20(
-                    flatValues,
-                    i * rowLen,
-                    rowLen
-                );
-            }
-        }
-
         return
-            _computeRootFromLeafHashes20(
+            _computeRootFromFlatRows20(
                 indices,
-                leafHashes,
+                flatValues,
+                rowLen,
                 depth,
-                decommitments
+                decommitments,
+                true
             );
     }
 
@@ -585,75 +565,66 @@ library MerkleVerifier {
         }
     }
 
-    function _computeRootFromLeafHashes20(
+    function _computeRootFromFlatRows20(
         uint256[] memory indices,
-        bytes32[] memory leafHashes,
+        uint256[] calldata flatValues,
+        uint256 rowLen,
         uint256 depth,
-        bytes32[] calldata decommitments
+        bytes32[] calldata decommitments,
+        bool isExtension
     ) private pure returns (bytes32 root) {
-        if (indices.length != leafHashes.length) {
-            revert LengthMismatch(indices.length, leafHashes.length);
-        }
         if (indices.length == 0) {
             revert EmptyIndices();
         }
 
-        // Assembly-optimized frontier-swap Merkle reduction.
-        // Sorted-unique validation is inlined into the copy loop.
-        assembly ("memory-safe") {
-            let n := mload(indices)
-            // Mask: top 160 bits set, bottom 96 bits clear  (DIGEST_MASK_20)
-            let digestMask := not(sub(shl(96, 1), 1))
+        bytes memory frontier = new bytes(indices.length * 0x40);
 
-            // Allocate two interleaved buffers and a 65-byte keccak scratch area.
-            // Each buffer entry is 64 bytes: [uint256 index | bytes32 hash].
-            let entrySize := 0x40
-            let bufBytes := mul(entrySize, n)
-            let base := mload(0x40)
-            let bufA := base
-            let bufB := add(base, bufBytes)
-            let scratch := add(bufB, bufBytes)
-            mstore(0x40, add(scratch, 65))
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
 
-            // Pre-store the 0x01 internal-node domain separator.
-            mstore8(scratch, 0x01)
+                bytes32 hash = isExtension
+                    ? hashLeafExtensionSlice20(flatValues, i * rowLen, rowLen)
+                    : hashLeafBaseSlice20(flatValues, i * rowLen, rowLen);
 
-            // Copy inputs into bufA (interleaved) with sorted-unique validation.
-            {
-                let idxPtr := add(indices, 0x20)
-                let hashPtr := add(leafHashes, 0x20)
-                let dst := bufA
-                let prevIdx := sub(0, 1) // type(uint256).max — always less than any real index
-                for {
-                    let i := 0
-                } lt(i, n) {
-                    i := add(i, 1)
-                } {
-                    let idx := mload(idxPtr)
-                    // Check strictly increasing (prevIdx < idx).
-                    // On first iteration prevIdx = max, but we skip the check via i > 0.
-                    if and(gt(i, 0), iszero(lt(prevIdx, idx))) {
-                        // revert IndicesNotStrictlyIncreasing(prevIdx, idx)
-                        mstore(
-                            0x00,
-                            0x22c3841000000000000000000000000000000000000000000000000000000000
-                        )
-                        mstore(0x04, prevIdx)
-                        mstore(0x24, idx)
-                        revert(0x00, 0x44)
-                    }
-                    prevIdx := idx
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
                     mstore(dst, idx)
-                    mstore(add(dst, 0x20), mload(hashPtr))
-                    dst := add(dst, entrySize)
-                    idxPtr := add(idxPtr, 0x20)
-                    hashPtr := add(hashPtr, 0x20)
+                    mstore(add(dst, 0x20), hash)
                 }
             }
+        }
 
-            let frontierLen := n
-            let frontier := bufA
-            let nextBuf := bufB
+        return
+            _computeRootFromFrontier20(
+                frontier,
+                indices.length,
+                depth,
+                decommitments
+            );
+    }
+
+    function _computeRootFromFrontier20(
+        bytes memory frontierBytes,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) private pure returns (bytes32 root) {
+        assembly ("memory-safe") {
+            let digestMask := not(sub(shl(96, 1), 1))
+            let entrySize := 0x40
+            let bufBytes := mul(entrySize, frontierLen)
+            let frontier := add(frontierBytes, 0x20)
+            let nextBuf := mload(0x40)
+            let scratch := add(nextBuf, bufBytes)
+            mstore(0x40, add(scratch, 65))
+            mstore8(scratch, 0x01)
+
             let decommLen := decommitments.length
             let decommBase := decommitments.offset
             let decommPtr := decommBase

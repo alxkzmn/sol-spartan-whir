@@ -183,26 +183,19 @@ contract WhirVerifier4 {
         }
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
-        WhirVerifierCore4.SelectStatement
-            memory finalStirStatement = WhirVerifierCore4
-                ._verifyStirChallengesRaw(
-                    challenger,
-                    prevCommitment.root,
-                    QuarticWhirFixedConfig.FINAL_POW_BITS,
-                    QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-                    QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
-                    QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
-                    QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
-                    QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
-                    proof.finalQueryBatch,
-                    proof.finalQueryBatchPresent,
-                    proof.finalPowWitness,
-                    foldingRandomness,
-                    false,
-                    QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1
-                );
-        WhirVerifierCore4._verifySelectStatement(
-            finalStirStatement,
+        WhirVerifierCore4._verifyFinalStirChallengesRaw(
+            challenger,
+            prevCommitment.root,
+            QuarticWhirFixedConfig.FINAL_POW_BITS,
+            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+            QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            proof.finalQueryBatch,
+            proof.finalQueryBatchPresent,
+            proof.finalPowWitness,
+            foldingRandomness,
+            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
             proof.finalPoly
         );
 
