@@ -51,6 +51,7 @@
     }
   ],
   "multiproof": {
+    "depth": 3,
     "indices": [
       1,
       3,
