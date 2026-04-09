@@ -577,7 +577,13 @@ library MerkleVerifier {
             revert EmptyIndices();
         }
 
-        bytes memory frontier = new bytes(indices.length * 0x40);
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
 
         unchecked {
             uint256 prevIdx;

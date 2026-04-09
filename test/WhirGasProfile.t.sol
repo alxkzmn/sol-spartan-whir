@@ -272,6 +272,17 @@ contract WhirProfileHarness {
         uint256 finalCheck;
     }
 
+    struct RoundStepResult {
+        WhirVerifierCore4.FixedParsedCommitment nextCommitment;
+        WhirVerifierCore4.FixedConstraint constraint;
+        uint256 claimedEval;
+        uint256[] foldingRandomness;
+        uint256 randomnessCursor;
+        uint256 gasParse;
+        uint256 gasStir;
+        uint256 gasSumcheck;
+    }
+
     function profileFullBreakdown(
         bytes32 expectedCommitment,
         WhirStructs.WhirStatement calldata statement,
@@ -279,8 +290,8 @@ contract WhirProfileHarness {
     ) external view returns (FullBreakdown memory bd) {
         uint256 g;
         KeccakChallenger.State memory challenger;
-        WhirVerifierCore4.Constraint[]
-            memory cArr = new WhirVerifierCore4.Constraint[](2);
+        WhirVerifierCore4.FixedConstraint[]
+            memory cArr = new WhirVerifierCore4.FixedConstraint[](2);
         uint256 cCount;
         uint256 claimedEval;
         uint256[] memory foldingRandomness;
@@ -289,12 +300,12 @@ contract WhirProfileHarness {
             QuarticWhirFixedConfig.NUM_VARIABLES
         );
         uint256 randomnessCursor;
-        WhirVerifierCore4.ParsedCommitment memory prevCommitment;
+        WhirVerifierCore4.FixedParsedCommitment memory prevCommitment;
 
         // --- Setup: observePattern + parseCommitment + combineInitialConstraintEvals ---
         g = gasleft();
         QuarticWhirFixedConfig.observePattern(challenger);
-        prevCommitment = WhirVerifierCore4._parseCommitment(
+        prevCommitment = WhirVerifierCore4._parseFixedCommitment(
             challenger,
             proof.initialCommitment,
             proof.initialOodAnswers,
@@ -302,33 +313,27 @@ contract WhirProfileHarness {
             QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
         );
         require(prevCommitment.root == expectedCommitment, "COMMITMENT");
-        WhirVerifierCore4.ParsedCommitment
+        WhirVerifierCore4.FixedParsedCommitment
             memory initialParsedCommitment = prevCommitment;
         uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
             challenger
         );
         {
-            uint256[] memory oodEvals = prevCommitment.oodStatement.evaluations;
-            uint256 oodLen = oodEvals.length;
             unchecked {
-                for (uint256 i = oodLen; i > 0; --i) {
-                    claimedEval = KoalaBearExt4.add(
-                        oodEvals[i - 1],
-                        KoalaBearExt4.mul(
-                            claimedEval,
-                            initialConstraintChallenge
-                        )
+                for (uint256 i = proof.initialOodAnswers.length; i > 0; --i) {
+                    claimedEval = WhirVerifierCore4._hornerStep(
+                        claimedEval,
+                        initialConstraintChallenge,
+                        proof.initialOodAnswers[i - 1]
                     );
                 }
                 for (uint256 i = statement.evaluations.length; i > 0; --i) {
                     uint256 evalValue = statement.evaluations[i - 1];
                     WhirVerifierUtils4.validatePackedExt4(evalValue);
-                    claimedEval = KoalaBearExt4.add(
-                        evalValue,
-                        KoalaBearExt4.mul(
-                            claimedEval,
-                            initialConstraintChallenge
-                        )
+                    claimedEval = WhirVerifierCore4._hornerStep(
+                        claimedEval,
+                        initialConstraintChallenge,
+                        evalValue
                     );
                 }
             }
@@ -351,19 +356,9 @@ contract WhirProfileHarness {
 
         // --- Round 0 ---
         {
-            (
-                prevCommitment,
-                claimedEval,
-                foldingRandomness,
-                randomnessCursor,
-                bd.round0Parse,
-                bd.round0Stir,
-                bd.round0Sumcheck
-            ) = _profileRoundStep(
+            RoundStepResult memory step = _profileRoundStep(
                 challenger,
                 prevCommitment.root,
-                cArr,
-                cCount,
                 claimedEval,
                 foldingRandomness,
                 allRandomness,
@@ -373,24 +368,22 @@ contract WhirProfileHarness {
                 QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
                 0
             );
+            prevCommitment = step.nextCommitment;
+            claimedEval = step.claimedEval;
+            foldingRandomness = step.foldingRandomness;
+            randomnessCursor = step.randomnessCursor;
+            bd.round0Parse = step.gasParse;
+            bd.round0Stir = step.gasStir;
+            bd.round0Sumcheck = step.gasSumcheck;
+            cArr[cCount] = step.constraint;
             cCount += 1;
         }
 
         // --- Round 1 ---
         {
-            (
-                prevCommitment,
-                claimedEval,
-                foldingRandomness,
-                randomnessCursor,
-                bd.round1Parse,
-                bd.round1Stir,
-                bd.round1Sumcheck
-            ) = _profileRoundStep(
+            RoundStepResult memory step = _profileRoundStep(
                 challenger,
                 prevCommitment.root,
-                cArr,
-                cCount,
                 claimedEval,
                 foldingRandomness,
                 allRandomness,
@@ -400,6 +393,14 @@ contract WhirProfileHarness {
                 QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
                 1
             );
+            prevCommitment = step.nextCommitment;
+            claimedEval = step.claimedEval;
+            foldingRandomness = step.foldingRandomness;
+            randomnessCursor = step.randomnessCursor;
+            bd.round1Parse = step.gasParse;
+            bd.round1Stir = step.gasStir;
+            bd.round1Sumcheck = step.gasSumcheck;
+            cArr[cCount] = step.constraint;
             cCount += 1;
         }
 
@@ -459,8 +460,7 @@ contract WhirProfileHarness {
         g = gasleft();
         {
             uint256[] memory oodFlatPoints = initialParsedCommitment
-                .oodStatement
-                .flatPoints;
+                .oodFlatPoints;
             uint256 initEval;
             uint256 ch0;
             uint256 ch1;
@@ -671,8 +671,6 @@ contract WhirProfileHarness {
     function _profileRoundStep(
         KeccakChallenger.State memory challenger,
         bytes32 expectedRoot,
-        WhirVerifierCore4.Constraint[] memory cArr,
-        uint256 constraintIndex,
         uint256 claimedEval,
         uint256[] memory foldingRandomness,
         uint256[] memory allRandomness,
@@ -681,37 +679,27 @@ contract WhirProfileHarness {
         QuarticWhirFixedConfig.RoundConfig memory rc,
         uint256 nextFoldingFactor,
         uint8 expectedKind
-    )
-        internal
-        view
-        returns (
-            WhirVerifierCore4.ParsedCommitment memory nextCommitment,
-            uint256 nextClaimedEval,
-            uint256[] memory nextFoldingRandomness,
-            uint256 nextRandomnessCursor,
-            uint256 gasParse,
-            uint256 gasStir,
-            uint256 gasSumcheck
-        )
-    {
+    ) internal view returns (RoundStepResult memory step) {
         uint256 g = gasleft();
-        nextCommitment = WhirVerifierCore4._parseCommitment(
+        step.nextCommitment = WhirVerifierCore4._parseFixedCommitment(
             challenger,
             rp.commitment,
             rp.oodAnswers,
             rc.numVariables,
             rc.oodSamples
         );
-        gasParse = g - gasleft();
+        step.gasParse = g - gasleft();
 
         g = gasleft();
-        WhirVerifierCore4.SelectStatement memory ss = WhirVerifierCore4
-            ._verifyStirChallengesRaw(
+        (
+            uint256 challenge,
+            uint256 roundContribution,
+            uint256[] memory selVars
+        ) = WhirVerifierCore4._verifyStirAndCombineConstraint(
                 challenger,
                 expectedRoot,
                 rc.powBits,
                 rc.numQueries,
-                rc.numVariables,
                 rc.foldingFactor,
                 rc.domainSize,
                 rc.foldedDomainGen,
@@ -719,36 +707,33 @@ contract WhirProfileHarness {
                 true,
                 rp.powWitness,
                 foldingRandomness,
-                true,
-                expectedKind
+                expectedKind,
+                rp.oodAnswers
             );
-        gasStir = g - gasleft();
+        step.gasStir = g - gasleft();
 
-        cArr[constraintIndex] = WhirVerifierCore4.Constraint({
-            challenge: WhirVerifierUtils4.sampleExt4(challenger),
-            eqStatement: nextCommitment.oodStatement,
-            selStatement: ss
+        step.constraint = WhirVerifierCore4.FixedConstraint({
+            challenge: challenge,
+            eqFlatPoints: step.nextCommitment.oodFlatPoints,
+            selVars: selVars
         });
-        nextClaimedEval = WhirVerifierCore4._combineConstraintEvals(
-            claimedEval,
-            cArr[constraintIndex]
-        );
+        step.claimedEval = KoalaBearExt4.add(claimedEval, roundContribution);
 
         g = gasleft();
         (
-            nextClaimedEval,
-            nextFoldingRandomness,
-            nextRandomnessCursor
+            step.claimedEval,
+            step.foldingRandomness,
+            step.randomnessCursor
         ) = WhirVerifierCore4._verifySumcheck(
             rp.sumcheck,
             challenger,
-            nextClaimedEval,
+            step.claimedEval,
             nextFoldingFactor,
             rc.foldingPowBits,
             allRandomness,
             randomnessCursor
         );
-        gasSumcheck = g - gasleft();
+        step.gasSumcheck = g - gasleft();
     }
 
     function profileStirBreakdowns(
@@ -1281,6 +1266,9 @@ contract WhirProfileHarness {
                 claimedEval,
                 cArr[round + 1]
             );
+            uint256 nextFoldingFactor = round == 0
+                ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
+                : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
             (
                 claimedEval,
                 foldingRandomness,
@@ -1289,9 +1277,7 @@ contract WhirProfileHarness {
                 rp.sumcheck,
                 challenger,
                 claimedEval,
-                round == 0
-                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
-                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                nextFoldingFactor,
                 rc.foldingPowBits,
                 allRandomness,
                 randomnessCursor
@@ -1437,6 +1423,9 @@ contract WhirProfileHarness {
                 cArr[cCount]
             );
             cCount += 1;
+            uint256 nextFoldingFactor = round == 0
+                ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
+                : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
             (
                 claimedEval,
                 foldingRandomness,
@@ -1445,9 +1434,7 @@ contract WhirProfileHarness {
                 rp.sumcheck,
                 challenger,
                 claimedEval,
-                round == 0
-                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
-                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                nextFoldingFactor,
                 rc.foldingPowBits,
                 allRandomness,
                 randomnessCursor
@@ -1458,20 +1445,20 @@ contract WhirProfileHarness {
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
         WhirVerifierCore4._verifyFinalStirChallengesRaw(
-                challenger,
-                prevCommitment.root,
-                QuarticWhirFixedConfig.FINAL_POW_BITS,
-                QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
-                QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
-                QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
-                proof.finalQueryBatch,
-                proof.finalQueryBatchPresent,
-                proof.finalPowWitness,
-                foldingRandomness,
-                1,
-                proof.finalPoly
-            );
+            challenger,
+            prevCommitment.root,
+            QuarticWhirFixedConfig.FINAL_POW_BITS,
+            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+            QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            proof.finalQueryBatch,
+            proof.finalQueryBatchPresent,
+            proof.finalPowWitness,
+            foldingRandomness,
+            1,
+            proof.finalPoly
+        );
         (
             claimedEval,
             finalSumcheckRandomness,

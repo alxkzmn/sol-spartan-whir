@@ -31,9 +31,20 @@ library WhirVerifierCore4 {
         SelectStatement selStatement;
     }
 
+    struct FixedConstraint {
+        uint256 challenge;
+        uint256[] eqFlatPoints;
+        uint256[] selVars;
+    }
+
     struct ParsedCommitment {
         bytes32 root;
         EqStatement oodStatement;
+    }
+
+    struct FixedParsedCommitment {
+        bytes32 root;
+        uint256[] oodFlatPoints;
     }
 
     error CommitmentMismatch(bytes32 expected, bytes32 actual);
@@ -137,6 +148,39 @@ library WhirVerifierCore4 {
                 uint256 evalValue = oodAnswers[i];
                 WhirVerifierUtils4.observeValidatedExt4(challenger, evalValue);
                 parsed.oodStatement.evaluations[i] = evalValue;
+            }
+        }
+    }
+
+    function _parseFixedCommitment(
+        KeccakChallenger.State memory challenger,
+        bytes32 root,
+        uint256[] calldata oodAnswers,
+        uint256 numVariables,
+        uint256 oodSamples
+    ) internal pure returns (FixedParsedCommitment memory parsed) {
+        if (oodAnswers.length != oodSamples) {
+            revert OodAnswerCountMismatch(oodSamples, oodAnswers.length);
+        }
+
+        challenger.observeHashU64Digest(root);
+
+        parsed.root = root;
+        parsed.oodFlatPoints = new uint256[](oodSamples * numVariables);
+
+        unchecked {
+            for (uint256 i = 0; i < oodSamples; ++i) {
+                uint256 point = WhirVerifierUtils4.sampleExt4(challenger);
+                uint256[] memory expanded = WhirVerifierUtils4
+                    .expandFromUnivariateExt(point, numVariables);
+                for (uint256 j = 0; j < numVariables; ++j) {
+                    parsed.oodFlatPoints[i * numVariables + j] = expanded[j];
+                }
+
+                WhirVerifierUtils4.observeValidatedExt4(
+                    challenger,
+                    oodAnswers[i]
+                );
             }
         }
     }
@@ -631,8 +675,164 @@ library WhirVerifierCore4 {
         }
     }
 
+    function _verifyStirAndCombineConstraint(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        WhirStructs.QueryBatchOpening calldata queryBatch,
+        bool queryBatchPresent,
+        uint256 powWitness,
+        uint256[] memory foldingRandomness,
+        uint8 expectedKind,
+        uint256[] calldata oodAnswers
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars
+        )
+    {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        challenger.sampleBase();
+
+        if (!queryBatchPresent) {
+            if (numQueries != 0) {
+                revert FinalQueryBatchPresenceMismatch(true, false);
+            }
+            challenge = WhirVerifierUtils4.sampleExt4(challenger);
+            unchecked {
+                for (uint256 i = oodAnswers.length; i > 0; --i) {
+                    claimedContribution = _hornerStep(
+                        claimedContribution,
+                        challenge,
+                        oodAnswers[i - 1]
+                    );
+                }
+            }
+            selVars = new uint256[](0);
+            return (challenge, claimedContribution, selVars);
+        }
+
+        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
+            challenger,
+            domainSize,
+            foldingFactor,
+            numQueries
+        );
+
+        if (queryBatch.kind != expectedKind) {
+            revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
+        }
+        if (queryBatch.numQueries != indices.length) {
+            revert QueryBatchCountMismatch(
+                indices.length,
+                queryBatch.numQueries
+            );
+        }
+
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
+        if (queryBatch.rowLen != expectedRowLen) {
+            revert QueryBatchRowLengthMismatch(
+                expectedRowLen,
+                queryBatch.rowLen
+            );
+        }
+
+        uint256 depth = WhirVerifierUtils4.log2Strict(
+            domainSize >> foldingFactor
+        );
+
+        bytes32 computedRoot;
+        if (expectedKind == 0) {
+            computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
+                indices,
+                queryBatch.values,
+                queryBatch.rowLen,
+                depth,
+                queryBatch.decommitments
+            );
+        } else {
+            computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
+                indices,
+                queryBatch.values,
+                queryBatch.rowLen,
+                depth,
+                queryBatch.decommitments
+            );
+        }
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        challenge = WhirVerifierUtils4.sampleExt4(challenger);
+        selVars = new uint256[](indices.length);
+
+        unchecked {
+            for (uint256 i = indices.length; i > 0; --i) {
+                uint256 idx = i - 1;
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[idx]);
+                selVars[idx] = point;
+
+                uint256 rowStart = idx * queryBatch.rowLen;
+                uint256 evalValue = expectedKind == 0
+                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
+                        queryBatch.values,
+                        rowStart,
+                        foldingRandomness
+                    )
+                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
+                        queryBatch.values,
+                        rowStart,
+                        foldingRandomness
+                    );
+                claimedContribution = _hornerStep(
+                    claimedContribution,
+                    challenge,
+                    evalValue
+                );
+            }
+
+            for (uint256 i = oodAnswers.length; i > 0; --i) {
+                claimedContribution = _hornerStep(
+                    claimedContribution,
+                    challenge,
+                    oodAnswers[i - 1]
+                );
+            }
+        }
+    }
+
     function _evaluateConstraintsFixedSelect(
         Constraint[] memory constraints,
+        uint256[] memory allRandomness
+    ) internal pure returns (uint256 acc) {
+        FixedConstraint[] memory fixedConstraints = new FixedConstraint[](
+            constraints.length
+        );
+        unchecked {
+            for (uint256 i = 0; i < constraints.length; ++i) {
+                fixedConstraints[i] = FixedConstraint({
+                    challenge: constraints[i].challenge,
+                    eqFlatPoints: constraints[i].eqStatement.flatPoints,
+                    selVars: constraints[i].selStatement.vars
+                });
+            }
+        }
+        return _evaluateConstraintsFixedSelect(fixedConstraints, allRandomness);
+    }
+
+    function _evaluateConstraintsFixedSelect(
+        FixedConstraint[] memory constraints,
         uint256[] memory allRandomness
     ) internal pure returns (uint256 acc) {
         acc = KoalaBearExt4.add(
@@ -642,22 +842,12 @@ library WhirVerifierCore4 {
     }
 
     function _evaluateConstraint12Select(
-        Constraint memory constraint,
+        FixedConstraint memory constraint,
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
-        if (
-            constraint.eqStatement.numVariables != 12 ||
-            constraint.selStatement.numVariables != 12
-        ) {
-            revert InconsistentConstraintArity(
-                constraint.eqStatement.numVariables,
-                constraint.selStatement.numVariables
-            );
-        }
-
         uint256 challenge = constraint.challenge;
-        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
-        uint256[] memory selVars = constraint.selStatement.vars;
+        uint256[] memory flatPoints = constraint.eqFlatPoints;
+        uint256[] memory selVars = constraint.selVars;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;
@@ -834,22 +1024,12 @@ library WhirVerifierCore4 {
     }
 
     function _evaluateConstraint8Select(
-        Constraint memory constraint,
+        FixedConstraint memory constraint,
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
-        if (
-            constraint.eqStatement.numVariables != 8 ||
-            constraint.selStatement.numVariables != 8
-        ) {
-            revert InconsistentConstraintArity(
-                constraint.eqStatement.numVariables,
-                constraint.selStatement.numVariables
-            );
-        }
-
         uint256 challenge = constraint.challenge;
-        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
-        uint256[] memory selVars = constraint.selStatement.vars;
+        uint256[] memory flatPoints = constraint.eqFlatPoints;
+        uint256[] memory selVars = constraint.selVars;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;
@@ -1425,5 +1605,81 @@ library WhirVerifierCore4 {
                 finalPoly.length,
                 finalSumcheckRandomness
             );
+    }
+
+    function _hornerStep(
+        uint256 total,
+        uint256 challenge,
+        uint256 weight
+    ) internal pure returns (uint256 updated) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
+
+            let ch0 := shr(224, challenge)
+            let ch1 := and(shr(192, challenge), m)
+            let ch2 := and(shr(160, challenge), m)
+            let ch3 := and(shr(128, challenge), m)
+
+            let a0 := shr(224, total)
+            let a1 := and(shr(192, total), m)
+            let a2 := and(shr(160, total), m)
+            let a3 := and(shr(128, total), m)
+
+            let w0 := shr(224, weight)
+            let w1 := and(shr(192, weight), m)
+            let w2 := and(shr(160, weight), m)
+            let w3 := and(shr(128, weight), m)
+
+            let r0 := mod(
+                add(
+                    add(
+                        mul(a0, ch0),
+                        mul(
+                            W,
+                            add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1))
+                        )
+                    ),
+                    w0
+                ),
+                M
+            )
+            let r1 := mod(
+                add(
+                    add(
+                        add(mul(a0, ch1), mul(a1, ch0)),
+                        mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                    ),
+                    w1
+                ),
+                M
+            )
+            let r2 := mod(
+                add(
+                    add(
+                        add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                        mul(W, mul(a3, ch3))
+                    ),
+                    w2
+                ),
+                M
+            )
+            let r3 := mod(
+                add(
+                    add(
+                        add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
+                        mul(a3, ch0)
+                    ),
+                    w3
+                ),
+                M
+            )
+
+            updated := or(
+                or(shl(224, r0), shl(192, r1)),
+                or(shl(160, r2), shl(128, r3))
+            )
+        }
     }
 }
