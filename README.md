@@ -45,9 +45,9 @@ Current measured execution snapshots:
 
 | Path                                    | Contract                  | Execution gas | Runtime size |
 | --------------------------------------- | ------------------------- | ------------: | -----------: |
-| **Recommended production path**         | `WhirBlobVerifierNative4` |     `875,601` | `18,953` B   |
-| Typed parity/reference path             | `WhirVerifier4`           |     `947,955` | `21,621` B   |
-| Blob decode-and-delegate reference path | `WhirBlobVerifier4`       |   `1,154,013` | `4,482` B    |
+| **Recommended production path**         | `WhirBlobVerifierNative4` |     `875,601` |   `18,953` B |
+| Typed parity/reference path             | `WhirVerifier4`           |     `947,955` |   `21,621` B |
+| Blob decode-and-delegate reference path | `WhirBlobVerifier4`       |   `1,154,013` |    `4,482` B |
 
 Role of each path:
 
@@ -61,25 +61,22 @@ Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables
 
 #### Total verification transaction cost
 
-The transaction tables below are historical snapshots for this branch family. Re-run the benchmark scripts if you need exact post-merge tx gas.
+The production path is `WhirBlobVerifierNative4` (native blob). The table below compares its tx cost against the `sol-whir` wrapper baseline.
 
-`sol-whir` only exposes a wrapper-style benchmark transaction (`WhirContract.callVerify(...)`), so the fairest apples-to-apples comparison is wrapper-to-wrapper:
+|                          | sol-spartan-whir native blob tx | sol-whir wrapper tx |
+| ------------------------ | ------------------------------- | ------------------- |
+| **Field**                | KoalaBear + ext4                | BN254               |
+| **Total tx gas**         | 962,268                         | 1,135,052           |
+| **Intrinsic + calldata** | 202,588                         | 435,876             |
+| **Execution remainder**  | 759,680                         | 699,176             |
 
-|                          | sol-spartan-whir wrapper tx | sol-whir wrapper tx |
-| ------------------------ | --------------------------- | ------------------- |
-| **Field**                | KoalaBear + ext4            | BN254               |
-| **Total tx gas**         | 1,118,048                   | 1,135,052           |
-| **Intrinsic + calldata** | 261,208                     | 435,876             |
-| **Execution remainder**  | 856,840                     | 699,176             |
-| **Wrapper overhead**     | 39,735                      | 22,165              |
+All three `sol-spartan-whir` paths for reference:
 
-The direct-call measurement for this branch family remains:
-
-|                          | sol-spartan-whir direct tx |
-| ------------------------ | -------------------------- |
-| **Total tx gas**         | 1,077,945                  |
-| **Intrinsic + calldata** | 260,840                    |
-| **Execution remainder**  | 817,105                    |
+|                          | Native blob tx | Direct typed tx | Wrapper tx |
+| ------------------------ | -------------- | --------------- | ---------- |
+| **Total tx gas**         | 962,268        | 1,038,944       | 1,079,035  |
+| **Intrinsic + calldata** | 202,588        | 260,840         | 261,196    |
+| **Execution remainder**  | 759,680        | 778,104         | 817,839    |
 
 #### Execution gas snapshots
 
@@ -87,7 +84,7 @@ The direct-call measurement for this branch family remains:
 | ----------------------------------- | ---------------- | -------- |
 | **Typed verifier execution**        | 947,955          | 677,011  |
 | **Native blob verifier execution**  | 875,601          | n/a      |
-| **Measured tx execution remainder** | 817,105          | 699,176  |
+| **Measured tx execution remainder** | 759,680          | 699,176  |
 
 Notes:
 
