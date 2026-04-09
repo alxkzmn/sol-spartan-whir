@@ -299,10 +299,23 @@ contract WhirVerifier4 {
         uint256[] memory oodFlatPoints = parsedCommitment
             .oodStatement
             .flatPoints;
-        uint256 oodLen = parsedCommitment.oodStatement.evaluations.length;
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+        }
 
         unchecked {
-            for (uint256 i = oodLen; i > 0; --i) {
+            for (
+                uint256 i = QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES;
+                i > 0;
+                --i
+            ) {
                 uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
                     oodFlatPoints,
                     (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
@@ -310,10 +323,79 @@ contract WhirVerifier4 {
                     0,
                     QuarticWhirFixedConfig.NUM_VARIABLES
                 );
-                total = KoalaBearExt4.add(
-                    weight,
-                    KoalaBearExt4.mul(total, challenge)
-                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
             }
 
             for (uint256 i = statement.points.length; i > 0; --i) {
@@ -326,10 +408,79 @@ contract WhirVerifier4 {
                     0,
                     QuarticWhirFixedConfig.NUM_VARIABLES
                 );
-                total = KoalaBearExt4.add(
-                    weight,
-                    KoalaBearExt4.mul(total, challenge)
-                );
+                assembly ("memory-safe") {
+                    let M := 0x7f000001
+                    let m := 0xffffffff
+                    let W := 3
+
+                    let a0 := shr(224, total)
+                    let a1 := and(shr(192, total), m)
+                    let a2 := and(shr(160, total), m)
+                    let a3 := and(shr(128, total), m)
+
+                    let w0 := shr(224, weight)
+                    let w1 := and(shr(192, weight), m)
+                    let w2 := and(shr(160, weight), m)
+                    let w3 := and(shr(128, weight), m)
+
+                    let r0 := mod(
+                        add(
+                            add(
+                                mul(a0, ch0),
+                                mul(
+                                    W,
+                                    add(
+                                        add(mul(a1, ch3), mul(a2, ch2)),
+                                        mul(a3, ch1)
+                                    )
+                                )
+                            ),
+                            w0
+                        ),
+                        M
+                    )
+                    let r1 := mod(
+                        add(
+                            add(
+                                add(mul(a0, ch1), mul(a1, ch0)),
+                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                            ),
+                            w1
+                        ),
+                        M
+                    )
+                    let r2 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch2), mul(a1, ch1)),
+                                    mul(a2, ch0)
+                                ),
+                                mul(W, mul(a3, ch3))
+                            ),
+                            w2
+                        ),
+                        M
+                    )
+                    let r3 := mod(
+                        add(
+                            add(
+                                add(
+                                    add(mul(a0, ch3), mul(a1, ch2)),
+                                    mul(a2, ch1)
+                                ),
+                                mul(a3, ch0)
+                            ),
+                            w3
+                        ),
+                        M
+                    )
+
+                    total := or(
+                        or(shl(224, r0), shl(192, r1)),
+                        or(shl(160, r2), shl(128, r3))
+                    )
+                }
             }
         }
     }

@@ -30,7 +30,7 @@ cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 
 ### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
 
-Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 800` with `WhirVerifier4` runtime bytecode at `24,082` bytes.
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 833` with `WhirVerifier4` runtime bytecode at `24,552` bytes.
 
 #### Total verification transaction cost
 
@@ -62,7 +62,7 @@ In production, `WhirVerifier4.verify(...)` would typically be called directly ra
 
 |                                     | sol-spartan-whir | sol-whir |
 | ----------------------------------- | ---------------- | -------- |
-| **Verifier execution snapshot**     | 1,050,316        | 677,011  |
+| **Verifier execution snapshot**     | 1,049,006        | 677,011  |
 | **Measured tx execution remainder** | 896,166          | 699,176  |
 
 Notes:
@@ -70,7 +70,7 @@ Notes:
 - `sol-spartan-whir` snapshot: `forge test --match-contract WhirVerifier4Test -vv`
 - `sol-whir` snapshot: checked-in [snapshots/verif.json](./../sol-whir/snapshots/verif.json)
 - The tx execution remainder is `total tx gas - intrinsic - calldata gas`
-- `sol-spartan-whir` tx numbers measured at `optimizer_runs = 800` / execution snapshot `1,050,316`
+- `sol-spartan-whir` tx numbers measured at `optimizer_runs = 833` / execution snapshot `1,049,006`
 
 #### Arithmetic and proof-structure differences
 
@@ -123,8 +123,8 @@ For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [.
 ```sh
 via_ir = true
 optimizer = true
-optimizer_runs = 800
-WhirVerifier4 deployed bytecode = 24,082 bytes
+optimizer_runs = 833
+WhirVerifier4 deployed bytecode = 24,552 bytes
 ```
 
 ## Dependencies

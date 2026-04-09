@@ -188,13 +188,11 @@ contract WhirStirDetailHarness {
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
         uint256 g = gasleft();
-        WhirVerifierCore4.SelectStatement memory finalSs = WhirVerifierCore4
-            ._verifyStirChallengesRaw(
+        WhirVerifierCore4._verifyFinalStirChallengesRaw(
                 challenger,
                 prevCommitment.root,
                 QuarticWhirFixedConfig.FINAL_POW_BITS,
                 QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-                QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
                 QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
                 QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
                 QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
@@ -202,16 +200,13 @@ contract WhirStirDetailHarness {
                 proof.finalQueryBatchPresent,
                 proof.finalPowWitness,
                 foldingRandomness,
-                false,
-                QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1
+                QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+                proof.finalPoly
             );
         split.materialization = g - gasleft();
 
-        g = gasleft();
-        WhirVerifierCore4._verifySelectStatement(finalSs, proof.finalPoly);
-        split.checkOnly = g - gasleft();
-        split.total = split.materialization + split.checkOnly;
-        split.queryCount = finalSs.vars.length;
+        split.checkOnly = 0;
+        split.total = split.materialization;
         split.polyLen = proof.finalPoly.length;
     }
 

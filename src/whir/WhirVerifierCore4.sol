@@ -529,27 +529,6 @@ library WhirVerifierCore4 {
         updated = KoalaBearExt4.add(acc, horner);
     }
 
-    function _evaluateConstraints(
-        Constraint[] memory constraints,
-        uint256 constraintCount,
-        uint256[] memory allRandomness
-    ) internal pure returns (uint256 acc) {
-        unchecked {
-            for (uint256 i = 0; i < constraintCount; ++i) {
-                uint256 numVariables = constraints[i].eqStatement.numVariables;
-                uint256 pointOffset = allRandomness.length - numVariables;
-                acc = KoalaBearExt4.add(
-                    acc,
-                    _evaluateConstraint(
-                        constraints[i],
-                        allRandomness,
-                        pointOffset
-                    )
-                );
-            }
-        }
-    }
-
     function _verifyFinalStirChallengesRaw(
         KeccakChallenger.State memory challenger,
         bytes32 expectedRoot,
@@ -652,213 +631,6 @@ library WhirVerifierCore4 {
         }
     }
 
-    function _evaluateConstraint(
-        Constraint memory constraint,
-        uint256[] memory fullPoint,
-        uint256 pointOffset
-    ) internal pure returns (uint256 total) {
-        if (
-            constraint.eqStatement.numVariables !=
-            constraint.selStatement.numVariables
-        ) {
-            revert InconsistentConstraintArity(
-                constraint.eqStatement.numVariables,
-                constraint.selStatement.numVariables
-            );
-        }
-
-        uint256 numVariables = constraint.eqStatement.numVariables;
-        uint256 challenge = constraint.challenge;
-        uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
-        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
-        uint256[] memory selVars = constraint.selStatement.vars;
-        uint256 selVarCount = selVars.length;
-
-        // Horner form: Σ γ^k × w_k = w_0 + γ·(w_1 + γ·(... + γ·w_{N-1}))
-        // Eliminates one ext4 mul per weight vs explicit gamma-power tracking.
-        // Process weights in reverse: selects last-to-first, then eq last-to-first.
-        // The mulAdd step (total = total * challenge + weight) is fused in inline
-        // assembly to avoid intermediate packing/unpacking of ext4 lanes.
-        // Pre-unpack challenge lanes (constant across all iterations)
-        uint256 ch0;
-        uint256 ch1;
-        uint256 ch2;
-        uint256 ch3;
-        assembly ("memory-safe") {
-            ch0 := shr(224, challenge)
-            ch1 := and(shr(192, challenge), 0xffffffff)
-            ch2 := and(shr(160, challenge), 0xffffffff)
-            ch3 := and(shr(128, challenge), 0xffffffff)
-        }
-        unchecked {
-            for (uint256 i = selVarCount; i > 0; --i) {
-                uint256 weight = _selectPolyEvalAt(
-                    selVars[i - 1],
-                    fullPoint,
-                    pointOffset,
-                    numVariables
-                );
-                // Fused: total = total * challenge + weight
-                assembly ("memory-safe") {
-                    let M := 0x7f000001
-                    let m := 0xffffffff
-                    let W := 3
-
-                    let a0 := shr(224, total)
-                    let a1 := and(shr(192, total), m)
-                    let a2 := and(shr(160, total), m)
-                    let a3 := and(shr(128, total), m)
-
-                    let w0 := shr(224, weight)
-                    let w1 := and(shr(192, weight), m)
-                    let w2 := and(shr(160, weight), m)
-                    let w3 := and(shr(128, weight), m)
-
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
-                            add(
-                                add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
-                                ),
-                                mul(W, mul(a3, ch3))
-                            ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
-                            add(
-                                add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
-                                ),
-                                mul(a3, ch0)
-                            ),
-                            w3
-                        ),
-                        M
-                    )
-
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
-                }
-            }
-            for (uint256 i = eqEvalCount; i > 0; --i) {
-                uint256 weight = _eqPolyEvalAt(
-                    flatPoints,
-                    (i - 1) * numVariables,
-                    fullPoint,
-                    pointOffset,
-                    numVariables
-                );
-                // Fused: total = total * challenge + weight
-                assembly ("memory-safe") {
-                    let M := 0x7f000001
-                    let m := 0xffffffff
-                    let W := 3
-
-                    let a0 := shr(224, total)
-                    let a1 := and(shr(192, total), m)
-                    let a2 := and(shr(160, total), m)
-                    let a3 := and(shr(128, total), m)
-
-                    let w0 := shr(224, weight)
-                    let w1 := and(shr(192, weight), m)
-                    let w2 := and(shr(160, weight), m)
-                    let w3 := and(shr(128, weight), m)
-
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
-                            add(
-                                add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
-                                ),
-                                mul(W, mul(a3, ch3))
-                            ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
-                            add(
-                                add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
-                                ),
-                                mul(a3, ch0)
-                            ),
-                            w3
-                        ),
-                        M
-                    )
-
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
-                }
-            }
-        }
-    }
-
     function _evaluateConstraintsFixedSelect(
         Constraint[] memory constraints,
         uint256[] memory allRandomness
@@ -885,9 +657,7 @@ library WhirVerifierCore4 {
 
         uint256 challenge = constraint.challenge;
         uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
-        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
         uint256[] memory selVars = constraint.selStatement.vars;
-        uint256 selVarCount = selVars.length;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;
@@ -899,7 +669,7 @@ library WhirVerifierCore4 {
             ch3 := and(shr(128, challenge), 0xffffffff)
         }
         unchecked {
-            for (uint256 i = selVarCount; i > 0; --i) {
+            for (uint256 i = 9; i > 0; --i) {
                 uint256 weight = _selectPolyEvalAt12At4(
                     selVars[i - 1],
                     fullPoint
@@ -978,7 +748,7 @@ library WhirVerifierCore4 {
                     )
                 }
             }
-            for (uint256 i = eqEvalCount; i > 0; --i) {
+            for (uint256 i = 2; i > 0; --i) {
                 uint256 weight = _eqPolyEvalAt(
                     flatPoints,
                     (i - 1) * 12,
@@ -1079,9 +849,7 @@ library WhirVerifierCore4 {
 
         uint256 challenge = constraint.challenge;
         uint256[] memory flatPoints = constraint.eqStatement.flatPoints;
-        uint256 eqEvalCount = constraint.eqStatement.evaluations.length;
         uint256[] memory selVars = constraint.selStatement.vars;
-        uint256 selVarCount = selVars.length;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;
@@ -1093,7 +861,7 @@ library WhirVerifierCore4 {
             ch3 := and(shr(128, challenge), 0xffffffff)
         }
         unchecked {
-            for (uint256 i = selVarCount; i > 0; --i) {
+            for (uint256 i = 6; i > 0; --i) {
                 uint256 weight = _selectPolyEvalAt8At8(
                     selVars[i - 1],
                     fullPoint
@@ -1172,7 +940,7 @@ library WhirVerifierCore4 {
                     )
                 }
             }
-            for (uint256 i = eqEvalCount; i > 0; --i) {
+            for (uint256 i = 2; i > 0; --i) {
                 uint256 weight = _eqPolyEvalAt(
                     flatPoints,
                     (i - 1) * 8,
@@ -1640,115 +1408,6 @@ library WhirVerifierCore4 {
                 or(shl(224, a0), shl(192, a1)),
                 or(shl(160, a2), shl(128, a3))
             )
-        }
-    }
-
-    function _selectPolyEvalAt(
-        uint256 var_,
-        uint256[] memory fullPoint,
-        uint256 pointOffset,
-        uint256 numVariables
-    ) internal pure returns (uint256 acc) {
-        assembly ("memory-safe") {
-            let modulus := 0x7f000001
-            let mask := 0xffffffff
-            let W := 3
-
-            let a0 := 1
-            let a1 := 0
-            let a2 := 0
-            let a3 := 0
-            let current := var_
-
-            // fullPoint base: array data starts at fullPoint + 0x20
-            // We iterate backwards: i from numVariables down to 1
-            // fullPoint[pointOffset + (i-1)] is at base + (pointOffset + i - 1) * 0x20
-            let fpBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
-
-            for {
-                let i := numVariables
-            } gt(i, 0) {
-                i := sub(i, 1)
-            } {
-                let pointValue := mload(add(fpBase, shl(5, sub(i, 1))))
-
-                // scalar = (current == 0) ? modulus - 1 : current - 1
-                let scalar := sub(current, 1)
-                if iszero(current) {
-                    scalar := sub(modulus, 1)
-                }
-
-                let p0 := shr(224, pointValue)
-                let p1 := and(shr(192, pointValue), mask)
-                let p2 := and(shr(160, pointValue), mask)
-                let p3 := and(shr(128, pointValue), mask)
-
-                // select term: t = 1 + scalar * point (base scalar times ext4 point)
-                let t0 := add(1, mul(scalar, p0))
-                let t1 := mul(scalar, p1)
-                let t2 := mul(scalar, p2)
-                let t3 := mul(scalar, p3)
-
-                // acc = acc * t (schoolbook over X^4 - 3)
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    modulus
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    modulus
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    modulus
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    modulus
-                )
-
-                a0 := n0
-                a1 := n1
-                a2 := n2
-                a3 := n3
-
-                // current = current^2 (base field squaring)
-                current := mulmod(current, current, modulus)
-            }
-
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
-        }
-    }
-
-    function _verifySelectStatement(
-        SelectStatement memory statement,
-        uint256[] calldata finalPoly
-    ) internal pure {
-        unchecked {
-            for (uint256 i = 0; i < statement.vars.length; ++i) {
-                uint256 actual = WhirVerifierUtils4.hornerBase(
-                    finalPoly,
-                    statement.vars[i]
-                );
-                if (actual != statement.evaluations[i]) {
-                    revert StirConstraintFailed(i);
-                }
-            }
         }
     }
 

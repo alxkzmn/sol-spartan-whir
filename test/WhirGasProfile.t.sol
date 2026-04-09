@@ -232,112 +232,6 @@ contract WhirProfileHarness {
         require(claimedEval != 0, "PROFILE_ZERO_CLAIM");
     }
 
-    function profileSyntheticEqConstraint(
-        bytes32 expectedCommitment,
-        WhirStructs.WhirStatement calldata statement,
-        WhirStructs.WhirProof calldata proof
-    )
-        external
-        view
-        returns (uint256 gasEvaluateConstraints, uint256 eqPointCount)
-    {
-        uint256 g;
-
-        KeccakChallenger.State memory challenger;
-        QuarticWhirFixedConfig.observePattern(challenger);
-        WhirVerifierCore4.ParsedCommitment memory parsed = WhirVerifierCore4
-            ._parseCommitment(
-                challenger,
-                proof.initialCommitment,
-                proof.initialOodAnswers,
-                QuarticWhirFixedConfig.NUM_VARIABLES,
-                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
-            );
-        if (parsed.root != expectedCommitment) {
-            revert WhirVerifierCore4.CommitmentMismatch(
-                expectedCommitment,
-                parsed.root
-            );
-        }
-
-        WhirVerifierCore4.EqStatement memory initialEq = WhirVerifierCore4
-            ._concatenateEq(
-                WhirVerifierCore4._statementFromCalldata(
-                    statement,
-                    QuarticWhirFixedConfig.NUM_VARIABLES
-                ),
-                parsed.oodStatement
-            );
-        eqPointCount = initialEq.evaluations.length;
-
-        WhirVerifierCore4.Constraint[]
-            memory constraints = new WhirVerifierCore4.Constraint[](1);
-        constraints[0] = WhirVerifierCore4.Constraint({
-            challenge: KoalaBearExt4.fromBase(7),
-            eqStatement: initialEq,
-            selStatement: WhirVerifierCore4._emptySelect(
-                QuarticWhirFixedConfig.NUM_VARIABLES
-            )
-        });
-
-        uint256[] memory syntheticPoint = new uint256[](
-            QuarticWhirFixedConfig.NUM_VARIABLES
-        );
-        unchecked {
-            for (uint256 i = 0; i < QuarticWhirFixedConfig.NUM_VARIABLES; ++i) {
-                syntheticPoint[i] = KoalaBearExt4.fromBase(i + 1);
-            }
-        }
-
-        g = gasleft();
-        WhirVerifierCore4._evaluateConstraints(constraints, 1, syntheticPoint);
-        gasEvaluateConstraints = g - gasleft();
-    }
-
-    function profileSyntheticSelectConstraint()
-        external
-        view
-        returns (uint256 gasEvaluateConstraints, uint256 selectCount)
-    {
-        WhirVerifierCore4.Constraint[]
-            memory constraints = new WhirVerifierCore4.Constraint[](1);
-        uint256[] memory vars = new uint256[](20);
-        uint256[] memory evals = new uint256[](0);
-        unchecked {
-            for (uint256 i = 0; i < vars.length; ++i) {
-                vars[i] = i + 2;
-            }
-        }
-
-        constraints[0] = WhirVerifierCore4.Constraint({
-            challenge: KoalaBearExt4.fromBase(11),
-            eqStatement: WhirVerifierCore4.EqStatement({
-                numVariables: QuarticWhirFixedConfig.NUM_VARIABLES,
-                evaluations: evals,
-                flatPoints: new uint256[](0)
-            }),
-            selStatement: WhirVerifierCore4.SelectStatement({
-                numVariables: QuarticWhirFixedConfig.NUM_VARIABLES,
-                evaluations: evals,
-                vars: vars
-            })
-        });
-        selectCount = vars.length;
-
-        uint256[] memory syntheticPoint = new uint256[](
-            QuarticWhirFixedConfig.NUM_VARIABLES
-        );
-        unchecked {
-            for (uint256 i = 0; i < QuarticWhirFixedConfig.NUM_VARIABLES; ++i) {
-                syntheticPoint[i] = KoalaBearExt4.fromBase(i + 1);
-            }
-        }
-
-        uint256 g = gasleft();
-        WhirVerifierCore4._evaluateConstraints(constraints, 1, syntheticPoint);
-        gasEvaluateConstraints = g - gasleft();
-    }
-
     function profileStandaloneFinalSumcheck(
         WhirStructs.WhirProof calldata proof
     ) external view returns (uint256 gasFinalSumcheck) {
@@ -372,6 +266,8 @@ contract WhirProfileHarness {
         uint256 finalStir;
         uint256 finalSelect;
         uint256 finalSumcheck;
+        uint256 constraintsFixedSelect;
+        uint256 constraintsInitial;
         uint256 constraints;
         uint256 finalCheck;
     }
@@ -558,17 +454,30 @@ contract WhirProfileHarness {
                 cArr,
                 allRandomness
             );
+        bd.constraintsFixedSelect = g - gasleft();
+
+        g = gasleft();
         {
             uint256[] memory oodFlatPoints = initialParsedCommitment
                 .oodStatement
                 .flatPoints;
-            uint256 oodLen = initialParsedCommitment
-                .oodStatement
-                .evaluations
-                .length;
             uint256 initEval;
+            uint256 ch0;
+            uint256 ch1;
+            uint256 ch2;
+            uint256 ch3;
+            assembly ("memory-safe") {
+                ch0 := shr(224, initialConstraintChallenge)
+                ch1 := and(shr(192, initialConstraintChallenge), 0xffffffff)
+                ch2 := and(shr(160, initialConstraintChallenge), 0xffffffff)
+                ch3 := and(shr(128, initialConstraintChallenge), 0xffffffff)
+            }
             unchecked {
-                for (uint256 i = oodLen; i > 0; --i) {
+                for (
+                    uint256 i = QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES;
+                    i > 0;
+                    --i
+                ) {
                     uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
                         oodFlatPoints,
                         (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
@@ -576,10 +485,79 @@ contract WhirProfileHarness {
                         0,
                         QuarticWhirFixedConfig.NUM_VARIABLES
                     );
-                    initEval = KoalaBearExt4.add(
-                        weight,
-                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
-                    );
+                    assembly ("memory-safe") {
+                        let M := 0x7f000001
+                        let m := 0xffffffff
+                        let W := 3
+
+                        let a0 := shr(224, initEval)
+                        let a1 := and(shr(192, initEval), m)
+                        let a2 := and(shr(160, initEval), m)
+                        let a3 := and(shr(128, initEval), m)
+
+                        let w0 := shr(224, weight)
+                        let w1 := and(shr(192, weight), m)
+                        let w2 := and(shr(160, weight), m)
+                        let w3 := and(shr(128, weight), m)
+
+                        let r0 := mod(
+                            add(
+                                add(
+                                    mul(a0, ch0),
+                                    mul(
+                                        W,
+                                        add(
+                                            add(mul(a1, ch3), mul(a2, ch2)),
+                                            mul(a3, ch1)
+                                        )
+                                    )
+                                ),
+                                w0
+                            ),
+                            M
+                        )
+                        let r1 := mod(
+                            add(
+                                add(
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                                ),
+                                w1
+                            ),
+                            M
+                        )
+                        let r2 := mod(
+                            add(
+                                add(
+                                    add(
+                                        add(mul(a0, ch2), mul(a1, ch1)),
+                                        mul(a2, ch0)
+                                    ),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                        let r3 := mod(
+                            add(
+                                add(
+                                    add(
+                                        add(mul(a0, ch3), mul(a1, ch2)),
+                                        mul(a2, ch1)
+                                    ),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
+
+                        initEval := or(
+                            or(shl(224, r0), shl(192, r1)),
+                            or(shl(160, r2), shl(128, r3))
+                        )
+                    }
                 }
                 for (uint256 i = statement.points.length; i > 0; --i) {
                     WhirVerifierUtils4.validatePackedExt4Calldata(
@@ -591,10 +569,79 @@ contract WhirProfileHarness {
                         0,
                         QuarticWhirFixedConfig.NUM_VARIABLES
                     );
-                    initEval = KoalaBearExt4.add(
-                        weight,
-                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
-                    );
+                    assembly ("memory-safe") {
+                        let M := 0x7f000001
+                        let m := 0xffffffff
+                        let W := 3
+
+                        let a0 := shr(224, initEval)
+                        let a1 := and(shr(192, initEval), m)
+                        let a2 := and(shr(160, initEval), m)
+                        let a3 := and(shr(128, initEval), m)
+
+                        let w0 := shr(224, weight)
+                        let w1 := and(shr(192, weight), m)
+                        let w2 := and(shr(160, weight), m)
+                        let w3 := and(shr(128, weight), m)
+
+                        let r0 := mod(
+                            add(
+                                add(
+                                    mul(a0, ch0),
+                                    mul(
+                                        W,
+                                        add(
+                                            add(mul(a1, ch3), mul(a2, ch2)),
+                                            mul(a3, ch1)
+                                        )
+                                    )
+                                ),
+                                w0
+                            ),
+                            M
+                        )
+                        let r1 := mod(
+                            add(
+                                add(
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                                ),
+                                w1
+                            ),
+                            M
+                        )
+                        let r2 := mod(
+                            add(
+                                add(
+                                    add(
+                                        add(mul(a0, ch2), mul(a1, ch1)),
+                                        mul(a2, ch0)
+                                    ),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                        let r3 := mod(
+                            add(
+                                add(
+                                    add(
+                                        add(mul(a0, ch3), mul(a1, ch2)),
+                                        mul(a2, ch1)
+                                    ),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
+
+                        initEval := or(
+                            or(shl(224, r0), shl(192, r1)),
+                            or(shl(160, r2), shl(128, r3))
+                        )
+                    }
                 }
             }
             evaluationOfWeights = KoalaBearExt4.add(
@@ -602,7 +649,8 @@ contract WhirProfileHarness {
                 initEval
             );
         }
-        bd.constraints = g - gasleft();
+        bd.constraintsInitial = g - gasleft();
+        bd.constraints = bd.constraintsFixedSelect + bd.constraintsInitial;
 
         // --- Final Check ---
         g = gasleft();
@@ -1409,13 +1457,11 @@ contract WhirProfileHarness {
 
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
-        WhirVerifierCore4.SelectStatement memory finalSs = WhirVerifierCore4
-            ._verifyStirChallengesRaw(
+        WhirVerifierCore4._verifyFinalStirChallengesRaw(
                 challenger,
                 prevCommitment.root,
                 QuarticWhirFixedConfig.FINAL_POW_BITS,
                 QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-                QuarticWhirFixedConfig.FINAL_NUM_VARIABLES,
                 QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
                 QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
                 QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
@@ -1423,10 +1469,9 @@ contract WhirProfileHarness {
                 proof.finalQueryBatchPresent,
                 proof.finalPowWitness,
                 foldingRandomness,
-                false,
-                1
+                1,
+                proof.finalPoly
             );
-        WhirVerifierCore4._verifySelectStatement(finalSs, proof.finalPoly);
         (
             claimedEval,
             finalSumcheckRandomness,
@@ -1886,14 +1931,6 @@ contract WhirGasProfileTest is Test {
             statement,
             proof
         );
-        (uint256 gasEvaluateConstraints, uint256 eqPointCount) = harness
-            .profileSyntheticEqConstraint(
-                proof.initialCommitment,
-                statement,
-                proof
-            );
-        (uint256 gasSelectConstraints, uint256 selectCount) = harness
-            .profileSyntheticSelectConstraint();
         uint256 gasFinalSumcheck = harness.profileStandaloneFinalSumcheck(
             proof
         );
@@ -1904,11 +1941,7 @@ contract WhirGasProfileTest is Test {
         console.log("Eq concat:             ", gasConcatEq);
         console.log("Initial sumcheck:      ", gasInitialSumcheck);
         console.log("Observe finalPoly:     ", gasObserveFinalPoly);
-        console.log("Eq point count:        ", eqPointCount);
-        console.log("Select count:          ", selectCount);
         console.log("Final sumcheck:        ", gasFinalSumcheck);
-        console.log("Synthetic eq eval:     ", gasEvaluateConstraints);
-        console.log("Synthetic select eval: ", gasSelectConstraints);
     }
 
     function testProfileMicroBenchmarks() external view {
@@ -2150,10 +2183,27 @@ contract WhirGasProfileTest is Test {
         console.log("Final STIR (5q d16 ext4):   ", bd.finalStir);
         console.log("Final select (5x Horner16): ", bd.finalSelect);
         console.log("Final sumcheck (4r pow=0):  ", bd.finalSumcheck);
+        console.log("Constraint fixed select:    ", bd.constraintsFixedSelect);
+        console.log("Constraint initial eq:      ", bd.constraintsInitial);
         console.log("Constraint evaluation:      ", bd.constraints);
         console.log("Final value check:          ", bd.finalCheck);
         console.log("---");
         console.log("Sum of phases:              ", total);
+    }
+
+    function testProfileConstraintSplit() external view {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        WhirProfileHarness.FullBreakdown memory bd = harness
+            .profileFullBreakdown(proof.initialCommitment, statement, proof);
+
+        console.log("=== Constraint Split ===");
+        console.log("Fixed select:        ", bd.constraintsFixedSelect);
+        console.log("Initial constraint:  ", bd.constraintsInitial);
+        console.log("Total constraints:   ", bd.constraints);
     }
 
     function testProfileStirBreakdown() external view {
@@ -2305,24 +2355,6 @@ contract WhirGasProfileTest is Test {
             proof
         );
         assertGt(gasConstraint, 0);
-    }
-
-    function testFlameSyntheticEqConstraint() external view {
-        (
-            WhirStructs.WhirStatement memory statement,
-            WhirStructs.WhirProof memory proof
-        ) = _loadSuccessFixture();
-        (uint256 gasEq, ) = harness.profileSyntheticEqConstraint(
-            proof.initialCommitment,
-            statement,
-            proof
-        );
-        assertGt(gasEq, 0);
-    }
-
-    function testFlameSyntheticSelectConstraint() external view {
-        (uint256 gasSelect, ) = harness.profileSyntheticSelectConstraint();
-        assertGt(gasSelect, 0);
     }
 
     function _logStirBreakdown(
