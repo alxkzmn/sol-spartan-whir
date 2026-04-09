@@ -5,6 +5,8 @@ library KoalaBear {
     uint256 internal constant MODULUS = 0x7f000001;
     uint256 internal constant W = 3;
 
+    // Assumes a,b are canonical KoalaBear elements in [0, MODULUS).
+    // Do not use for lazy-reduced / unreduced accumulators
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         unchecked {
             uint256 c = a + b;
@@ -12,6 +14,8 @@ library KoalaBear {
         }
     }
 
+    // Assumes a,b are canonical KoalaBear elements in [0, MODULUS).
+    // Do not use for lazy-reduced / unreduced accumulators
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         unchecked {
             return a >= b ? a - b : a + MODULUS - b;
@@ -43,7 +47,7 @@ library KoalaBear {
     }
 
     function inv(uint256 a) internal pure returns (uint256) {
-        require(a != 0, "ZERO_INV");
+        require(a % MODULUS != 0, "ZERO_INV");
         return pow(a, MODULUS - 2);
     }
 }

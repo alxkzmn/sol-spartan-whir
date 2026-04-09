@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {KoalaBear} from "../../src/field/KoalaBear.sol";
 import {KoalaBearExt4} from "../../src/field/KoalaBearExt4.sol";
 import {KoalaBearExt8} from "../../src/field/KoalaBearExt8.sol";
+import {WhirVerifierUtils4} from "../../src/whir/WhirVerifierUtils4.sol";
 
 contract FieldHarness {
     function baseAdd(uint256 a, uint256 b) external pure returns (uint256) {
@@ -32,6 +33,10 @@ contract FieldHarness {
         return _from4(KoalaBearExt4.unpack(packed));
     }
 
+    function ext4Validate(uint256 packed) external pure {
+        WhirVerifierUtils4.validatePackedExt4(packed);
+    }
+
     function ext4Add(uint256 a, uint256 b) external pure returns (uint256) {
         return KoalaBearExt4.add(a, b);
     }
@@ -52,7 +57,7 @@ contract FieldHarness {
         uint256 a,
         uint256 b
     ) external pure returns (uint256) {
-        return KoalaBearExt4.mul_reference(a, b);
+        return KoalaBearExt4.mulReference(a, b);
     }
 
     function ext4Inv(uint256 a) external pure returns (uint256) {

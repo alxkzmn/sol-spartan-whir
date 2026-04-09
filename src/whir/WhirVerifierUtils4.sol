@@ -29,11 +29,11 @@ library WhirVerifierUtils4 {
         }
     }
 
-    function observeExt4(
+    function observeValidatedExt4(
         KeccakChallenger.State memory challenger,
         uint256 packed
     ) internal pure {
-        challenger.observePackedExt4(packed);
+        challenger.observeValidatedPackedExt4(packed);
     }
 
     function sampleExt4(
@@ -71,6 +71,7 @@ library WhirVerifierUtils4 {
     function validatePackedExt4(uint256 packed) internal pure {
         unchecked {
             if (
+                (packed & ((1 << 128) - 1)) != 0 ||
                 (packed >> 224) >= KoalaBear.MODULUS ||
                 ((packed >> 192) & 0xffffffff) >= KoalaBear.MODULUS ||
                 ((packed >> 160) & 0xffffffff) >= KoalaBear.MODULUS ||
@@ -90,6 +91,20 @@ library WhirVerifierUtils4 {
 
         for (uint256 i = numVariables; i > 0; --i) {
             point[i - 1] = current;
+            current = KoalaBearExt4.square(current);
+        }
+    }
+
+    function expandFromUnivariateExtInto(
+        uint256[] memory dst,
+        uint256 dstOffset,
+        uint256 value,
+        uint256 numVariables
+    ) internal pure {
+        uint256 current = value;
+
+        for (uint256 i = numVariables; i > 0; --i) {
+            dst[dstOffset + i - 1] = current;
             current = KoalaBearExt4.square(current);
         }
     }
@@ -327,7 +342,7 @@ library WhirVerifierUtils4 {
         uint256[] calldata flatValues,
         uint256 start,
         uint256[] memory point
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         uint256 src;
         assembly ("memory-safe") {
             src := add(flatValues.offset, shl(5, start))
@@ -433,7 +448,7 @@ library WhirVerifierUtils4 {
         uint256[] calldata flatValues,
         uint256 start,
         uint256[] memory point
-    ) private pure returns (uint256) {
+    ) internal pure returns (uint256) {
         uint256 src;
         assembly ("memory-safe") {
             src := add(flatValues.offset, shl(5, start))
@@ -732,14 +747,6 @@ library WhirVerifierUtils4 {
         c1 = (packed >> 192) & 0xffffffff;
         c2 = (packed >> 160) & 0xffffffff;
         c3 = (packed >> 128) & 0xffffffff;
-    }
-
-    function _subCoeff(
-        uint256 lhs,
-        uint256 rhs,
-        uint256 modulus
-    ) private pure returns (uint256) {
-        return lhs >= rhs ? lhs - rhs : lhs + modulus - rhs;
     }
 
     function log2Strict(uint256 x) internal pure returns (uint256 result) {

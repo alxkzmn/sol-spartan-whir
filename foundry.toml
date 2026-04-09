@@ -7,8 +7,7 @@ script = "script"
 solc = "0.8.28"
 via_ir = true
 optimizer = true
-# Max value where WhirVerifier4 bytecode fits EIP-170 (24,576 bytes).
-# At 500 the contract is 24,290 bytes (286 margin). At 501 it jumps to 25,526.
+# Deployable setting used on the linearized-merkle branch.
 optimizer_runs = 500
 fs_permissions = [
   { access = "read", path = "./testdata" }

@@ -45,7 +45,7 @@ library KeccakChallenger {
         _appendDigestU64LE(self, digest);
     }
 
-    function observePackedExt4(
+    function observeValidatedPackedExt4(
         State memory self,
         uint256 packed
     ) internal pure {
@@ -61,61 +61,62 @@ library KeccakChallenger {
                 )
             }
 
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+                if and(x, sub(shl(128, 1), 1)) {
+                    revertPacked(x)
+                }
+
+                let x0 := shr(224, x)
+                if iszero(lt(x0, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x1 := and(shr(192, x), mask)
+                if iszero(lt(x1, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x2 := and(shr(160, x), mask)
+                if iszero(lt(x2, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x3 := and(shr(128, x), mask)
+                if iszero(lt(x3, modulus)) {
+                    revertPacked(x)
+                }
+
+                encoded := or(
+                    or(
+                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
+                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
+                    ),
+                    or(
+                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
+                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
+                    )
+                )
+            }
+
             let modulus := 0x7f000001
             let montyR := 0x01fffffe
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
 
-            mstore(
-                dst,
-                or(
-                    or(
-                        shl(
-                            224,
-                            bswap32(mulmod(shr(224, packed), montyR, modulus))
-                        ),
-                        shl(
-                            192,
-                            bswap32(
-                                mulmod(
-                                    and(shr(192, packed), mask),
-                                    montyR,
-                                    modulus
-                                )
-                            )
-                        )
-                    ),
-                    or(
-                        shl(
-                            160,
-                            bswap32(
-                                mulmod(
-                                    and(shr(160, packed), mask),
-                                    montyR,
-                                    modulus
-                                )
-                            )
-                        ),
-                        shl(
-                            128,
-                            bswap32(
-                                mulmod(
-                                    and(shr(128, packed), mask),
-                                    montyR,
-                                    modulus
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+            mstore(dst, validateAndEncode(packed, modulus, montyR, mask))
         }
 
         self.inputLen = newLen;
         self.outputIndex = 0;
     }
 
-    function observePackedExt4Pair(
+    function observeValidatedPackedExt4Pair(
         State memory self,
         uint256 first,
         uint256 second
@@ -132,30 +133,45 @@ library KeccakChallenger {
                 )
             }
 
-            function encodePackedExt4(x, modulus, montyR, mask) -> encoded {
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+                if and(x, sub(shl(128, 1), 1)) {
+                    revertPacked(x)
+                }
+
+                let x0 := shr(224, x)
+                if iszero(lt(x0, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x1 := and(shr(192, x), mask)
+                if iszero(lt(x1, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x2 := and(shr(160, x), mask)
+                if iszero(lt(x2, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x3 := and(shr(128, x), mask)
+                if iszero(lt(x3, modulus)) {
+                    revertPacked(x)
+                }
+
                 encoded := or(
                     or(
-                        shl(224, bswap32(mulmod(shr(224, x), montyR, modulus))),
-                        shl(
-                            192,
-                            bswap32(
-                                mulmod(and(shr(192, x), mask), montyR, modulus)
-                            )
-                        )
+                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
+                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
                     ),
                     or(
-                        shl(
-                            160,
-                            bswap32(
-                                mulmod(and(shr(160, x), mask), montyR, modulus)
-                            )
-                        ),
-                        shl(
-                            128,
-                            bswap32(
-                                mulmod(and(shr(128, x), mask), montyR, modulus)
-                            )
-                        )
+                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
+                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
                     )
                 )
             }
@@ -165,10 +181,10 @@ library KeccakChallenger {
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
 
-            mstore(dst, encodePackedExt4(first, modulus, montyR, mask))
+            mstore(dst, validateAndEncode(first, modulus, montyR, mask))
             mstore(
                 add(dst, 0x10),
-                encodePackedExt4(second, modulus, montyR, mask)
+                validateAndEncode(second, modulus, montyR, mask)
             )
         }
 
@@ -176,7 +192,7 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
-    function observePackedExt4Slice(
+    function observeValidatedPackedExt4Slice(
         State memory self,
         uint256[] calldata values
     ) internal pure {
@@ -193,30 +209,45 @@ library KeccakChallenger {
                 )
             }
 
-            function encodePackedExt4(x, modulus, montyR, mask) -> encoded {
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+                if and(x, sub(shl(128, 1), 1)) {
+                    revertPacked(x)
+                }
+
+                let x0 := shr(224, x)
+                if iszero(lt(x0, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x1 := and(shr(192, x), mask)
+                if iszero(lt(x1, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x2 := and(shr(160, x), mask)
+                if iszero(lt(x2, modulus)) {
+                    revertPacked(x)
+                }
+
+                let x3 := and(shr(128, x), mask)
+                if iszero(lt(x3, modulus)) {
+                    revertPacked(x)
+                }
+
                 encoded := or(
                     or(
-                        shl(224, bswap32(mulmod(shr(224, x), montyR, modulus))),
-                        shl(
-                            192,
-                            bswap32(
-                                mulmod(and(shr(192, x), mask), montyR, modulus)
-                            )
-                        )
+                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
+                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
                     ),
                     or(
-                        shl(
-                            160,
-                            bswap32(
-                                mulmod(and(shr(160, x), mask), montyR, modulus)
-                            )
-                        ),
-                        shl(
-                            128,
-                            bswap32(
-                                mulmod(and(shr(128, x), mask), montyR, modulus)
-                            )
-                        )
+                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
+                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
                     )
                 )
             }
@@ -236,7 +267,7 @@ library KeccakChallenger {
             } {
                 mstore(
                     dst,
-                    encodePackedExt4(calldataload(src), modulus, montyR, mask)
+                    validateAndEncode(calldataload(src), modulus, montyR, mask)
                 )
             }
         }

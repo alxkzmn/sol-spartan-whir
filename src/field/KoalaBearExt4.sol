@@ -90,7 +90,7 @@ library KoalaBearExt4 {
     }
 
     function square(uint256 a) internal pure returns (uint256) {
-        return _square_packed(a);
+        return _squarePacked(a);
     }
 
     function fromBase(uint256 value) internal pure returns (uint256) {
@@ -135,7 +135,7 @@ library KoalaBearExt4 {
         uint256 e2,
         uint256 r
     ) internal pure returns (uint256) {
-        return _extrapolate_012_fast(e0, e1, e2, r);
+        return _extrapolate012Fast(e0, e1, e2, r);
     }
 
     function extrapolate_012_reference(
@@ -173,7 +173,7 @@ library KoalaBearExt4 {
         uint256[] memory point
     ) internal pure returns (uint256) {
         uint256 size = evals.length;
-        require(size != 0 && _is_power_of_two(size), "BAD_EVALS");
+        require(size != 0 && _isPowerOfTwo(size), "BAD_EVALS");
         require(size == (uint256(1) << point.length), "DIM");
 
         if (point.length == 0) {
@@ -298,11 +298,11 @@ library KoalaBearExt4 {
             );
     }
 
-    function mul_reference(
+    function mulReference(
         uint256 a,
         uint256 b
     ) internal pure returns (uint256) {
-        return pack(_mul_coeffs_reference(unpack(a), unpack(b)));
+        return pack(_mulCoeffsReference(unpack(a), unpack(b)));
     }
 
     function _mul_packed(
@@ -333,7 +333,7 @@ library KoalaBearExt4 {
         }
     }
 
-    function _square_packed(uint256 a) internal pure returns (uint256 out) {
+    function _squarePacked(uint256 a) internal pure returns (uint256 out) {
         uint256 a0 = a >> 224;
         uint256 a1 = (a >> 192) & COEFF_MASK;
         uint256 a2 = (a >> 160) & COEFF_MASK;
@@ -365,7 +365,7 @@ library KoalaBearExt4 {
         }
     }
 
-    function _mul_coeffs_reference(
+    function _mulCoeffsReference(
         uint256[4] memory a,
         uint256[4] memory b
     ) internal pure returns (uint256[4] memory out) {
@@ -387,7 +387,7 @@ library KoalaBearExt4 {
         }
     }
 
-    function _extrapolate_012_fast(
+    function _extrapolate012Fast(
         uint256 e0,
         uint256 e1,
         uint256 e2,
@@ -502,7 +502,7 @@ library KoalaBearExt4 {
         return add(e0, mul(r, add(q1Packed, mul(r, q2Packed))));
     }
 
-    function _is_power_of_two(uint256 x) internal pure returns (bool) {
+    function _isPowerOfTwo(uint256 x) internal pure returns (bool) {
         return x & (x - 1) == 0;
     }
 }

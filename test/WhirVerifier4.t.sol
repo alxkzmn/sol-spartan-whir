@@ -6,6 +6,7 @@ import {Test} from "forge-std/Test.sol";
 import {MerkleVerifier} from "../src/merkle/MerkleVerifier.sol";
 import {WhirStructs} from "../src/whir/WhirStructs.sol";
 import {WhirVerifierCore4} from "../src/whir/WhirVerifierCore4.sol";
+import {WhirVerifierUtils4} from "../src/whir/WhirVerifierUtils4.sol";
 import {WhirVerifier4} from "../src/whir/WhirVerifier4.sol";
 
 contract WhirVerifier4Test is Test {
@@ -95,6 +96,14 @@ contract WhirVerifier4Test is Test {
         verifier.verify(success.initialCommitment, statement, failure);
     }
 
+    function testRejectsMalformedInitialOodAnswers() external {
+        _assertRejectsMalformedPackedExt4AtInitialOod(0, 0, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtInitialOod(0, 1, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtInitialOod(0, 2, 2 * 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtInitialOod(0, 3, 0xffffffff);
+        _assertRejectsMalformedLowBitsAtInitialOod(0);
+    }
+
     function testRejectsTamperedInitialSumcheckData() external {
         (
             WhirStructs.WhirStatement memory statement,
@@ -107,6 +116,18 @@ contract WhirVerifier4Test is Test {
 
         vm.expectRevert();
         verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function testRejectsMalformedInitialSumcheckEvals() external {
+        _assertRejectsMalformedPackedExt4AtInitialSumcheck(0, 0, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtInitialSumcheck(0, 1, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtInitialSumcheck(
+            0,
+            2,
+            2 * 0x7f000001
+        );
+        _assertRejectsMalformedPackedExt4AtInitialSumcheck(0, 3, 0xffffffff);
+        _assertRejectsMalformedLowBitsAtInitialSumcheck(0);
     }
 
     function testRejectsFinalConstraintMismatch() external {
@@ -123,6 +144,14 @@ contract WhirVerifier4Test is Test {
             WhirVerifierCore4.FinalConstraintMismatch.selector
         );
         verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function testRejectsMalformedFinalPolyCoefficients() external {
+        _assertRejectsMalformedPackedExt4AtFinalPoly(0, 0, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtFinalPoly(0, 1, 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtFinalPoly(0, 2, 2 * 0x7f000001);
+        _assertRejectsMalformedPackedExt4AtFinalPoly(0, 3, 0xffffffff);
+        _assertRejectsMalformedLowBitsAtFinalPoly(0);
     }
 
     function testRejectsTamperedFinalMerklePath() external {
@@ -170,5 +199,132 @@ contract WhirVerifier4Test is Test {
             next = 0;
         }
         return (packed & ~(uint256(type(uint32).max) << 224)) | (next << 224);
+    }
+
+    function _assertRejectsMalformedPackedExt4AtInitialOod(
+        uint256 index,
+        uint256 lane,
+        uint256 value
+    ) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.initialOodAnswers[index] = _withLane(
+            proof.initialOodAnswers[index],
+            lane,
+            value
+        );
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _assertRejectsMalformedLowBitsAtInitialOod(
+        uint256 index
+    ) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.initialOodAnswers[index] = _withLowBits(
+            proof.initialOodAnswers[index]
+        );
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _assertRejectsMalformedPackedExt4AtInitialSumcheck(
+        uint256 index,
+        uint256 lane,
+        uint256 value
+    ) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.initialSumcheck.polynomialEvals[index] = _withLane(
+            proof.initialSumcheck.polynomialEvals[index],
+            lane,
+            value
+        );
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _assertRejectsMalformedLowBitsAtInitialSumcheck(
+        uint256 index
+    ) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.initialSumcheck.polynomialEvals[index] = _withLowBits(
+            proof.initialSumcheck.polynomialEvals[index]
+        );
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _assertRejectsMalformedPackedExt4AtFinalPoly(
+        uint256 index,
+        uint256 lane,
+        uint256 value
+    ) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.finalPoly[index] = _withLane(proof.finalPoly[index], lane, value);
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _assertRejectsMalformedLowBitsAtFinalPoly(uint256 index) internal {
+        (
+            WhirStructs.WhirStatement memory statement,
+            WhirStructs.WhirProof memory proof
+        ) = _loadSuccessFixture();
+
+        proof.finalPoly[index] = _withLowBits(proof.finalPoly[index]);
+
+        vm.expectPartialRevert(
+            WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
+        );
+        verifier.verify(proof.initialCommitment, statement, proof);
+    }
+
+    function _withLane(
+        uint256 packed,
+        uint256 lane,
+        uint256 value
+    ) internal pure returns (uint256) {
+        require(lane < 4, "BAD_LANE");
+        uint256 shift = 224 - (lane * 32);
+        uint256 mask = ~(uint256(type(uint32).max) << shift);
+        return (packed & mask) | (value << shift);
+    }
+
+    function _withLowBits(uint256 packed) internal pure returns (uint256) {
+        return packed | 1;
     }
 }

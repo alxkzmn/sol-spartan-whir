@@ -30,9 +30,11 @@ cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 
 ### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
 
-Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 500` with `WhirVerifier4` runtime bytecode at `24,290` bytes.
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The current `sol-spartan-whir` deployable setting uses `optimizer_runs = 500` with `WhirVerifier4` runtime bytecode at `21,671` bytes.
 
 #### Total verification transaction cost
+
+The transaction tables below are historical snapshots for this branch family. Re-run the benchmark scripts if you need exact post-merge tx gas.
 
 `sol-whir` only exposes a wrapper-style benchmark transaction (`WhirContract.callVerify(...)`), so the fairest apples-to-apples comparison is wrapper-to-wrapper:
 
@@ -62,7 +64,7 @@ The table below shows a direct-call measurement where the verifier is invoked wi
 
 |                                     | sol-spartan-whir | sol-whir |
 | ----------------------------------- | ---------------- | -------- |
-| **Verifier execution snapshot**     | 986,923          | 677,011  |
+| **Verifier execution snapshot**     | 948,000          | 677,011  |
 | **Measured tx execution remainder** | 817,105          | 699,176  |
 
 Notes:
@@ -123,7 +125,7 @@ For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [.
 via_ir = true
 optimizer = true
 optimizer_runs = 500
-WhirVerifier4 deployed bytecode = 24,290 bytes
+WhirVerifier4 deployed bytecode = 21,671 bytes
 ```
 
 ## Dependencies
