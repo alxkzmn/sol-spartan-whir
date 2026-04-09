@@ -28,9 +28,35 @@ cargo run --bin export-fixtures -p spartan-whir-export -- testdata
 
 ## Gas
 
+### Recommended stage4 verifier path
+
+On the current `stage4` branch, the verifier that should be treated as the main deployment target is:
+
+- `WhirBlobVerifierNative4`
+
+Why:
+
+- it is the lowest-gas execution path measured so far
+- it verifies directly from the fixed-shape blob without materializing typed proof structs
+- it has much more bytecode headroom than the typed verifier
+
+Current measured stage4 execution snapshots:
+
+| Path                                    | Contract                  | Execution gas |            Runtime size |
+| --------------------------------------- | ------------------------- | ------------: | ----------------------: |
+| **Recommended production path**         | `WhirBlobVerifierNative4` |     `936,013` |          `19,615` bytes |
+| Typed parity/reference path             | `WhirVerifier4`           |   `1,007,179` |          `24,412` bytes |
+| Blob decode-and-delegate reference path | `WhirBlobVerifier4`       |   `1,190,987` | not a production target |
+
+Role of each path:
+
+- `WhirBlobVerifierNative4`: main stage4 verifier
+- `WhirVerifier4`: typed ABI parity path and readable reference implementation
+- `WhirBlobVerifier4`: blob-format reference, malformed-blob rejection path, and calldata benchmark harness
+
 ### WHIR-only verifier comparison (sol-spartan-whir vs sol-whir)
 
-Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 833` with `WhirVerifier4` runtime bytecode at `24,455` bytes.
+Both verifiers target 80-bit security with `foldingFactor = 4` and `numVariables = 16`, but the benchmark proof structures are not identical. The `sol-spartan-whir` numbers below are for the deployable setting `optimizer_runs = 833` with `WhirVerifier4` runtime bytecode at `24,412` bytes.
 
 #### Total verification transaction cost
 
@@ -62,7 +88,7 @@ In production, `WhirVerifier4.verify(...)` would typically be called directly ra
 
 |                                     | sol-spartan-whir | sol-whir |
 | ----------------------------------- | ---------------- | -------- |
-| **Verifier execution snapshot**     | 1,007,224        | 677,011  |
+| **Verifier execution snapshot**     | 1,007,179        | 677,011  |
 | **Measured tx execution remainder** | 853,074          | 699,176  |
 
 Notes:
@@ -70,7 +96,27 @@ Notes:
 - `sol-spartan-whir` snapshot: `forge test --match-contract WhirVerifier4Test -vv`
 - `sol-whir` snapshot: checked-in [snapshots/verif.json](./../sol-whir/snapshots/verif.json)
 - The tx execution remainder is `total tx gas - intrinsic - calldata gas`
-- `sol-spartan-whir` tx numbers measured at `optimizer_runs = 833` / execution snapshot `1,007,224`
+- `sol-spartan-whir` tx numbers measured at `optimizer_runs = 833` / execution snapshot `1,007,179`
+
+### Stage4 fixed-shape blob snapshot
+
+The current repo includes both the main native blob verifier and the supporting reference paths:
+
+- Contracts:
+  - `WhirBlobVerifier4` (decode-and-delegate wrapper)
+  - `WhirBlobVerifierNative4` (fixed-shape native verifier)
+- Fixture format: `quartic_whir_success.blob` and matching failure blobs
+- Raw success blob size: `10,032` bytes
+- Blob native execution snapshot: `936,013` gas (`forge test --match-contract WhirBlobVerifierNative4Test -vv`)
+- Blob native deployed bytecode: `39,231` hex chars, about `19,615` bytes
+- Blob wrapper execution snapshot: `1,190,987` gas (`forge test --match-contract WhirBlobVerifier4Test -vv`)
+
+Important tradeoff:
+
+- The native blob path is the main stage4 verifier and the best execution path measured so far: it is below both the typed verifier (`1,007,179`) and the wrapper blob verifier (`1,190,987`).
+- The typed path remains useful for typed-ABI parity, debugging, and fixture/reference work.
+- The wrapper path is a correctness-first decode-and-delegate adapter over `WhirVerifier4`. Treat it as a reference / malformed-blob / calldata-benchmark path, not the production verifier.
+- Full `SPWB` blob support remains future work for the later Spartan verifier stages.
 
 #### Arithmetic and proof-structure differences
 
@@ -114,7 +160,7 @@ For `sol-spartan-whir`, the current tx numbers were remeasured by:
 2. Deploying the current bytecode to a local Anvil node.
 3. Replaying the benchmark calldata over raw JSON-RPC and reading the receipt.
 
-The direct-call calldata footprint comes from `script/WhirTxBenchmark.s.sol`, and the wrapper calldata footprint comes from `script/MeasureTxGas.s.sol`.
+The direct-call typed calldata footprint comes from `script/WhirTxBenchmark.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark.s.sol`.
 
 For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so the checked-in snapshot and broadcast artifact remain the source of truth.
 
@@ -124,7 +170,7 @@ For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [.
 via_ir = true
 optimizer = true
 optimizer_runs = 833
-WhirVerifier4 deployed bytecode = 24,455 bytes
+WhirVerifier4 deployed bytecode = 24,412 bytes
 ```
 
 ## Dependencies

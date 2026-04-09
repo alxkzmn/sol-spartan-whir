@@ -387,6 +387,72 @@ library MerkleVerifier {
             );
     }
 
+    function computeRootFromFlatBaseRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32) {
+        if (rowLen == 16) {
+            return
+                _computeRootFromFlatBaseRows20Blob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen
+                );
+        }
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                false
+            );
+    }
+
+    function computeRootFromFlatExtensionRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32) {
+        if (rowLen == 16) {
+            return
+                _computeRootFromFlatExtensionRows20Blob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen
+                );
+        }
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                true
+            );
+    }
+
     function _computeRootFromLeafHashes(
         uint256[] memory indices,
         bytes32[] memory leafHashes,
@@ -615,6 +681,169 @@ library MerkleVerifier {
             );
     }
 
+    function _computeRootFromFlatBaseRows20Blob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 64;
+                bytes32 hash = hashLeafBaseSlice20Blob(blob, rowOffset, 16);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return
+            _computeRootFromFrontier20Blob(
+                frontier,
+                indices.length,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
+    function _computeRootFromFlatExtensionRows20Blob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 256;
+                bytes32 hash = hashLeafExtensionSlice20Blob(
+                    blob,
+                    rowOffset,
+                    16
+                );
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return
+            _computeRootFromFrontier20Blob(
+                frontier,
+                indices.length,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
+    function _computeRootFromFlatRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        bool isExtension
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        uint256 stride = isExtension ? 16 : 4;
+        unchecked {
+            uint256 prevIdx;
+            uint256 rowBytes = rowLen * stride;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * rowBytes;
+                bytes32 hash = isExtension
+                    ? hashLeafExtensionSlice20Blob(blob, rowOffset, rowLen)
+                    : hashLeafBaseSlice20Blob(blob, rowOffset, rowLen);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return
+            _computeRootFromFrontier20Blob(
+                frontier,
+                indices.length,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
     function _computeRootFromFrontier20(
         bytes memory frontierBytes,
         uint256 frontierLen,
@@ -766,6 +995,230 @@ library MerkleVerifier {
             }
 
             root := mload(add(frontier, 0x20))
+        }
+    }
+
+    function _computeRootFromFrontier20Blob(
+        bytes memory frontierBytes,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        assembly ("memory-safe") {
+            let digestMask := not(sub(shl(96, 1), 1))
+            let entrySize := 0x40
+            let bufBytes := mul(entrySize, frontierLen)
+            let frontier := add(frontierBytes, 0x20)
+            let nextBuf := mload(0x40)
+            let scratch := add(nextBuf, bufBytes)
+            mstore(0x40, add(scratch, 65))
+            mstore8(scratch, 0x01)
+
+            let decommBase := add(blob.offset, decommOffset)
+            let decommPtr := decommBase
+            let decommEnd := add(decommBase, mul(decommLen, 20))
+
+            for {
+                let level := 0
+            } lt(level, depth) {
+                level := add(level, 1)
+            } {
+                let nextLen := 0
+                let ep := frontier
+                let frontierEnd := add(frontier, mul(frontierLen, entrySize))
+                let nextPtr := nextBuf
+                let lastParentIndex := 0
+                let hasLastParent := 0
+                for {
+
+                } lt(ep, frontierEnd) {
+
+                } {
+                    let node := mload(ep)
+                    let hash := mload(add(ep, 0x20))
+                    let nodeIsRight := and(node, 1)
+                    let nextReadPtr := add(ep, entrySize)
+                    let parentHash
+
+                    let merged := 0
+                    if iszero(nodeIsRight) {
+                        if lt(nextReadPtr, frontierEnd) {
+                            if eq(mload(nextReadPtr), add(node, 1)) {
+                                mstore(add(scratch, 1), hash)
+                                mstore(
+                                    add(scratch, 0x21),
+                                    mload(add(nextReadPtr, 0x20))
+                                )
+                                parentHash := and(
+                                    keccak256(scratch, 65),
+                                    digestMask
+                                )
+                                nextReadPtr := add(nextReadPtr, entrySize)
+                                merged := 1
+                            }
+                        }
+                    }
+
+                    if iszero(merged) {
+                        if iszero(lt(decommPtr, decommEnd)) {
+                            mstore(
+                                0x00,
+                                0x90196ee300000000000000000000000000000000000000000000000000000000
+                            )
+                            mstore(
+                                0x04,
+                                add(div(sub(decommPtr, decommBase), 20), 1)
+                            )
+                            mstore(0x24, decommLen)
+                            revert(0x00, 0x44)
+                        }
+                        let sibling := and(calldataload(decommPtr), digestMask)
+                        decommPtr := add(decommPtr, 20)
+
+                        switch nodeIsRight
+                        case 0 {
+                            mstore(add(scratch, 1), hash)
+                            mstore(add(scratch, 0x21), sibling)
+                        }
+                        default {
+                            mstore(add(scratch, 1), sibling)
+                            mstore(add(scratch, 0x21), hash)
+                        }
+                        parentHash := and(keccak256(scratch, 65), digestMask)
+                    }
+
+                    ep := nextReadPtr
+                    let parentIndex := shr(1, node)
+                    let sameParent := and(
+                        hasLastParent,
+                        eq(lastParentIndex, parentIndex)
+                    )
+                    if sameParent {
+                        mstore(sub(nextPtr, 0x20), parentHash)
+                    }
+                    if iszero(sameParent) {
+                        mstore(nextPtr, parentIndex)
+                        mstore(add(nextPtr, 0x20), parentHash)
+                        nextPtr := add(nextPtr, entrySize)
+                        nextLen := add(nextLen, 1)
+                        lastParentIndex := parentIndex
+                        hasLastParent := 1
+                    }
+                }
+
+                let tmp := frontier
+                frontier := nextBuf
+                nextBuf := tmp
+                frontierLen := nextLen
+            }
+
+            if iszero(eq(decommPtr, decommEnd)) {
+                mstore(
+                    0x00,
+                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
+                )
+                mstore(0x04, div(sub(decommPtr, decommBase), 20))
+                mstore(0x24, decommLen)
+                revert(0x00, 0x44)
+            }
+
+            if or(iszero(eq(frontierLen, 1)), iszero(iszero(mload(frontier)))) {
+                let idx := sub(0, 1)
+                if gt(frontierLen, 0) {
+                    idx := mload(frontier)
+                }
+                mstore(
+                    0x00,
+                    0x1d72965600000000000000000000000000000000000000000000000000000000
+                )
+                mstore(0x04, frontierLen)
+                mstore(0x24, idx)
+                revert(0x00, 0x44)
+            }
+
+            root := mload(add(frontier, 0x20))
+        }
+    }
+
+    function hashLeafBaseSlice20Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen
+    ) internal pure returns (bytes32 digest) {
+        assembly ("memory-safe") {
+            let size := add(1, shl(2, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, shl(2, rowLen))
+            for {
+
+            } lt(check, end) {
+                check := add(check, 4)
+            } {
+                let v := shr(224, calldataload(check))
+                if iszero(lt(v, modulus)) {
+                    mstore(
+                        0x00,
+                        0xf512b67800000000000000000000000000000000000000000000000000000000
+                    )
+                    mstore(0x04, v)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, shl(2, rowLen))
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
+    function hashLeafExtensionSlice20Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen
+    ) internal pure returns (bytes32 digest) {
+        assembly ("memory-safe") {
+            let size := add(1, shl(4, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, shl(4, rowLen))
+            for {
+
+            } lt(check, end) {
+                check := add(check, 0x10)
+            } {
+                let packed := and(calldataload(check), not(sub(shl(128, 1), 1)))
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                if or(
+                    or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                    or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                ) {
+                    mstore(
+                        0x00,
+                        0xf512b67800000000000000000000000000000000000000000000000000000000
+                    )
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, shl(4, rowLen))
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
         }
     }
 
