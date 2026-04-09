@@ -6,6 +6,7 @@ import {KoalaBearExt4} from "../field/KoalaBearExt4.sol";
 import {MerkleVerifier} from "../merkle/MerkleVerifier.sol";
 import {KeccakChallenger} from "../transcript/KeccakChallenger.sol";
 import {WhirStructs} from "./WhirStructs.sol";
+import {WhirBlobCodec4} from "./WhirBlobCodec4.sol";
 import {WhirVerifierUtils4} from "./WhirVerifierUtils4.sol";
 
 library WhirVerifierCore4 {
@@ -252,6 +253,171 @@ library WhirVerifierCore4 {
         WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[1]);
     }
 
+    function _parseFixedCommitment2Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset,
+        uint256 numVariables
+    )
+        internal
+        pure
+        returns (
+            FixedParsedCommitment memory parsed,
+            uint256 ood0,
+            uint256 ood1,
+            uint256 nextOffset
+        )
+    {
+        (parsed.root, offset) = WhirBlobCodec4.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(parsed.root);
+
+        parsed.oodFlatPoints = new uint256[](numVariables << 1);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            numVariables
+        );
+        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            numVariables,
+            point1,
+            numVariables
+        );
+        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        nextOffset = offset;
+    }
+
+    function _parseFixedCommitment16x2Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (
+            FixedParsedCommitment memory parsed,
+            uint256 ood0,
+            uint256 ood1,
+            uint256 nextOffset
+        )
+    {
+        (parsed.root, offset) = WhirBlobCodec4.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(parsed.root);
+
+        parsed.oodFlatPoints = new uint256[](32);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            16
+        );
+        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            16,
+            point1,
+            16
+        );
+        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        nextOffset = offset;
+    }
+
+    function _parseFixedCommitment12x2Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (
+            FixedParsedCommitment memory parsed,
+            uint256 ood0,
+            uint256 ood1,
+            uint256 nextOffset
+        )
+    {
+        (parsed.root, offset) = WhirBlobCodec4.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(parsed.root);
+
+        parsed.oodFlatPoints = new uint256[](24);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            12
+        );
+        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            12,
+            point1,
+            12
+        );
+        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        nextOffset = offset;
+    }
+
+    function _parseFixedCommitment8x2Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (
+            FixedParsedCommitment memory parsed,
+            uint256 ood0,
+            uint256 ood1,
+            uint256 nextOffset
+        )
+    {
+        (parsed.root, offset) = WhirBlobCodec4.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(parsed.root);
+
+        parsed.oodFlatPoints = new uint256[](16);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            8
+        );
+        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            8,
+            point1,
+            8
+        );
+        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        nextOffset = offset;
+    }
+
     function _concatenateEq(
         EqStatement memory lhs,
         EqStatement memory rhs
@@ -354,6 +520,66 @@ library WhirVerifierCore4 {
 
                 uint256 r = WhirVerifierUtils4.sampleExt4(challenger);
                 foldingRandomness[i] = r;
+                allRandomness[updatedCursor] = r;
+                updatedCursor += 1;
+                updatedClaimedEval = KoalaBearExt4.extrapolate_012(
+                    c0,
+                    KoalaBearExt4.sub(updatedClaimedEval, c0),
+                    c2,
+                    r
+                );
+            }
+        }
+    }
+
+    function _verifySumcheckBlob(
+        bytes calldata blob,
+        uint256 offset,
+        KeccakChallenger.State memory challenger,
+        uint256 claimedEval,
+        uint256 expectedRounds,
+        uint256 powBits,
+        uint256[] memory allRandomness,
+        uint256 randomnessCursor
+    )
+        internal
+        pure
+        returns (
+            uint256 updatedClaimedEval,
+            uint256 updatedCursor,
+            uint256 nextOffset
+        )
+    {
+        updatedClaimedEval = claimedEval;
+        updatedCursor = randomnessCursor;
+
+        uint256 polyOffset = offset;
+        uint256 powOffset = polyOffset + expectedRounds * 32;
+        nextOffset = powOffset + (powBits > 0 ? expectedRounds * 4 : 0);
+
+        unchecked {
+            for (uint256 i = 0; i < expectedRounds; ++i) {
+                uint256 c0;
+                uint256 c2;
+                (c0, ) = WhirBlobCodec4.readExt4(blob, polyOffset + i * 32);
+                (c2, ) = WhirBlobCodec4.readExt4(
+                    blob,
+                    polyOffset + i * 32 + 16
+                );
+
+                challenger.observeValidatedPackedExt4Pair(c0, c2);
+                if (powBits > 0) {
+                    uint256 witness;
+                    (witness, ) = WhirBlobCodec4.readBase(
+                        blob,
+                        powOffset + i * 4
+                    );
+                    if (!challenger.checkWitness(powBits, witness)) {
+                        revert InvalidPowWitness();
+                    }
+                }
+
+                uint256 r = WhirVerifierUtils4.sampleExt4(challenger);
                 allRandomness[updatedCursor] = r;
                 updatedCursor += 1;
                 updatedClaimedEval = KoalaBearExt4.extrapolate_012(
@@ -875,6 +1101,298 @@ library WhirVerifierCore4 {
                     challenge,
                     oodAnswers[i - 1]
                 );
+            }
+        }
+    }
+
+    function _verifyStirAndCombineConstraintBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitness,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 ood0,
+        uint256 ood1
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        challenger.sampleBase();
+
+        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueriesPow2(
+            challenger,
+            depth,
+            numQueries
+        );
+        if (indices.length != numQueries) {
+            revert QueryBatchCountMismatch(numQueries, indices.length);
+        }
+
+        uint256 rowLen = 16;
+        uint256 stride = expectedKind == 0 ? 4 : 16;
+        uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
+        nextOffset = decommOffset + decommLen * 20;
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen
+            )
+            : MerkleVerifier.computeRootFromFlatExtensionRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        challenge = WhirVerifierUtils4.sampleExt4(challenger);
+        // Reuse the sampled query-index buffer as the select-variable output to avoid
+        // a second allocation; the loop below overwrites each sorted index with g^index
+        // only after Merkle verification has already consumed the original indices.
+        selVars = indices;
+
+        unchecked {
+            uint256 rowBytes = rowLen * stride;
+            uint256 pointBase;
+            assembly ("memory-safe") {
+                pointBase := add(
+                    add(allRandomness, 0x20),
+                    shl(5, randomnessOffset)
+                )
+            }
+            uint256 p0;
+            uint256 p1;
+            uint256 p2;
+            uint256 p3;
+            assembly ("memory-safe") {
+                p0 := mload(pointBase)
+                p1 := mload(add(pointBase, 0x20))
+                p2 := mload(add(pointBase, 0x40))
+                p3 := mload(add(pointBase, 0x60))
+            }
+
+            if (expectedKind == 0) {
+                for (uint256 i = numQueries; i > 0; --i) {
+                    uint256 idx = i - 1;
+                    uint256 point = KoalaBear.pow(
+                        foldedDomainGen,
+                        indices[idx]
+                    );
+                    selVars[idx] = point;
+                    uint256 rowOffset = valuesOffset + idx * rowBytes;
+                    uint256 evalValue = WhirVerifierUtils4
+                        ._evaluateBaseRowDim4BlobPackedPoints(
+                            blob,
+                            rowOffset,
+                            p0,
+                            p1,
+                            p2,
+                            p3
+                        );
+                    claimedContribution = _hornerStep(
+                        claimedContribution,
+                        challenge,
+                        evalValue
+                    );
+                }
+            } else {
+                for (uint256 i = numQueries; i > 0; --i) {
+                    uint256 idx = i - 1;
+                    uint256 point = KoalaBear.pow(
+                        foldedDomainGen,
+                        indices[idx]
+                    );
+                    selVars[idx] = point;
+                    uint256 rowOffset = valuesOffset + idx * rowBytes;
+                    uint256 evalValue = WhirVerifierUtils4
+                        ._evaluateExtensionRowDim4BlobPackedPoints(
+                            blob,
+                            rowOffset,
+                            p0,
+                            p1,
+                            p2,
+                            p3
+                        );
+                    claimedContribution = _hornerStep(
+                        claimedContribution,
+                        challenge,
+                        evalValue
+                    );
+                }
+            }
+
+            claimedContribution = _hornerStep(
+                claimedContribution,
+                challenge,
+                ood1
+            );
+            claimedContribution = _hornerStep(
+                claimedContribution,
+                challenge,
+                ood0
+            );
+        }
+    }
+
+    function _verifyFinalStirChallengesBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitness,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 finalPolyOffset,
+        uint256 finalPolyLen
+    ) internal pure returns (uint256 nextOffset) {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueriesPow2(
+            challenger,
+            depth,
+            numQueries
+        );
+        if (indices.length != numQueries) {
+            revert QueryBatchCountMismatch(numQueries, indices.length);
+        }
+
+        uint256 rowLen = 16;
+        uint256 stride = expectedKind == 0 ? 4 : 16;
+        uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
+        nextOffset = decommOffset + decommLen * 20;
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen
+            )
+            : MerkleVerifier.computeRootFromFlatExtensionRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        unchecked {
+            uint256 rowBytes = rowLen * stride;
+            uint256 pointBase;
+            assembly ("memory-safe") {
+                pointBase := add(
+                    add(allRandomness, 0x20),
+                    shl(5, randomnessOffset)
+                )
+            }
+            uint256 p0;
+            uint256 p1;
+            uint256 p2;
+            uint256 p3;
+            assembly ("memory-safe") {
+                p0 := mload(pointBase)
+                p1 := mload(add(pointBase, 0x20))
+                p2 := mload(add(pointBase, 0x40))
+                p3 := mload(add(pointBase, 0x60))
+            }
+
+            if (expectedKind == 0) {
+                for (uint256 i = 0; i < numQueries; ++i) {
+                    uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                    uint256 rowOffset = valuesOffset + i * rowBytes;
+                    uint256 expectedEval = WhirVerifierUtils4
+                        ._evaluateBaseRowDim4BlobPackedPoints(
+                            blob,
+                            rowOffset,
+                            p0,
+                            p1,
+                            p2,
+                            p3
+                        );
+
+                    if (
+                        WhirVerifierUtils4.hornerBaseBlob(
+                            blob,
+                            finalPolyOffset,
+                            finalPolyLen,
+                            point
+                        ) != expectedEval
+                    ) {
+                        revert StirConstraintFailed(i);
+                    }
+                }
+            } else {
+                for (uint256 i = 0; i < numQueries; ++i) {
+                    uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                    uint256 rowOffset = valuesOffset + i * rowBytes;
+                    uint256 expectedEval = WhirVerifierUtils4
+                        ._evaluateExtensionRowDim4BlobPackedPoints(
+                            blob,
+                            rowOffset,
+                            p0,
+                            p1,
+                            p2,
+                            p3
+                        );
+
+                    if (
+                        WhirVerifierUtils4.hornerBaseBlob(
+                            blob,
+                            finalPolyOffset,
+                            finalPolyLen,
+                            point
+                        ) != expectedEval
+                    ) {
+                        revert StirConstraintFailed(i);
+                    }
+                }
             }
         }
     }
@@ -1680,6 +2198,223 @@ library WhirVerifierCore4 {
         }
     }
 
+    function _eqPolyEvalAtMemory(
+        uint256[] memory point,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        if (point.length != numVariables) {
+            revert StatementPointArityMismatch(0, numVariables, point.length);
+        }
+
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+
+            let pointBase := add(point, 0x20)
+            let fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
+
+            for {
+                let i := 0
+            } lt(i, numVariables) {
+                i := add(i, 1)
+            } {
+                let off := shl(5, i)
+                let p := mload(add(pointBase, off))
+                let q := mload(add(fullBase, off))
+
+                let p0 := shr(224, p)
+                let p1 := and(shr(192, p), m)
+                let p2 := and(shr(160, p), m)
+                let p3 := and(shr(128, p), m)
+
+                let q0 := shr(224, q)
+                let q1 := and(shr(192, q), m)
+                let q2 := and(shr(160, q), m)
+                let q3 := and(shr(128, q), m)
+
+                let pq0 := add(
+                    mul(p0, q0),
+                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
+                )
+                let pq1 := add(
+                    add(mul(p0, q1), mul(p1, q0)),
+                    mul(W, add(mul(p2, q3), mul(p3, q2)))
+                )
+                let pq2 := add(
+                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                    mul(W, mul(p3, q3))
+                )
+                let pq3 := add(
+                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
+                    mul(p3, q0)
+                )
+
+                let t0 := sub(
+                    add(add(pq0, pq0), add(0xfe000002, 1)),
+                    add(p0, q0)
+                )
+                let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
+                let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
+                let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
+
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    M
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    M
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    M
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    M
+                )
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+            }
+
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
+    }
+
+    function _eqPolyEvalAtBlob(
+        bytes calldata blob,
+        uint256 blobOffset,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let m := 0xffffffff
+            let W := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+
+            let pointBase := add(blob.offset, blobOffset)
+            let fullBase := add(add(fullPoint, 0x20), shl(5, pointOffset))
+
+            for {
+                let i := 0
+            } lt(i, numVariables) {
+                i := add(i, 1)
+            } {
+                let poff := shl(4, i)
+                let foff := shl(5, i)
+                let p := and(
+                    calldataload(add(pointBase, poff)),
+                    not(sub(shl(128, 1), 1))
+                )
+                let q := mload(add(fullBase, foff))
+
+                let p0 := shr(224, p)
+                let p1 := and(shr(192, p), m)
+                let p2 := and(shr(160, p), m)
+                let p3 := and(shr(128, p), m)
+
+                let q0 := shr(224, q)
+                let q1 := and(shr(192, q), m)
+                let q2 := and(shr(160, q), m)
+                let q3 := and(shr(128, q), m)
+
+                let pq0 := add(
+                    mul(p0, q0),
+                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
+                )
+                let pq1 := add(
+                    add(mul(p0, q1), mul(p1, q0)),
+                    mul(W, add(mul(p2, q3), mul(p3, q2)))
+                )
+                let pq2 := add(
+                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                    mul(W, mul(p3, q3))
+                )
+                let pq3 := add(
+                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
+                    mul(p3, q0)
+                )
+
+                let t0 := sub(
+                    add(add(pq0, pq0), add(0xfe000002, 1)),
+                    add(p0, q0)
+                )
+                let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
+                let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
+                let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
+
+                let n0 := mod(
+                    add(
+                        mul(a0, t0),
+                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
+                    ),
+                    M
+                )
+                let n1 := mod(
+                    add(
+                        add(mul(a0, t1), mul(a1, t0)),
+                        mul(W, add(mul(a2, t3), mul(a3, t2)))
+                    ),
+                    M
+                )
+                let n2 := mod(
+                    add(
+                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                        mul(W, mul(a3, t3))
+                    ),
+                    M
+                )
+                let n3 := mod(
+                    add(
+                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
+                        mul(a3, t0)
+                    ),
+                    M
+                )
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+            }
+
+            acc := or(
+                or(shl(224, a0), shl(192, a1)),
+                or(shl(160, a2), shl(128, a3))
+            )
+        }
+    }
+
     function _evaluateFinalValue(
         uint256[] calldata finalPoly,
         uint256[] memory finalSumcheckRandomness
@@ -1692,6 +2427,20 @@ library WhirVerifierCore4 {
                 finalPoly,
                 0,
                 finalPoly.length,
+                finalSumcheckRandomness
+            );
+    }
+
+    function _evaluateFinalValueMemory(
+        uint256[] memory finalPoly,
+        uint256[] memory finalSumcheckRandomness
+    ) internal pure returns (uint256) {
+        if (finalSumcheckRandomness.length == 0) {
+            return finalPoly[0];
+        }
+        return
+            KoalaBearExt4.evaluate_hypercube(
+                finalPoly,
                 finalSumcheckRandomness
             );
     }

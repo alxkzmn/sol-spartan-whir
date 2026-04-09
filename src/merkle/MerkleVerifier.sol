@@ -407,6 +407,72 @@ library MerkleVerifier {
             );
     }
 
+    function computeRootFromFlatBaseRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32) {
+        if (rowLen == 16) {
+            return
+                _computeRootFromFlatBaseRows20Blob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen
+                );
+        }
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                false
+            );
+    }
+
+    function computeRootFromFlatExtensionRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32) {
+        if (rowLen == 16) {
+            return
+                _computeRootFromFlatExtensionRows20Blob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen
+                );
+        }
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                true
+            );
+    }
+
     function _computeRootFromLeafHashes(
         uint256[] memory indices,
         bytes32[] memory leafHashes,
@@ -553,6 +619,246 @@ library MerkleVerifier {
                     }
                 }
             }
+        }
+    }
+
+    function _computeRootFromFlatBaseRows20Blob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32) {
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                16,
+                depth,
+                decommOffset,
+                decommLen,
+                false
+            );
+    }
+
+    function _computeRootFromFlatExtensionRows20Blob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32) {
+        return
+            _computeRootFromFlatRows20Blob(
+                indices,
+                blob,
+                valuesOffset,
+                16,
+                depth,
+                decommOffset,
+                decommLen,
+                true
+            );
+    }
+
+    function _computeRootFromFlatRows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        bool isExtension
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        _ensureSortedUnique(indices);
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        uint256 stride = isExtension ? 16 : 4;
+        unchecked {
+            uint256 rowBytes = rowLen * stride;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 rowOffset = valuesOffset + i * rowBytes;
+                leafHashes[i] = isExtension
+                    ? hashLeafExtensionSlice20Blob(blob, rowOffset, rowLen)
+                    : hashLeafBaseSlice20Blob(blob, rowOffset, rowLen);
+            }
+        }
+
+        return
+            _computeRootFromLeafHashes20Blob(
+                indices,
+                leafHashes,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
+    function _computeRootFromLeafHashes20Blob(
+        uint256[] memory indices,
+        bytes32[] memory leafHashes,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        if (indices.length != leafHashes.length) {
+            revert LengthMismatch(indices.length, leafHashes.length);
+        }
+
+        uint256 expectedDecommitments = indices.length * depth;
+        if (decommLen < expectedDecommitments) {
+            revert InsufficientDecommitments(expectedDecommitments, decommLen);
+        }
+        if (decommLen > expectedDecommitments) {
+            revert TrailingDecommitments(expectedDecommitments, decommLen);
+        }
+
+        assembly ("memory-safe") {
+            let n := mload(indices)
+            let digestMask := not(sub(shl(96, 1), 1))
+            let scratch := mload(0x40)
+            mstore(0x40, add(scratch, 65))
+            mstore8(scratch, 0x01)
+
+            let idxPtr := add(indices, 0x20)
+            let hashPtr := add(leafHashes, 0x20)
+            let decommPtr := add(blob.offset, decommOffset)
+
+            for {
+                let i := 0
+            } lt(i, n) {
+                i := add(i, 1)
+            } {
+                let node := mload(add(idxPtr, shl(5, i)))
+                let hash := mload(add(hashPtr, shl(5, i)))
+
+                for {
+                    let level := 0
+                } lt(level, depth) {
+                    level := add(level, 1)
+                } {
+                    let sibling := and(calldataload(decommPtr), digestMask)
+                    decommPtr := add(decommPtr, 20)
+
+                    switch and(node, 1)
+                    case 0 {
+                        mstore(add(scratch, 1), hash)
+                        mstore(add(scratch, 0x21), sibling)
+                    }
+                    default {
+                        mstore(add(scratch, 1), sibling)
+                        mstore(add(scratch, 0x21), hash)
+                    }
+                    hash := and(keccak256(scratch, 65), digestMask)
+                    node := shr(1, node)
+                }
+
+                switch i
+                case 0 {
+                    root := hash
+                }
+                default {
+                    if iszero(eq(hash, root)) {
+                        mstore(
+                            0x00,
+                            0x1d72965600000000000000000000000000000000000000000000000000000000
+                        )
+                        mstore(0x04, n)
+                        mstore(0x24, i)
+                        revert(0x00, 0x44)
+                    }
+                }
+            }
+        }
+    }
+
+    function hashLeafBaseSlice20Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen
+    ) internal pure returns (bytes32 digest) {
+        assembly ("memory-safe") {
+            let size := add(1, shl(2, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, shl(2, rowLen))
+            for {
+
+            } lt(check, end) {
+                check := add(check, 4)
+            } {
+                let v := shr(224, calldataload(check))
+                if iszero(lt(v, modulus)) {
+                    mstore(
+                        0x00,
+                        0xf512b67800000000000000000000000000000000000000000000000000000000
+                    )
+                    mstore(0x04, v)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, shl(2, rowLen))
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
+    function hashLeafExtensionSlice20Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen
+    ) internal pure returns (bytes32 digest) {
+        assembly ("memory-safe") {
+            let size := add(1, shl(4, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, shl(4, rowLen))
+            for {
+
+            } lt(check, end) {
+                check := add(check, 0x10)
+            } {
+                let packed := and(calldataload(check), not(sub(shl(128, 1), 1)))
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                if or(
+                    or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                    or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                ) {
+                    mstore(
+                        0x00,
+                        0xf512b67800000000000000000000000000000000000000000000000000000000
+                    )
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, shl(4, rowLen))
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
         }
     }
 

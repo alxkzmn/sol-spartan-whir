@@ -152,6 +152,92 @@ library WhirVerifierUtils4 {
         }
     }
 
+    function hornerBaseMemory(
+        uint256[] memory coeffs,
+        uint256 var_
+    ) internal pure returns (uint256 acc) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+
+            let src := add(add(coeffs, 0x20), shl(5, mload(coeffs)))
+            let end := add(coeffs, 0x20)
+
+            for {
+
+            } gt(src, end) {
+
+            } {
+                src := sub(src, 0x20)
+                let packed := mload(src)
+
+                let a0 := shr(224, acc)
+                let a1 := and(shr(192, acc), mask)
+                let a2 := and(shr(160, acc), mask)
+                let a3 := and(shr(128, acc), mask)
+
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), mask)
+                let c2 := and(shr(160, packed), mask)
+                let c3 := and(shr(128, packed), mask)
+
+                let r0 := mod(add(mulmod(a0, var_, modulus), c0), modulus)
+                let r1 := mod(add(mulmod(a1, var_, modulus), c1), modulus)
+                let r2 := mod(add(mulmod(a2, var_, modulus), c2), modulus)
+                let r3 := mod(add(mulmod(a3, var_, modulus), c3), modulus)
+
+                acc := or(
+                    or(shl(224, r0), shl(192, r1)),
+                    or(shl(160, r2), shl(128, r3))
+                )
+            }
+        }
+    }
+
+    function hornerBaseBlob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 coeffCount,
+        uint256 var_
+    ) internal pure returns (uint256 acc) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+
+            let src := add(add(blob.offset, offset), shl(4, coeffCount))
+            let end := add(blob.offset, offset)
+
+            for {
+
+            } gt(src, end) {
+
+            } {
+                src := sub(src, 0x10)
+                let packed := and(calldataload(src), not(sub(shl(128, 1), 1)))
+
+                let a0 := shr(224, acc)
+                let a1 := and(shr(192, acc), mask)
+                let a2 := and(shr(160, acc), mask)
+                let a3 := and(shr(128, acc), mask)
+
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), mask)
+                let c2 := and(shr(160, packed), mask)
+                let c3 := and(shr(128, packed), mask)
+
+                let r0 := mod(add(mulmod(a0, var_, modulus), c0), modulus)
+                let r1 := mod(add(mulmod(a1, var_, modulus), c1), modulus)
+                let r2 := mod(add(mulmod(a2, var_, modulus), c2), modulus)
+                let r3 := mod(add(mulmod(a3, var_, modulus), c3), modulus)
+
+                acc := or(
+                    or(shl(224, r0), shl(192, r1)),
+                    or(shl(160, r2), shl(128, r3))
+                )
+            }
+        }
+    }
+
     function sampleStirQueries(
         KeccakChallenger.State memory challenger,
         uint256 domainSize,
@@ -160,6 +246,14 @@ library WhirVerifierUtils4 {
     ) internal pure returns (uint256[] memory queries) {
         uint256 foldedDomainSize = domainSize >> foldingFactor;
         uint256 domainBits = log2Strict(foldedDomainSize);
+        return sampleStirQueriesPow2(challenger, domainBits, numQueries);
+    }
+
+    function sampleStirQueriesPow2(
+        KeccakChallenger.State memory challenger,
+        uint256 domainBits,
+        uint256 numQueries
+    ) internal pure returns (uint256[] memory queries) {
         uint256 maxBitsPerCall = 20;
         uint256 totalBitsNeeded = numQueries * domainBits;
 
@@ -172,7 +266,7 @@ library WhirVerifierUtils4 {
                 : ((uint256(1) << domainBits) - 1);
             unchecked {
                 for (uint256 i = 0; i < numQueries; ++i) {
-                    queries[i] = (allBits & mask) % foldedDomainSize;
+                    queries[i] = allBits & mask;
                     allBits >>= domainBits;
                 }
             }
@@ -191,9 +285,7 @@ library WhirVerifierUtils4 {
 
                     unchecked {
                         for (uint256 i = 0; i < batchSize; ++i) {
-                            queries[cursor] =
-                                (allBits & mask) %
-                                foldedDomainSize;
+                            queries[cursor] = allBits & mask;
                             allBits >>= domainBits;
                             cursor += 1;
                         }
@@ -414,6 +506,98 @@ library WhirVerifierUtils4 {
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
     }
 
+    function _evaluateBaseRowDim4BlobWindow(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory point,
+        uint256 pointOffset
+    ) internal pure returns (uint256) {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(point, 0x20), shl(5, pointOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        return
+            _evaluateBaseRowDim4BlobPackedPoints(blob, offset, p0, p1, p2, p3);
+    }
+
+    function _evaluateBaseRowDim4BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+        uint256 w0;
+        uint256 w1;
+        uint256 mask = 0xffffffff;
+        assembly ("memory-safe") {
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+        }
+
+        uint256 v0 = w0 >> 224;
+        uint256 v1 = (w0 >> 192) & mask;
+        uint256 v2 = (w0 >> 160) & mask;
+        uint256 v3 = (w0 >> 128) & mask;
+        uint256 v4 = (w0 >> 96) & mask;
+        uint256 v5 = (w0 >> 64) & mask;
+        uint256 v6 = (w0 >> 32) & mask;
+        uint256 v7 = w0 & mask;
+        uint256 v8 = w1 >> 224;
+        uint256 v9 = (w1 >> 192) & mask;
+        uint256 v10 = (w1 >> 160) & mask;
+        uint256 v11 = (w1 >> 128) & mask;
+        uint256 v12 = (w1 >> 96) & mask;
+        uint256 v13 = (w1 >> 64) & mask;
+        uint256 v14 = (w1 >> 32) & mask;
+        uint256 v15 = w1 & mask;
+
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
+            p0
+        );
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13) = _unpackCoeffs(
+            p1
+        );
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23) = _unpackCoeffs(
+            p2
+        );
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(
+            p3
+        );
+
+        uint256 l0 = _foldOnceBase(v0, v8, r00, r01, r02, r03);
+        uint256 l1 = _foldOnceBase(v1, v9, r00, r01, r02, r03);
+        uint256 l2 = _foldOnceBase(v2, v10, r00, r01, r02, r03);
+        uint256 l3 = _foldOnceBase(v3, v11, r00, r01, r02, r03);
+        uint256 l4 = _foldOnceBase(v4, v12, r00, r01, r02, r03);
+        uint256 l5 = _foldOnceBase(v5, v13, r00, r01, r02, r03);
+        uint256 l6 = _foldOnceBase(v6, v14, r00, r01, r02, r03);
+        uint256 l7 = _foldOnceBase(v7, v15, r00, r01, r02, r03);
+        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
+        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
+        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);
+        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13);
+        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
+        return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
+    }
+
     function _evaluateExtensionRowDim3(
         uint256[] calldata flatValues,
         uint256 start,
@@ -498,6 +682,118 @@ library WhirVerifierUtils4 {
         );
         (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(
             point[3]
+        );
+
+        uint256 l0 = _foldOnceWithCoeffs(v0, v8, r00, r01, r02, r03);
+        uint256 l1 = _foldOnceWithCoeffs(v1, v9, r00, r01, r02, r03);
+        uint256 l2 = _foldOnceWithCoeffs(v2, v10, r00, r01, r02, r03);
+        uint256 l3 = _foldOnceWithCoeffs(v3, v11, r00, r01, r02, r03);
+        uint256 l4 = _foldOnceWithCoeffs(v4, v12, r00, r01, r02, r03);
+        uint256 l5 = _foldOnceWithCoeffs(v5, v13, r00, r01, r02, r03);
+        uint256 l6 = _foldOnceWithCoeffs(v6, v14, r00, r01, r02, r03);
+        uint256 l7 = _foldOnceWithCoeffs(v7, v15, r00, r01, r02, r03);
+        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13);
+        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13);
+        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13);
+        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13);
+        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
+        return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
+    }
+
+    function _evaluateExtensionRowDim4BlobWindow(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory point,
+        uint256 pointOffset
+    ) internal pure returns (uint256) {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(point, 0x20), shl(5, pointOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        return
+            _evaluateExtensionRowDim4BlobPackedPoints(
+                blob,
+                offset,
+                p0,
+                p1,
+                p2,
+                p3
+            );
+    }
+
+    function _evaluateExtensionRowDim4BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        uint256 w4;
+        uint256 w5;
+        uint256 w6;
+        uint256 w7;
+        uint256 lowMask = (uint256(1) << 128) - 1;
+        assembly ("memory-safe") {
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+            w4 := calldataload(add(src, 0x80))
+            w5 := calldataload(add(src, 0xa0))
+            w6 := calldataload(add(src, 0xc0))
+            w7 := calldataload(add(src, 0xe0))
+        }
+
+        uint256 v0 = w0 & ~lowMask;
+        uint256 v1 = (w0 & lowMask) << 128;
+        uint256 v2 = w1 & ~lowMask;
+        uint256 v3 = (w1 & lowMask) << 128;
+        uint256 v4 = w2 & ~lowMask;
+        uint256 v5 = (w2 & lowMask) << 128;
+        uint256 v6 = w3 & ~lowMask;
+        uint256 v7 = (w3 & lowMask) << 128;
+        uint256 v8 = w4 & ~lowMask;
+        uint256 v9 = (w4 & lowMask) << 128;
+        uint256 v10 = w5 & ~lowMask;
+        uint256 v11 = (w5 & lowMask) << 128;
+        uint256 v12 = w6 & ~lowMask;
+        uint256 v13 = (w6 & lowMask) << 128;
+        uint256 v14 = w7 & ~lowMask;
+        uint256 v15 = (w7 & lowMask) << 128;
+
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(
+            p0
+        );
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13) = _unpackCoeffs(
+            p1
+        );
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23) = _unpackCoeffs(
+            p2
+        );
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(
+            p3
         );
 
         uint256 l0 = _foldOnceWithCoeffs(v0, v8, r00, r01, r02, r03);
