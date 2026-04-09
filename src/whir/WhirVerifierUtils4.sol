@@ -95,6 +95,20 @@ library WhirVerifierUtils4 {
         }
     }
 
+    function expandFromUnivariateExtInto(
+        uint256[] memory dst,
+        uint256 dstOffset,
+        uint256 value,
+        uint256 numVariables
+    ) internal pure {
+        uint256 current = value;
+
+        for (uint256 i = numVariables; i > 0; --i) {
+            dst[dstOffset + i - 1] = current;
+            current = KoalaBearExt4.square(current);
+        }
+    }
+
     function hornerBase(
         uint256[] calldata coeffs,
         uint256 var_

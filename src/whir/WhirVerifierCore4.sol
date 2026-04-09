@@ -137,13 +137,12 @@ library WhirVerifierCore4 {
         unchecked {
             for (uint256 i = 0; i < oodSamples; ++i) {
                 uint256 point = WhirVerifierUtils4.sampleExt4(challenger);
-                uint256[] memory expanded = WhirVerifierUtils4
-                    .expandFromUnivariateExt(point, numVariables);
-                for (uint256 j = 0; j < numVariables; ++j) {
-                    parsed.oodStatement.flatPoints[
-                        i * numVariables + j
-                    ] = expanded[j];
-                }
+                WhirVerifierUtils4.expandFromUnivariateExtInto(
+                    parsed.oodStatement.flatPoints,
+                    i * numVariables,
+                    point,
+                    numVariables
+                );
 
                 uint256 evalValue = oodAnswers[i];
                 WhirVerifierUtils4.observeValidatedExt4(challenger, evalValue);
@@ -171,11 +170,12 @@ library WhirVerifierCore4 {
         unchecked {
             for (uint256 i = 0; i < oodSamples; ++i) {
                 uint256 point = WhirVerifierUtils4.sampleExt4(challenger);
-                uint256[] memory expanded = WhirVerifierUtils4
-                    .expandFromUnivariateExt(point, numVariables);
-                for (uint256 j = 0; j < numVariables; ++j) {
-                    parsed.oodFlatPoints[i * numVariables + j] = expanded[j];
-                }
+                WhirVerifierUtils4.expandFromUnivariateExtInto(
+                    parsed.oodFlatPoints,
+                    i * numVariables,
+                    point,
+                    numVariables
+                );
 
                 WhirVerifierUtils4.observeValidatedExt4(
                     challenger,
@@ -183,6 +183,73 @@ library WhirVerifierCore4 {
                 );
             }
         }
+    }
+
+    function _parseFixedCommitment2(
+        KeccakChallenger.State memory challenger,
+        bytes32 root,
+        uint256[] calldata oodAnswers,
+        uint256 numVariables
+    ) internal pure returns (FixedParsedCommitment memory parsed) {
+        if (oodAnswers.length != 2) {
+            revert OodAnswerCountMismatch(2, oodAnswers.length);
+        }
+
+        challenger.observeHashU64Digest(root);
+
+        parsed.root = root;
+        parsed.oodFlatPoints = new uint256[](numVariables << 1);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            numVariables
+        );
+        WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[0]);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            numVariables,
+            point1,
+            numVariables
+        );
+        WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[1]);
+    }
+
+    function _parseFixedCommitment16x2(
+        KeccakChallenger.State memory challenger,
+        bytes32 root,
+        uint256[] calldata oodAnswers
+    ) internal pure returns (FixedParsedCommitment memory parsed) {
+        if (oodAnswers.length != 2) {
+            revert OodAnswerCountMismatch(2, oodAnswers.length);
+        }
+
+        challenger.observeHashU64Digest(root);
+
+        parsed.root = root;
+        parsed.oodFlatPoints = new uint256[](32);
+
+        uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            0,
+            point0,
+            16
+        );
+        WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[0]);
+
+        uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
+        WhirVerifierUtils4.expandFromUnivariateExtInto(
+            parsed.oodFlatPoints,
+            16,
+            point1,
+            16
+        );
+        WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[1]);
     }
 
     function _concatenateEq(
@@ -828,26 +895,49 @@ library WhirVerifierCore4 {
                 });
             }
         }
-        return _evaluateConstraintsFixedSelect(fixedConstraints, allRandomness);
+        return
+            _evaluateConstraintsFixedSelectRaw(
+                constraints[0].challenge,
+                fixedConstraints[0].eqFlatPoints,
+                fixedConstraints[0].selVars,
+                constraints[1].challenge,
+                fixedConstraints[1].eqFlatPoints,
+                fixedConstraints[1].selVars,
+                allRandomness
+            );
     }
 
-    function _evaluateConstraintsFixedSelect(
-        FixedConstraint[] memory constraints,
+    function _evaluateConstraintsFixedSelectRaw(
+        uint256 round0Challenge,
+        uint256[] memory round0EqFlatPoints,
+        uint256[] memory round0SelVars,
+        uint256 round1Challenge,
+        uint256[] memory round1EqFlatPoints,
+        uint256[] memory round1SelVars,
         uint256[] memory allRandomness
     ) internal pure returns (uint256 acc) {
         acc = KoalaBearExt4.add(
-            _evaluateConstraint12Select(constraints[0], allRandomness),
-            _evaluateConstraint8Select(constraints[1], allRandomness)
+            _evaluateConstraint12SelectRaw(
+                round0Challenge,
+                round0EqFlatPoints,
+                round0SelVars,
+                allRandomness
+            ),
+            _evaluateConstraint8SelectRaw(
+                round1Challenge,
+                round1EqFlatPoints,
+                round1SelVars,
+                allRandomness
+            )
         );
     }
 
-    function _evaluateConstraint12Select(
-        FixedConstraint memory constraint,
+    function _evaluateConstraint12SelectRaw(
+        uint256 challenge,
+        uint256[] memory flatPoints,
+        uint256[] memory selVars,
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
-        uint256 challenge = constraint.challenge;
-        uint256[] memory flatPoints = constraint.eqFlatPoints;
-        uint256[] memory selVars = constraint.selVars;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;
@@ -1023,13 +1113,12 @@ library WhirVerifierCore4 {
         }
     }
 
-    function _evaluateConstraint8Select(
-        FixedConstraint memory constraint,
+    function _evaluateConstraint8SelectRaw(
+        uint256 challenge,
+        uint256[] memory flatPoints,
+        uint256[] memory selVars,
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
-        uint256 challenge = constraint.challenge;
-        uint256[] memory flatPoints = constraint.eqFlatPoints;
-        uint256[] memory selVars = constraint.selVars;
         uint256 ch0;
         uint256 ch1;
         uint256 ch2;

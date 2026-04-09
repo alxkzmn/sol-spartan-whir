@@ -11,47 +11,41 @@ import {WhirVerifierUtils4} from "./WhirVerifierUtils4.sol";
 contract WhirVerifier4 {
     using KeccakChallenger for KeccakChallenger.State;
 
+    error FixedRoundCountMismatch();
+    error MissingFinalQueryBatch();
+    error MissingFinalSumcheck();
+    error FixedStatementShapeMismatch();
+    error FixedStatementArityMismatch();
+    error FixedFinalPolyLengthMismatch();
+    error FixedRandomnessLengthMismatch();
+
     function verify(
         bytes32 expectedCommitment,
         WhirStructs.WhirStatement calldata statement,
         WhirStructs.WhirProof calldata proof
     ) external pure returns (bool) {
         if (proof.rounds.length != QuarticWhirFixedConfig.ROUND_COUNT) {
-            revert WhirVerifierCore4.ProofRoundCountMismatch(
-                QuarticWhirFixedConfig.ROUND_COUNT,
-                proof.rounds.length
-            );
+            revert FixedRoundCountMismatch();
         }
 
-        bool expectFinalQueryBatch = QuarticWhirFixedConfig
-            .EXPECT_FINAL_QUERY_BATCH != 0;
-        if (proof.finalQueryBatchPresent != expectFinalQueryBatch) {
-            revert WhirVerifierCore4.FinalQueryBatchPresenceMismatch(
-                expectFinalQueryBatch,
-                proof.finalQueryBatchPresent
-            );
+        if (!proof.finalQueryBatchPresent) {
+            revert MissingFinalQueryBatch();
         }
 
-        bool expectFinalSumcheck = QuarticWhirFixedConfig
-            .EXPECT_FINAL_SUMCHECK != 0;
-        if (proof.finalSumcheckPresent != expectFinalSumcheck) {
-            revert WhirVerifierCore4.FinalSumcheckPresenceMismatch(
-                expectFinalSumcheck,
-                proof.finalSumcheckPresent
-            );
+        if (!proof.finalSumcheckPresent) {
+            revert MissingFinalSumcheck();
         }
 
         KeccakChallenger.State memory challenger;
         QuarticWhirFixedConfig.observePattern(challenger);
 
         WhirVerifierCore4.FixedParsedCommitment
-            memory parsedCommitment = WhirVerifierCore4._parseFixedCommitment(
-                challenger,
-                proof.initialCommitment,
-                proof.initialOodAnswers,
-                QuarticWhirFixedConfig.NUM_VARIABLES,
-                QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
-            );
+            memory parsedCommitment = WhirVerifierCore4
+                ._parseFixedCommitment16x2(
+                    challenger,
+                    proof.initialCommitment,
+                    proof.initialOodAnswers
+                );
 
         if (parsedCommitment.root != expectedCommitment) {
             revert WhirVerifierCore4.CommitmentMismatch(
@@ -60,21 +54,35 @@ contract WhirVerifier4 {
             );
         }
 
-        WhirVerifierCore4.FixedConstraint[]
-            memory constraints = new WhirVerifierCore4.FixedConstraint[](
-                proof.rounds.length
-            );
-        uint256 constraintCount = 0;
         uint256 claimedEval = 0;
         uint256[] memory foldingRandomness;
         uint256[] memory finalSumcheckRandomness;
+        uint256[] calldata statementPoint;
+        uint256 round0ConstraintChallenge;
+        uint256[] memory round0EqFlatPoints;
+        uint256[] memory round0SelVars;
+        uint256 round1ConstraintChallenge;
+        uint256[] memory round1EqFlatPoints;
+        uint256[] memory round1SelVars;
         uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
             challenger
         );
+        uint256 statementEval;
 
-        claimedEval = _combineInitialConstraintEvals(
+        if (statement.points.length != 1 || statement.evaluations.length != 1) {
+            revert FixedStatementShapeMismatch();
+        }
+        statementPoint = statement.points[0];
+        if (statementPoint.length != QuarticWhirFixedConfig.NUM_VARIABLES) {
+            revert FixedStatementArityMismatch();
+        }
+        WhirVerifierUtils4.validatePackedExt4Calldata(statementPoint);
+        statementEval = statement.evaluations[0];
+        WhirVerifierUtils4.validatePackedExt4(statementEval);
+
+        claimedEval = _combineInitialConstraintEvalsSingleRaw(
             initialConstraintChallenge,
-            statement,
+            statementEval,
             proof.initialOodAnswers
         );
 
@@ -97,87 +105,112 @@ contract WhirVerifier4 {
         WhirVerifierCore4.FixedParsedCommitment
             memory prevCommitment = parsedCommitment;
 
-        for (
-            uint256 roundIndex = 0;
-            roundIndex < QuarticWhirFixedConfig.ROUND_COUNT;
-            ++roundIndex
-        ) {
-            QuarticWhirFixedConfig.RoundConfig
-                memory roundConfig = QuarticWhirFixedConfig.roundConfig(
-                    roundIndex
-                );
-            WhirStructs.WhirRoundProof calldata roundProof = proof.rounds[
-                roundIndex
-            ];
-
+        {
+            WhirStructs.WhirRoundProof calldata round0Proof = proof.rounds[0];
             WhirVerifierCore4.FixedParsedCommitment
-                memory newCommitment = WhirVerifierCore4._parseFixedCommitment(
-                    challenger,
-                    roundProof.commitment,
-                    roundProof.oodAnswers,
-                    roundConfig.numVariables,
-                    roundConfig.oodSamples
-                );
+                memory round0Commitment = WhirVerifierCore4
+                    ._parseFixedCommitment2(
+                        challenger,
+                        round0Proof.commitment,
+                        round0Proof.oodAnswers,
+                        12
+                    );
 
+            uint256 round0Contribution;
             (
-                uint256 constraintChallenge,
-                uint256 roundContribution,
-                uint256[] memory stirVars
+                round0ConstraintChallenge,
+                round0Contribution,
+                round0SelVars
             ) = WhirVerifierCore4._verifyStirAndCombineConstraint(
-                    challenger,
-                    prevCommitment.root,
-                    roundConfig.powBits,
-                    roundConfig.numQueries,
-                    roundConfig.foldingFactor,
-                    roundConfig.domainSize,
-                    roundConfig.foldedDomainGen,
-                    roundProof.queryBatch,
-                    true,
-                    roundProof.powWitness,
-                    foldingRandomness,
-                    roundIndex == 0 ? 0 : 1,
-                    roundProof.oodAnswers
-                );
-
-            constraints[constraintCount] = WhirVerifierCore4.FixedConstraint({
-                challenge: constraintChallenge,
-                eqFlatPoints: newCommitment.oodFlatPoints,
-                selVars: stirVars
-            });
-            claimedEval = KoalaBearExt4.add(claimedEval, roundContribution);
-            constraintCount += 1;
-
-            uint256 nextFoldingFactor = roundIndex + 1 <
-                QuarticWhirFixedConfig.ROUND_COUNT
-                ? QuarticWhirFixedConfig
-                    .roundConfig(roundIndex + 1)
-                    .foldingFactor
-                : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
+                challenger,
+                prevCommitment.root,
+                26,
+                9,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                4194304,
+                1816824389,
+                round0Proof.queryBatch,
+                true,
+                round0Proof.powWitness,
+                foldingRandomness,
+                0,
+                round0Proof.oodAnswers
+            );
+            claimedEval = KoalaBearExt4.add(claimedEval, round0Contribution);
+            round0EqFlatPoints = round0Commitment.oodFlatPoints;
 
             (
                 claimedEval,
                 foldingRandomness,
                 randomnessCursor
             ) = WhirVerifierCore4._verifySumcheck(
-                roundProof.sumcheck,
+                round0Proof.sumcheck,
                 challenger,
                 claimedEval,
-                nextFoldingFactor,
-                roundConfig.foldingPowBits,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                0,
                 allRandomness,
                 randomnessCursor
             );
 
-            prevCommitment = newCommitment;
+            prevCommitment = round0Commitment;
+        }
+
+        {
+            WhirStructs.WhirRoundProof calldata round1Proof = proof.rounds[1];
+            WhirVerifierCore4.FixedParsedCommitment
+                memory round1Commitment = WhirVerifierCore4
+                    ._parseFixedCommitment2(
+                        challenger,
+                        round1Proof.commitment,
+                        round1Proof.oodAnswers,
+                        8
+                    );
+
+            uint256 round1Contribution;
+            (
+                round1ConstraintChallenge,
+                round1Contribution,
+                round1SelVars
+            ) = WhirVerifierCore4._verifyStirAndCombineConstraint(
+                challenger,
+                prevCommitment.root,
+                26,
+                6,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                2097152,
+                373019801,
+                round1Proof.queryBatch,
+                true,
+                round1Proof.powWitness,
+                foldingRandomness,
+                1,
+                round1Proof.oodAnswers
+            );
+            claimedEval = KoalaBearExt4.add(claimedEval, round1Contribution);
+            round1EqFlatPoints = round1Commitment.oodFlatPoints;
+
+            (
+                claimedEval,
+                foldingRandomness,
+                randomnessCursor
+            ) = WhirVerifierCore4._verifySumcheck(
+                round1Proof.sumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                4,
+                allRandomness,
+                randomnessCursor
+            );
+
+            prevCommitment = round1Commitment;
         }
 
         if (
             proof.finalPoly.length != QuarticWhirFixedConfig.FINAL_POLY_LENGTH
         ) {
-            revert WhirVerifierCore4.FinalPolyLengthMismatch(
-                QuarticWhirFixedConfig.FINAL_POLY_LENGTH,
-                proof.finalPoly.length
-            );
+            revert FixedFinalPolyLengthMismatch();
         }
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
 
@@ -193,7 +226,7 @@ contract WhirVerifier4 {
             proof.finalQueryBatchPresent,
             proof.finalPowWitness,
             foldingRandomness,
-            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+            1,
             proof.finalPoly
         );
 
@@ -212,19 +245,24 @@ contract WhirVerifier4 {
         );
 
         if (randomnessCursor != QuarticWhirFixedConfig.NUM_VARIABLES) {
-            revert WhirVerifierCore4.RandomnessLengthMismatch(
-                QuarticWhirFixedConfig.NUM_VARIABLES,
-                randomnessCursor
-            );
+            revert FixedRandomnessLengthMismatch();
         }
 
         uint256 evaluationOfWeights = WhirVerifierCore4
-            ._evaluateConstraintsFixedSelect(constraints, allRandomness);
+            ._evaluateConstraintsFixedSelectRaw(
+                round0ConstraintChallenge,
+                round0EqFlatPoints,
+                round0SelVars,
+                round1ConstraintChallenge,
+                round1EqFlatPoints,
+                round1SelVars,
+                allRandomness
+            );
         evaluationOfWeights = KoalaBearExt4.add(
             evaluationOfWeights,
-            _evaluateInitialConstraint(
+            _evaluateInitialConstraintSingleRaw(
                 initialConstraintChallenge,
-                statement,
+                statementPoint,
                 parsedCommitment.oodFlatPoints,
                 allRandomness
             )
@@ -245,6 +283,66 @@ contract WhirVerifier4 {
         return true;
     }
 
+    function _combineInitialConstraintEvalsSingleRaw(
+        uint256 challenge,
+        uint256 statementEval,
+        uint256[] calldata initialOodAnswers
+    ) private pure returns (uint256 updated) {
+        return
+            WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
+                        challenge,
+                        initialOodAnswers[1]
+                    ),
+                    challenge,
+                    initialOodAnswers[0]
+                ),
+                challenge,
+                statementEval
+            );
+    }
+
+    function _evaluateInitialConstraintSingleRaw(
+        uint256 challenge,
+        uint256[] calldata statementPoint,
+        uint256[] memory oodFlatPoints,
+        uint256[] memory allRandomness
+    ) private pure returns (uint256 total) {
+        return
+            WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
+                        challenge,
+                        WhirVerifierCore4._eqPolyEvalAt(
+                            oodFlatPoints,
+                            QuarticWhirFixedConfig.NUM_VARIABLES,
+                            allRandomness,
+                            0,
+                            QuarticWhirFixedConfig.NUM_VARIABLES
+                        )
+                    ),
+                    challenge,
+                    WhirVerifierCore4._eqPolyEvalAt(
+                        oodFlatPoints,
+                        0,
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    )
+                ),
+                challenge,
+                WhirVerifierCore4._eqPolyEvalAtCalldata(
+                    statementPoint,
+                    allRandomness,
+                    0,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                )
+            );
+    }
+
     function _combineInitialConstraintEvals(
         uint256 challenge,
         WhirStructs.WhirStatement calldata statement,
@@ -255,6 +353,29 @@ contract WhirVerifier4 {
                 statement.points.length,
                 statement.evaluations.length
             );
+        }
+
+        if (
+            initialOodAnswers.length ==
+            QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES &&
+            statement.evaluations.length == 1
+        ) {
+            uint256 evalValue = statement.evaluations[0];
+            WhirVerifierUtils4.validatePackedExt4(evalValue);
+            return
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        WhirVerifierCore4._hornerStep(
+                            0,
+                            challenge,
+                            initialOodAnswers[1]
+                        ),
+                        challenge,
+                        initialOodAnswers[0]
+                    ),
+                    challenge,
+                    evalValue
+                );
         }
 
         // Horner: Σ challenge^i * eval_i, iterate from last to first
@@ -291,6 +412,50 @@ contract WhirVerifier4 {
                 statement.points.length,
                 statement.evaluations.length
             );
+        }
+        if (statement.points.length == 1) {
+            if (
+                statement.points[0].length !=
+                QuarticWhirFixedConfig.NUM_VARIABLES
+            ) {
+                revert WhirVerifierCore4.StatementPointArityMismatch(
+                    0,
+                    QuarticWhirFixedConfig.NUM_VARIABLES,
+                    statement.points[0].length
+                );
+            }
+            WhirVerifierUtils4.validatePackedExt4Calldata(statement.points[0]);
+            return
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        WhirVerifierCore4._hornerStep(
+                            0,
+                            challenge,
+                            WhirVerifierCore4._eqPolyEvalAt(
+                                oodFlatPoints,
+                                QuarticWhirFixedConfig.NUM_VARIABLES,
+                                allRandomness,
+                                0,
+                                QuarticWhirFixedConfig.NUM_VARIABLES
+                            )
+                        ),
+                        challenge,
+                        WhirVerifierCore4._eqPolyEvalAt(
+                            oodFlatPoints,
+                            0,
+                            allRandomness,
+                            0,
+                            QuarticWhirFixedConfig.NUM_VARIABLES
+                        )
+                    ),
+                    challenge,
+                    WhirVerifierCore4._eqPolyEvalAtCalldata(
+                        statement.points[0],
+                        allRandomness,
+                        0,
+                        QuarticWhirFixedConfig.NUM_VARIABLES
+                    )
+                );
         }
         uint256 ch0;
         uint256 ch1;

@@ -290,12 +290,15 @@ contract WhirProfileHarness {
     ) external view returns (FullBreakdown memory bd) {
         uint256 g;
         KeccakChallenger.State memory challenger;
-        WhirVerifierCore4.FixedConstraint[]
-            memory cArr = new WhirVerifierCore4.FixedConstraint[](2);
-        uint256 cCount;
         uint256 claimedEval;
         uint256[] memory foldingRandomness;
         uint256[] memory finalSumcheckRandomness;
+        uint256 round0ConstraintChallenge;
+        uint256[] memory round0EqFlatPoints;
+        uint256[] memory round0SelVars;
+        uint256 round1ConstraintChallenge;
+        uint256[] memory round1EqFlatPoints;
+        uint256[] memory round1SelVars;
         uint256[] memory allRandomness = new uint256[](
             QuarticWhirFixedConfig.NUM_VARIABLES
         );
@@ -319,24 +322,26 @@ contract WhirProfileHarness {
             challenger
         );
         {
-            unchecked {
-                for (uint256 i = proof.initialOodAnswers.length; i > 0; --i) {
-                    claimedEval = WhirVerifierCore4._hornerStep(
-                        claimedEval,
+            require(
+                statement.points.length == 1 &&
+                    statement.evaluations.length == 1,
+                "FIXED_STATEMENT_COUNT"
+            );
+            uint256 evalValue = statement.evaluations[0];
+            WhirVerifierUtils4.validatePackedExt4(evalValue);
+            claimedEval = WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
                         initialConstraintChallenge,
-                        proof.initialOodAnswers[i - 1]
-                    );
-                }
-                for (uint256 i = statement.evaluations.length; i > 0; --i) {
-                    uint256 evalValue = statement.evaluations[i - 1];
-                    WhirVerifierUtils4.validatePackedExt4(evalValue);
-                    claimedEval = WhirVerifierCore4._hornerStep(
-                        claimedEval,
-                        initialConstraintChallenge,
-                        evalValue
-                    );
-                }
-            }
+                        proof.initialOodAnswers[1]
+                    ),
+                    initialConstraintChallenge,
+                    proof.initialOodAnswers[0]
+                ),
+                initialConstraintChallenge,
+                evalValue
+            );
         }
         bd.setup = g - gasleft();
 
@@ -375,8 +380,9 @@ contract WhirProfileHarness {
             bd.round0Parse = step.gasParse;
             bd.round0Stir = step.gasStir;
             bd.round0Sumcheck = step.gasSumcheck;
-            cArr[cCount] = step.constraint;
-            cCount += 1;
+            round0ConstraintChallenge = step.constraint.challenge;
+            round0EqFlatPoints = step.constraint.eqFlatPoints;
+            round0SelVars = step.constraint.selVars;
         }
 
         // --- Round 1 ---
@@ -400,8 +406,9 @@ contract WhirProfileHarness {
             bd.round1Parse = step.gasParse;
             bd.round1Stir = step.gasStir;
             bd.round1Sumcheck = step.gasSumcheck;
-            cArr[cCount] = step.constraint;
-            cCount += 1;
+            round1ConstraintChallenge = step.constraint.challenge;
+            round1EqFlatPoints = step.constraint.eqFlatPoints;
+            round1SelVars = step.constraint.selVars;
         }
 
         // --- Observe Final Poly ---
@@ -451,8 +458,14 @@ contract WhirProfileHarness {
         // --- Evaluate Constraints ---
         uint256 evaluationOfWeights;
         g = gasleft();
-        evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelect(
-                cArr,
+        evaluationOfWeights = WhirVerifierCore4
+            ._evaluateConstraintsFixedSelectRaw(
+                round0ConstraintChallenge,
+                round0EqFlatPoints,
+                round0SelVars,
+                round1ConstraintChallenge,
+                round1EqFlatPoints,
+                round1SelVars,
                 allRandomness
             );
         bd.constraintsFixedSelect = g - gasleft();
@@ -461,189 +474,47 @@ contract WhirProfileHarness {
         {
             uint256[] memory oodFlatPoints = initialParsedCommitment
                 .oodFlatPoints;
-            uint256 initEval;
-            uint256 ch0;
-            uint256 ch1;
-            uint256 ch2;
-            uint256 ch3;
-            assembly ("memory-safe") {
-                ch0 := shr(224, initialConstraintChallenge)
-                ch1 := and(shr(192, initialConstraintChallenge), 0xffffffff)
-                ch2 := and(shr(160, initialConstraintChallenge), 0xffffffff)
-                ch3 := and(shr(128, initialConstraintChallenge), 0xffffffff)
-            }
-            unchecked {
-                for (
-                    uint256 i = QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES;
-                    i > 0;
-                    --i
-                ) {
-                    uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
+            require(
+                statement.points.length == 1 &&
+                    statement.evaluations.length == 1,
+                "FIXED_STATEMENT_COUNT"
+            );
+            require(
+                statement.points[0].length ==
+                    QuarticWhirFixedConfig.NUM_VARIABLES,
+                "FIXED_STATEMENT_ARITY"
+            );
+            WhirVerifierUtils4.validatePackedExt4Calldata(statement.points[0]);
+            uint256 initEval = WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
+                        initialConstraintChallenge,
+                        WhirVerifierCore4._eqPolyEvalAt(
+                            oodFlatPoints,
+                            QuarticWhirFixedConfig.NUM_VARIABLES,
+                            allRandomness,
+                            0,
+                            QuarticWhirFixedConfig.NUM_VARIABLES
+                        )
+                    ),
+                    initialConstraintChallenge,
+                    WhirVerifierCore4._eqPolyEvalAt(
                         oodFlatPoints,
-                        (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
+                        0,
                         allRandomness,
                         0,
                         QuarticWhirFixedConfig.NUM_VARIABLES
-                    );
-                    assembly ("memory-safe") {
-                        let M := 0x7f000001
-                        let m := 0xffffffff
-                        let W := 3
-
-                        let a0 := shr(224, initEval)
-                        let a1 := and(shr(192, initEval), m)
-                        let a2 := and(shr(160, initEval), m)
-                        let a3 := and(shr(128, initEval), m)
-
-                        let w0 := shr(224, weight)
-                        let w1 := and(shr(192, weight), m)
-                        let w2 := and(shr(160, weight), m)
-                        let w3 := and(shr(128, weight), m)
-
-                        let r0 := mod(
-                            add(
-                                add(
-                                    mul(a0, ch0),
-                                    mul(
-                                        W,
-                                        add(
-                                            add(mul(a1, ch3), mul(a2, ch2)),
-                                            mul(a3, ch1)
-                                        )
-                                    )
-                                ),
-                                w0
-                            ),
-                            M
-                        )
-                        let r1 := mod(
-                            add(
-                                add(
-                                    add(mul(a0, ch1), mul(a1, ch0)),
-                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                                ),
-                                w1
-                            ),
-                            M
-                        )
-                        let r2 := mod(
-                            add(
-                                add(
-                                    add(
-                                        add(mul(a0, ch2), mul(a1, ch1)),
-                                        mul(a2, ch0)
-                                    ),
-                                    mul(W, mul(a3, ch3))
-                                ),
-                                w2
-                            ),
-                            M
-                        )
-                        let r3 := mod(
-                            add(
-                                add(
-                                    add(
-                                        add(mul(a0, ch3), mul(a1, ch2)),
-                                        mul(a2, ch1)
-                                    ),
-                                    mul(a3, ch0)
-                                ),
-                                w3
-                            ),
-                            M
-                        )
-
-                        initEval := or(
-                            or(shl(224, r0), shl(192, r1)),
-                            or(shl(160, r2), shl(128, r3))
-                        )
-                    }
-                }
-                for (uint256 i = statement.points.length; i > 0; --i) {
-                    WhirVerifierUtils4.validatePackedExt4Calldata(
-                        statement.points[i - 1]
-                    );
-                    uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
-                        statement.points[i - 1],
-                        allRandomness,
-                        0,
-                        QuarticWhirFixedConfig.NUM_VARIABLES
-                    );
-                    assembly ("memory-safe") {
-                        let M := 0x7f000001
-                        let m := 0xffffffff
-                        let W := 3
-
-                        let a0 := shr(224, initEval)
-                        let a1 := and(shr(192, initEval), m)
-                        let a2 := and(shr(160, initEval), m)
-                        let a3 := and(shr(128, initEval), m)
-
-                        let w0 := shr(224, weight)
-                        let w1 := and(shr(192, weight), m)
-                        let w2 := and(shr(160, weight), m)
-                        let w3 := and(shr(128, weight), m)
-
-                        let r0 := mod(
-                            add(
-                                add(
-                                    mul(a0, ch0),
-                                    mul(
-                                        W,
-                                        add(
-                                            add(mul(a1, ch3), mul(a2, ch2)),
-                                            mul(a3, ch1)
-                                        )
-                                    )
-                                ),
-                                w0
-                            ),
-                            M
-                        )
-                        let r1 := mod(
-                            add(
-                                add(
-                                    add(mul(a0, ch1), mul(a1, ch0)),
-                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                                ),
-                                w1
-                            ),
-                            M
-                        )
-                        let r2 := mod(
-                            add(
-                                add(
-                                    add(
-                                        add(mul(a0, ch2), mul(a1, ch1)),
-                                        mul(a2, ch0)
-                                    ),
-                                    mul(W, mul(a3, ch3))
-                                ),
-                                w2
-                            ),
-                            M
-                        )
-                        let r3 := mod(
-                            add(
-                                add(
-                                    add(
-                                        add(mul(a0, ch3), mul(a1, ch2)),
-                                        mul(a2, ch1)
-                                    ),
-                                    mul(a3, ch0)
-                                ),
-                                w3
-                            ),
-                            M
-                        )
-
-                        initEval := or(
-                            or(shl(224, r0), shl(192, r1)),
-                            or(shl(160, r2), shl(128, r3))
-                        )
-                    }
-                }
-            }
+                    )
+                ),
+                initialConstraintChallenge,
+                WhirVerifierCore4._eqPolyEvalAtCalldata(
+                    statement.points[0],
+                    allRandomness,
+                    0,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                )
+            );
             evaluationOfWeights = KoalaBearExt4.add(
                 evaluationOfWeights,
                 initEval
@@ -1322,18 +1193,21 @@ contract WhirProfileHarness {
         KeccakChallenger.State memory challenger;
         QuarticWhirFixedConfig.observePattern(challenger);
 
-        WhirVerifierCore4.Constraint[]
-            memory cArr = new WhirVerifierCore4.Constraint[](2);
-        uint256 cCount;
         uint256 claimedEval;
         uint256[] memory foldingRandomness;
         uint256[] memory finalSumcheckRandomness;
+        uint256 round0ConstraintChallenge;
+        uint256[] memory round0EqFlatPoints;
+        uint256[] memory round0SelVars;
+        uint256 round1ConstraintChallenge;
+        uint256[] memory round1EqFlatPoints;
+        uint256[] memory round1SelVars;
         uint256[] memory allRandomness = new uint256[](
             QuarticWhirFixedConfig.NUM_VARIABLES
         );
         uint256 randomnessCursor;
-        WhirVerifierCore4.ParsedCommitment
-            memory prevCommitment = WhirVerifierCore4._parseCommitment(
+        WhirVerifierCore4.FixedParsedCommitment
+            memory prevCommitment = WhirVerifierCore4._parseFixedCommitment(
                 challenger,
                 proof.initialCommitment,
                 proof.initialOodAnswers,
@@ -1341,36 +1215,32 @@ contract WhirProfileHarness {
                 QuarticWhirFixedConfig.COMMITMENT_OOD_SAMPLES
             );
         require(prevCommitment.root == expectedCommitment, "COMMITMENT");
-        WhirVerifierCore4.ParsedCommitment
+        WhirVerifierCore4.FixedParsedCommitment
             memory initialParsedCommitment = prevCommitment;
         uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(
             challenger
         );
         {
-            uint256[] memory oodEvals = prevCommitment.oodStatement.evaluations;
-            uint256 oodLen = oodEvals.length;
-            unchecked {
-                for (uint256 i = oodLen; i > 0; --i) {
-                    claimedEval = KoalaBearExt4.add(
-                        oodEvals[i - 1],
-                        KoalaBearExt4.mul(
-                            claimedEval,
-                            initialConstraintChallenge
-                        )
-                    );
-                }
-                for (uint256 i = statement.evaluations.length; i > 0; --i) {
-                    uint256 evalValue = statement.evaluations[i - 1];
-                    WhirVerifierUtils4.validatePackedExt4(evalValue);
-                    claimedEval = KoalaBearExt4.add(
-                        evalValue,
-                        KoalaBearExt4.mul(
-                            claimedEval,
-                            initialConstraintChallenge
-                        )
-                    );
-                }
-            }
+            require(
+                statement.points.length == 1 &&
+                    statement.evaluations.length == 1,
+                "FIXED_STATEMENT_COUNT"
+            );
+            uint256 evalValue = statement.evaluations[0];
+            WhirVerifierUtils4.validatePackedExt4(evalValue);
+            claimedEval = WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
+                        initialConstraintChallenge,
+                        proof.initialOodAnswers[1]
+                    ),
+                    initialConstraintChallenge,
+                    proof.initialOodAnswers[0]
+                ),
+                initialConstraintChallenge,
+                evalValue
+            );
         }
 
         (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4
@@ -1388,21 +1258,23 @@ contract WhirProfileHarness {
             QuarticWhirFixedConfig.RoundConfig
                 memory rc = QuarticWhirFixedConfig.roundConfig(round);
             WhirStructs.WhirRoundProof calldata rp = proof.rounds[round];
-            WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4
-                ._parseCommitment(
+            WhirVerifierCore4.FixedParsedCommitment
+                memory nc = WhirVerifierCore4._parseFixedCommitment(
                     challenger,
                     rp.commitment,
                     rp.oodAnswers,
                     rc.numVariables,
                     rc.oodSamples
                 );
-            WhirVerifierCore4.SelectStatement memory ss = WhirVerifierCore4
-                ._verifyStirChallengesRaw(
+            (
+                uint256 constraintChallenge,
+                uint256 roundContribution,
+                uint256[] memory stirVars
+            ) = WhirVerifierCore4._verifyStirAndCombineConstraint(
                     challenger,
                     prevCommitment.root,
                     rc.powBits,
                     rc.numQueries,
-                    rc.numVariables,
                     rc.foldingFactor,
                     rc.domainSize,
                     rc.foldedDomainGen,
@@ -1410,19 +1282,19 @@ contract WhirProfileHarness {
                     true,
                     rp.powWitness,
                     foldingRandomness,
-                    true,
-                    uint8(round)
+                    uint8(round),
+                    rp.oodAnswers
                 );
-            cArr[cCount] = WhirVerifierCore4.Constraint({
-                challenge: WhirVerifierUtils4.sampleExt4(challenger),
-                eqStatement: nc.oodStatement,
-                selStatement: ss
-            });
-            claimedEval = WhirVerifierCore4._combineConstraintEvals(
-                claimedEval,
-                cArr[cCount]
-            );
-            cCount += 1;
+            claimedEval = KoalaBearExt4.add(claimedEval, roundContribution);
+            if (round == 0) {
+                round0ConstraintChallenge = constraintChallenge;
+                round0EqFlatPoints = nc.oodFlatPoints;
+                round0SelVars = stirVars;
+            } else {
+                round1ConstraintChallenge = constraintChallenge;
+                round1EqFlatPoints = nc.oodFlatPoints;
+                round1SelVars = stirVars;
+            }
             uint256 nextFoldingFactor = round == 0
                 ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
                 : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
@@ -1475,46 +1347,59 @@ contract WhirProfileHarness {
 
         uint256 g = gasleft();
         uint256 evaluationOfWeights = WhirVerifierCore4
-            ._evaluateConstraintsFixedSelect(cArr, allRandomness);
+            ._evaluateConstraintsFixedSelectRaw(
+                round0ConstraintChallenge,
+                round0EqFlatPoints,
+                round0SelVars,
+                round1ConstraintChallenge,
+                round1EqFlatPoints,
+                round1SelVars,
+                allRandomness
+            );
         {
             uint256[] memory oodFlatPoints = initialParsedCommitment
-                .oodStatement
-                .flatPoints;
-            uint256 oodLen = initialParsedCommitment
-                .oodStatement
-                .evaluations
-                .length;
-            uint256 initEval;
-            unchecked {
-                for (uint256 i = oodLen; i > 0; --i) {
-                    uint256 weight = WhirVerifierCore4._eqPolyEvalAt(
+                .oodFlatPoints;
+            require(
+                statement.points.length == 1 &&
+                    statement.evaluations.length == 1,
+                "FIXED_STATEMENT_COUNT"
+            );
+            require(
+                statement.points[0].length ==
+                    QuarticWhirFixedConfig.NUM_VARIABLES,
+                "FIXED_STATEMENT_ARITY"
+            );
+            WhirVerifierUtils4.validatePackedExt4Calldata(statement.points[0]);
+            uint256 initEval = WhirVerifierCore4._hornerStep(
+                WhirVerifierCore4._hornerStep(
+                    WhirVerifierCore4._hornerStep(
+                        0,
+                        initialConstraintChallenge,
+                        WhirVerifierCore4._eqPolyEvalAt(
+                            oodFlatPoints,
+                            QuarticWhirFixedConfig.NUM_VARIABLES,
+                            allRandomness,
+                            0,
+                            QuarticWhirFixedConfig.NUM_VARIABLES
+                        )
+                    ),
+                    initialConstraintChallenge,
+                    WhirVerifierCore4._eqPolyEvalAt(
                         oodFlatPoints,
-                        (i - 1) * QuarticWhirFixedConfig.NUM_VARIABLES,
+                        0,
                         allRandomness,
                         0,
                         QuarticWhirFixedConfig.NUM_VARIABLES
-                    );
-                    initEval = KoalaBearExt4.add(
-                        weight,
-                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
-                    );
-                }
-                for (uint256 i = statement.points.length; i > 0; --i) {
-                    WhirVerifierUtils4.validatePackedExt4Calldata(
-                        statement.points[i - 1]
-                    );
-                    uint256 weight = WhirVerifierCore4._eqPolyEvalAtCalldata(
-                        statement.points[i - 1],
-                        allRandomness,
-                        0,
-                        QuarticWhirFixedConfig.NUM_VARIABLES
-                    );
-                    initEval = KoalaBearExt4.add(
-                        weight,
-                        KoalaBearExt4.mul(initEval, initialConstraintChallenge)
-                    );
-                }
-            }
+                    )
+                ),
+                initialConstraintChallenge,
+                WhirVerifierCore4._eqPolyEvalAtCalldata(
+                    statement.points[0],
+                    allRandomness,
+                    0,
+                    QuarticWhirFixedConfig.NUM_VARIABLES
+                )
+            );
             evaluationOfWeights = KoalaBearExt4.add(
                 evaluationOfWeights,
                 initEval
