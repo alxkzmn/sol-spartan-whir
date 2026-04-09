@@ -654,24 +654,25 @@ library MerkleVerifier {
                 } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
+                    let nodeIsRight := and(node, 1)
+                    let nextReadPtr := add(ep, entrySize)
                     let parentHash
 
                     // Try to merge with sibling (both leaves present).
                     let merged := 0
-                    if iszero(and(node, 1)) {
-                        let nep := add(ep, entrySize)
-                        if lt(nep, frontierEnd) {
-                            if eq(mload(nep), add(node, 1)) {
+                    if iszero(nodeIsRight) {
+                        if lt(nextReadPtr, frontierEnd) {
+                            if eq(mload(nextReadPtr), add(node, 1)) {
                                 mstore(add(scratch, 1), hash)
                                 mstore(
                                     add(scratch, 0x21),
-                                    mload(add(nep, 0x20))
+                                    mload(add(nextReadPtr, 0x20))
                                 )
                                 parentHash := and(
                                     keccak256(scratch, 65),
                                     digestMask
                                 )
-                                ep := add(nep, entrySize)
+                                nextReadPtr := add(nextReadPtr, entrySize)
                                 merged := 1
                             }
                         }
@@ -694,9 +695,8 @@ library MerkleVerifier {
                         }
                         let sibling := calldataload(decommPtr)
                         decommPtr := add(decommPtr, 0x20)
-                        ep := add(ep, entrySize)
 
-                        switch and(node, 1)
+                        switch nodeIsRight
                         case 0 {
                             mstore(add(scratch, 1), hash)
                             mstore(add(scratch, 0x21), sibling)
@@ -708,16 +708,19 @@ library MerkleVerifier {
                         parentHash := and(keccak256(scratch, 65), digestMask)
                     }
 
+                    ep := nextReadPtr
                     let parentIndex := shr(1, node)
+                    let sameParent := and(
+                        hasLastParent,
+                        eq(lastParentIndex, parentIndex)
+                    )
 
                     // Dedup: if the previous entry had the same parent index,
                     // overwrite its hash in place instead of appending a new entry.
-                    if and(hasLastParent, eq(lastParentIndex, parentIndex)) {
+                    if sameParent {
                         mstore(sub(nextPtr, 0x20), parentHash)
                     }
-                    if iszero(
-                        and(hasLastParent, eq(lastParentIndex, parentIndex))
-                    ) {
+                    if iszero(sameParent) {
                         mstore(nextPtr, parentIndex)
                         mstore(add(nextPtr, 0x20), parentHash)
                         nextPtr := add(nextPtr, entrySize)

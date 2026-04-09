@@ -189,20 +189,20 @@ contract WhirStirDetailHarness {
 
         uint256 g = gasleft();
         WhirVerifierCore4._verifyFinalStirChallengesRaw(
-                challenger,
-                prevCommitment.root,
-                QuarticWhirFixedConfig.FINAL_POW_BITS,
-                QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
-                QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
-                QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
-                proof.finalQueryBatch,
-                proof.finalQueryBatchPresent,
-                proof.finalPowWitness,
-                foldingRandomness,
-                QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
-                proof.finalPoly
-            );
+            challenger,
+            prevCommitment.root,
+            QuarticWhirFixedConfig.FINAL_POW_BITS,
+            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
+            QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE,
+            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            proof.finalQueryBatch,
+            proof.finalQueryBatchPresent,
+            proof.finalPowWitness,
+            foldingRandomness,
+            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+            proof.finalPoly
+        );
         split.materialization = g - gasleft();
 
         split.checkOnly = 0;
@@ -736,19 +736,21 @@ contract WhirStirDetailHarness {
             while (cursor < frontierLen) {
                 uint256 node = frontierIndices[cursor];
                 bytes32 hash = frontierHashes[cursor];
+                uint256 nextCursor = cursor + 1;
+                bool nodeIsRight = (node & 1) != 0;
                 bytes32 parentHash;
 
                 if (
-                    (node & 1) == 0 &&
-                    cursor + 1 < frontierLen &&
-                    frontierIndices[cursor + 1] == node + 1
+                    !nodeIsRight &&
+                    nextCursor < frontierLen &&
+                    frontierIndices[nextCursor] == node + 1
                 ) {
                     parentHash = MerkleVerifier.compressNode(
                         hash,
-                        frontierHashes[cursor + 1],
+                        frontierHashes[nextCursor],
                         effectiveDigestBytes
                     );
-                    cursor += 2;
+                    nextCursor += 1;
                 } else {
                     require(
                         decommitmentCursor < decommitments.length,
@@ -756,9 +758,8 @@ contract WhirStirDetailHarness {
                     );
                     bytes32 siblingHash = decommitments[decommitmentCursor];
                     decommitmentCursor += 1;
-                    cursor += 1;
 
-                    parentHash = (node & 1) == 0
+                    parentHash = !nodeIsRight
                         ? MerkleVerifier.compressNode(
                             hash,
                             siblingHash,
@@ -771,8 +772,11 @@ contract WhirStirDetailHarness {
                         );
                 }
 
+                cursor = nextCursor;
                 uint256 parentIndex = node >> 1;
-                if (nextLen > 0 && nextIndices[nextLen - 1] == parentIndex) {
+                bool sameParent = nextLen > 0 &&
+                    nextIndices[nextLen - 1] == parentIndex;
+                if (sameParent) {
                     nextHashes[nextLen - 1] = parentHash;
                 } else {
                     nextIndices[nextLen] = parentIndex;
