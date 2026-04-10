@@ -54,7 +54,7 @@ contract TranscriptParityTest is Test {
         KeccakChallenger.State memory rhs;
 
         lhs.observeBase(0x01020304);
-        rhs.observeBytes(hex"cce9f731");
+        rhs.observeBytes(hex"04030201");
 
         assertEq(
             KeccakChallenger.debugInputHash(lhs),

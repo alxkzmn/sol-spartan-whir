@@ -8,7 +8,7 @@
     "Failure fixture mutates initial commitment to force commitment mismatch.",
     "Failure fixture mutates one STIR query opening while keeping commitments and OOD answers intact.",
     "Failure fixture mutates one initial OOD answer, which also changes the downstream transcript.",
-    "Blob fixtures are the fixed-shape WHRB encoding of the current typed ABI fixtures on this branch.",
+    "Blob fixtures encode the current fixed-shape quartic standalone WHIR proof family.",
     "Transcript trace records every observe/sample call in canonical replay form.",
     "Spartan transcript fixture records domain-separator preimage, digest, public inputs, and checkpoint.",
     "Field vectors include base/quartic/octic arithmetic tuples.",
