@@ -115,8 +115,10 @@ contract WhirBlobVerifierNative4 {
                 );
             offset = afterCommitment;
 
-            uint256 round0PowWitness;
-            (round0PowWitness, offset) = WhirBlobCodec4.readBase(blob, offset);
+            uint256 round0PowWitnessOffset = offset;
+            unchecked {
+                offset += 4;
+            }
 
             uint256 round0Contribution;
             (
@@ -130,11 +132,11 @@ contract WhirBlobVerifierNative4 {
                 26,
                 9,
                 18,
-                1816824389,
+                1_816_824_389,
                 blob,
                 offset,
                 round0DecommLen,
-                round0PowWitness,
+                round0PowWitnessOffset,
                 allRandomness,
                 round0RandomnessOffset,
                 0,
@@ -172,8 +174,10 @@ contract WhirBlobVerifierNative4 {
                 );
             offset = afterCommitment;
 
-            uint256 round1PowWitness;
-            (round1PowWitness, offset) = WhirBlobCodec4.readBase(blob, offset);
+            uint256 round1PowWitnessOffset = offset;
+            unchecked {
+                offset += 4;
+            }
 
             uint256 round1Contribution;
             (
@@ -187,11 +191,11 @@ contract WhirBlobVerifierNative4 {
                 26,
                 6,
                 17,
-                373019801,
+                373_019_801,
                 blob,
                 offset,
                 round1DecommLen,
-                round1PowWitness,
+                round1PowWitnessOffset,
                 allRandomness,
                 round1RandomnessOffset,
                 1,
@@ -233,8 +237,10 @@ contract WhirBlobVerifierNative4 {
             }
         }
 
-        uint256 finalPowWitness;
-        (finalPowWitness, offset) = WhirBlobCodec4.readBase(blob, offset);
+        uint256 finalPowWitnessOffset = offset;
+        unchecked {
+            offset += 4;
+        }
 
         offset = WhirVerifierCore4._verifyFinalStirChallengesBlob(
             challenger,
@@ -246,7 +252,7 @@ contract WhirBlobVerifierNative4 {
             blob,
             offset,
             finalDecommLen,
-            finalPowWitness,
+            finalPowWitnessOffset,
             allRandomness,
             finalStirRandomnessOffset,
             1,

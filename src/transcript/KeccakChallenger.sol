@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 library KeccakChallenger {
     uint256 internal constant KOALABEAR_MODULUS = 0x7f000001;
-    uint256 internal constant KOALABEAR_MONTY_R = 0x01fffffe;
     uint256 internal constant KOALABEAR_SAMPLE_MASK = 0x7fffffff;
     uint256 internal constant DIGEST_BYTES = 32;
     uint256 internal constant INITIAL_CAPACITY = 64;
@@ -20,15 +19,19 @@ library KeccakChallenger {
         _appendBytes(self, data);
     }
 
+    function observeBytesCalldata(
+        State memory self,
+        bytes calldata data,
+        uint256 offset,
+        uint256 len
+    ) internal pure {
+        self.outputIndex = 0;
+        _appendBytesCalldata(self, data, offset, len);
+    }
+
     function observeBase(State memory self, uint256 value) internal pure {
         require(value < KOALABEAR_MODULUS, "BASE_RANGE");
-
-        // Rust serializes KoalaBear transcript observations in unique Montgomery form,
-        // so convert the canonical field element before writing its little-endian bytes.
-        _appendBaseLE(
-            self,
-            uint32(mulmod(value, KOALABEAR_MONTY_R, KOALABEAR_MODULUS))
-        );
+        _appendBaseLE(self, uint32(value));
     }
 
     function observeHashU8Digest(
@@ -67,7 +70,7 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+            function validateAndEncode(x, modulus, mask) -> encoded {
                 if and(x, sub(shl(128, 1), 1)) {
                     revertPacked(x)
                 }
@@ -93,23 +96,16 @@ library KeccakChallenger {
                 }
 
                 encoded := or(
-                    or(
-                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
-                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
-                    ),
-                    or(
-                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
-                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
-                    )
+                    or(shl(224, bswap32(x0)), shl(192, bswap32(x1))),
+                    or(shl(160, bswap32(x2)), shl(128, bswap32(x3)))
                 )
             }
 
             let modulus := 0x7f000001
-            let montyR := 0x01fffffe
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
 
-            mstore(dst, validateAndEncode(packed, modulus, montyR, mask))
+            mstore(dst, validateAndEncode(packed, modulus, mask))
         }
 
         self.inputLen = newLen;
@@ -139,7 +135,7 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+            function validateAndEncode(x, modulus, mask) -> encoded {
                 if and(x, sub(shl(128, 1), 1)) {
                     revertPacked(x)
                 }
@@ -165,27 +161,17 @@ library KeccakChallenger {
                 }
 
                 encoded := or(
-                    or(
-                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
-                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
-                    ),
-                    or(
-                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
-                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
-                    )
+                    or(shl(224, bswap32(x0)), shl(192, bswap32(x1))),
+                    or(shl(160, bswap32(x2)), shl(128, bswap32(x3)))
                 )
             }
 
             let modulus := 0x7f000001
-            let montyR := 0x01fffffe
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
 
-            mstore(dst, validateAndEncode(first, modulus, montyR, mask))
-            mstore(
-                add(dst, 0x10),
-                validateAndEncode(second, modulus, montyR, mask)
-            )
+            mstore(dst, validateAndEncode(first, modulus, mask))
+            mstore(add(dst, 0x10), validateAndEncode(second, modulus, mask))
         }
 
         self.inputLen = newLen;
@@ -215,7 +201,7 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, montyR, mask) -> encoded {
+            function validateAndEncode(x, modulus, mask) -> encoded {
                 if and(x, sub(shl(128, 1), 1)) {
                     revertPacked(x)
                 }
@@ -241,19 +227,12 @@ library KeccakChallenger {
                 }
 
                 encoded := or(
-                    or(
-                        shl(224, bswap32(mulmod(x0, montyR, modulus))),
-                        shl(192, bswap32(mulmod(x1, montyR, modulus)))
-                    ),
-                    or(
-                        shl(160, bswap32(mulmod(x2, montyR, modulus))),
-                        shl(128, bswap32(mulmod(x3, montyR, modulus)))
-                    )
+                    or(shl(224, bswap32(x0)), shl(192, bswap32(x1))),
+                    or(shl(160, bswap32(x2)), shl(128, bswap32(x3)))
                 )
             }
 
             let modulus := 0x7f000001
-            let montyR := 0x01fffffe
             let mask := 0xffffffff
             let src := values.offset
             let end := add(src, shl(5, values.length))
@@ -265,11 +244,126 @@ library KeccakChallenger {
                 src := add(src, 0x20)
                 dst := add(dst, 0x10)
             } {
-                mstore(
-                    dst,
-                    validateAndEncode(calldataload(src), modulus, montyR, mask)
+                mstore(dst, validateAndEncode(calldataload(src), modulus, mask))
+            }
+        }
+
+        self.inputLen = newLen;
+        self.outputIndex = 0;
+    }
+
+    function observeReadValidatedPackedExt4Le(
+        State memory self,
+        bytes calldata data,
+        uint256 offset
+    ) internal pure returns (uint256 packed) {
+        uint256 oldLen = self.inputLen;
+        uint256 newLen = oldLen + 16;
+        _ensureCapacity(self, newLen);
+        bytes memory buffer = self.inputBuffer;
+        assembly ("memory-safe") {
+            function bswap32(x) -> y {
+                y := or(
+                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
+                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
                 )
             }
+
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            let raw := calldataload(add(data.offset, offset))
+            let modulus := 0x7f000001
+            let x0 := bswap32(shr(224, raw))
+            if iszero(lt(x0, modulus)) {
+                revertPacked(raw)
+            }
+            let x1 := bswap32(and(shr(192, raw), 0xffffffff))
+            if iszero(lt(x1, modulus)) {
+                revertPacked(raw)
+            }
+            let x2 := bswap32(and(shr(160, raw), 0xffffffff))
+            if iszero(lt(x2, modulus)) {
+                revertPacked(raw)
+            }
+            let x3 := bswap32(and(shr(128, raw), 0xffffffff))
+            if iszero(lt(x3, modulus)) {
+                revertPacked(raw)
+            }
+
+            packed := or(
+                or(shl(224, x0), shl(192, x1)),
+                or(shl(160, x2), shl(128, x3))
+            )
+
+            mstore(add(add(buffer, 0x20), oldLen), raw)
+        }
+
+        self.inputLen = newLen;
+        self.outputIndex = 0;
+    }
+
+    function observeReadValidatedPackedExt4LePair(
+        State memory self,
+        bytes calldata data,
+        uint256 offset
+    ) internal pure returns (uint256 first, uint256 second) {
+        uint256 oldLen = self.inputLen;
+        uint256 newLen = oldLen + 32;
+        _ensureCapacity(self, newLen + 16);
+        bytes memory buffer = self.inputBuffer;
+        assembly ("memory-safe") {
+            function bswap32(x) -> y {
+                y := or(
+                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
+                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
+                )
+            }
+
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function decodeAndValidate(raw) -> packed {
+                let modulus := 0x7f000001
+                let x0 := bswap32(shr(224, raw))
+                if iszero(lt(x0, modulus)) {
+                    revertPacked(raw)
+                }
+                let x1 := bswap32(and(shr(192, raw), 0xffffffff))
+                if iszero(lt(x1, modulus)) {
+                    revertPacked(raw)
+                }
+                let x2 := bswap32(and(shr(160, raw), 0xffffffff))
+                if iszero(lt(x2, modulus)) {
+                    revertPacked(raw)
+                }
+                let x3 := bswap32(and(shr(128, raw), 0xffffffff))
+                if iszero(lt(x3, modulus)) {
+                    revertPacked(raw)
+                }
+
+                packed := or(
+                    or(shl(224, x0), shl(192, x1)),
+                    or(shl(160, x2), shl(128, x3))
+                )
+            }
+
+            let src := add(data.offset, offset)
+            let raw0 := calldataload(src)
+            let raw1 := calldataload(add(src, 0x10))
+
+            first := decodeAndValidate(raw0)
+            second := decodeAndValidate(raw1)
+
+            let dst := add(add(buffer, 0x20), oldLen)
+            mstore(dst, raw0)
+            mstore(add(dst, 0x10), raw1)
         }
 
         self.inputLen = newLen;
@@ -400,6 +494,28 @@ library KeccakChallenger {
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
             mcopy(add(add(buffer, 0x20), oldLen), add(data, 0x20), appendLen)
+        }
+
+        self.inputLen = newLen;
+    }
+
+    function _appendBytesCalldata(
+        State memory self,
+        bytes calldata data,
+        uint256 offset,
+        uint256 appendLen
+    ) private pure {
+        uint256 oldLen = self.inputLen;
+        uint256 newLen = oldLen + appendLen;
+        _ensureCapacity(self, newLen);
+
+        bytes memory buffer = self.inputBuffer;
+        assembly ("memory-safe") {
+            calldatacopy(
+                add(add(buffer, 0x20), oldLen),
+                add(data.offset, offset),
+                appendLen
+            )
         }
 
         self.inputLen = newLen;

@@ -218,7 +218,7 @@ contract WhirBlobVerifierNative4Test is Test {
             bytes memory blob = vm.readFileBinary(
                 string.concat(TESTDATA, "quartic_whir_success.blob")
             );
-            _setExt4Lane(blob, offsets.initialOod, lane, MODULUS);
+            _setExt4LaneLe(blob, offsets.initialOod, lane, MODULUS);
 
             vm.expectPartialRevert(
                 WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
@@ -234,7 +234,7 @@ contract WhirBlobVerifierNative4Test is Test {
         );
         BlobOffsets memory offsets = _computeOffsets(proof);
 
-        _incrementExt4Lane(blob, offsets.initialSumcheck, 0);
+        _incrementExt4LaneLe(blob, offsets.initialSumcheck, 0);
 
         vm.expectRevert();
         nativeBlobVerifier.verify(proof.initialCommitment, blob);
@@ -248,7 +248,7 @@ contract WhirBlobVerifierNative4Test is Test {
             bytes memory blob = vm.readFileBinary(
                 string.concat(TESTDATA, "quartic_whir_success.blob")
             );
-            _setExt4Lane(blob, offsets.initialSumcheck, lane, MODULUS);
+            _setExt4LaneLe(blob, offsets.initialSumcheck, lane, MODULUS);
 
             vm.expectPartialRevert(
                 WhirVerifierUtils4.PackedExtensionElementOutOfRange.selector
@@ -393,6 +393,28 @@ contract WhirBlobVerifierNative4Test is Test {
         blob[offset + 3] = bytes1(uint8(value));
     }
 
+    function _readU32Le(
+        bytes memory blob,
+        uint256 offset
+    ) internal pure returns (uint256 value) {
+        value =
+            uint8(blob[offset]) |
+            (uint8(blob[offset + 1]) << 8) |
+            (uint8(blob[offset + 2]) << 16) |
+            (uint8(blob[offset + 3]) << 24);
+    }
+
+    function _writeU32Le(
+        bytes memory blob,
+        uint256 offset,
+        uint256 value
+    ) internal pure {
+        blob[offset] = bytes1(uint8(value));
+        blob[offset + 1] = bytes1(uint8(value >> 8));
+        blob[offset + 2] = bytes1(uint8(value >> 16));
+        blob[offset + 3] = bytes1(uint8(value >> 24));
+    }
+
     function _setExt4Lane(
         bytes memory blob,
         uint256 ext4Offset,
@@ -414,5 +436,28 @@ contract WhirBlobVerifierNative4Test is Test {
             value = 0;
         }
         _writeU32(blob, ext4Offset + lane * 4, value);
+    }
+
+    function _setExt4LaneLe(
+        bytes memory blob,
+        uint256 ext4Offset,
+        uint256 lane,
+        uint256 value
+    ) internal pure {
+        require(lane < 4, "BAD_LANE");
+        _writeU32Le(blob, ext4Offset + lane * 4, value);
+    }
+
+    function _incrementExt4LaneLe(
+        bytes memory blob,
+        uint256 ext4Offset,
+        uint256 lane
+    ) internal pure {
+        uint256 value = _readU32Le(blob, ext4Offset + lane * 4);
+        value += 1;
+        if (value == MODULUS) {
+            value = 0;
+        }
+        _writeU32Le(blob, ext4Offset + lane * 4, value);
     }
 }

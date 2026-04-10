@@ -68,13 +68,13 @@ library WhirBlobCodec4 {
         (proof.initialCommitment, offset) = readDigest20(blob, offset);
         proof.initialOodAnswers = new uint256[](INITIAL_OOD_SAMPLES);
         for (uint256 i = 0; i < INITIAL_OOD_SAMPLES; ++i) {
-            (proof.initialOodAnswers[i], offset) = readExt4(blob, offset);
+            (proof.initialOodAnswers[i], offset) = readExt4Le(blob, offset);
         }
         proof.initialSumcheck.polynomialEvals = new uint256[](
             INITIAL_SUMCHECK_EVALS
         );
         for (uint256 i = 0; i < INITIAL_SUMCHECK_EVALS; ++i) {
-            (proof.initialSumcheck.polynomialEvals[i], offset) = readExt4(
+            (proof.initialSumcheck.polynomialEvals[i], offset) = readExt4Le(
                 blob,
                 offset
             );
@@ -89,7 +89,7 @@ library WhirBlobCodec4 {
         for (uint256 i = 0; i < FINAL_POLY_LEN; ++i) {
             (proof.finalPoly[i], offset) = readExt4(blob, offset);
         }
-        (proof.finalPowWitness, offset) = readBase(blob, offset);
+        (proof.finalPowWitness, offset) = readBaseLe(blob, offset);
 
         proof.finalQueryBatchPresent = true;
         proof.finalQueryBatch.kind = 1;
@@ -114,7 +114,7 @@ library WhirBlobCodec4 {
             FINAL_SUMCHECK_EVALS
         );
         for (uint256 i = 0; i < FINAL_SUMCHECK_EVALS; ++i) {
-            (proof.finalSumcheck.polynomialEvals[i], offset) = readExt4(
+            (proof.finalSumcheck.polynomialEvals[i], offset) = readExt4Le(
                 blob,
                 offset
             );
@@ -135,9 +135,9 @@ library WhirBlobCodec4 {
         (round.commitment, offset) = readDigest20(blob, offset);
         round.oodAnswers = new uint256[](ROUND_OOD_SAMPLES);
         for (uint256 i = 0; i < ROUND_OOD_SAMPLES; ++i) {
-            (round.oodAnswers[i], offset) = readExt4(blob, offset);
+            (round.oodAnswers[i], offset) = readExt4Le(blob, offset);
         }
-        (round.powWitness, offset) = readBase(blob, offset);
+        (round.powWitness, offset) = readBaseLe(blob, offset);
 
         round.queryBatch.kind = 0;
         round.queryBatch.numQueries = ROUND0_NUM_QUERIES;
@@ -156,7 +156,7 @@ library WhirBlobCodec4 {
 
         round.sumcheck.polynomialEvals = new uint256[](ROUND_SUMCHECK_EVALS);
         for (uint256 i = 0; i < ROUND_SUMCHECK_EVALS; ++i) {
-            (round.sumcheck.polynomialEvals[i], offset) = readExt4(
+            (round.sumcheck.polynomialEvals[i], offset) = readExt4Le(
                 blob,
                 offset
             );
@@ -174,9 +174,9 @@ library WhirBlobCodec4 {
         (round.commitment, offset) = readDigest20(blob, offset);
         round.oodAnswers = new uint256[](ROUND_OOD_SAMPLES);
         for (uint256 i = 0; i < ROUND_OOD_SAMPLES; ++i) {
-            (round.oodAnswers[i], offset) = readExt4(blob, offset);
+            (round.oodAnswers[i], offset) = readExt4Le(blob, offset);
         }
-        (round.powWitness, offset) = readBase(blob, offset);
+        (round.powWitness, offset) = readBaseLe(blob, offset);
 
         round.queryBatch.kind = 1;
         round.queryBatch.numQueries = ROUND1_NUM_QUERIES;
@@ -195,7 +195,7 @@ library WhirBlobCodec4 {
 
         round.sumcheck.polynomialEvals = new uint256[](ROUND_SUMCHECK_EVALS);
         for (uint256 i = 0; i < ROUND_SUMCHECK_EVALS; ++i) {
-            (round.sumcheck.polynomialEvals[i], offset) = readExt4(
+            (round.sumcheck.polynomialEvals[i], offset) = readExt4Le(
                 blob,
                 offset
             );
@@ -204,7 +204,7 @@ library WhirBlobCodec4 {
             ROUND1_SUMCHECK_POW_WITNESSES
         );
         for (uint256 i = 0; i < ROUND1_SUMCHECK_POW_WITNESSES; ++i) {
-            (round.sumcheck.powWitnesses[i], offset) = readBase(blob, offset);
+            (round.sumcheck.powWitnesses[i], offset) = readBaseLe(blob, offset);
         }
         return offset;
     }
@@ -346,6 +346,40 @@ library WhirBlobCodec4 {
         next = offset + 4;
     }
 
+    function readBaseLe(
+        bytes calldata blob,
+        uint256 offset
+    ) internal pure returns (uint256 value, uint256 next) {
+        uint32 littleEndian;
+        assembly ("memory-safe") {
+            littleEndian := shr(224, calldataload(add(blob.offset, offset)))
+        }
+        value = _bswap32(littleEndian);
+        next = offset + 4;
+    }
+
+    function readExt4Le(
+        bytes calldata blob,
+        uint256 offset
+    ) internal pure returns (uint256 value, uint256 next) {
+        uint256 word;
+        assembly ("memory-safe") {
+            word := calldataload(add(blob.offset, offset))
+        }
+
+        uint32 c0 = uint32(word >> 224);
+        uint32 c1 = uint32(word >> 192);
+        uint32 c2 = uint32(word >> 160);
+        uint32 c3 = uint32(word >> 128);
+
+        value =
+            (_bswap32(c0) << 224) |
+            (_bswap32(c1) << 192) |
+            (_bswap32(c2) << 160) |
+            (_bswap32(c3) << 128);
+        next = offset + 16;
+    }
+
     function readU32(
         bytes calldata blob,
         uint256 offset
@@ -371,5 +405,13 @@ library WhirBlobCodec4 {
         assembly ("memory-safe") {
             value := shr(248, calldataload(add(blob.offset, offset)))
         }
+    }
+
+    function _bswap32(uint32 x) private pure returns (uint256) {
+        return
+            ((uint256(x) & 0x000000ff) << 24) |
+            ((uint256(x) & 0x0000ff00) << 8) |
+            ((uint256(x) & 0x00ff0000) >> 8) |
+            ((uint256(x) & 0xff000000) >> 24);
     }
 }

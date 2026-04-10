@@ -280,8 +280,8 @@ library WhirVerifierCore4 {
             point0,
             numVariables
         );
-        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+        ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
@@ -290,8 +290,8 @@ library WhirVerifierCore4 {
             point1,
             numVariables
         );
-        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
         nextOffset = offset;
     }
 
@@ -321,8 +321,8 @@ library WhirVerifierCore4 {
             point0,
             16
         );
-        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+        ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
@@ -331,8 +331,8 @@ library WhirVerifierCore4 {
             point1,
             16
         );
-        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
         nextOffset = offset;
     }
 
@@ -362,8 +362,8 @@ library WhirVerifierCore4 {
             point0,
             12
         );
-        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+        ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
@@ -372,8 +372,8 @@ library WhirVerifierCore4 {
             point1,
             12
         );
-        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
         nextOffset = offset;
     }
 
@@ -403,8 +403,8 @@ library WhirVerifierCore4 {
             point0,
             8
         );
-        (ood0, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood0);
+        ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
@@ -413,9 +413,25 @@ library WhirVerifierCore4 {
             point1,
             8
         );
-        (ood1, offset) = WhirBlobCodec4.readExt4(blob, offset);
-        WhirVerifierUtils4.observeValidatedExt4(challenger, ood1);
+        ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
+        offset += 16;
         nextOffset = offset;
+    }
+
+    function _checkWitnessBaseLeBlob(
+        KeccakChallenger.State memory challenger,
+        uint256 bits,
+        bytes calldata blob,
+        uint256 offset
+    ) internal pure {
+        if (bits == 0) {
+            return;
+        }
+
+        challenger.observeBytesCalldata(blob, offset, 4);
+        if (challenger.sampleBitsUnchecked(bits) != 0) {
+            revert InvalidPowWitness();
+        }
     }
 
     function _concatenateEq(
@@ -559,24 +575,18 @@ library WhirVerifierCore4 {
 
         unchecked {
             for (uint256 i = 0; i < expectedRounds; ++i) {
-                uint256 c0;
-                uint256 c2;
-                (c0, ) = WhirBlobCodec4.readExt4(blob, polyOffset + i * 32);
-                (c2, ) = WhirBlobCodec4.readExt4(
-                    blob,
-                    polyOffset + i * 32 + 16
-                );
-
-                challenger.observeValidatedPackedExt4Pair(c0, c2);
+                (uint256 c0, uint256 c2) = challenger
+                    .observeReadValidatedPackedExt4LePair(
+                        blob,
+                        polyOffset + i * 32
+                    );
                 if (powBits > 0) {
-                    uint256 witness;
-                    (witness, ) = WhirBlobCodec4.readBase(
+                    _checkWitnessBaseLeBlob(
+                        challenger,
+                        powBits,
                         blob,
                         powOffset + i * 4
                     );
-                    if (!challenger.checkWitness(powBits, witness)) {
-                        revert InvalidPowWitness();
-                    }
                 }
 
                 uint256 r = WhirVerifierUtils4.sampleExt4(challenger);
@@ -1115,7 +1125,7 @@ library WhirVerifierCore4 {
         bytes calldata blob,
         uint256 valuesOffset,
         uint256 decommLen,
-        uint256 powWitness,
+        uint256 powWitnessOffset,
         uint256[] memory allRandomness,
         uint256 randomnessOffset,
         uint8 expectedKind,
@@ -1131,9 +1141,7 @@ library WhirVerifierCore4 {
             uint256 nextOffset
         )
     {
-        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
-            revert InvalidPowWitness();
-        }
+        _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
 
         challenger.sampleBase();
 
@@ -1274,16 +1282,14 @@ library WhirVerifierCore4 {
         bytes calldata blob,
         uint256 valuesOffset,
         uint256 decommLen,
-        uint256 powWitness,
+        uint256 powWitnessOffset,
         uint256[] memory allRandomness,
         uint256 randomnessOffset,
         uint8 expectedKind,
         uint256 finalPolyOffset,
         uint256 finalPolyLen
     ) internal pure returns (uint256 nextOffset) {
-        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
-            revert InvalidPowWitness();
-        }
+        _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
 
         uint256[] memory indices = WhirVerifierUtils4.sampleStirQueriesPow2(
             challenger,
