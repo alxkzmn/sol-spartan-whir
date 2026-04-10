@@ -32,7 +32,7 @@ The current deployment target on `stage4` is:
 
 - `WhirBlobVerifierNative4`
 
-It is the lowest-gas verifier in this repo, verifies directly from the fixed-shape standalone blob format, and has materially more bytecode headroom than the typed verifier.
+It is the lowest-gas verifier in this repo, verifies directly from the standalone blob format used on this branch, and has materially more bytecode headroom than the typed verifier.
 
 ### Current comparison: optimized `sol-spartan-whir` vs `sol-whir`
 
@@ -53,10 +53,10 @@ Notes:
 
 - `sol-spartan-whir` tx numbers are freshly measured on the current `stage4` branch for the production path `WhirBlobVerifierNative4`
 - `sol-whir` tx numbers come from the current checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
-- current `sol-spartan-whir` reference-only paths are:
+- current `sol-spartan-whir` reference verifiers are:
   - typed parity path: `WhirVerifier4` at `1,008,830`
   - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,210,200`
-- current `sol-spartan-whir` production-path execution snapshot: `927,944`
+- current execution gas for the deployed verifier path: `927,944`
 - current `WhirBlobVerifierNative4` runtime size: `19,751` bytes
 - current success blob size: `10,152` bytes
 
@@ -104,7 +104,7 @@ For `sol-spartan-whir`, the current tx numbers were remeasured by:
 
 The direct-call typed calldata footprint comes from `script/WhirTxBenchmark.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark.s.sol`.
 
-For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so the checked-in snapshot and broadcast artifact remain the source of truth.
+For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that checked-in measurement remains the source of truth.
 
 `sol-spartan-whir` current deployable config:
 
