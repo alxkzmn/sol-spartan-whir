@@ -34,7 +34,7 @@ On this `linearized-merkle` branch, the main deployment target is:
 
 - `WhirBlobVerifierNative4`
 
-It verifies the fixed-shape `WHRB` blob directly from calldata and uses the branch’s linearized Merkle verification path.
+It verifies the fixed-shape standalone blob format directly from calldata and uses the branch’s linearized Merkle verification path.
 
 ### Current comparison: optimized `sol-spartan-whir` vs `sol-whir`
 
