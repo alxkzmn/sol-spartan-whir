@@ -32,7 +32,7 @@ The current deployment target on `stage4` is:
 
 - `WhirBlobVerifierNative4`
 
-It is the lowest-gas verifier in this repo, verifies directly from the fixed-shape `WHRB` blob, and has materially more bytecode headroom than the typed verifier.
+It is the lowest-gas verifier in this repo, verifies directly from the fixed-shape standalone blob format, and has materially more bytecode headroom than the typed verifier.
 
 ### Current comparison: optimized `sol-spartan-whir` vs `sol-whir`
 

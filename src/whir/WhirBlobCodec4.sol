@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import {WhirStructs} from "./WhirStructs.sol";
 
 library WhirBlobCodec4 {
-    uint32 internal constant MAGIC = 0x57485242; // WHRB
+    uint32 internal constant MAGIC = 0x57485242; // standalone blob wire magic
     uint16 internal constant VERSION = 1;
     uint8 internal constant EFFECTIVE_DIGEST_BYTES = 20;
     uint8 internal constant EXTENSION_DEGREE = 4;
