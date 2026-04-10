@@ -34,7 +34,7 @@ On this `linearized-merkle` branch, the main deployment target is:
 
 - `WhirBlobVerifierNative4`
 
-It verifies the fixed-shape standalone blob format directly from calldata and uses the branch’s linearized Merkle verification path.
+It verifies the standalone blob format used on this branch directly from calldata and uses the branch’s linearized Merkle verification path.
 
 ### Current comparison: optimized `sol-spartan-whir` vs `sol-whir`
 
@@ -53,9 +53,9 @@ It verifies the fixed-shape standalone blob format directly from calldata and us
 
 Notes:
 
-- `sol-spartan-whir` tx numbers above are freshly measured on the current `linearized-merkle` branch for `WhirBlobVerifierNative4`
+- `sol-spartan-whir` tx numbers are freshly measured on the current `linearized-merkle` branch for `WhirBlobVerifierNative4`
 - `sol-whir` tx numbers come from the checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
-- current `sol-spartan-whir` execution snapshots from `forge test` are:
+- current `sol-spartan-whir` reference verifiers are:
   - native blob path: `863,621`
   - typed parity path: `945,244`
   - blob decode-and-delegate path: `1,167,054`
@@ -80,6 +80,40 @@ Implications:
 - `sol-spartan-whir` pays for more OOD sampling and a real final sumcheck.
 - The one structural delta we can price directly is the final sumcheck: ~`21.7k` gas in the current `sol-spartan-whir` profile, while the `sol-whir` benchmark config has `finalSumcheckRound = 0`.
 - Proof structure explains part of the gap; the rest is execution cost inside the verifier.
+
+### Measurement methodology
+
+**Execution gas** is measured via `forge test --match-contract WhirVerifier4Test -vv`, which reports the gas used by the verifier call in the Foundry harness.
+
+**Total tx gas** is measured from real transaction receipts, then split as:
+
+```text
+total tx gas = intrinsic gas (21,000) + calldata gas + execution remainder
+```
+
+where:
+
+- `calldata gas = 4 * zero_bytes + 16 * nonzero_bytes`
+- `execution remainder = receipt.gasUsed - 21,000 - calldata gas`
+
+For `sol-spartan-whir`, the current tx numbers were remeasured by:
+
+1. A wrapper contract stores the `verify()` result in state, making the call state-changing.
+2. Deploying the current bytecode to a local Anvil node.
+3. Replaying the benchmark calldata over raw JSON-RPC and reading the receipt.
+
+The direct-call typed calldata footprint comes from `script/WhirTxBenchmark.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark.s.sol`.
+
+For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that checked-in measurement remains the source of truth.
+
+`sol-spartan-whir` current deployable config:
+
+```sh
+via_ir = true
+optimizer = true
+optimizer_runs = 500
+WhirVerifier4 deployed bytecode = 21,587 bytes
+```
 
 ## Dependencies
 
