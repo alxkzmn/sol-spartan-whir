@@ -782,6 +782,25 @@ library MerkleVerifier {
         }
     }
 
+    function computeRootFromLeafHashes20Blob(
+        uint256[] memory indices,
+        bytes32[] memory leafHashes,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32 root) {
+        return
+            _computeRootFromLeafHashes20Blob(
+                indices,
+                leafHashes,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
     function hashLeafBaseSlice20Blob(
         bytes calldata blob,
         uint256 offset,

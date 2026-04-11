@@ -238,6 +238,140 @@ library WhirVerifierUtils4 {
         }
     }
 
+    function checkHornerBaseBlob16Matches(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory vars,
+        uint256[] memory rowEvals
+    ) internal pure returns (uint256 mismatchPlusOne) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let highMask := not(sub(shl(128, 1), 1))
+
+            let varBase := add(vars, 0x20)
+            let evalBase := add(rowEvals, 0x20)
+
+            let v0 := mload(varBase)
+            let v1 := mload(add(varBase, 0x20))
+            let v2 := mload(add(varBase, 0x40))
+            let v3 := mload(add(varBase, 0x60))
+            let v4 := mload(add(varBase, 0x80))
+
+            let a00 := 0
+            let a01 := 0
+            let a02 := 0
+            let a03 := 0
+            let a10 := 0
+            let a11 := 0
+            let a12 := 0
+            let a13 := 0
+            let a20 := 0
+            let a21 := 0
+            let a22 := 0
+            let a23 := 0
+            let a30 := 0
+            let a31 := 0
+            let a32 := 0
+            let a33 := 0
+            let a40 := 0
+            let a41 := 0
+            let a42 := 0
+            let a43 := 0
+
+            let src := add(add(blob.offset, offset), 0x100)
+            let end := add(blob.offset, offset)
+
+            for {
+
+            } gt(src, end) {
+
+            } {
+                src := sub(src, 0x10)
+                let packed := and(calldataload(src), highMask)
+
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), mask)
+                let c2 := and(shr(160, packed), mask)
+                let c3 := and(shr(128, packed), mask)
+
+                a00 := mod(add(mulmod(a00, v0, modulus), c0), modulus)
+                a01 := mod(add(mulmod(a01, v0, modulus), c1), modulus)
+                a02 := mod(add(mulmod(a02, v0, modulus), c2), modulus)
+                a03 := mod(add(mulmod(a03, v0, modulus), c3), modulus)
+
+                a10 := mod(add(mulmod(a10, v1, modulus), c0), modulus)
+                a11 := mod(add(mulmod(a11, v1, modulus), c1), modulus)
+                a12 := mod(add(mulmod(a12, v1, modulus), c2), modulus)
+                a13 := mod(add(mulmod(a13, v1, modulus), c3), modulus)
+
+                a20 := mod(add(mulmod(a20, v2, modulus), c0), modulus)
+                a21 := mod(add(mulmod(a21, v2, modulus), c1), modulus)
+                a22 := mod(add(mulmod(a22, v2, modulus), c2), modulus)
+                a23 := mod(add(mulmod(a23, v2, modulus), c3), modulus)
+
+                a30 := mod(add(mulmod(a30, v3, modulus), c0), modulus)
+                a31 := mod(add(mulmod(a31, v3, modulus), c1), modulus)
+                a32 := mod(add(mulmod(a32, v3, modulus), c2), modulus)
+                a33 := mod(add(mulmod(a33, v3, modulus), c3), modulus)
+
+                a40 := mod(add(mulmod(a40, v4, modulus), c0), modulus)
+                a41 := mod(add(mulmod(a41, v4, modulus), c1), modulus)
+                a42 := mod(add(mulmod(a42, v4, modulus), c2), modulus)
+                a43 := mod(add(mulmod(a43, v4, modulus), c3), modulus)
+            }
+
+            let out0 := or(
+                or(shl(224, a00), shl(192, a01)),
+                or(shl(160, a02), shl(128, a03))
+            )
+            let out1 := or(
+                or(shl(224, a10), shl(192, a11)),
+                or(shl(160, a12), shl(128, a13))
+            )
+            let out2 := or(
+                or(shl(224, a20), shl(192, a21)),
+                or(shl(160, a22), shl(128, a23))
+            )
+            let out3 := or(
+                or(shl(224, a30), shl(192, a31)),
+                or(shl(160, a32), shl(128, a33))
+            )
+            let out4 := or(
+                or(shl(224, a40), shl(192, a41)),
+                or(shl(160, a42), shl(128, a43))
+            )
+
+            if and(iszero(mismatchPlusOne), iszero(eq(out0, mload(evalBase)))) {
+                mismatchPlusOne := 1
+            }
+            if and(
+                iszero(mismatchPlusOne),
+                iszero(eq(out1, mload(add(evalBase, 0x20))))
+            ) {
+                mismatchPlusOne := 2
+            }
+            if and(
+                iszero(mismatchPlusOne),
+                iszero(eq(out2, mload(add(evalBase, 0x40))))
+            ) {
+                mismatchPlusOne := 3
+            }
+            if and(
+                iszero(mismatchPlusOne),
+                iszero(eq(out3, mload(add(evalBase, 0x60))))
+            ) {
+                mismatchPlusOne := 4
+            }
+            if and(
+                iszero(mismatchPlusOne),
+                iszero(eq(out4, mload(add(evalBase, 0x80))))
+            ) {
+                mismatchPlusOne := 5
+            }
+        }
+    }
+
     function sampleStirQueries(
         KeccakChallenger.State memory challenger,
         uint256 domainSize,
@@ -545,11 +679,107 @@ library WhirVerifierUtils4 {
         }
         uint256 w0;
         uint256 w1;
-        uint256 mask = 0xffffffff;
         assembly ("memory-safe") {
             w0 := calldataload(src)
             w1 := calldataload(add(src, 0x20))
         }
+
+        return _evaluateBaseRowDim4FromBlobWords(w0, w1, p0, p1, p2, p3);
+    }
+
+    function _hashAndEvaluateBaseRowDim4BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) internal pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+        uint256 w0;
+        uint256 w1;
+        assembly ("memory-safe") {
+            function revertField(x) {
+                mstore(
+                    0x00,
+                    0xf512b67800000000000000000000000000000000000000000000000000000000
+                )
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            let ptr := mload(0x40)
+            let modulus := 0x7f000001
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+
+            {
+                let v0 := shr(224, w0)
+                let v1 := and(shr(192, w0), 0xffffffff)
+                let v2 := and(shr(160, w0), 0xffffffff)
+                let v3 := and(shr(128, w0), 0xffffffff)
+                let v4 := and(shr(96, w0), 0xffffffff)
+                let v5 := and(shr(64, w0), 0xffffffff)
+                let v6 := and(shr(32, w0), 0xffffffff)
+                let v7 := and(w0, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v0, modulus)), iszero(lt(v1, modulus))),
+                        or(iszero(lt(v2, modulus)), iszero(lt(v3, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v4, modulus)), iszero(lt(v5, modulus))),
+                        or(iszero(lt(v6, modulus)), iszero(lt(v7, modulus)))
+                    )
+                ) {
+                    revertField(w0)
+                }
+            }
+
+            {
+                let v8 := shr(224, w1)
+                let v9 := and(shr(192, w1), 0xffffffff)
+                let v10 := and(shr(160, w1), 0xffffffff)
+                let v11 := and(shr(128, w1), 0xffffffff)
+                let v12 := and(shr(96, w1), 0xffffffff)
+                let v13 := and(shr(64, w1), 0xffffffff)
+                let v14 := and(shr(32, w1), 0xffffffff)
+                let v15 := and(w1, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v8, modulus)), iszero(lt(v9, modulus))),
+                        or(iszero(lt(v10, modulus)), iszero(lt(v11, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v12, modulus)), iszero(lt(v13, modulus))),
+                        or(iszero(lt(v14, modulus)), iszero(lt(v15, modulus)))
+                    )
+                ) {
+                    revertField(w1)
+                }
+            }
+
+            mstore8(ptr, 0x00)
+            mstore(add(ptr, 0x01), w0)
+            mstore(add(ptr, 0x21), w1)
+            digest := and(keccak256(ptr, 65), not(sub(shl(96, 1), 1)))
+        }
+
+        evalValue = _evaluateBaseRowDim4FromBlobWords(w0, w1, p0, p1, p2, p3);
+    }
+
+    function _evaluateBaseRowDim4FromBlobWords(
+        uint256 w0,
+        uint256 w1,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (uint256) {
+        uint256 mask = 0xffffffff;
 
         uint256 v0 = w0 >> 224;
         uint256 v1 = (w0 >> 192) & mask;
@@ -754,7 +984,6 @@ library WhirVerifierUtils4 {
         uint256 w5;
         uint256 w6;
         uint256 w7;
-        uint256 lowMask = (uint256(1) << 128) - 1;
         assembly ("memory-safe") {
             w0 := calldataload(src)
             w1 := calldataload(add(src, 0x20))
@@ -765,6 +994,147 @@ library WhirVerifierUtils4 {
             w6 := calldataload(add(src, 0xc0))
             w7 := calldataload(add(src, 0xe0))
         }
+
+        return
+            _evaluateExtensionRowDim4FromBlobWords(
+                w0,
+                w1,
+                w2,
+                w3,
+                w4,
+                w5,
+                w6,
+                w7,
+                p0,
+                p1,
+                p2,
+                p3
+            );
+    }
+
+    function _hashAndEvaluateExtensionRowDim4BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) internal pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        uint256 w4;
+        uint256 w5;
+        uint256 w6;
+        uint256 w7;
+        assembly ("memory-safe") {
+            function revertPacked(x) {
+                mstore(
+                    0x00,
+                    0xf512b67800000000000000000000000000000000000000000000000000000000
+                )
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateWord(word, modulus, coeffMask, lowMask) {
+                let hi := and(word, not(lowMask))
+                let hi0 := shr(224, hi)
+                let hi1 := and(shr(192, hi), coeffMask)
+                let hi2 := and(shr(160, hi), coeffMask)
+                let hi3 := and(shr(128, hi), coeffMask)
+                if or(
+                    or(iszero(lt(hi0, modulus)), iszero(lt(hi1, modulus))),
+                    or(iszero(lt(hi2, modulus)), iszero(lt(hi3, modulus)))
+                ) {
+                    revertPacked(hi)
+                }
+
+                let lo := and(word, lowMask)
+                let lo0 := shr(96, lo)
+                let lo1 := and(shr(64, lo), coeffMask)
+                let lo2 := and(shr(32, lo), coeffMask)
+                let lo3 := and(lo, coeffMask)
+                if or(
+                    or(iszero(lt(lo0, modulus)), iszero(lt(lo1, modulus))),
+                    or(iszero(lt(lo2, modulus)), iszero(lt(lo3, modulus)))
+                ) {
+                    revertPacked(shl(128, lo))
+                }
+            }
+
+            let ptr := mload(0x40)
+            let modulus := 0x7f000001
+            let coeffMask := 0xffffffff
+            let lowMask := sub(shl(128, 1), 1)
+
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+            w4 := calldataload(add(src, 0x80))
+            w5 := calldataload(add(src, 0xa0))
+            w6 := calldataload(add(src, 0xc0))
+            w7 := calldataload(add(src, 0xe0))
+
+            validateWord(w0, modulus, coeffMask, lowMask)
+            validateWord(w1, modulus, coeffMask, lowMask)
+            validateWord(w2, modulus, coeffMask, lowMask)
+            validateWord(w3, modulus, coeffMask, lowMask)
+            validateWord(w4, modulus, coeffMask, lowMask)
+            validateWord(w5, modulus, coeffMask, lowMask)
+            validateWord(w6, modulus, coeffMask, lowMask)
+            validateWord(w7, modulus, coeffMask, lowMask)
+
+            mstore8(ptr, 0x00)
+            mstore(add(ptr, 0x01), w0)
+            mstore(add(ptr, 0x21), w1)
+            mstore(add(ptr, 0x41), w2)
+            mstore(add(ptr, 0x61), w3)
+            mstore(add(ptr, 0x81), w4)
+            mstore(add(ptr, 0xa1), w5)
+            mstore(add(ptr, 0xc1), w6)
+            mstore(add(ptr, 0xe1), w7)
+            digest := and(keccak256(ptr, 257), not(sub(shl(96, 1), 1)))
+        }
+
+        evalValue = _evaluateExtensionRowDim4FromBlobWords(
+            w0,
+            w1,
+            w2,
+            w3,
+            w4,
+            w5,
+            w6,
+            w7,
+            p0,
+            p1,
+            p2,
+            p3
+        );
+    }
+
+    function _evaluateExtensionRowDim4FromBlobWords(
+        uint256 w0,
+        uint256 w1,
+        uint256 w2,
+        uint256 w3,
+        uint256 w4,
+        uint256 w5,
+        uint256 w6,
+        uint256 w7,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (uint256) {
+        uint256 lowMask = (uint256(1) << 128) - 1;
 
         uint256 v0 = w0 & ~lowMask;
         uint256 v1 = (w0 & lowMask) << 128;
@@ -840,7 +1210,7 @@ library WhirVerifierUtils4 {
     ) private pure returns (uint256 out) {
         assembly {
             let M := 0x7f000001
-            let d := mod(sub(add(a1, M), a0), M)
+            let d := sub(add(a1, M), a0)
             out := or(
                 or(
                     shl(224, mod(add(a0, mul(r0, d)), M)),
@@ -865,11 +1235,11 @@ library WhirVerifierUtils4 {
             let a02 := and(shr(160, a0), m)
             a0 := and(shr(128, a0), m) // a03
 
-            // d = a1 - a0 (per lane, mod M)
-            let d0 := mod(sub(add(shr(224, a1), M), a00), M)
-            let d1 := mod(sub(add(and(shr(192, a1), m), M), a01), M)
-            let d2 := mod(sub(add(and(shr(160, a1), m), M), a02), M)
-            let d3 := mod(sub(add(and(shr(128, a1), m), M), a0), M)
+            // d = a1 - a0 (per lane, unreduced: d_i in [1, 2P-1])
+            let d0 := sub(add(shr(224, a1), M), a00)
+            let d1 := sub(add(and(shr(192, a1), m), M), a01)
+            let d2 := sub(add(and(shr(160, a1), m), M), a02)
+            let d3 := sub(add(and(shr(128, a1), m), M), a0)
 
             // Unpack r
             let r0 := shr(224, r)
@@ -962,11 +1332,11 @@ library WhirVerifierUtils4 {
             let a02 := and(shr(160, a0), m)
             a0 := and(shr(128, a0), m) // a03
 
-            // d = a1 - a0 (per lane, mod M)
-            let d0 := mod(sub(add(shr(224, a1), M), a00), M)
-            let d1 := mod(sub(add(and(shr(192, a1), m), M), a01), M)
-            let d2 := mod(sub(add(and(shr(160, a1), m), M), a02), M)
-            let d3 := mod(sub(add(and(shr(128, a1), m), M), a0), M)
+            // d = a1 - a0 (per lane, unreduced: d_i in [1, 2P-1])
+            let d0 := sub(add(shr(224, a1), M), a00)
+            let d1 := sub(add(and(shr(192, a1), m), M), a01)
+            let d2 := sub(add(and(shr(160, a1), m), M), a02)
+            let d3 := sub(add(and(shr(128, a1), m), M), a0)
 
             // c = a0 + r * d (schoolbook over X^4 - 3)
             out := shl(

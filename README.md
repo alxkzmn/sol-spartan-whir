@@ -43,10 +43,10 @@ It verifies the standalone blob format used on this branch directly from calldat
 | Main verifier path        | `EOA -> WhirBlobVerifierNative4.verify(...)` | `EOA -> WhirContract.callVerify(...)` |
 | Field                     |                             KoalaBear + ext4 |                                 BN254 |
 | Security target           |                                       80-bit |                                80-bit |
-| Total verification tx gas |                                    `949,952` |                           `1,135,052` |
+| Total verification tx gas |                                    `928,674` |                           `1,135,052` |
 | Intrinsic gas             |                                     `21,000` |                              `21,000` |
 | Calldata gas              |                                    `181,252` |                             `414,876` |
-| Execution remainder       |                                    `747,700` |                             `699,176` |
+| Execution remainder       |                                    `726,422` |                             `699,176` |
 | Calldata bytes            |                                     `11,620` |                              `28,740` |
 | Zero bytes                |                                        `389` |                               `3,747` |
 | Non-zero bytes            |                                     `11,231` |                              `24,993` |
@@ -56,9 +56,11 @@ Notes:
 - `sol-spartan-whir` tx numbers are freshly measured on the current `linearized-merkle` branch for `WhirBlobVerifierNative4`
 - `sol-whir` tx numbers come from the checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
 - current `sol-spartan-whir` reference verifiers are:
-  - native blob path: `863,621`
-  - typed parity path: `945,244`
-  - blob decode-and-delegate path: `1,167,054`
+  - native blob path: `842,343`
+  - typed parity path: `932,563`
+  - blob decode-and-delegate path: `1,154,373`
+- current `WhirBlobVerifierNative4` runtime size: `21,418` bytes
+- current success blob size: `11,512` bytes
 
 #### Arithmetic and proof-structure differences
 
