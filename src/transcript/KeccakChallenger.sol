@@ -402,7 +402,9 @@ library KeccakChallenger {
         if (bits == 0) {
             return 0;
         }
-        return uint256(_sampleUint32(self)) & ((uint256(1) << bits) - 1);
+        unchecked {
+            return uint256(_sampleUint32(self)) & ((uint256(1) << bits) - 1);
+        }
     }
 
     function sampleExt4Coeffs(
@@ -608,16 +610,20 @@ library KeccakChallenger {
             ((uint256(x) & 0xff000000) >> 24);
     }
 
-    function _bswap64(uint64 x) private pure returns (uint256) {
-        uint256 y = uint256(x);
-        return
-            ((y & 0x00000000000000ff) << 56) |
-            ((y & 0x000000000000ff00) << 40) |
-            ((y & 0x0000000000ff0000) << 24) |
-            ((y & 0x00000000ff000000) << 8) |
-            ((y & 0x000000ff00000000) >> 8) |
-            ((y & 0x0000ff0000000000) >> 24) |
-            ((y & 0x00ff000000000000) >> 40) |
-            ((y & 0xff00000000000000) >> 56);
+    function _bswap64(uint64 x) private pure returns (uint256 r) {
+        assembly {
+            // Swap adjacent bytes
+            r := or(
+                shr(8, and(x, 0xFF00FF00FF00FF00)),
+                shl(8, and(x, 0x00FF00FF00FF00FF))
+            )
+            // Swap adjacent 16-bit pairs
+            r := or(
+                shr(16, and(r, 0xFFFF0000FFFF0000)),
+                shl(16, and(r, 0x0000FFFF0000FFFF))
+            )
+            // Swap 32-bit halves
+            r := or(shr(32, r), shl(32, and(r, 0xFFFFFFFF)))
+        }
     }
 }

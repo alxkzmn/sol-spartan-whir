@@ -1115,6 +1115,146 @@ library WhirVerifierCore4 {
         }
     }
 
+    function _computeBaseRootAndEvalsBlob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierBytes := shl(6, count)
+            frontier := mload(0x40)
+            mstore(frontier, frontierBytes)
+
+            rowEvals := add(add(frontier, 0x20), frontierBytes)
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(
+                        prevIdx,
+                        idx
+                    );
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 64;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4
+                    ._hashAndEvaluateBaseRowDim4BlobPackedPoints(
+                        blob,
+                        rowOffset,
+                        p0,
+                        p1,
+                        p2,
+                        p3
+                    );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromFrontier20Blob(
+            frontier,
+            count,
+            depth,
+            blob,
+            decommOffset,
+            decommLen
+        );
+    }
+
+    function _computeExtensionRootAndEvalsBlob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierBytes := shl(6, count)
+            frontier := mload(0x40)
+            mstore(frontier, frontierBytes)
+
+            rowEvals := add(add(frontier, 0x20), frontierBytes)
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(
+                        prevIdx,
+                        idx
+                    );
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 256;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4
+                    ._hashAndEvaluateExtensionRowDim4BlobPackedPoints(
+                        blob,
+                        rowOffset,
+                        p0,
+                        p1,
+                        p2,
+                        p3
+                    );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromFrontier20Blob(
+            frontier,
+            count,
+            depth,
+            blob,
+            decommOffset,
+            decommLen
+        );
+    }
+
     function _verifyStirAndCombineConstraintBlob(
         KeccakChallenger.State memory challenger,
         bytes32 expectedRoot,
@@ -1159,38 +1299,7 @@ library WhirVerifierCore4 {
         uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
         nextOffset = decommOffset + decommLen * 20;
 
-        bytes32 computedRoot = expectedKind == 0
-            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen
-            )
-            : MerkleVerifier.computeRootFromFlatExtensionRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen
-            );
-
-        if (computedRoot != expectedRoot) {
-            revert MerkleRootMismatch(expectedRoot, computedRoot);
-        }
-
-        challenge = WhirVerifierUtils4.sampleExt4(challenger);
-        // Reuse the sampled query-index buffer as the select-variable output to avoid
-        // a second allocation; the loop below overwrites each sorted index with g^index
-        // only after Merkle verification has already consumed the original indices.
-        selVars = indices;
-
         unchecked {
-            uint256 rowBytes = rowLen * stride;
             uint256 pointBase;
             assembly ("memory-safe") {
                 pointBase := add(
@@ -1209,54 +1318,55 @@ library WhirVerifierCore4 {
                 p3 := mload(add(pointBase, 0x60))
             }
 
+            bytes32 computedRoot;
+            uint256[] memory rowEvals;
             if (expectedKind == 0) {
-                for (uint256 i = numQueries; i > 0; --i) {
-                    uint256 idx = i - 1;
-                    uint256 point = KoalaBear.pow(
-                        foldedDomainGen,
-                        indices[idx]
-                    );
-                    selVars[idx] = point;
-                    uint256 rowOffset = valuesOffset + idx * rowBytes;
-                    uint256 evalValue = WhirVerifierUtils4
-                        ._evaluateBaseRowDim4BlobPackedPoints(
-                            blob,
-                            rowOffset,
-                            p0,
-                            p1,
-                            p2,
-                            p3
-                        );
-                    claimedContribution = _hornerStep(
-                        claimedContribution,
-                        challenge,
-                        evalValue
-                    );
-                }
+                (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen,
+                    p0,
+                    p1,
+                    p2,
+                    p3
+                );
             } else {
-                for (uint256 i = numQueries; i > 0; --i) {
-                    uint256 idx = i - 1;
-                    uint256 point = KoalaBear.pow(
-                        foldedDomainGen,
-                        indices[idx]
-                    );
-                    selVars[idx] = point;
-                    uint256 rowOffset = valuesOffset + idx * rowBytes;
-                    uint256 evalValue = WhirVerifierUtils4
-                        ._evaluateExtensionRowDim4BlobPackedPoints(
-                            blob,
-                            rowOffset,
-                            p0,
-                            p1,
-                            p2,
-                            p3
-                        );
-                    claimedContribution = _hornerStep(
-                        claimedContribution,
-                        challenge,
-                        evalValue
-                    );
-                }
+                (computedRoot, rowEvals) = _computeExtensionRootAndEvalsBlob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen,
+                    p0,
+                    p1,
+                    p2,
+                    p3
+                );
+            }
+
+            if (computedRoot != expectedRoot) {
+                revert MerkleRootMismatch(expectedRoot, computedRoot);
+            }
+
+            challenge = WhirVerifierUtils4.sampleExt4(challenger);
+            // Reuse the sampled query-index buffer as the select-variable output to avoid
+            // a second allocation; the loop below overwrites each sorted index with g^index
+            // only after Merkle verification has already consumed the original indices.
+            selVars = indices;
+
+            for (uint256 i = numQueries; i > 0; --i) {
+                uint256 idx = i - 1;
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[idx]);
+                selVars[idx] = point;
+                claimedContribution = _hornerStep(
+                    claimedContribution,
+                    challenge,
+                    rowEvals[idx]
+                );
             }
 
             claimedContribution = _hornerStep(
@@ -1286,8 +1396,7 @@ library WhirVerifierCore4 {
         uint256[] memory allRandomness,
         uint256 randomnessOffset,
         uint8 expectedKind,
-        uint256 finalPolyOffset,
-        uint256 finalPolyLen
+        uint256 finalPolyOffset
     ) internal pure returns (uint256 nextOffset) {
         _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
 
@@ -1305,32 +1414,7 @@ library WhirVerifierCore4 {
         uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
         nextOffset = decommOffset + decommLen * 20;
 
-        bytes32 computedRoot = expectedKind == 0
-            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen
-            )
-            : MerkleVerifier.computeRootFromFlatExtensionRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen
-            );
-
-        if (computedRoot != expectedRoot) {
-            revert MerkleRootMismatch(expectedRoot, computedRoot);
-        }
-
         unchecked {
-            uint256 rowBytes = rowLen * stride;
             uint256 pointBase;
             assembly ("memory-safe") {
                 pointBase := add(
@@ -1349,56 +1433,53 @@ library WhirVerifierCore4 {
                 p3 := mload(add(pointBase, 0x60))
             }
 
+            bytes32 computedRoot;
+            uint256[] memory rowEvals;
             if (expectedKind == 0) {
-                for (uint256 i = 0; i < numQueries; ++i) {
-                    uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
-                    uint256 rowOffset = valuesOffset + i * rowBytes;
-                    uint256 expectedEval = WhirVerifierUtils4
-                        ._evaluateBaseRowDim4BlobPackedPoints(
-                            blob,
-                            rowOffset,
-                            p0,
-                            p1,
-                            p2,
-                            p3
-                        );
-
-                    if (
-                        WhirVerifierUtils4.hornerBaseBlob(
-                            blob,
-                            finalPolyOffset,
-                            finalPolyLen,
-                            point
-                        ) != expectedEval
-                    ) {
-                        revert StirConstraintFailed(i);
-                    }
-                }
+                (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen,
+                    p0,
+                    p1,
+                    p2,
+                    p3
+                );
             } else {
-                for (uint256 i = 0; i < numQueries; ++i) {
-                    uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
-                    uint256 rowOffset = valuesOffset + i * rowBytes;
-                    uint256 expectedEval = WhirVerifierUtils4
-                        ._evaluateExtensionRowDim4BlobPackedPoints(
-                            blob,
-                            rowOffset,
-                            p0,
-                            p1,
-                            p2,
-                            p3
-                        );
+                (computedRoot, rowEvals) = _computeExtensionRootAndEvalsBlob16(
+                    indices,
+                    blob,
+                    valuesOffset,
+                    depth,
+                    decommOffset,
+                    decommLen,
+                    p0,
+                    p1,
+                    p2,
+                    p3
+                );
+            }
 
-                    if (
-                        WhirVerifierUtils4.hornerBaseBlob(
-                            blob,
-                            finalPolyOffset,
-                            finalPolyLen,
-                            point
-                        ) != expectedEval
-                    ) {
-                        revert StirConstraintFailed(i);
-                    }
-                }
+            if (computedRoot != expectedRoot) {
+                revert MerkleRootMismatch(expectedRoot, computedRoot);
+            }
+
+            for (uint256 i = 0; i < numQueries; ++i) {
+                indices[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
+            }
+
+            uint256 mismatchPlusOne = WhirVerifierUtils4
+                .checkHornerBaseBlob16Matches(
+                    blob,
+                    finalPolyOffset,
+                    indices,
+                    rowEvals
+                );
+            if (mismatchPlusOne != 0) {
+                revert StirConstraintFailed(mismatchPlusOne - 1);
             }
         }
     }

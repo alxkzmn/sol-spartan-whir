@@ -41,23 +41,23 @@ It is the lowest-gas verifier in this repo, verifies directly from the standalon
 | Main verifier path        | `EOA -> WhirBlobVerifierNative4.verify(...)` | `EOA -> WhirContract.callVerify(...)` |
 | Field                     |                             KoalaBear + ext4 |                                 BN254 |
 | Security target           |                                       80-bit |                                80-bit |
-| Total verification tx gas |                                  `1,003,258` |                           `1,135,052` |
+| Total verification tx gas |                                    `978,550` |                           `1,135,052` |
 | Intrinsic gas             |                                     `21,000` |                              `21,000` |
 | Calldata gas              |                                    `159,640` |                             `414,876` |
-| Execution remainder       |                                    `822,618` |                             `699,176` |
+| Execution remainder       |                                    `797,910` |                             `699,176` |
 | Calldata bytes            |                                     `10,276` |                              `28,740` |
 | Zero bytes                |                                        `398` |                               `3,747` |
 | Non-zero bytes            |                                      `9,878` |                              `24,993` |
 
 Notes:
 
-- `sol-spartan-whir` tx numbers are freshly measured on the current `stage4` branch for the production path `WhirBlobVerifierNative4`
+- `sol-spartan-whir` tx numbers are freshly measured on the current `stage4` branch for the production path `WhirBlobVerifierNative4`.
 - `sol-whir` tx numbers come from the current checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
 - current `sol-spartan-whir` reference verifiers are:
-  - typed parity path: `WhirVerifier4` at `1,008,830`
-  - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,210,200`
-- current execution gas for the deployed verifier path: `927,944`
-- current `WhirBlobVerifierNative4` runtime size: `19,751` bytes
+  - typed parity path: `WhirVerifier4` at `996,068`
+  - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,197,438`
+- current execution gas for the deployed verifier path: `903,236`
+- current `WhirBlobVerifierNative4` runtime size: `21,889` bytes
 - current success blob size: `10,152` bytes
 
 #### Arithmetic and proof-structure differences

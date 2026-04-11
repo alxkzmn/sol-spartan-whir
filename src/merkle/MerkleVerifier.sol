@@ -1142,6 +1142,25 @@ library MerkleVerifier {
         }
     }
 
+    function computeRootFromFrontier20Blob(
+        bytes memory frontierBytes,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32 root) {
+        return
+            _computeRootFromFrontier20Blob(
+                frontierBytes,
+                frontierLen,
+                depth,
+                blob,
+                decommOffset,
+                decommLen
+            );
+    }
+
     function hashLeafBaseSlice20Blob(
         bytes calldata blob,
         uint256 offset,

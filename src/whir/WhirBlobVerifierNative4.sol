@@ -256,8 +256,7 @@ contract WhirBlobVerifierNative4 {
             allRandomness,
             finalStirRandomnessOffset,
             1,
-            finalPolyOffset,
-            QuarticWhirFixedConfig.FINAL_POLY_LENGTH
+            finalPolyOffset
         );
 
         uint256 finalSumcheckStart = randomnessCursor;

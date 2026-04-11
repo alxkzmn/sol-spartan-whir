@@ -2,9 +2,11 @@
 """Parse broadcast JSON artifacts from anvil tx-gas measurement scripts.
 
 Usage:
-    python3 parse_tx_gas.py              # parse both direct + wrapper
-    python3 parse_tx_gas.py direct       # parse direct tx only
-    python3 parse_tx_gas.py wrapper      # parse wrapper tx only
+    python3 parse_tx_gas.py              # parse all available modes
+    python3 parse_tx_gas.py native       # native blob verifier (production path)
+    python3 parse_tx_gas.py direct       # typed verifier
+    python3 parse_tx_gas.py blob         # blob decode-and-delegate verifier
+    python3 parse_tx_gas.py wrapper      # typed wrapper verifier
 """
 
 import json
@@ -12,7 +14,9 @@ import sys
 from pathlib import Path
 
 BROADCAST_DIR = Path(__file__).parent / "broadcast"
+NATIVE_JSON = BROADCAST_DIR / "WhirBlobNativeTxBenchmark.s.sol/31337/run-latest.json"
 DIRECT_JSON = BROADCAST_DIR / "WhirTxBenchmark.s.sol/31337/run-latest.json"
+BLOB_JSON = BROADCAST_DIR / "WhirBlobTxBenchmark.s.sol/31337/run-latest.json"
 WRAPPER_JSON = BROADCAST_DIR / "MeasureTxGas.s.sol/31337/run-latest.json"
 
 
@@ -30,30 +34,38 @@ def calldata_breakdown(hex_input: str) -> dict:
     }
 
 
-def parse_direct():
-    if not DIRECT_JSON.exists():
-        print(f"Not found: {DIRECT_JSON}")
-        print("Run WhirTxBenchmark.s.sol against anvil first (see AGENTS.md).")
+def _parse_broadcast(json_path, label, verify_receipt_idx, min_receipts):
+    """Generic parser for any benchmark broadcast JSON.
+
+    Args:
+        json_path: Path to the broadcast run-latest.json
+        label: Human-readable label for the output header
+        verify_receipt_idx: Index of the verify receipt in the receipts array
+        min_receipts: Minimum expected receipts (CREATE(s) + CALL)
+    """
+    if not json_path.exists():
+        print(f"Not found: {json_path}")
+        print(
+            "Run the corresponding benchmark script against anvil first (see AGENTS.md)."
+        )
         return
 
-    with open(DIRECT_JSON) as f:
+    with open(json_path) as f:
         data = json.load(f)
 
-    if len(data["receipts"]) < 2:
-        print("ERROR: receipts array has <2 entries — broadcast likely failed.")
+    if len(data["receipts"]) < min_receipts:
+        print(
+            f"ERROR: receipts array has <{min_receipts} entries — broadcast likely failed."
+        )
         print("Did you pass --private-key? See AGENTS.md for the full command.")
         return
 
-    # Receipt[0] = CREATE, Receipt[1] = verify CALL
-    gas_used = int(data["receipts"][1]["gasUsed"], 16)
-
-    # Calldata from tx[1] input
-    inp = data["transactions"][1]["transaction"]["input"]
+    gas_used = int(data["receipts"][verify_receipt_idx]["gasUsed"], 16)
+    inp = data["transactions"][verify_receipt_idx]["transaction"]["input"]
     cd = calldata_breakdown(inp)
-
     exec_remainder = gas_used - cd["intrinsic_plus_calldata"]
 
-    print("=== Direct tx (EOA -> WhirVerifier4.verify) ===")
+    print(f"=== {label} ===")
     print(f"  Total tx gas:         {gas_used:>12,}")
     print(f"  Intrinsic + calldata: {cd['intrinsic_plus_calldata']:>12,}")
     print(f"    calldata bytes:     {cd['total_bytes']:>12,}")
@@ -63,67 +75,68 @@ def parse_direct():
     print(f"    intrinsic:          {21_000:>12,}")
     print(f"  Execution remainder:  {exec_remainder:>12,}")
     return gas_used, cd, exec_remainder
+
+
+def parse_native():
+    return _parse_broadcast(
+        NATIVE_JSON,
+        "Native blob tx (EOA -> WhirBlobVerifierNative4.verify)",
+        verify_receipt_idx=1,
+        min_receipts=2,
+    )
+
+
+def parse_direct():
+    return _parse_broadcast(
+        DIRECT_JSON,
+        "Direct tx (EOA -> WhirVerifier4.verify)",
+        verify_receipt_idx=1,
+        min_receipts=2,
+    )
+
+
+def parse_blob():
+    return _parse_broadcast(
+        BLOB_JSON,
+        "Blob tx (EOA -> WhirBlobVerifier4.verify)",
+        verify_receipt_idx=2,
+        min_receipts=3,
+    )
 
 
 def parse_wrapper():
-    if not WRAPPER_JSON.exists():
-        print(f"Not found: {WRAPPER_JSON}")
-        print("Run MeasureTxGas.s.sol against anvil first (see AGENTS.md).")
-        return
-
-    with open(WRAPPER_JSON) as f:
-        data = json.load(f)
-
-    if len(data["receipts"]) < 3:
-        print("ERROR: receipts array has <3 entries — broadcast likely failed.")
-        print("Did you pass --private-key and --tc MeasureTxGas? See AGENTS.md.")
-        return
-
-    # Receipt[0] = WhirVerifier4 CREATE
-    # Receipt[1] = VerifyWrapper CREATE
-    # Receipt[2] = verifyAndStore CALL
-    gas_used = int(data["receipts"][2]["gasUsed"], 16)
-
-    # Calldata from tx[2] input
-    inp = data["transactions"][2]["transaction"]["input"]
-    cd = calldata_breakdown(inp)
-
-    exec_remainder = gas_used - cd["intrinsic_plus_calldata"]
-
-    print("=== Wrapper tx (EOA -> VerifyWrapper -> WhirVerifier4.verify) ===")
-    print(f"  Total tx gas:         {gas_used:>12,}")
-    print(f"  Intrinsic + calldata: {cd['intrinsic_plus_calldata']:>12,}")
-    print(f"    calldata bytes:     {cd['total_bytes']:>12,}")
-    print(f"    zero bytes:         {cd['zero_bytes']:>12,}")
-    print(f"    nonzero bytes:      {cd['nonzero_bytes']:>12,}")
-    print(f"    calldata gas:       {cd['calldata_gas']:>12,}")
-    print(f"    intrinsic:          {21_000:>12,}")
-    print(f"  Execution remainder:  {exec_remainder:>12,}")
-    return gas_used, cd, exec_remainder
+    return _parse_broadcast(
+        WRAPPER_JSON,
+        "Wrapper tx (EOA -> VerifyWrapper -> WhirVerifier4.verify)",
+        verify_receipt_idx=2,
+        min_receipts=3,
+    )
 
 
 def main():
-    modes = sys.argv[1:] if len(sys.argv) > 1 else ["direct", "wrapper"]
+    all_modes = ["native", "direct", "blob", "wrapper"]
+    parsers = {
+        "native": parse_native,
+        "direct": parse_direct,
+        "blob": parse_blob,
+        "wrapper": parse_wrapper,
+    }
+    modes = sys.argv[1:] if len(sys.argv) > 1 else all_modes
 
-    direct_result = None
-    wrapper_result = None
-
+    results = {}
     for mode in modes:
-        if mode == "direct":
-            direct_result = parse_direct()
-        elif mode == "wrapper":
-            wrapper_result = parse_wrapper()
-        else:
-            print(f"Unknown mode: {mode}. Use 'direct' or 'wrapper'.")
+        if mode not in parsers:
+            print(f"Unknown mode: {mode}. Use one of: {', '.join(all_modes)}")
             sys.exit(1)
+        results[mode] = parsers[mode]()
         print()
 
-    # If both are available, print comparison
-    if direct_result and wrapper_result:
-        d_gas, d_cd, d_exec = direct_result
-        w_gas, w_cd, w_exec = wrapper_result
+    # If both direct and wrapper are available, print comparison
+    if results.get("direct") and results.get("wrapper"):
+        d_gas, d_cd, d_exec = results["direct"]
+        w_gas, w_cd, w_exec = results["wrapper"]
         overhead = w_exec - d_exec
-        print("=== Comparison ===")
+        print("=== Comparison (wrapper vs direct) ===")
         print(f"  Wrapper overhead:     {overhead:>12,}")
         print(
             f"  Calldata delta:       {w_cd['intrinsic_plus_calldata'] - d_cd['intrinsic_plus_calldata']:>+12,}"
