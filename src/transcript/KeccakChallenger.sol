@@ -34,24 +34,15 @@ library KeccakChallenger {
         _appendBaseLE(self, uint32(value));
     }
 
-    function observeHashU8Digest(
-        State memory self,
-        bytes32 digest
-    ) internal pure {
+    function observeHashU8Digest(State memory self, bytes32 digest) internal pure {
         _appendDigest32(self, digest);
     }
 
-    function observeHashU64Digest(
-        State memory self,
-        bytes32 digest
-    ) internal pure {
+    function observeHashU64Digest(State memory self, bytes32 digest) internal pure {
         _appendDigestU64LE(self, digest);
     }
 
-    function observeValidatedPackedExt4(
-        State memory self,
-        uint256 packed
-    ) internal pure {
+    function observeValidatedPackedExt4(State memory self, uint256 packed) internal pure {
         uint256 oldLen = self.inputLen;
         uint256 newLen = oldLen + 16;
         _ensureCapacity(self, newLen);
@@ -112,11 +103,10 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
-    function observeValidatedPackedExt4Pair(
-        State memory self,
-        uint256 first,
-        uint256 second
-    ) internal pure {
+    function observeValidatedPackedExt4Pair(State memory self, uint256 first, uint256 second)
+        internal
+        pure
+    {
         uint256 oldLen = self.inputLen;
         uint256 newLen = oldLen + 32;
         _ensureCapacity(self, newLen + 16);
@@ -178,10 +168,10 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
-    function observeValidatedPackedExt4Slice(
-        State memory self,
-        uint256[] calldata values
-    ) internal pure {
+    function observeValidatedPackedExt4Slice(State memory self, uint256[] calldata values)
+        internal
+        pure
+    {
         uint256 oldLen = self.inputLen;
         uint256 appendLen = values.length * 16;
         uint256 newLen = oldLen + appendLen;
@@ -238,9 +228,7 @@ library KeccakChallenger {
             let end := add(src, shl(5, values.length))
             let dst := add(add(buffer, 0x20), oldLen)
 
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 0x10)
             } {
@@ -294,10 +282,7 @@ library KeccakChallenger {
                 revertPacked(raw)
             }
 
-            packed := or(
-                or(shl(224, x0), shl(192, x1)),
-                or(shl(160, x2), shl(128, x3))
-            )
+            packed := or(or(shl(224, x0), shl(192, x1)), or(shl(160, x2), shl(128, x3)))
 
             mstore(add(add(buffer, 0x20), oldLen), raw)
         }
@@ -348,10 +333,7 @@ library KeccakChallenger {
                     revertPacked(raw)
                 }
 
-                packed := or(
-                    or(shl(224, x0), shl(192, x1)),
-                    or(shl(160, x2), shl(128, x3))
-                )
+                packed := or(or(shl(224, x0), shl(192, x1)), or(shl(160, x2), shl(128, x3)))
             }
 
             let src := add(data.offset, offset)
@@ -372,8 +354,7 @@ library KeccakChallenger {
 
     function sampleBase(State memory self) internal pure returns (uint256) {
         while (true) {
-            uint256 value = uint256(_sampleUint32(self)) &
-                KOALABEAR_SAMPLE_MASK;
+            uint256 value = uint256(_sampleUint32(self)) & KOALABEAR_SAMPLE_MASK;
             if (value < KOALABEAR_MODULUS) {
                 return value;
             }
@@ -382,10 +363,7 @@ library KeccakChallenger {
         revert("UNREACHABLE");
     }
 
-    function sampleBits(
-        State memory self,
-        uint256 bits
-    ) internal pure returns (uint256) {
+    function sampleBits(State memory self, uint256 bits) internal pure returns (uint256) {
         require(bits < 256, "BITS_WIDTH");
         if (bits == 0) {
             return 0;
@@ -395,10 +373,7 @@ library KeccakChallenger {
         return sampleBitsUnchecked(self, bits);
     }
 
-    function sampleBitsUnchecked(
-        State memory self,
-        uint256 bits
-    ) internal pure returns (uint256) {
+    function sampleBitsUnchecked(State memory self, uint256 bits) internal pure returns (uint256) {
         if (bits == 0) {
             return 0;
         }
@@ -407,9 +382,7 @@ library KeccakChallenger {
         }
     }
 
-    function sampleExt4Coeffs(
-        State memory self
-    ) internal pure returns (uint256[4] memory coeffs) {
+    function sampleExt4Coeffs(State memory self) internal pure returns (uint256[4] memory coeffs) {
         unchecked {
             for (uint256 i = 0; i < 4; ++i) {
                 coeffs[i] = sampleBase(self);
@@ -417,9 +390,7 @@ library KeccakChallenger {
         }
     }
 
-    function sampleExt8Coeffs(
-        State memory self
-    ) internal pure returns (uint256[8] memory coeffs) {
+    function sampleExt8Coeffs(State memory self) internal pure returns (uint256[8] memory coeffs) {
         unchecked {
             for (uint256 i = 0; i < 8; ++i) {
                 coeffs[i] = sampleBase(self);
@@ -427,11 +398,11 @@ library KeccakChallenger {
         }
     }
 
-    function checkWitness(
-        State memory self,
-        uint256 bits,
-        uint256 witness
-    ) internal pure returns (bool) {
+    function checkWitness(State memory self, uint256 bits, uint256 witness)
+        internal
+        pure
+        returns (bool)
+    {
         if (bits == 0) {
             return true;
         }
@@ -440,9 +411,7 @@ library KeccakChallenger {
         return sampleBitsUnchecked(self, bits) == 0;
     }
 
-    function debugInputHash(
-        State memory self
-    ) internal pure returns (bytes32 digest) {
+    function debugInputHash(State memory self) internal pure returns (bytes32 digest) {
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
             digest := keccak256(add(buffer, 0x20), mload(add(self, 0x20)))
@@ -467,9 +436,7 @@ library KeccakChallenger {
         self.outputIndex = DIGEST_BYTES;
     }
 
-    function _sampleUint32(
-        State memory self
-    ) private pure returns (uint32 value) {
+    function _sampleUint32(State memory self) private pure returns (uint32 value) {
         if (self.outputIndex == 0) {
             _flush(self);
         }
@@ -477,13 +444,7 @@ library KeccakChallenger {
         unchecked {
             uint256 oldIndex = self.outputIndex;
             self.outputIndex = oldIndex - 4;
-            return
-                uint32(
-                    uint256(
-                        self.outputBlock >>
-                            (((DIGEST_BYTES - oldIndex) & 0xff) << 3)
-                    )
-                );
+            return uint32(uint256(self.outputBlock >> (((DIGEST_BYTES - oldIndex) & 0xff) << 3)));
         }
     }
 
@@ -513,11 +474,7 @@ library KeccakChallenger {
 
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
-            calldatacopy(
-                add(add(buffer, 0x20), oldLen),
-                add(data.offset, offset),
-                appendLen
-            )
+            calldatacopy(add(add(buffer, 0x20), oldLen), add(data.offset, offset), appendLen)
         }
 
         self.inputLen = newLen;
@@ -552,19 +509,15 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
-    function _appendDigestU64LE(
-        State memory self,
-        bytes32 digest
-    ) private pure {
+    function _appendDigestU64LE(State memory self, bytes32 digest) private pure {
         uint256 oldLen = self.inputLen;
         uint256 newLen = oldLen + DIGEST_BYTES;
         _ensureCapacity(self, newLen);
 
         uint256 value = uint256(digest);
-        uint256 reordered = (_bswap64(uint64(value >> 192)) << 192) |
-            (_bswap64(uint64(value >> 128)) << 128) |
-            (_bswap64(uint64(value >> 64)) << 64) |
-            _bswap64(uint64(value));
+        uint256 reordered = (_bswap64(uint64(value >> 192)) << 192)
+            | (_bswap64(uint64(value >> 128)) << 128) | (_bswap64(uint64(value >> 64)) << 64)
+            | _bswap64(uint64(value));
 
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
@@ -575,10 +528,7 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
-    function _ensureCapacity(
-        State memory self,
-        uint256 minCapacity
-    ) private pure {
+    function _ensureCapacity(State memory self, uint256 minCapacity) private pure {
         uint256 capacity = self.inputBuffer.length;
         if (capacity >= minCapacity) {
             return;
@@ -603,25 +553,16 @@ library KeccakChallenger {
     }
 
     function _bswap32(uint32 x) private pure returns (uint256) {
-        return
-            ((uint256(x) & 0x000000ff) << 24) |
-            ((uint256(x) & 0x0000ff00) << 8) |
-            ((uint256(x) & 0x00ff0000) >> 8) |
-            ((uint256(x) & 0xff000000) >> 24);
+        return ((uint256(x) & 0x000000ff) << 24) | ((uint256(x) & 0x0000ff00) << 8)
+            | ((uint256(x) & 0x00ff0000) >> 8) | ((uint256(x) & 0xff000000) >> 24);
     }
 
     function _bswap64(uint64 x) private pure returns (uint256 r) {
         assembly {
             // Swap adjacent bytes
-            r := or(
-                shr(8, and(x, 0xFF00FF00FF00FF00)),
-                shl(8, and(x, 0x00FF00FF00FF00FF))
-            )
+            r := or(shr(8, and(x, 0xFF00FF00FF00FF00)), shl(8, and(x, 0x00FF00FF00FF00FF)))
             // Swap adjacent 16-bit pairs
-            r := or(
-                shr(16, and(r, 0xFFFF0000FFFF0000)),
-                shl(16, and(r, 0x0000FFFF0000FFFF))
-            )
+            r := or(shr(16, and(r, 0xFFFF0000FFFF0000)), shl(16, and(r, 0x0000FFFF0000FFFF)))
             // Swap 32-bit halves
             r := or(shr(32, r), shl(32, and(r, 0xFFFFFFFF)))
         }

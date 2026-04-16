@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {KoalaBearExt4} from "../field/KoalaBearExt4.sol";
-import {KeccakChallenger} from "./KeccakChallenger.sol";
+import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
+import { KeccakChallenger } from "./KeccakChallenger.sol";
 
 library WhirTranscript {
     using KeccakChallenger for KeccakChallenger.State;
 
-    function observeWhirFsPattern(
-        KeccakChallenger.State memory self,
-        uint256[] memory pattern
-    ) internal pure {
+    function observeWhirFsPattern(KeccakChallenger.State memory self, uint256[] memory pattern)
+        internal
+        pure
+    {
         unchecked {
             for (uint256 i = 0; i < pattern.length; ++i) {
                 self.observeBase(pattern[i]);
@@ -18,10 +18,7 @@ library WhirTranscript {
         }
     }
 
-    function observeExt4Element(
-        KeccakChallenger.State memory self,
-        uint256 packed
-    ) internal pure {
+    function observeExt4Element(KeccakChallenger.State memory self, uint256 packed) internal pure {
         uint256[4] memory coeffs = KoalaBearExt4.unpack(packed);
 
         unchecked {
@@ -31,10 +28,10 @@ library WhirTranscript {
         }
     }
 
-    function observeExt4Slice(
-        KeccakChallenger.State memory self,
-        uint256[] memory packedValues
-    ) internal pure {
+    function observeExt4Slice(KeccakChallenger.State memory self, uint256[] memory packedValues)
+        internal
+        pure
+    {
         unchecked {
             for (uint256 i = 0; i < packedValues.length; ++i) {
                 observeExt4Element(self, packedValues[i]);

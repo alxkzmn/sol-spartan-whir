@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {KoalaBear} from "../field/KoalaBear.sol";
-import {KoalaBearExt4} from "../field/KoalaBearExt4.sol";
-import {MerkleVerifier} from "../merkle/MerkleVerifier.sol";
-import {KeccakChallenger} from "../transcript/KeccakChallenger.sol";
-import {WhirStructs} from "./WhirStructs.sol";
-import {WhirBlobCodec4} from "./WhirBlobCodec4.sol";
-import {WhirVerifierUtils4} from "./WhirVerifierUtils4.sol";
+import { KoalaBear } from "../field/KoalaBear.sol";
+import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
+import { MerkleVerifier } from "../merkle/MerkleVerifier.sol";
+import { KeccakChallenger } from "../transcript/KeccakChallenger.sol";
+import { WhirStructs } from "./WhirStructs.sol";
+import { WhirBlobCodec4 } from "./WhirBlobCodec4_lir6_ff5_rsv1.sol";
+import { WhirVerifierUtils4 } from "./WhirVerifierUtils4.sol";
 
 library WhirVerifierCore4 {
     using KeccakChallenger for KeccakChallenger.State;
@@ -51,11 +51,7 @@ library WhirVerifierCore4 {
     error CommitmentMismatch(bytes32 expected, bytes32 actual);
     error ProofRoundCountMismatch(uint256 expected, uint256 actual);
     error StatementLengthMismatch(uint256 points, uint256 evaluations);
-    error StatementPointArityMismatch(
-        uint256 index,
-        uint256 expected,
-        uint256 actual
-    );
+    error StatementPointArityMismatch(uint256 index, uint256 expected, uint256 actual);
     error OodAnswerCountMismatch(uint256 expected, uint256 actual);
     error FinalPolyLengthMismatch(uint256 expected, uint256 actual);
     error FinalQueryBatchPresenceMismatch(bool expected, bool actual);
@@ -69,10 +65,7 @@ library WhirVerifierCore4 {
     error SumcheckPowWitnessLengthMismatch(uint256 expected, uint256 actual);
     error StirConstraintFailed(uint256 index);
     error FinalConstraintMismatch(uint256 expected, uint256 actual);
-    error InconsistentConstraintArity(
-        uint256 eqNumVariables,
-        uint256 selNumVariables
-    );
+    error InconsistentConstraintArity(uint256 eqNumVariables, uint256 selNumVariables);
     error RandomnessLengthMismatch(uint256 expected, uint256 actual);
 
     function _statementFromCalldata(
@@ -80,26 +73,17 @@ library WhirVerifierCore4 {
         uint256 numVariables
     ) internal pure returns (EqStatement memory eqStatement) {
         if (statement.points.length != statement.evaluations.length) {
-            revert StatementLengthMismatch(
-                statement.points.length,
-                statement.evaluations.length
-            );
+            revert StatementLengthMismatch(statement.points.length, statement.evaluations.length);
         }
 
         eqStatement.numVariables = numVariables;
-        eqStatement.flatPoints = new uint256[](
-            statement.points.length * numVariables
-        );
+        eqStatement.flatPoints = new uint256[](statement.points.length * numVariables);
         eqStatement.evaluations = new uint256[](statement.evaluations.length);
 
         unchecked {
             for (uint256 i = 0; i < statement.points.length; ++i) {
                 if (statement.points[i].length != numVariables) {
-                    revert StatementPointArityMismatch(
-                        i,
-                        numVariables,
-                        statement.points[i].length
-                    );
+                    revert StatementPointArityMismatch(i, numVariables, statement.points[i].length);
                 }
 
                 for (uint256 j = 0; j < numVariables; ++j) {
@@ -130,19 +114,14 @@ library WhirVerifierCore4 {
 
         parsed.root = root;
         parsed.oodStatement.numVariables = numVariables;
-        parsed.oodStatement.flatPoints = new uint256[](
-            oodSamples * numVariables
-        );
+        parsed.oodStatement.flatPoints = new uint256[](oodSamples * numVariables);
         parsed.oodStatement.evaluations = new uint256[](oodSamples);
 
         unchecked {
             for (uint256 i = 0; i < oodSamples; ++i) {
                 uint256 point = WhirVerifierUtils4.sampleExt4(challenger);
                 WhirVerifierUtils4.expandFromUnivariateExtInto(
-                    parsed.oodStatement.flatPoints,
-                    i * numVariables,
-                    point,
-                    numVariables
+                    parsed.oodStatement.flatPoints, i * numVariables, point, numVariables
                 );
 
                 uint256 evalValue = oodAnswers[i];
@@ -172,16 +151,10 @@ library WhirVerifierCore4 {
             for (uint256 i = 0; i < oodSamples; ++i) {
                 uint256 point = WhirVerifierUtils4.sampleExt4(challenger);
                 WhirVerifierUtils4.expandFromUnivariateExtInto(
-                    parsed.oodFlatPoints,
-                    i * numVariables,
-                    point,
-                    numVariables
+                    parsed.oodFlatPoints, i * numVariables, point, numVariables
                 );
 
-                WhirVerifierUtils4.observeValidatedExt4(
-                    challenger,
-                    oodAnswers[i]
-                );
+                WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[i]);
             }
         }
     }
@@ -203,19 +176,13 @@ library WhirVerifierCore4 {
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            numVariables
+            parsed.oodFlatPoints, 0, point0, numVariables
         );
         WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[0]);
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            numVariables,
-            point1,
-            numVariables
+            parsed.oodFlatPoints, numVariables, point1, numVariables
         );
         WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[1]);
     }
@@ -235,21 +202,11 @@ library WhirVerifierCore4 {
         parsed.oodFlatPoints = new uint256[](32);
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            16
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 0, point0, 16);
         WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[0]);
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            16,
-            point1,
-            16
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 16, point1, 16);
         WhirVerifierUtils4.observeValidatedExt4(challenger, oodAnswers[1]);
     }
 
@@ -275,20 +232,14 @@ library WhirVerifierCore4 {
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            numVariables
+            parsed.oodFlatPoints, 0, point0, numVariables
         );
         ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
         WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            numVariables,
-            point1,
-            numVariables
+            parsed.oodFlatPoints, numVariables, point1, numVariables
         );
         ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
@@ -315,22 +266,12 @@ library WhirVerifierCore4 {
         parsed.oodFlatPoints = new uint256[](32);
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            16
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 0, point0, 16);
         ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            16,
-            point1,
-            16
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 16, point1, 16);
         ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
         nextOffset = offset;
@@ -356,22 +297,12 @@ library WhirVerifierCore4 {
         parsed.oodFlatPoints = new uint256[](24);
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            12
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 0, point0, 12);
         ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            12,
-            point1,
-            12
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 12, point1, 12);
         ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
         nextOffset = offset;
@@ -397,22 +328,12 @@ library WhirVerifierCore4 {
         parsed.oodFlatPoints = new uint256[](16);
 
         uint256 point0 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            0,
-            point0,
-            8
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 0, point0, 8);
         ood0 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
 
         uint256 point1 = WhirVerifierUtils4.sampleExt4(challenger);
-        WhirVerifierUtils4.expandFromUnivariateExtInto(
-            parsed.oodFlatPoints,
-            8,
-            point1,
-            8
-        );
+        WhirVerifierUtils4.expandFromUnivariateExtInto(parsed.oodFlatPoints, 8, point1, 8);
         ood1 = challenger.observeReadValidatedPackedExt4Le(blob, offset);
         offset += 16;
         nextOffset = offset;
@@ -434,15 +355,13 @@ library WhirVerifierCore4 {
         }
     }
 
-    function _concatenateEq(
-        EqStatement memory lhs,
-        EqStatement memory rhs
-    ) internal pure returns (EqStatement memory out) {
+    function _concatenateEq(EqStatement memory lhs, EqStatement memory rhs)
+        internal
+        pure
+        returns (EqStatement memory out)
+    {
         if (lhs.numVariables != rhs.numVariables) {
-            revert InconsistentConstraintArity(
-                lhs.numVariables,
-                rhs.numVariables
-            );
+            revert InconsistentConstraintArity(lhs.numVariables, rhs.numVariables);
         }
 
         uint256 pointCountL = lhs.evaluations.length;
@@ -450,9 +369,7 @@ library WhirVerifierCore4 {
         uint256 numVariables = lhs.numVariables;
 
         out.numVariables = numVariables;
-        out.flatPoints = new uint256[](
-            (pointCountL + pointCountR) * numVariables
-        );
+        out.flatPoints = new uint256[]((pointCountL + pointCountR) * numVariables);
         out.evaluations = new uint256[](pointCountL + pointCountR);
 
         unchecked {
@@ -471,9 +388,7 @@ library WhirVerifierCore4 {
         }
     }
 
-    function _emptySelect(
-        uint256 numVariables
-    ) internal pure returns (SelectStatement memory sel) {
+    function _emptySelect(uint256 numVariables) internal pure returns (SelectStatement memory sel) {
         sel.numVariables = numVariables;
         sel.vars = new uint256[](0);
         sel.evaluations = new uint256[](0);
@@ -499,17 +414,13 @@ library WhirVerifierCore4 {
         uint256 expectedPolyEvals = expectedRounds * 2;
         if (sumcheck.polynomialEvals.length != expectedPolyEvals) {
             revert SumcheckPolynomialLengthMismatch(
-                expectedPolyEvals,
-                sumcheck.polynomialEvals.length
+                expectedPolyEvals, sumcheck.polynomialEvals.length
             );
         }
 
         uint256 expectedWitnesses = powBits > 0 ? expectedRounds : 0;
         if (sumcheck.powWitnesses.length != expectedWitnesses) {
-            revert SumcheckPowWitnessLengthMismatch(
-                expectedWitnesses,
-                sumcheck.powWitnesses.length
-            );
+            revert SumcheckPowWitnessLengthMismatch(expectedWitnesses, sumcheck.powWitnesses.length);
         }
 
         updatedClaimedEval = claimedEval;
@@ -524,12 +435,7 @@ library WhirVerifierCore4 {
                 challenger.observeValidatedPackedExt4Pair(c0, c2);
 
                 if (powBits > 0) {
-                    if (
-                        !challenger.checkWitness(
-                            powBits,
-                            sumcheck.powWitnesses[i]
-                        )
-                    ) {
+                    if (!challenger.checkWitness(powBits, sumcheck.powWitnesses[i])) {
                         revert InvalidPowWitness();
                     }
                 }
@@ -539,10 +445,7 @@ library WhirVerifierCore4 {
                 allRandomness[updatedCursor] = r;
                 updatedCursor += 1;
                 updatedClaimedEval = KoalaBearExt4.extrapolate_012(
-                    c0,
-                    KoalaBearExt4.sub(updatedClaimedEval, c0),
-                    c2,
-                    r
+                    c0, KoalaBearExt4.sub(updatedClaimedEval, c0), c2, r
                 );
             }
         }
@@ -560,11 +463,7 @@ library WhirVerifierCore4 {
     )
         internal
         pure
-        returns (
-            uint256 updatedClaimedEval,
-            uint256 updatedCursor,
-            uint256 nextOffset
-        )
+        returns (uint256 updatedClaimedEval, uint256 updatedCursor, uint256 nextOffset)
     {
         updatedClaimedEval = claimedEval;
         updatedCursor = randomnessCursor;
@@ -575,28 +474,17 @@ library WhirVerifierCore4 {
 
         unchecked {
             for (uint256 i = 0; i < expectedRounds; ++i) {
-                (uint256 c0, uint256 c2) = challenger
-                    .observeReadValidatedPackedExt4LePair(
-                        blob,
-                        polyOffset + i * 32
-                    );
+                (uint256 c0, uint256 c2) =
+                    challenger.observeReadValidatedPackedExt4LePair(blob, polyOffset + i * 32);
                 if (powBits > 0) {
-                    _checkWitnessBaseLeBlob(
-                        challenger,
-                        powBits,
-                        blob,
-                        powOffset + i * 4
-                    );
+                    _checkWitnessBaseLeBlob(challenger, powBits, blob, powOffset + i * 4);
                 }
 
                 uint256 r = WhirVerifierUtils4.sampleExt4(challenger);
                 allRandomness[updatedCursor] = r;
                 updatedCursor += 1;
                 updatedClaimedEval = KoalaBearExt4.extrapolate_012(
-                    c0,
-                    KoalaBearExt4.sub(updatedClaimedEval, c0),
-                    c2,
-                    r
+                    c0, KoalaBearExt4.sub(updatedClaimedEval, c0), c2, r
                 );
             }
         }
@@ -638,52 +526,33 @@ library WhirVerifierCore4 {
         }
 
         uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
-            challenger,
-            domainSize,
-            foldingFactor,
-            numQueries
+            challenger, domainSize, foldingFactor, numQueries
         );
 
         if (queryBatch.kind != expectedKind) {
             revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
         }
         if (queryBatch.numQueries != indices.length) {
-            revert QueryBatchCountMismatch(
-                indices.length,
-                queryBatch.numQueries
-            );
+            revert QueryBatchCountMismatch(indices.length, queryBatch.numQueries);
         }
 
         uint256 expectedRowLen = uint256(1) << foldingFactor;
         if (queryBatch.rowLen != expectedRowLen) {
-            revert QueryBatchRowLengthMismatch(
-                expectedRowLen,
-                queryBatch.rowLen
-            );
+            revert QueryBatchRowLengthMismatch(expectedRowLen, queryBatch.rowLen);
         }
 
-        uint256 depth = WhirVerifierUtils4.log2Strict(
-            domainSize >> foldingFactor
-        );
+        uint256 depth = WhirVerifierUtils4.log2Strict(domainSize >> foldingFactor);
         statement.vars = new uint256[](indices.length);
         statement.evaluations = new uint256[](indices.length);
 
         bytes32 computedRoot;
         if (expectedKind == 0) {
             computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         } else {
             computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         }
 
@@ -696,24 +565,21 @@ library WhirVerifierCore4 {
                 statement.vars[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
                 uint256 rowStart = i * queryBatch.rowLen;
                 statement.evaluations[i] = expectedKind == 0
-                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     )
-                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    : WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     );
             }
         }
     }
 
-    function _combineConstraintEvals(
-        uint256 acc,
-        Constraint memory constraint
-    ) internal pure returns (uint256 updated) {
+    function _combineConstraintEvals(uint256 acc, Constraint memory constraint)
+        internal
+        pure
+        returns (uint256 updated)
+    {
         uint256 challenge = constraint.challenge;
         uint256[] memory eqEvals = constraint.eqStatement.evaluations;
         uint256 eqLen = eqEvals.length;
@@ -751,52 +617,47 @@ library WhirVerifierCore4 {
                 let w2 := and(shr(160, w), m)
                 let w3 := and(shr(128, w), m)
 
-                let r0 := mod(
-                    add(
+                let r0 :=
+                    mod(
                         add(
-                            mul(h0, ch0),
-                            mul(
-                                W,
-                                add(
-                                    add(mul(h1, ch3), mul(h2, ch2)),
-                                    mul(h3, ch1)
-                                )
-                            )
+                            add(
+                                mul(h0, ch0),
+                                mul(W, add(add(mul(h1, ch3), mul(h2, ch2)), mul(h3, ch1)))
+                            ),
+                            w0
                         ),
-                        w0
-                    ),
-                    M
-                )
-                let r1 := mod(
-                    add(
+                        M
+                    )
+                let r1 :=
+                    mod(
                         add(
-                            add(mul(h0, ch1), mul(h1, ch0)),
-                            mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                            add(
+                                add(mul(h0, ch1), mul(h1, ch0)),
+                                mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                            ),
+                            w1
                         ),
-                        w1
-                    ),
-                    M
-                )
-                let r2 := mod(
-                    add(
+                        M
+                    )
+                let r2 :=
+                    mod(
                         add(
-                            add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
-                            mul(W, mul(h3, ch3))
+                            add(
+                                add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
+                                mul(W, mul(h3, ch3))
+                            ),
+                            w2
                         ),
-                        w2
-                    ),
-                    M
-                )
-                let r3 := mod(
-                    add(
+                        M
+                    )
+                let r3 :=
+                    mod(
                         add(
-                            add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)),
-                            mul(h3, ch0)
+                            add(add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)), mul(h3, ch0)),
+                            w3
                         ),
-                        w3
-                    ),
-                    M
-                )
+                        M
+                    )
                 h0 := r0
                 h1 := r1
                 h2 := r2
@@ -815,62 +676,54 @@ library WhirVerifierCore4 {
                 let w2 := and(shr(160, w), m)
                 let w3 := and(shr(128, w), m)
 
-                let r0 := mod(
-                    add(
+                let r0 :=
+                    mod(
                         add(
-                            mul(h0, ch0),
-                            mul(
-                                W,
-                                add(
-                                    add(mul(h1, ch3), mul(h2, ch2)),
-                                    mul(h3, ch1)
-                                )
-                            )
+                            add(
+                                mul(h0, ch0),
+                                mul(W, add(add(mul(h1, ch3), mul(h2, ch2)), mul(h3, ch1)))
+                            ),
+                            w0
                         ),
-                        w0
-                    ),
-                    M
-                )
-                let r1 := mod(
-                    add(
+                        M
+                    )
+                let r1 :=
+                    mod(
                         add(
-                            add(mul(h0, ch1), mul(h1, ch0)),
-                            mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                            add(
+                                add(mul(h0, ch1), mul(h1, ch0)),
+                                mul(W, add(mul(h2, ch3), mul(h3, ch2)))
+                            ),
+                            w1
                         ),
-                        w1
-                    ),
-                    M
-                )
-                let r2 := mod(
-                    add(
+                        M
+                    )
+                let r2 :=
+                    mod(
                         add(
-                            add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
-                            mul(W, mul(h3, ch3))
+                            add(
+                                add(add(mul(h0, ch2), mul(h1, ch1)), mul(h2, ch0)),
+                                mul(W, mul(h3, ch3))
+                            ),
+                            w2
                         ),
-                        w2
-                    ),
-                    M
-                )
-                let r3 := mod(
-                    add(
+                        M
+                    )
+                let r3 :=
+                    mod(
                         add(
-                            add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)),
-                            mul(h3, ch0)
+                            add(add(add(mul(h0, ch3), mul(h1, ch2)), mul(h2, ch1)), mul(h3, ch0)),
+                            w3
                         ),
-                        w3
-                    ),
-                    M
-                )
+                        M
+                    )
                 h0 := r0
                 h1 := r1
                 h2 := r2
                 h3 := r3
             }
 
-            horner := or(
-                or(shl(224, h0), shl(192, h1)),
-                or(shl(160, h2), shl(128, h3))
-            )
+            horner := or(or(shl(224, h0), shl(192, h1)), or(shl(160, h2), shl(128, h3)))
         }
 
         updated = KoalaBearExt4.add(acc, horner);
@@ -903,49 +756,30 @@ library WhirVerifierCore4 {
         }
 
         uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
-            challenger,
-            domainSize,
-            foldingFactor,
-            numQueries
+            challenger, domainSize, foldingFactor, numQueries
         );
 
         if (queryBatch.kind != expectedKind) {
             revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
         }
         if (queryBatch.numQueries != indices.length) {
-            revert QueryBatchCountMismatch(
-                indices.length,
-                queryBatch.numQueries
-            );
+            revert QueryBatchCountMismatch(indices.length, queryBatch.numQueries);
         }
 
         uint256 expectedRowLen = uint256(1) << foldingFactor;
         if (queryBatch.rowLen != expectedRowLen) {
-            revert QueryBatchRowLengthMismatch(
-                expectedRowLen,
-                queryBatch.rowLen
-            );
+            revert QueryBatchRowLengthMismatch(expectedRowLen, queryBatch.rowLen);
         }
 
-        uint256 depth = WhirVerifierUtils4.log2Strict(
-            domainSize >> foldingFactor
-        );
+        uint256 depth = WhirVerifierUtils4.log2Strict(domainSize >> foldingFactor);
         bytes32 computedRoot;
         if (expectedKind == 0) {
             computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         } else {
             computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         }
 
@@ -958,20 +792,13 @@ library WhirVerifierCore4 {
                 uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
                 uint256 rowStart = i * queryBatch.rowLen;
                 uint256 expectedEval = expectedKind == 0
-                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     )
-                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    : WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     );
-                if (
-                    WhirVerifierUtils4.hornerBase(finalPoly, point) !=
-                    expectedEval
-                ) {
+                if (WhirVerifierUtils4.hornerBase(finalPoly, point) != expectedEval) {
                     revert StirConstraintFailed(i);
                 }
             }
@@ -995,11 +822,7 @@ library WhirVerifierCore4 {
     )
         internal
         pure
-        returns (
-            uint256 challenge,
-            uint256 claimedContribution,
-            uint256[] memory selVars
-        )
+        returns (uint256 challenge, uint256 claimedContribution, uint256[] memory selVars)
     {
         if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
             revert InvalidPowWitness();
@@ -1014,11 +837,8 @@ library WhirVerifierCore4 {
             challenge = WhirVerifierUtils4.sampleExt4(challenger);
             unchecked {
                 for (uint256 i = oodAnswers.length; i > 0; --i) {
-                    claimedContribution = _hornerStep(
-                        claimedContribution,
-                        challenge,
-                        oodAnswers[i - 1]
-                    );
+                    claimedContribution =
+                        _hornerStep(claimedContribution, challenge, oodAnswers[i - 1]);
                 }
             }
             selVars = new uint256[](0);
@@ -1026,50 +846,31 @@ library WhirVerifierCore4 {
         }
 
         uint256[] memory indices = WhirVerifierUtils4.sampleStirQueries(
-            challenger,
-            domainSize,
-            foldingFactor,
-            numQueries
+            challenger, domainSize, foldingFactor, numQueries
         );
 
         if (queryBatch.kind != expectedKind) {
             revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
         }
         if (queryBatch.numQueries != indices.length) {
-            revert QueryBatchCountMismatch(
-                indices.length,
-                queryBatch.numQueries
-            );
+            revert QueryBatchCountMismatch(indices.length, queryBatch.numQueries);
         }
 
         uint256 expectedRowLen = uint256(1) << foldingFactor;
         if (queryBatch.rowLen != expectedRowLen) {
-            revert QueryBatchRowLengthMismatch(
-                expectedRowLen,
-                queryBatch.rowLen
-            );
+            revert QueryBatchRowLengthMismatch(expectedRowLen, queryBatch.rowLen);
         }
 
-        uint256 depth = WhirVerifierUtils4.log2Strict(
-            domainSize >> foldingFactor
-        );
+        uint256 depth = WhirVerifierUtils4.log2Strict(domainSize >> foldingFactor);
 
         bytes32 computedRoot;
         if (expectedKind == 0) {
             computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         } else {
             computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20(
-                indices,
-                queryBatch.values,
-                queryBatch.rowLen,
-                depth,
-                queryBatch.decommitments
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
             );
         }
 
@@ -1088,29 +889,17 @@ library WhirVerifierCore4 {
 
                 uint256 rowStart = idx * queryBatch.rowLen;
                 uint256 evalValue = expectedKind == 0
-                    ? WhirVerifierUtils4._evaluateBaseRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    ? WhirVerifierUtils4.evaluateBaseRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     )
-                    : WhirVerifierUtils4._evaluateExtensionRowDim4(
-                        queryBatch.values,
-                        rowStart,
-                        foldingRandomness
+                    : WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
                     );
-                claimedContribution = _hornerStep(
-                    claimedContribution,
-                    challenge,
-                    evalValue
-                );
+                claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
             }
 
             for (uint256 i = oodAnswers.length; i > 0; --i) {
-                claimedContribution = _hornerStep(
-                    claimedContribution,
-                    challenge,
-                    oodAnswers[i - 1]
-                );
+                claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswers[i - 1]);
             }
         }
     }
@@ -1148,23 +937,14 @@ library WhirVerifierCore4 {
             for (uint256 i = 0; i < count; ++i) {
                 uint256 idx = indices[i];
                 if (i != 0 && prevIdx >= idx) {
-                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(
-                        prevIdx,
-                        idx
-                    );
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
                 }
                 prevIdx = idx;
 
                 uint256 rowOffset = valuesOffset + i * 64;
-                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4
-                    ._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                        blob,
-                        rowOffset,
-                        p0,
-                        p1,
-                        p2,
-                        p3
-                    );
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4._hashAndEvaluateBaseRowDim4BlobPackedPoints(
+                    blob, rowOffset, p0, p1, p2, p3
+                );
                 rowEvals[i] = evalValue;
 
                 assembly ("memory-safe") {
@@ -1176,12 +956,64 @@ library WhirVerifierCore4 {
         }
 
         root = MerkleVerifier.computeRootFromFrontier20Blob(
-            frontier,
-            count,
-            depth,
-            blob,
-            decommOffset,
-            decommLen
+            frontier, count, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeBaseRootAndEvalsBlob32(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierBytes := shl(6, count)
+            frontier := mload(0x40)
+            mstore(frontier, frontierBytes)
+
+            rowEvals := add(add(frontier, 0x20), frontierBytes)
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 128;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4._hashAndEvaluateBaseRowDim5BlobPackedPoints(
+                    blob, rowOffset, p0, p1, p2, p3, p4
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromFrontier20Blob(
+            frontier, count, depth, blob, decommOffset, decommLen
         );
     }
 
@@ -1218,23 +1050,14 @@ library WhirVerifierCore4 {
             for (uint256 i = 0; i < count; ++i) {
                 uint256 idx = indices[i];
                 if (i != 0 && prevIdx >= idx) {
-                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(
-                        prevIdx,
-                        idx
-                    );
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
                 }
                 prevIdx = idx;
 
                 uint256 rowOffset = valuesOffset + i * 256;
-                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4
-                    ._hashAndEvaluateExtensionRowDim4BlobPackedPoints(
-                        blob,
-                        rowOffset,
-                        p0,
-                        p1,
-                        p2,
-                        p3
-                    );
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4._hashAndEvaluateExtensionRowDim4BlobPackedPoints(
+                    blob, rowOffset, p0, p1, p2, p3
+                );
                 rowEvals[i] = evalValue;
 
                 assembly ("memory-safe") {
@@ -1246,13 +1069,147 @@ library WhirVerifierCore4 {
         }
 
         root = MerkleVerifier.computeRootFromFrontier20Blob(
-            frontier,
-            count,
-            depth,
-            blob,
-            decommOffset,
-            decommLen
+            frontier, count, depth, blob, decommOffset, decommLen
         );
+    }
+
+    function _computeExtensionRootAndEvalsBlob32(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierBytes := shl(6, count)
+            frontier := mload(0x40)
+            mstore(frontier, frontierBytes)
+
+            rowEvals := add(add(frontier, 0x20), frontierBytes)
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 512;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils4._hashAndEvaluateExtensionRowDim5BlobPackedPoints(
+                    blob, rowOffset, p0, p1, p2, p3, p4
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromFrontier20Blob(
+            frontier, count, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeBlobRootAndEvals(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind
+    ) private pure returns (bytes32 computedRoot, uint256[] memory rowEvals) {
+        uint256 p0 = allRandomness[randomnessOffset];
+        uint256 p1 = allRandomness[randomnessOffset + 1];
+        uint256 p2 = allRandomness[randomnessOffset + 2];
+        uint256 p3 = allRandomness[randomnessOffset + 3];
+
+        if (rowLen == 16) {
+            if (expectedKind == 0) {
+                return _computeBaseRootAndEvalsBlob16(
+                    indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+                );
+            }
+
+            return _computeExtensionRootAndEvalsBlob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+            );
+        }
+
+        if (rowLen == 32) {
+            uint256 p4 = allRandomness[randomnessOffset + 4];
+
+            if (expectedKind == 0) {
+                return _computeBaseRootAndEvalsBlob32(
+                    indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3, p4
+                );
+            }
+
+            return _computeExtensionRootAndEvalsBlob32(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3, p4
+            );
+        }
+
+        uint256 count = indices.length;
+        rowEvals = new uint256[](count);
+        if (expectedKind == 0) {
+            computedRoot = MerkleVerifier.computeRootFromFlatBaseRows20Blob(
+                indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+            );
+            unchecked {
+                for (uint256 i = 0; i < count; ++i) {
+                    rowEvals[i] = WhirVerifierUtils4.evaluateBaseRowBlobAsExt4(
+                        blob,
+                        valuesOffset + i * rowLen * 4,
+                        rowLen,
+                        allRandomness,
+                        randomnessOffset,
+                        WhirVerifierUtils4.log2Strict(rowLen)
+                    );
+                }
+            }
+            return (computedRoot, rowEvals);
+        }
+
+        computedRoot = MerkleVerifier.computeRootFromFlatExtensionRows20Blob(
+            indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+        );
+        unchecked {
+            for (uint256 i = 0; i < count; ++i) {
+                rowEvals[i] = WhirVerifierUtils4.evaluateExtensionRowBlobAsExt4(
+                    blob,
+                    valuesOffset + i * rowLen * 16,
+                    rowLen,
+                    allRandomness,
+                    randomnessOffset,
+                    WhirVerifierUtils4.log2Strict(rowLen)
+                );
+            }
+        }
+        return (computedRoot, rowEvals);
     }
 
     function _verifyStirAndCombineConstraintBlob(
@@ -1260,6 +1217,7 @@ library WhirVerifierCore4 {
         bytes32 expectedRoot,
         uint256 powBits,
         uint256 numQueries,
+        uint256 rowLen,
         uint256 depth,
         uint256 foldedDomainGen,
         bytes calldata blob,
@@ -1285,68 +1243,29 @@ library WhirVerifierCore4 {
 
         challenger.sampleBase();
 
-        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueriesPow2(
-            challenger,
-            depth,
-            numQueries
-        );
+        uint256[] memory indices =
+            WhirVerifierUtils4.sampleStirQueriesPow2(challenger, depth, numQueries);
         if (indices.length != numQueries) {
             revert QueryBatchCountMismatch(numQueries, indices.length);
         }
 
-        uint256 rowLen = 16;
         uint256 stride = expectedKind == 0 ? 4 : 16;
         uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
         nextOffset = decommOffset + decommLen * 20;
 
         unchecked {
-            uint256 pointBase;
-            assembly ("memory-safe") {
-                pointBase := add(
-                    add(allRandomness, 0x20),
-                    shl(5, randomnessOffset)
-                )
-            }
-            uint256 p0;
-            uint256 p1;
-            uint256 p2;
-            uint256 p3;
-            assembly ("memory-safe") {
-                p0 := mload(pointBase)
-                p1 := mload(add(pointBase, 0x20))
-                p2 := mload(add(pointBase, 0x40))
-                p3 := mload(add(pointBase, 0x60))
-            }
-
-            bytes32 computedRoot;
-            uint256[] memory rowEvals;
-            if (expectedKind == 0) {
-                (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen,
-                    p0,
-                    p1,
-                    p2,
-                    p3
-                );
-            } else {
-                (computedRoot, rowEvals) = _computeExtensionRootAndEvalsBlob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen,
-                    p0,
-                    p1,
-                    p2,
-                    p3
-                );
-            }
+            (bytes32 computedRoot, uint256[] memory rowEvals) = _computeBlobRootAndEvals(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                allRandomness,
+                randomnessOffset,
+                expectedKind
+            );
 
             if (computedRoot != expectedRoot) {
                 revert MerkleRootMismatch(expectedRoot, computedRoot);
@@ -1362,23 +1281,11 @@ library WhirVerifierCore4 {
                 uint256 idx = i - 1;
                 uint256 point = KoalaBear.pow(foldedDomainGen, indices[idx]);
                 selVars[idx] = point;
-                claimedContribution = _hornerStep(
-                    claimedContribution,
-                    challenge,
-                    rowEvals[idx]
-                );
+                claimedContribution = _hornerStep(claimedContribution, challenge, rowEvals[idx]);
             }
 
-            claimedContribution = _hornerStep(
-                claimedContribution,
-                challenge,
-                ood1
-            );
-            claimedContribution = _hornerStep(
-                claimedContribution,
-                challenge,
-                ood0
-            );
+            claimedContribution = _hornerStep(claimedContribution, challenge, ood1);
+            claimedContribution = _hornerStep(claimedContribution, challenge, ood0);
         }
     }
 
@@ -1387,6 +1294,7 @@ library WhirVerifierCore4 {
         bytes32 expectedRoot,
         uint256 powBits,
         uint256 numQueries,
+        uint256 rowLen,
         uint256 depth,
         uint256 foldedDomainGen,
         bytes calldata blob,
@@ -1396,72 +1304,34 @@ library WhirVerifierCore4 {
         uint256[] memory allRandomness,
         uint256 randomnessOffset,
         uint8 expectedKind,
-        uint256 finalPolyOffset
+        uint256 finalPolyOffset,
+        uint256 finalPolyLen
     ) internal pure returns (uint256 nextOffset) {
         _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
 
-        uint256[] memory indices = WhirVerifierUtils4.sampleStirQueriesPow2(
-            challenger,
-            depth,
-            numQueries
-        );
+        uint256[] memory indices =
+            WhirVerifierUtils4.sampleStirQueriesPow2(challenger, depth, numQueries);
         if (indices.length != numQueries) {
             revert QueryBatchCountMismatch(numQueries, indices.length);
         }
 
-        uint256 rowLen = 16;
         uint256 stride = expectedKind == 0 ? 4 : 16;
         uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
         nextOffset = decommOffset + decommLen * 20;
 
         unchecked {
-            uint256 pointBase;
-            assembly ("memory-safe") {
-                pointBase := add(
-                    add(allRandomness, 0x20),
-                    shl(5, randomnessOffset)
-                )
-            }
-            uint256 p0;
-            uint256 p1;
-            uint256 p2;
-            uint256 p3;
-            assembly ("memory-safe") {
-                p0 := mload(pointBase)
-                p1 := mload(add(pointBase, 0x20))
-                p2 := mload(add(pointBase, 0x40))
-                p3 := mload(add(pointBase, 0x60))
-            }
-
-            bytes32 computedRoot;
-            uint256[] memory rowEvals;
-            if (expectedKind == 0) {
-                (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen,
-                    p0,
-                    p1,
-                    p2,
-                    p3
-                );
-            } else {
-                (computedRoot, rowEvals) = _computeExtensionRootAndEvalsBlob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen,
-                    p0,
-                    p1,
-                    p2,
-                    p3
-                );
-            }
+            (bytes32 computedRoot, uint256[] memory rowEvals) = _computeBlobRootAndEvals(
+                indices,
+                blob,
+                valuesOffset,
+                rowLen,
+                depth,
+                decommOffset,
+                decommLen,
+                allRandomness,
+                randomnessOffset,
+                expectedKind
+            );
 
             if (computedRoot != expectedRoot) {
                 revert MerkleRootMismatch(expectedRoot, computedRoot);
@@ -1471,15 +1341,14 @@ library WhirVerifierCore4 {
                 indices[i] = KoalaBear.pow(foldedDomainGen, indices[i]);
             }
 
-            uint256 mismatchPlusOne = WhirVerifierUtils4
-                .checkHornerBaseBlob16Matches(
-                    blob,
-                    finalPolyOffset,
-                    indices,
-                    rowEvals
-                );
-            if (mismatchPlusOne != 0) {
-                revert StirConstraintFailed(mismatchPlusOne - 1);
+            for (uint256 i = 0; i < numQueries; ++i) {
+                if (
+                    WhirVerifierUtils4.hornerBaseBlob(
+                            blob, finalPolyOffset, finalPolyLen, indices[i]
+                        ) != rowEvals[i]
+                ) {
+                    revert StirConstraintFailed(i);
+                }
             }
         }
     }
@@ -1488,9 +1357,7 @@ library WhirVerifierCore4 {
         Constraint[] memory constraints,
         uint256[] memory allRandomness
     ) internal pure returns (uint256 acc) {
-        FixedConstraint[] memory fixedConstraints = new FixedConstraint[](
-            constraints.length
-        );
+        FixedConstraint[] memory fixedConstraints = new FixedConstraint[](constraints.length);
         unchecked {
             for (uint256 i = 0; i < constraints.length; ++i) {
                 fixedConstraints[i] = FixedConstraint({
@@ -1500,16 +1367,15 @@ library WhirVerifierCore4 {
                 });
             }
         }
-        return
-            _evaluateConstraintsFixedSelectRaw(
-                constraints[0].challenge,
-                fixedConstraints[0].eqFlatPoints,
-                fixedConstraints[0].selVars,
-                constraints[1].challenge,
-                fixedConstraints[1].eqFlatPoints,
-                fixedConstraints[1].selVars,
-                allRandomness
-            );
+        return _evaluateConstraintsFixedSelectRaw(
+            constraints[0].challenge,
+            fixedConstraints[0].eqFlatPoints,
+            fixedConstraints[0].selVars,
+            constraints[1].challenge,
+            fixedConstraints[1].eqFlatPoints,
+            fixedConstraints[1].selVars,
+            allRandomness
+        );
     }
 
     function _evaluateConstraintsFixedSelectRaw(
@@ -1523,18 +1389,42 @@ library WhirVerifierCore4 {
     ) internal pure returns (uint256 acc) {
         acc = KoalaBearExt4.add(
             _evaluateConstraint12SelectRaw(
-                round0Challenge,
-                round0EqFlatPoints,
-                round0SelVars,
-                allRandomness
+                round0Challenge, round0EqFlatPoints, round0SelVars, allRandomness
             ),
             _evaluateConstraint8SelectRaw(
-                round1Challenge,
-                round1EqFlatPoints,
-                round1SelVars,
-                allRandomness
+                round1Challenge, round1EqFlatPoints, round1SelVars, allRandomness
             )
         );
+    }
+
+    function _evaluateConstraintGenericRaw(
+        uint256 challenge,
+        uint256[] memory flatPoints,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 numVariables = flatPoints.length / 2;
+        uint256 eqCount = numVariables == 0 ? 0 : flatPoints.length / numVariables;
+        uint256 pointOffset = fullPoint.length - numVariables;
+
+        unchecked {
+            for (uint256 i = selVars.length; i > 0; --i) {
+                total = _hornerStep(
+                    total,
+                    challenge,
+                    _selectPolyEvalAtTail(selVars[i - 1], fullPoint, pointOffset, numVariables)
+                );
+            }
+            for (uint256 i = eqCount; i > 0; --i) {
+                total = _hornerStep(
+                    total,
+                    challenge,
+                    _eqPolyEvalAt(
+                        flatPoints, (i - 1) * numVariables, fullPoint, pointOffset, numVariables
+                    )
+                );
+            }
+        }
     }
 
     function _evaluateConstraint12SelectRaw(
@@ -1555,10 +1445,7 @@ library WhirVerifierCore4 {
         }
         unchecked {
             for (uint256 i = 9; i > 0; --i) {
-                uint256 weight = _selectPolyEvalAt12At4(
-                    selVars[i - 1],
-                    fullPoint
-                );
+                uint256 weight = _selectPolyEvalAt12At4(selVars[i - 1], fullPoint);
                 assembly ("memory-safe") {
                     let M := 0x7f000001
                     let m := 0xffffffff
@@ -1574,73 +1461,56 @@ library WhirVerifierCore4 {
                     let w2 := and(shr(160, weight), m)
                     let w3 := and(shr(128, weight), m)
 
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
+                    let r0 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
+                                    mul(a0, ch0),
+                                    mul(W, add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1)))
                                 ),
-                                mul(W, mul(a3, ch3))
+                                w0
                             ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
+                            M
+                        )
+                    let r1 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
                                 ),
-                                mul(a3, ch0)
+                                w1
                             ),
-                            w3
-                        ),
-                        M
-                    )
+                            M
+                        )
+                    let r2 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                    let r3 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
 
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
+                    total := or(or(shl(224, r0), shl(192, r1)), or(shl(160, r2), shl(128, r3)))
                 }
             }
             for (uint256 i = 2; i > 0; --i) {
-                uint256 weight = _eqPolyEvalAt(
-                    flatPoints,
-                    (i - 1) * 12,
-                    fullPoint,
-                    4,
-                    12
-                );
+                uint256 weight = _eqPolyEvalAt(flatPoints, (i - 1) * 12, fullPoint, 4, 12);
                 assembly ("memory-safe") {
                     let M := 0x7f000001
                     let m := 0xffffffff
@@ -1656,63 +1526,52 @@ library WhirVerifierCore4 {
                     let w2 := and(shr(160, weight), m)
                     let w3 := and(shr(128, weight), m)
 
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
+                    let r0 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
+                                    mul(a0, ch0),
+                                    mul(W, add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1)))
                                 ),
-                                mul(W, mul(a3, ch3))
+                                w0
                             ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
+                            M
+                        )
+                    let r1 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
                                 ),
-                                mul(a3, ch0)
+                                w1
                             ),
-                            w3
-                        ),
-                        M
-                    )
+                            M
+                        )
+                    let r2 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                    let r3 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
 
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
+                    total := or(or(shl(224, r0), shl(192, r1)), or(shl(160, r2), shl(128, r3)))
                 }
             }
         }
@@ -1736,10 +1595,7 @@ library WhirVerifierCore4 {
         }
         unchecked {
             for (uint256 i = 6; i > 0; --i) {
-                uint256 weight = _selectPolyEvalAt8At8(
-                    selVars[i - 1],
-                    fullPoint
-                );
+                uint256 weight = _selectPolyEvalAt8At8(selVars[i - 1], fullPoint);
                 assembly ("memory-safe") {
                     let M := 0x7f000001
                     let m := 0xffffffff
@@ -1755,73 +1611,56 @@ library WhirVerifierCore4 {
                     let w2 := and(shr(160, weight), m)
                     let w3 := and(shr(128, weight), m)
 
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
+                    let r0 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
+                                    mul(a0, ch0),
+                                    mul(W, add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1)))
                                 ),
-                                mul(W, mul(a3, ch3))
+                                w0
                             ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
+                            M
+                        )
+                    let r1 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
                                 ),
-                                mul(a3, ch0)
+                                w1
                             ),
-                            w3
-                        ),
-                        M
-                    )
+                            M
+                        )
+                    let r2 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                    let r3 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
 
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
+                    total := or(or(shl(224, r0), shl(192, r1)), or(shl(160, r2), shl(128, r3)))
                 }
             }
             for (uint256 i = 2; i > 0; --i) {
-                uint256 weight = _eqPolyEvalAt(
-                    flatPoints,
-                    (i - 1) * 8,
-                    fullPoint,
-                    8,
-                    8
-                );
+                uint256 weight = _eqPolyEvalAt(flatPoints, (i - 1) * 8, fullPoint, 8, 8);
                 assembly ("memory-safe") {
                     let M := 0x7f000001
                     let m := 0xffffffff
@@ -1837,63 +1676,52 @@ library WhirVerifierCore4 {
                     let w2 := and(shr(160, weight), m)
                     let w3 := and(shr(128, weight), m)
 
-                    let r0 := mod(
-                        add(
-                            add(
-                                mul(a0, ch0),
-                                mul(
-                                    W,
-                                    add(
-                                        add(mul(a1, ch3), mul(a2, ch2)),
-                                        mul(a3, ch1)
-                                    )
-                                )
-                            ),
-                            w0
-                        ),
-                        M
-                    )
-                    let r1 := mod(
-                        add(
-                            add(
-                                add(mul(a0, ch1), mul(a1, ch0)),
-                                mul(W, add(mul(a2, ch3), mul(a3, ch2)))
-                            ),
-                            w1
-                        ),
-                        M
-                    )
-                    let r2 := mod(
-                        add(
+                    let r0 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch2), mul(a1, ch1)),
-                                    mul(a2, ch0)
+                                    mul(a0, ch0),
+                                    mul(W, add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1)))
                                 ),
-                                mul(W, mul(a3, ch3))
+                                w0
                             ),
-                            w2
-                        ),
-                        M
-                    )
-                    let r3 := mod(
-                        add(
+                            M
+                        )
+                    let r1 :=
+                        mod(
                             add(
                                 add(
-                                    add(mul(a0, ch3), mul(a1, ch2)),
-                                    mul(a2, ch1)
+                                    add(mul(a0, ch1), mul(a1, ch0)),
+                                    mul(W, add(mul(a2, ch3), mul(a3, ch2)))
                                 ),
-                                mul(a3, ch0)
+                                w1
                             ),
-                            w3
-                        ),
-                        M
-                    )
+                            M
+                        )
+                    let r2 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                                    mul(W, mul(a3, ch3))
+                                ),
+                                w2
+                            ),
+                            M
+                        )
+                    let r3 :=
+                        mod(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
+                                    mul(a3, ch0)
+                                ),
+                                w3
+                            ),
+                            M
+                        )
 
-                    total := or(
-                        or(shl(224, r0), shl(192, r1)),
-                        or(shl(160, r2), shl(128, r3))
-                    )
+                    total := or(or(shl(224, r0), shl(192, r1)), or(shl(160, r2), shl(128, r3)))
                 }
             }
         }
@@ -1940,82 +1768,53 @@ library WhirVerifierCore4 {
                 let q3 := and(shr(128, q), m)
 
                 // pq = p * q  (schoolbook ext4, X^4 - 3)
-                let pq0 := add(
-                    mul(p0, q0),
-                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
-                )
-                let pq1 := add(
-                    add(mul(p0, q1), mul(p1, q0)),
-                    mul(W, add(mul(p2, q3), mul(p3, q2)))
-                )
-                let pq2 := add(
-                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
-                    mul(W, mul(p3, q3))
-                )
-                let pq3 := add(
-                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
-                    mul(p3, q0)
-                )
+                let pq0 := add(mul(p0, q0), mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1))))
+                let pq1 := add(add(mul(p0, q1), mul(p1, q0)), mul(W, add(mul(p2, q3), mul(p3, q2))))
+                let pq2 := add(add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)), mul(W, mul(p3, q3)))
+                let pq3 := add(add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)), mul(p3, q0))
 
                 // t = 2*pq + 1 - p - q  (lane 0 gets +1)
                 // Use 2*M as bias to avoid underflow.
                 // mod is intentionally omitted: t_i < 2^67 and the subsequent
                 // schoolbook acc*t products (< 2^31 * 2^67 = 2^98) fit in
                 // uint256.  The final mod on acc gives the correct result.
-                let t0 := sub(
-                    add(add(pq0, pq0), add(0xfe000002, 1)),
-                    add(p0, q0)
-                )
+                let t0 := sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0))
                 let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
                 let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
                 let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
                 // acc = acc * t  (schoolbook ext4)
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    M
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    M
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    M
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    M
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        M
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        M
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        M
+                    )
+                let n3 := mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), M)
                 a0 := n0
                 a1 := n1
                 a2 := n2
                 a3 := n3
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
         }
     }
 
-    function _selectPolyEvalAt12At4(
-        uint256 var_,
-        uint256[] memory fullPoint
-    ) internal pure returns (uint256 acc) {
+    function _selectPolyEvalAt12At4(uint256 var_, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
@@ -2049,34 +1848,23 @@ library WhirVerifierCore4 {
                 let t2 := mul(scalar, p2)
                 let t3 := mul(scalar, p3)
 
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    modulus
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    modulus
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    modulus
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    modulus
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        modulus
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        modulus
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        modulus
+                    )
+                let n3 :=
+                    mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), modulus)
 
                 a0 := n0
                 a1 := n1
@@ -2085,17 +1873,15 @@ library WhirVerifierCore4 {
                 current := mulmod(current, current, modulus)
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
         }
     }
 
-    function _selectPolyEvalAt8At8(
-        uint256 var_,
-        uint256[] memory fullPoint
-    ) internal pure returns (uint256 acc) {
+    function _selectPolyEvalAt8At8(uint256 var_, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
@@ -2129,34 +1915,23 @@ library WhirVerifierCore4 {
                 let t2 := mul(scalar, p2)
                 let t3 := mul(scalar, p3)
 
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    modulus
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    modulus
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    modulus
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    modulus
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        modulus
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        modulus
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        modulus
+                    )
+                let n3 :=
+                    mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), modulus)
 
                 a0 := n0
                 a1 := n1
@@ -2165,10 +1940,31 @@ library WhirVerifierCore4 {
                 current := mulmod(current, current, modulus)
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
+        }
+    }
+
+    function _selectPolyEvalAtTail(
+        uint256 var_,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = EXT4_ONE;
+        uint256 current = var_;
+
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 pointValue = fullPoint[pointOffset + i - 1];
+                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                uint256 term = scalar == 0
+                    ? EXT4_ONE
+                    : KoalaBearExt4.add(
+                        EXT4_ONE, KoalaBearExt4.mul(pointValue, KoalaBearExt4.fromBase(scalar))
+                    );
+                acc = KoalaBearExt4.mul(acc, term);
+                current = mulmod(current, current, KoalaBear.MODULUS);
+            }
         }
     }
 
@@ -2215,73 +2011,43 @@ library WhirVerifierCore4 {
                 let q3 := and(shr(128, q), m)
 
                 // pq = p * q  (schoolbook ext4, X^4 - 3)
-                let pq0 := add(
-                    mul(p0, q0),
-                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
-                )
-                let pq1 := add(
-                    add(mul(p0, q1), mul(p1, q0)),
-                    mul(W, add(mul(p2, q3), mul(p3, q2)))
-                )
-                let pq2 := add(
-                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
-                    mul(W, mul(p3, q3))
-                )
-                let pq3 := add(
-                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
-                    mul(p3, q0)
-                )
+                let pq0 := add(mul(p0, q0), mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1))))
+                let pq1 := add(add(mul(p0, q1), mul(p1, q0)), mul(W, add(mul(p2, q3), mul(p3, q2))))
+                let pq2 := add(add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)), mul(W, mul(p3, q3)))
+                let pq3 := add(add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)), mul(p3, q0))
 
                 // t = 2*pq + 1 - p - q  (lane 0 gets +1)
                 // Use 2*M as bias to avoid underflow.
                 // mod is intentionally omitted (see _eqPolyEvalAt).
-                let t0 := sub(
-                    add(add(pq0, pq0), add(0xfe000002, 1)),
-                    add(p0, q0)
-                )
+                let t0 := sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0))
                 let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
                 let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
                 let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
                 // acc = acc * t  (schoolbook ext4)
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    M
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    M
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    M
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    M
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        M
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        M
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        M
+                    )
+                let n3 := mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), M)
                 a0 := n0
                 a1 := n1
                 a2 := n2
                 a3 := n3
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
         }
     }
 
@@ -2327,69 +2093,39 @@ library WhirVerifierCore4 {
                 let q2 := and(shr(160, q), m)
                 let q3 := and(shr(128, q), m)
 
-                let pq0 := add(
-                    mul(p0, q0),
-                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
-                )
-                let pq1 := add(
-                    add(mul(p0, q1), mul(p1, q0)),
-                    mul(W, add(mul(p2, q3), mul(p3, q2)))
-                )
-                let pq2 := add(
-                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
-                    mul(W, mul(p3, q3))
-                )
-                let pq3 := add(
-                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
-                    mul(p3, q0)
-                )
+                let pq0 := add(mul(p0, q0), mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1))))
+                let pq1 := add(add(mul(p0, q1), mul(p1, q0)), mul(W, add(mul(p2, q3), mul(p3, q2))))
+                let pq2 := add(add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)), mul(W, mul(p3, q3)))
+                let pq3 := add(add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)), mul(p3, q0))
 
-                let t0 := sub(
-                    add(add(pq0, pq0), add(0xfe000002, 1)),
-                    add(p0, q0)
-                )
+                let t0 := sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0))
                 let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
                 let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
                 let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    M
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    M
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    M
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    M
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        M
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        M
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        M
+                    )
+                let n3 := mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), M)
                 a0 := n0
                 a1 := n1
                 a2 := n2
                 a3 := n3
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
         }
     }
 
@@ -2420,10 +2156,7 @@ library WhirVerifierCore4 {
             } {
                 let poff := shl(4, i)
                 let foff := shl(5, i)
-                let p := and(
-                    calldataload(add(pointBase, poff)),
-                    not(sub(shl(128, 1), 1))
-                )
+                let p := and(calldataload(add(pointBase, poff)), not(sub(shl(128, 1), 1)))
                 let q := mload(add(fullBase, foff))
 
                 let p0 := shr(224, p)
@@ -2436,69 +2169,39 @@ library WhirVerifierCore4 {
                 let q2 := and(shr(160, q), m)
                 let q3 := and(shr(128, q), m)
 
-                let pq0 := add(
-                    mul(p0, q0),
-                    mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1)))
-                )
-                let pq1 := add(
-                    add(mul(p0, q1), mul(p1, q0)),
-                    mul(W, add(mul(p2, q3), mul(p3, q2)))
-                )
-                let pq2 := add(
-                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
-                    mul(W, mul(p3, q3))
-                )
-                let pq3 := add(
-                    add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)),
-                    mul(p3, q0)
-                )
+                let pq0 := add(mul(p0, q0), mul(W, add(add(mul(p1, q3), mul(p2, q2)), mul(p3, q1))))
+                let pq1 := add(add(mul(p0, q1), mul(p1, q0)), mul(W, add(mul(p2, q3), mul(p3, q2))))
+                let pq2 := add(add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)), mul(W, mul(p3, q3)))
+                let pq3 := add(add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)), mul(p3, q0))
 
-                let t0 := sub(
-                    add(add(pq0, pq0), add(0xfe000002, 1)),
-                    add(p0, q0)
-                )
+                let t0 := sub(add(add(pq0, pq0), add(0xfe000002, 1)), add(p0, q0))
                 let t1 := sub(add(add(pq1, pq1), 0xfe000002), add(p1, q1))
                 let t2 := sub(add(add(pq2, pq2), 0xfe000002), add(p2, q2))
                 let t3 := sub(add(add(pq3, pq3), 0xfe000002), add(p3, q3))
 
-                let n0 := mod(
-                    add(
-                        mul(a0, t0),
-                        mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))
-                    ),
-                    M
-                )
-                let n1 := mod(
-                    add(
-                        add(mul(a0, t1), mul(a1, t0)),
-                        mul(W, add(mul(a2, t3), mul(a3, t2)))
-                    ),
-                    M
-                )
-                let n2 := mod(
-                    add(
-                        add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                        mul(W, mul(a3, t3))
-                    ),
-                    M
-                )
-                let n3 := mod(
-                    add(
-                        add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)),
-                        mul(a3, t0)
-                    ),
-                    M
-                )
+                let n0 :=
+                    mod(
+                        add(mul(a0, t0), mul(W, add(add(mul(a1, t3), mul(a2, t2)), mul(a3, t1)))),
+                        M
+                    )
+                let n1 :=
+                    mod(
+                        add(add(mul(a0, t1), mul(a1, t0)), mul(W, add(mul(a2, t3), mul(a3, t2)))),
+                        M
+                    )
+                let n2 :=
+                    mod(
+                        add(add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)), mul(W, mul(a3, t3))),
+                        M
+                    )
+                let n3 := mod(add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)), M)
                 a0 := n0
                 a1 := n1
                 a2 := n2
                 a3 := n3
             }
 
-            acc := or(
-                or(shl(224, a0), shl(192, a1)),
-                or(shl(160, a2), shl(128, a3))
-            )
+            acc := or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3)))
         }
     }
 
@@ -2509,13 +2212,9 @@ library WhirVerifierCore4 {
         if (finalSumcheckRandomness.length == 0) {
             return finalPoly[0];
         }
-        return
-            WhirVerifierUtils4.evaluateExtensionRowAsExt4(
-                finalPoly,
-                0,
-                finalPoly.length,
-                finalSumcheckRandomness
-            );
+        return WhirVerifierUtils4.evaluateExtensionRowAsExt4(
+            finalPoly, 0, finalPoly.length, finalSumcheckRandomness
+        );
     }
 
     function _evaluateFinalValueMemory(
@@ -2525,18 +2224,14 @@ library WhirVerifierCore4 {
         if (finalSumcheckRandomness.length == 0) {
             return finalPoly[0];
         }
-        return
-            KoalaBearExt4.evaluate_hypercube(
-                finalPoly,
-                finalSumcheckRandomness
-            );
+        return KoalaBearExt4.evaluate_hypercube(finalPoly, finalSumcheckRandomness);
     }
 
-    function _hornerStep(
-        uint256 total,
-        uint256 challenge,
-        uint256 weight
-    ) internal pure returns (uint256 updated) {
+    function _hornerStep(uint256 total, uint256 challenge, uint256 weight)
+        internal
+        pure
+        returns (uint256 updated)
+    {
         assembly ("memory-safe") {
             let M := 0x7f000001
             let m := 0xffffffff
@@ -2557,54 +2252,46 @@ library WhirVerifierCore4 {
             let w2 := and(shr(160, weight), m)
             let w3 := and(shr(128, weight), m)
 
-            let r0 := mod(
-                add(
+            let r0 :=
+                mod(
                     add(
-                        mul(a0, ch0),
-                        mul(
-                            W,
-                            add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1))
-                        )
+                        add(
+                            mul(a0, ch0),
+                            mul(W, add(add(mul(a1, ch3), mul(a2, ch2)), mul(a3, ch1)))
+                        ),
+                        w0
                     ),
-                    w0
-                ),
-                M
-            )
-            let r1 := mod(
-                add(
+                    M
+                )
+            let r1 :=
+                mod(
                     add(
-                        add(mul(a0, ch1), mul(a1, ch0)),
-                        mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                        add(
+                            add(mul(a0, ch1), mul(a1, ch0)),
+                            mul(W, add(mul(a2, ch3), mul(a3, ch2)))
+                        ),
+                        w1
                     ),
-                    w1
-                ),
-                M
-            )
-            let r2 := mod(
-                add(
+                    M
+                )
+            let r2 :=
+                mod(
                     add(
-                        add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
-                        mul(W, mul(a3, ch3))
+                        add(
+                            add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                            mul(W, mul(a3, ch3))
+                        ),
+                        w2
                     ),
-                    w2
-                ),
-                M
-            )
-            let r3 := mod(
-                add(
-                    add(
-                        add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)),
-                        mul(a3, ch0)
-                    ),
-                    w3
-                ),
-                M
-            )
+                    M
+                )
+            let r3 :=
+                mod(
+                    add(add(add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)), mul(a3, ch0)), w3),
+                    M
+                )
 
-            updated := or(
-                or(shl(224, r0), shl(192, r1)),
-                or(shl(160, r2), shl(128, r3))
-            )
+            updated := or(or(shl(224, r0), shl(192, r1)), or(shl(160, r2), shl(128, r3)))
         }
     }
 }

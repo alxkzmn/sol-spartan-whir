@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {MerkleVerifier} from "../../src/merkle/MerkleVerifier.sol";
+import { MerkleVerifier } from "../../src/merkle/MerkleVerifier.sol";
 
 contract MerkleHarness {
-    function hashLeafBase(
-        uint256[] calldata values,
-        uint256 effectiveDigestBytes
-    ) external pure returns (bytes32) {
+    function hashLeafBase(uint256[] calldata values, uint256 effectiveDigestBytes)
+        external
+        pure
+        returns (bytes32)
+    {
         return MerkleVerifier.hashLeafBase(values, effectiveDigestBytes);
     }
 
@@ -17,20 +18,14 @@ contract MerkleHarness {
         uint256 rowLen,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
-        return
-            MerkleVerifier.hashLeafExtensionSlice(
-                values,
-                start,
-                rowLen,
-                effectiveDigestBytes
-            );
+        return MerkleVerifier.hashLeafExtensionSlice(values, start, rowLen, effectiveDigestBytes);
     }
 
-    function compressNode(
-        bytes32 left,
-        bytes32 right,
-        uint256 effectiveDigestBytes
-    ) external pure returns (bytes32) {
+    function compressNode(bytes32 left, bytes32 right, uint256 effectiveDigestBytes)
+        external
+        pure
+        returns (bytes32)
+    {
         return MerkleVerifier.compressNode(left, right, effectiveDigestBytes);
     }
 
@@ -41,14 +36,9 @@ contract MerkleHarness {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
-        return
-            MerkleVerifier.computeRootFromLeafHashes(
-                indices,
-                leafHashes,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return MerkleVerifier.computeRootFromLeafHashes(
+            indices, leafHashes, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function computeRootFromBaseRows(
@@ -58,14 +48,9 @@ contract MerkleHarness {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bytes32) {
-        return
-            MerkleVerifier.computeRootFromBaseRows(
-                indices,
-                openedRows,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return MerkleVerifier.computeRootFromBaseRows(
+            indices, openedRows, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function verifyBaseRows(
@@ -76,14 +61,8 @@ contract MerkleHarness {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) external pure returns (bool) {
-        return
-            MerkleVerifier.verifyBaseRows(
-                expectedRoot,
-                indices,
-                openedRows,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return MerkleVerifier.verifyBaseRows(
+            expectedRoot, indices, openedRows, depth, decommitments, effectiveDigestBytes
+        );
     }
 }

@@ -26,16 +26,11 @@ library KoalaBear {
         return mulmod(a, b, MODULUS);
     }
 
-    function pow(
-        uint256 a,
-        uint256 exponent
-    ) internal pure returns (uint256 result) {
+    function pow(uint256 a, uint256 exponent) internal pure returns (uint256 result) {
         assembly {
             result := 1
             let m := 0x7f000001
-            for {
-
-            } gt(exponent, 0) {
+            for { } gt(exponent, 0) {
                 exponent := shr(1, exponent)
             } {
                 if and(exponent, 1) {

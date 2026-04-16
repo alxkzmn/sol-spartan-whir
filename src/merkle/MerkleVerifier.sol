@@ -18,10 +18,11 @@ library MerkleVerifier {
     error FieldElementOutOfRange(uint256 value);
     error InvalidEffectiveDigestBytes(uint256 value);
 
-    function hashLeafBase(
-        uint256[] calldata values,
-        uint256 effectiveDigestBytes
-    ) internal pure returns (bytes32 digest) {
+    function hashLeafBase(uint256[] calldata values, uint256 effectiveDigestBytes)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let len := values.length
             let size := add(1, shl(2, len))
@@ -33,18 +34,13 @@ library MerkleVerifier {
             let src := values.offset
             let dst := add(ptr, 1)
             let end := add(src, shl(5, len))
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 4)
             } {
                 let v := calldataload(src)
                 if iszero(lt(v, modulus)) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, v)
                     revert(0x00, 0x24)
                 }
@@ -57,11 +53,11 @@ library MerkleVerifier {
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
-    function compressNode(
-        bytes32 left,
-        bytes32 right,
-        uint256 effectiveDigestBytes
-    ) internal pure returns (bytes32 digest) {
+    function compressNode(bytes32 left, bytes32 right, uint256 effectiveDigestBytes)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore8(ptr, 0x01)
@@ -72,10 +68,7 @@ library MerkleVerifier {
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
-    function compressNode20(
-        bytes32 left,
-        bytes32 right
-    ) internal pure returns (bytes32 digest) {
+    function compressNode20(bytes32 left, bytes32 right) internal pure returns (bytes32 digest) {
         assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore8(ptr, 0x01)
@@ -102,18 +95,13 @@ library MerkleVerifier {
             let src := add(values.offset, shl(5, start))
             let dst := add(ptr, 1)
             let end := add(src, shl(5, rowLen))
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 4)
             } {
                 let v := calldataload(src)
                 if iszero(lt(v, modulus)) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, v)
                     revert(0x00, 0x24)
                 }
@@ -126,11 +114,11 @@ library MerkleVerifier {
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
-    function hashLeafBaseSlice20(
-        uint256[] calldata values,
-        uint256 start,
-        uint256 rowLen
-    ) internal pure returns (bytes32 digest) {
+    function hashLeafBaseSlice20(uint256[] calldata values, uint256 start, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let size := add(1, shl(2, rowLen))
             let ptr := mload(0x40)
@@ -141,18 +129,13 @@ library MerkleVerifier {
             let src := add(values.offset, shl(5, start))
             let dst := add(ptr, 1)
             let end := add(src, shl(5, rowLen))
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 4)
             } {
                 let v := calldataload(src)
                 if iszero(lt(v, modulus)) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, v)
                     revert(0x00, 0x24)
                 }
@@ -180,9 +163,7 @@ library MerkleVerifier {
             let src := add(values.offset, shl(5, start))
             let dst := add(ptr, 1)
             let end := add(src, shl(5, rowLen))
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 0x10)
             } {
@@ -195,10 +176,7 @@ library MerkleVerifier {
                     or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
                     or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
                 ) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)
                     revert(0x00, 0x24)
                 }
@@ -211,11 +189,11 @@ library MerkleVerifier {
         return _maskDigestTail(digest, effectiveDigestBytes);
     }
 
-    function hashLeafExtensionSlice20(
-        uint256[] calldata values,
-        uint256 start,
-        uint256 rowLen
-    ) internal pure returns (bytes32 digest) {
+    function hashLeafExtensionSlice20(uint256[] calldata values, uint256 start, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let size := add(1, shl(4, rowLen))
             let ptr := mload(0x40)
@@ -227,9 +205,7 @@ library MerkleVerifier {
             let src := add(values.offset, shl(5, start))
             let dst := add(ptr, 1)
             let end := add(src, shl(5, rowLen))
-            for {
-
-            } lt(src, end) {
+            for { } lt(src, end) {
                 src := add(src, 0x20)
                 dst := add(dst, 0x10)
             } {
@@ -242,10 +218,7 @@ library MerkleVerifier {
                     or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
                     or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
                 ) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)
                     revert(0x00, 0x24)
                 }
@@ -263,14 +236,9 @@ library MerkleVerifier {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bytes32) {
-        return
-            _computeRootFromLeafHashes(
-                _copyIndices(indices),
-                leafHashes,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return _computeRootFromLeafHashes(
+            _copyIndices(indices), leafHashes, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function computeRootFromFlatBaseRows(
@@ -289,23 +257,14 @@ library MerkleVerifier {
         bytes32[] memory leafHashes = new bytes32[](indices.length);
         unchecked {
             for (uint256 i = 0; i < indices.length; ++i) {
-                leafHashes[i] = hashLeafBaseSlice(
-                    flatValues,
-                    i * rowLen,
-                    rowLen,
-                    effectiveDigestBytes
-                );
+                leafHashes[i] =
+                    hashLeafBaseSlice(flatValues, i * rowLen, rowLen, effectiveDigestBytes);
             }
         }
 
-        return
-            _computeRootFromLeafHashes(
-                indices,
-                leafHashes,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return _computeRootFromLeafHashes(
+            indices, leafHashes, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function computeRootFromFlatBaseRows20(
@@ -319,15 +278,7 @@ library MerkleVerifier {
         if (flatValues.length != expected) {
             revert FlattenedRowLengthMismatch(flatValues.length, expected);
         }
-        return
-            _computeRootFromFlatRows20(
-                indices,
-                flatValues,
-                rowLen,
-                depth,
-                decommitments,
-                false
-            );
+        return _computeRootFromFlatRows20(indices, flatValues, rowLen, depth, decommitments, false);
     }
 
     function computeRootFromFlatExtensionRows(
@@ -346,23 +297,14 @@ library MerkleVerifier {
         bytes32[] memory leafHashes = new bytes32[](indices.length);
         unchecked {
             for (uint256 i = 0; i < indices.length; ++i) {
-                leafHashes[i] = hashLeafExtensionSlice(
-                    flatValues,
-                    i * rowLen,
-                    rowLen,
-                    effectiveDigestBytes
-                );
+                leafHashes[i] =
+                    hashLeafExtensionSlice(flatValues, i * rowLen, rowLen, effectiveDigestBytes);
             }
         }
 
-        return
-            _computeRootFromLeafHashes(
-                indices,
-                leafHashes,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return _computeRootFromLeafHashes(
+            indices, leafHashes, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function computeRootFromFlatExtensionRows20(
@@ -376,15 +318,7 @@ library MerkleVerifier {
         if (flatValues.length != expected) {
             revert FlattenedRowLengthMismatch(flatValues.length, expected);
         }
-        return
-            _computeRootFromFlatRows20(
-                indices,
-                flatValues,
-                rowLen,
-                depth,
-                decommitments,
-                true
-            );
+        return _computeRootFromFlatRows20(indices, flatValues, rowLen, depth, decommitments, true);
     }
 
     function computeRootFromFlatBaseRows20Blob(
@@ -397,27 +331,18 @@ library MerkleVerifier {
         uint256 decommLen
     ) internal pure returns (bytes32) {
         if (rowLen == 16) {
-            return
-                _computeRootFromFlatBaseRows20Blob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen
-                );
-        }
-        return
-            _computeRootFromFlatRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen,
-                false
+            return _computeRootFromFlatBaseRows20Blob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen
             );
+        }
+        if (rowLen == 32) {
+            return _computeRootFromFlatBaseRows20Blob32(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen
+            );
+        }
+        return _computeRootFromFlatRows20Blob(
+            indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen, false
+        );
     }
 
     function computeRootFromFlatExtensionRows20Blob(
@@ -430,27 +355,18 @@ library MerkleVerifier {
         uint256 decommLen
     ) internal pure returns (bytes32) {
         if (rowLen == 16) {
-            return
-                _computeRootFromFlatExtensionRows20Blob16(
-                    indices,
-                    blob,
-                    valuesOffset,
-                    depth,
-                    decommOffset,
-                    decommLen
-                );
-        }
-        return
-            _computeRootFromFlatRows20Blob(
-                indices,
-                blob,
-                valuesOffset,
-                rowLen,
-                depth,
-                decommOffset,
-                decommLen,
-                true
+            return _computeRootFromFlatExtensionRows20Blob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen
             );
+        }
+        if (rowLen == 32) {
+            return _computeRootFromFlatExtensionRows20Blob32(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen
+            );
+        }
+        return _computeRootFromFlatRows20Blob(
+            indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen, true
+        );
     }
 
     function _computeRootFromLeafHashes(
@@ -467,9 +383,7 @@ library MerkleVerifier {
         uint256 keep = _validateEffectiveDigestBytes(effectiveDigestBytes);
         uint256 digestMask;
         unchecked {
-            digestMask = keep == 32
-                ? type(uint256).max
-                : (type(uint256).max << ((32 - keep) * 8));
+            digestMask = keep == 32 ? type(uint256).max : (type(uint256).max << ((32 - keep) * 8));
         }
 
         // Assembly-optimized frontier-swap Merkle reduction with configurable
@@ -519,11 +433,7 @@ library MerkleVerifier {
                 let ep := frontier
                 let frontierEnd := add(frontier, mul(frontierLen, entrySize))
                 let nextPtr := nextBuf
-                for {
-
-                } lt(ep, frontierEnd) {
-
-                } {
+                for { } lt(ep, frontierEnd) { } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
                     let parentHash
@@ -535,14 +445,8 @@ library MerkleVerifier {
                         if lt(nep, frontierEnd) {
                             if eq(mload(nep), add(node, 1)) {
                                 mstore(add(scratch, 1), hash)
-                                mstore(
-                                    add(scratch, 0x21),
-                                    mload(add(nep, 0x20))
-                                )
-                                parentHash := and(
-                                    keccak256(scratch, 65),
-                                    digestMask
-                                )
+                                mstore(add(scratch, 0x21), mload(add(nep, 0x20)))
+                                parentHash := and(keccak256(scratch, 65), digestMask)
                                 ep := add(nep, entrySize)
                                 merged := 1
                             }
@@ -560,9 +464,7 @@ library MerkleVerifier {
                             mstore(0x24, decommLen)
                             revert(0x00, 0x44)
                         }
-                        let sibling := calldataload(
-                            add(decommitments.offset, shl(5, decommCursor))
-                        )
+                        let sibling := calldataload(add(decommitments.offset, shl(5, decommCursor)))
                         decommCursor := add(decommCursor, 1)
                         ep := add(ep, entrySize)
 
@@ -603,10 +505,7 @@ library MerkleVerifier {
 
             if iszero(eq(decommCursor, decommLen)) {
                 // revert TrailingDecommitments(decommCursor, decommLen)
-                mstore(
-                    0x00,
-                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0xb48ec3d200000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, decommCursor)
                 mstore(0x24, decommLen)
                 revert(0x00, 0x44)
@@ -618,10 +517,7 @@ library MerkleVerifier {
                 if gt(frontierLen, 0) {
                     idx := mload(frontier)
                 }
-                mstore(
-                    0x00,
-                    0x1d72965600000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0x1d72965600000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, frontierLen)
                 mstore(0x24, idx)
                 revert(0x00, 0x44)
@@ -672,13 +568,7 @@ library MerkleVerifier {
             }
         }
 
-        return
-            _computeRootFromFrontier20(
-                frontier,
-                indices.length,
-                depth,
-                decommitments
-            );
+        return _computeRootFromFrontier20(frontier, indices.length, depth, decommitments);
     }
 
     function _computeRootFromFlatBaseRows20Blob16(
@@ -721,15 +611,54 @@ library MerkleVerifier {
             }
         }
 
-        return
-            _computeRootFromFrontier20Blob(
-                frontier,
-                indices.length,
-                depth,
-                blob,
-                decommOffset,
-                decommLen
-            );
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeRootFromFlatBaseRows20Blob32(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 128;
+                bytes32 hash = hashLeafBaseSlice20Blob(blob, rowOffset, 32);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
     }
 
     function _computeRootFromFlatExtensionRows20Blob16(
@@ -762,11 +691,7 @@ library MerkleVerifier {
                 prevIdx = idx;
 
                 uint256 rowOffset = valuesOffset + i * 256;
-                bytes32 hash = hashLeafExtensionSlice20Blob(
-                    blob,
-                    rowOffset,
-                    16
-                );
+                bytes32 hash = hashLeafExtensionSlice20Blob(blob, rowOffset, 16);
 
                 assembly ("memory-safe") {
                     let dst := add(add(frontier, 0x20), shl(6, i))
@@ -776,15 +701,54 @@ library MerkleVerifier {
             }
         }
 
-        return
-            _computeRootFromFrontier20Blob(
-                frontier,
-                indices.length,
-                depth,
-                blob,
-                decommOffset,
-                decommLen
-            );
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeRootFromFlatExtensionRows20Blob32(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 512;
+                bytes32 hash = hashLeafExtensionSlice20Blob(blob, rowOffset, 32);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
     }
 
     function _computeRootFromFlatRows20Blob(
@@ -833,15 +797,9 @@ library MerkleVerifier {
             }
         }
 
-        return
-            _computeRootFromFrontier20Blob(
-                frontier,
-                indices.length,
-                depth,
-                blob,
-                decommOffset,
-                decommLen
-            );
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
     }
 
     function _computeRootFromFrontier20(
@@ -876,11 +834,7 @@ library MerkleVerifier {
                 let nextPtr := nextBuf
                 let lastParentIndex := 0
                 let hasLastParent := 0
-                for {
-
-                } lt(ep, frontierEnd) {
-
-                } {
+                for { } lt(ep, frontierEnd) { } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
                     let nodeIsRight := and(node, 1)
@@ -893,14 +847,8 @@ library MerkleVerifier {
                         if lt(nextReadPtr, frontierEnd) {
                             if eq(mload(nextReadPtr), add(node, 1)) {
                                 mstore(add(scratch, 1), hash)
-                                mstore(
-                                    add(scratch, 0x21),
-                                    mload(add(nextReadPtr, 0x20))
-                                )
-                                parentHash := and(
-                                    keccak256(scratch, 65),
-                                    digestMask
-                                )
+                                mstore(add(scratch, 0x21), mload(add(nextReadPtr, 0x20)))
+                                parentHash := and(keccak256(scratch, 65), digestMask)
                                 nextReadPtr := add(nextReadPtr, entrySize)
                                 merged := 1
                             }
@@ -915,10 +863,7 @@ library MerkleVerifier {
                                 0x00,
                                 0x90196ee300000000000000000000000000000000000000000000000000000000
                             )
-                            mstore(
-                                0x04,
-                                add(shr(5, sub(decommPtr, decommBase)), 1)
-                            )
+                            mstore(0x04, add(shr(5, sub(decommPtr, decommBase)), 1))
                             mstore(0x24, decommLen)
                             revert(0x00, 0x44)
                         }
@@ -939,10 +884,7 @@ library MerkleVerifier {
 
                     ep := nextReadPtr
                     let parentIndex := shr(1, node)
-                    let sameParent := and(
-                        hasLastParent,
-                        eq(lastParentIndex, parentIndex)
-                    )
+                    let sameParent := and(hasLastParent, eq(lastParentIndex, parentIndex))
 
                     // Dedup: if the previous entry had the same parent index,
                     // overwrite its hash in place instead of appending a new entry.
@@ -969,10 +911,7 @@ library MerkleVerifier {
             // Verify all decommitments consumed.
             if iszero(eq(decommPtr, decommEnd)) {
                 // revert TrailingDecommitments(consumed, decommLen)
-                mstore(
-                    0x00,
-                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0xb48ec3d200000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, shr(5, sub(decommPtr, decommBase)))
                 mstore(0x24, decommLen)
                 revert(0x00, 0x44)
@@ -985,10 +924,7 @@ library MerkleVerifier {
                 if gt(frontierLen, 0) {
                     idx := mload(frontier)
                 }
-                mstore(
-                    0x00,
-                    0x1d72965600000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0x1d72965600000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, frontierLen)
                 mstore(0x24, idx)
                 revert(0x00, 0x44)
@@ -1031,11 +967,7 @@ library MerkleVerifier {
                 let nextPtr := nextBuf
                 let lastParentIndex := 0
                 let hasLastParent := 0
-                for {
-
-                } lt(ep, frontierEnd) {
-
-                } {
+                for { } lt(ep, frontierEnd) { } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
                     let nodeIsRight := and(node, 1)
@@ -1047,14 +979,8 @@ library MerkleVerifier {
                         if lt(nextReadPtr, frontierEnd) {
                             if eq(mload(nextReadPtr), add(node, 1)) {
                                 mstore(add(scratch, 1), hash)
-                                mstore(
-                                    add(scratch, 0x21),
-                                    mload(add(nextReadPtr, 0x20))
-                                )
-                                parentHash := and(
-                                    keccak256(scratch, 65),
-                                    digestMask
-                                )
+                                mstore(add(scratch, 0x21), mload(add(nextReadPtr, 0x20)))
+                                parentHash := and(keccak256(scratch, 65), digestMask)
                                 nextReadPtr := add(nextReadPtr, entrySize)
                                 merged := 1
                             }
@@ -1067,10 +993,7 @@ library MerkleVerifier {
                                 0x00,
                                 0x90196ee300000000000000000000000000000000000000000000000000000000
                             )
-                            mstore(
-                                0x04,
-                                add(div(sub(decommPtr, decommBase), 20), 1)
-                            )
+                            mstore(0x04, add(div(sub(decommPtr, decommBase), 20), 1))
                             mstore(0x24, decommLen)
                             revert(0x00, 0x44)
                         }
@@ -1091,10 +1014,7 @@ library MerkleVerifier {
 
                     ep := nextReadPtr
                     let parentIndex := shr(1, node)
-                    let sameParent := and(
-                        hasLastParent,
-                        eq(lastParentIndex, parentIndex)
-                    )
+                    let sameParent := and(hasLastParent, eq(lastParentIndex, parentIndex))
                     if sameParent {
                         mstore(sub(nextPtr, 0x20), parentHash)
                     }
@@ -1115,10 +1035,7 @@ library MerkleVerifier {
             }
 
             if iszero(eq(decommPtr, decommEnd)) {
-                mstore(
-                    0x00,
-                    0xb48ec3d200000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0xb48ec3d200000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, div(sub(decommPtr, decommBase), 20))
                 mstore(0x24, decommLen)
                 revert(0x00, 0x44)
@@ -1129,10 +1046,7 @@ library MerkleVerifier {
                 if gt(frontierLen, 0) {
                     idx := mload(frontier)
                 }
-                mstore(
-                    0x00,
-                    0x1d72965600000000000000000000000000000000000000000000000000000000
-                )
+                mstore(0x00, 0x1d72965600000000000000000000000000000000000000000000000000000000)
                 mstore(0x04, frontierLen)
                 mstore(0x24, idx)
                 revert(0x00, 0x44)
@@ -1150,22 +1064,16 @@ library MerkleVerifier {
         uint256 decommOffset,
         uint256 decommLen
     ) internal pure returns (bytes32 root) {
-        return
-            _computeRootFromFrontier20Blob(
-                frontierBytes,
-                frontierLen,
-                depth,
-                blob,
-                decommOffset,
-                decommLen
-            );
+        return _computeRootFromFrontier20Blob(
+            frontierBytes, frontierLen, depth, blob, decommOffset, decommLen
+        );
     }
 
-    function hashLeafBaseSlice20Blob(
-        bytes calldata blob,
-        uint256 offset,
-        uint256 rowLen
-    ) internal pure returns (bytes32 digest) {
+    function hashLeafBaseSlice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let size := add(1, shl(2, rowLen))
             let ptr := mload(0x40)
@@ -1176,17 +1084,12 @@ library MerkleVerifier {
             let src := add(blob.offset, offset)
             let check := src
             let end := add(src, shl(2, rowLen))
-            for {
-
-            } lt(check, end) {
+            for { } lt(check, end) {
                 check := add(check, 4)
             } {
                 let v := shr(224, calldataload(check))
                 if iszero(lt(v, modulus)) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, v)
                     revert(0x00, 0x24)
                 }
@@ -1197,11 +1100,11 @@ library MerkleVerifier {
         }
     }
 
-    function hashLeafExtensionSlice20Blob(
-        bytes calldata blob,
-        uint256 offset,
-        uint256 rowLen
-    ) internal pure returns (bytes32 digest) {
+    function hashLeafExtensionSlice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         assembly ("memory-safe") {
             let size := add(1, shl(4, rowLen))
             let ptr := mload(0x40)
@@ -1213,9 +1116,7 @@ library MerkleVerifier {
             let src := add(blob.offset, offset)
             let check := src
             let end := add(src, shl(4, rowLen))
-            for {
-
-            } lt(check, end) {
+            for { } lt(check, end) {
                 check := add(check, 0x10)
             } {
                 let packed := and(calldataload(check), not(sub(shl(128, 1), 1)))
@@ -1227,10 +1128,7 @@ library MerkleVerifier {
                     or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
                     or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
                 ) {
-                    mstore(
-                        0x00,
-                        0xf512b67800000000000000000000000000000000000000000000000000000000
-                    )
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)
                     revert(0x00, 0x24)
                 }
@@ -1255,21 +1153,13 @@ library MerkleVerifier {
         bytes32[] memory leafHashes = new bytes32[](openedRows.length);
         unchecked {
             for (uint256 i = 0; i < openedRows.length; ++i) {
-                leafHashes[i] = hashLeafBase(
-                    openedRows[i],
-                    effectiveDigestBytes
-                );
+                leafHashes[i] = hashLeafBase(openedRows[i], effectiveDigestBytes);
             }
         }
 
-        return
-            computeRootFromLeafHashes(
-                indices,
-                leafHashes,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            );
+        return computeRootFromLeafHashes(
+            indices, leafHashes, depth, decommitments, effectiveDigestBytes
+        );
     }
 
     function verifyBaseRows(
@@ -1280,19 +1170,16 @@ library MerkleVerifier {
         bytes32[] calldata decommitments,
         uint256 effectiveDigestBytes
     ) internal pure returns (bool) {
-        return
-            computeRootFromBaseRows(
-                indices,
-                openedRows,
-                depth,
-                decommitments,
-                effectiveDigestBytes
-            ) == expectedRoot;
+        return computeRootFromBaseRows(
+            indices, openedRows, depth, decommitments, effectiveDigestBytes
+        ) == expectedRoot;
     }
 
-    function _copyIndices(
-        uint256[] calldata indices
-    ) private pure returns (uint256[] memory copied) {
+    function _copyIndices(uint256[] calldata indices)
+        private
+        pure
+        returns (uint256[] memory copied)
+    {
         copied = new uint256[](indices.length);
         unchecked {
             for (uint256 i = 0; i < indices.length; ++i) {
@@ -1309,19 +1196,17 @@ library MerkleVerifier {
         unchecked {
             for (uint256 i = 1; i < indices.length; ++i) {
                 if (indices[i - 1] >= indices[i]) {
-                    revert IndicesNotStrictlyIncreasing(
-                        indices[i - 1],
-                        indices[i]
-                    );
+                    revert IndicesNotStrictlyIncreasing(indices[i - 1], indices[i]);
                 }
             }
         }
     }
 
-    function _maskDigestTail(
-        bytes32 digest,
-        uint256 effectiveDigestBytes
-    ) private pure returns (bytes32) {
+    function _maskDigestTail(bytes32 digest, uint256 effectiveDigestBytes)
+        private
+        pure
+        returns (bytes32)
+    {
         uint256 keep = _validateEffectiveDigestBytes(effectiveDigestBytes);
         if (keep == 32) {
             return digest;
@@ -1334,9 +1219,11 @@ library MerkleVerifier {
         }
     }
 
-    function _validateEffectiveDigestBytes(
-        uint256 effectiveDigestBytes
-    ) private pure returns (uint256) {
+    function _validateEffectiveDigestBytes(uint256 effectiveDigestBytes)
+        private
+        pure
+        returns (uint256)
+    {
         if (effectiveDigestBytes == 0 || effectiveDigestBytes > 32) {
             revert InvalidEffectiveDigestBytes(effectiveDigestBytes);
         }

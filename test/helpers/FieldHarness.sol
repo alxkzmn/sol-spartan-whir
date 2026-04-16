@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {KoalaBear} from "../../src/field/KoalaBear.sol";
-import {KoalaBearExt4} from "../../src/field/KoalaBearExt4.sol";
-import {KoalaBearExt8} from "../../src/field/KoalaBearExt8.sol";
-import {WhirVerifierUtils4} from "../../src/whir/WhirVerifierUtils4.sol";
+import { KoalaBear } from "../../src/field/KoalaBear.sol";
+import { KoalaBearExt4 } from "../../src/field/KoalaBearExt4.sol";
+import { KoalaBearExt8 } from "../../src/field/KoalaBearExt8.sol";
+import { WhirVerifierUtils4 } from "../../src/whir/WhirVerifierUtils4.sol";
 
 contract FieldHarness {
     function baseAdd(uint256 a, uint256 b) external pure returns (uint256) {
@@ -27,9 +27,7 @@ contract FieldHarness {
         return KoalaBearExt4.pack(_to4(coeffs));
     }
 
-    function ext4Unpack(
-        uint256 packed
-    ) external pure returns (uint256[] memory coeffs) {
+    function ext4Unpack(uint256 packed) external pure returns (uint256[] memory coeffs) {
         return _from4(KoalaBearExt4.unpack(packed));
     }
 
@@ -53,10 +51,7 @@ contract FieldHarness {
         return KoalaBearExt4.square(a);
     }
 
-    function ext4MulReference(
-        uint256 a,
-        uint256 b
-    ) external pure returns (uint256) {
+    function ext4MulReference(uint256 a, uint256 b) external pure returns (uint256) {
         return KoalaBearExt4.mulReference(a, b);
     }
 
@@ -68,35 +63,35 @@ contract FieldHarness {
         return KoalaBearExt4.mul_by_w(a);
     }
 
-    function ext4Extrapolate012(
-        uint256 e0,
-        uint256 e1,
-        uint256 e2,
-        uint256 r
-    ) external pure returns (uint256) {
+    function ext4Extrapolate012(uint256 e0, uint256 e1, uint256 e2, uint256 r)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt4.extrapolate_012(e0, e1, e2, r);
     }
 
-    function ext4Extrapolate012Reference(
-        uint256 e0,
-        uint256 e1,
-        uint256 e2,
-        uint256 r
-    ) external pure returns (uint256) {
+    function ext4Extrapolate012Reference(uint256 e0, uint256 e1, uint256 e2, uint256 r)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt4.extrapolate_012_reference(e0, e1, e2, r);
     }
 
-    function ext4EqPolyEval(
-        uint256[] memory p,
-        uint256[] memory q
-    ) external pure returns (uint256) {
+    function ext4EqPolyEval(uint256[] memory p, uint256[] memory q)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt4.eq_poly_eval(p, q);
     }
 
-    function ext4EvaluateHypercube(
-        uint256[] memory evals,
-        uint256[] memory point
-    ) external pure returns (uint256) {
+    function ext4EvaluateHypercube(uint256[] memory evals, uint256[] memory point)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt4.evaluate_hypercube(evals, point);
     }
 
@@ -104,9 +99,7 @@ contract FieldHarness {
         return KoalaBearExt8.pack(_to8(coeffs));
     }
 
-    function ext8Unpack(
-        uint256 packed
-    ) external pure returns (uint256[] memory coeffs) {
+    function ext8Unpack(uint256 packed) external pure returns (uint256[] memory coeffs) {
         return _from8(KoalaBearExt8.unpack(packed));
     }
 
@@ -130,32 +123,31 @@ contract FieldHarness {
         return KoalaBearExt8.mul_by_w(a);
     }
 
-    function ext8Extrapolate012(
-        uint256 e0,
-        uint256 e1,
-        uint256 e2,
-        uint256 r
-    ) external pure returns (uint256) {
+    function ext8Extrapolate012(uint256 e0, uint256 e1, uint256 e2, uint256 r)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt8.extrapolate_012(e0, e1, e2, r);
     }
 
-    function ext8EqPolyEval(
-        uint256[] memory p,
-        uint256[] memory q
-    ) external pure returns (uint256) {
+    function ext8EqPolyEval(uint256[] memory p, uint256[] memory q)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt8.eq_poly_eval(p, q);
     }
 
-    function ext8EvaluateHypercube(
-        uint256[] memory evals,
-        uint256[] memory point
-    ) external pure returns (uint256) {
+    function ext8EvaluateHypercube(uint256[] memory evals, uint256[] memory point)
+        external
+        pure
+        returns (uint256)
+    {
         return KoalaBearExt8.evaluate_hypercube(evals, point);
     }
 
-    function _to4(
-        uint256[] memory coeffs
-    ) internal pure returns (uint256[4] memory out) {
+    function _to4(uint256[] memory coeffs) internal pure returns (uint256[4] memory out) {
         require(coeffs.length == 4, "LEN4");
         unchecked {
             for (uint256 i = 0; i < 4; ++i) {
@@ -164,9 +156,7 @@ contract FieldHarness {
         }
     }
 
-    function _from4(
-        uint256[4] memory coeffs
-    ) internal pure returns (uint256[] memory out) {
+    function _from4(uint256[4] memory coeffs) internal pure returns (uint256[] memory out) {
         out = new uint256[](4);
         unchecked {
             for (uint256 i = 0; i < 4; ++i) {
@@ -175,9 +165,7 @@ contract FieldHarness {
         }
     }
 
-    function _to8(
-        uint256[] memory coeffs
-    ) internal pure returns (uint256[8] memory out) {
+    function _to8(uint256[] memory coeffs) internal pure returns (uint256[8] memory out) {
         require(coeffs.length == 8, "LEN8");
         unchecked {
             for (uint256 i = 0; i < 8; ++i) {
@@ -186,9 +174,7 @@ contract FieldHarness {
         }
     }
 
-    function _from8(
-        uint256[8] memory coeffs
-    ) internal pure returns (uint256[] memory out) {
+    function _from8(uint256[8] memory coeffs) internal pure returns (uint256[] memory out) {
         out = new uint256[](8);
         unchecked {
             for (uint256 i = 0; i < 8; ++i) {

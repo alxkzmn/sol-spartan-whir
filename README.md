@@ -26,6 +26,16 @@ forge test
 cargo run --release --bin export-fixtures -p spartan-whir-export -- testdata
 ```
 
+The schedule sweep model lives in [whir_param_sweep.py](/Users/alexkuzmin/development/spartan-p3/sol-spartan-whir/whir_param_sweep.py).
+
+Current documented precision for that model:
+
+- execution gas only, not total tx gas
+- `Constant(5), lir=11, rs_v=3`: model `891,844` vs measured `957,712` (`-6.9%`)
+- `Constant(4), lir=6, rs_v=1`: model `1,064,610` vs measured `996,068` (`+6.9%`)
+- current measured calibration band: within `±6.9%` relative error on those two anchor schedules
+- this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
+
 ## Gas
 
 The current deployment target on `stage4` is:
@@ -59,6 +69,25 @@ Notes:
 - current execution gas for the deployed verifier path: `903,236`
 - current `WhirBlobVerifierNative4` runtime size: `21,889` bytes
 - current success blob size: `10,152` bytes
+
+#### Hard schedule tuning example
+
+The repo also keeps one alternate fixed verifier family for schedule tuning work. This same measured family was used as one of the calibration points for [whir_param_sweep.py](/Users/alexkuzmin/development/spartan-p3/sol-spartan-whir/whir_param_sweep.py):
+
+- schedule: `ff=5, lir=11, rs_v=3`
+- typed verifier file: `src/whir/WhirVerifier4_lir11_ff5_rsv3.sol`
+- blob wrapper file: `src/whir/WhirBlobVerifier4_lir11_ff5_rsv3.sol`
+- native blob verifier file: `src/whir/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
+
+Measured execution gas for that alternate family:
+
+| Path                                                                 |         Gas |
+| -------------------------------------------------------------------- | ----------: |
+| `WhirVerifierLir11Test.testGasWhirVerifyFixed()`                     |   `957,778` |
+| `WhirBlobVerifierLir11Test.testGasWhirVerifyBlobFixed()`             | `1,125,188` |
+| `WhirBlobVerifierNativeLir11Test.testGasWhirVerifyBlobNativeFixed()` |   `914,723` |
+
+This is documented as a standalone example of hard schedule tuning and sweep-model calibration. It is not part of the `sol-whir` comparison table above, and it is not the default deployment target on this branch.
 
 #### Arithmetic and proof-structure differences
 
@@ -102,7 +131,7 @@ For `sol-spartan-whir`, the current tx numbers were remeasured by:
 2. Deploying the current bytecode to a local Anvil node.
 3. Replaying the benchmark calldata over raw JSON-RPC and reading the receipt.
 
-The direct-call typed calldata footprint comes from `script/WhirTxBenchmark.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark.s.sol`.
+The direct-call typed calldata footprint comes from `script/WhirTxBenchmark_lir6_ff5_rsv1.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas_lir6_ff5_rsv1.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark_lir6_ff5_rsv1.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol`.
 
 For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that checked-in measurement remains the source of truth.
 
