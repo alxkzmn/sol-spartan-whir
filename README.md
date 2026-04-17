@@ -78,6 +78,7 @@ The repo also keeps one alternate fixed verifier family for schedule tuning work
 - typed verifier file: `src/whir/WhirVerifier4_lir11_ff5_rsv3.sol`
 - blob wrapper file: `src/whir/WhirBlobVerifier4_lir11_ff5_rsv3.sol`
 - native blob verifier file: `src/whir/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
+- exporter command: `cargo run --release --bin export-fixtures-lir11-ff5-rsv3 -p spartan-whir-export -- testdata`
 
 Measured execution gas for that alternate family:
 
