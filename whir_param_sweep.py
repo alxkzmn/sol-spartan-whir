@@ -51,6 +51,15 @@ Usage:
   python3 whir_param_sweep.py
   python3 whir_param_sweep.py --num-vars 20
   python3 whir_param_sweep.py --max-starting-log-inv-rate 11
+
+Sweep controls and ranges:
+  - num_vars is set by --num-vars (default: 16)
+  - Constant(ff): ff in [1, num_vars]
+  - ConstantFromSecondRound(ff_0, ff_rest): 1 <= ff_rest < ff_0 <= num_vars
+  - starting_log_inv_rate: [1, min(--max-starting-log-inv-rate, TWO_ADICITY - num_vars + ff_0)]
+  - rs_domain_initial_reduction_factor: [1, ff_0]
+  - max_pow is fixed to MAX_POW_BITS (= 30), not swept
+  - candidates that violate derive_config() assertions or derived-PoW validity are discarded
 """
 
 import math
@@ -801,11 +810,20 @@ def print_sweep(
     )
 
     # --- Sweep parameter ranges ---
-    # Sweep the full validity space instead of a curated subset:
+    # Sweep the full validity space instead of a curated subset.
+    #
+    # The full search space is:
+    #   - num_vars = CLI/runtime input (default 16), not swept internally
     #   - Constant(ff): ff in [1, num_vars]
     #   - ConstantFromSecondRound(ff_0, ff_rest): 1 <= ff_rest < ff_0 <= num_vars
     #   - starting_log_inv_rate in [1, min(cap, TWO_ADICITY - num_vars + ff_0)]
-    #     (default cap = 11, which is also the current hard sweep ceiling)
+    #     where cap defaults to 11 (the current hard sweep ceiling)
+    #   - rs_domain_initial_reduction_factor (rs_v) in [1, ff_0]
+    #
+    # Additional filtering happens in derive_config():
+    #   - log_folded_domain_size = num_vars + starting_log_inv_rate - ff_0 <= TWO_ADICITY
+    #   - rs_domain_initial_reduction_factor <= ff_0
+    #   - all derived PoW values must be <= MAX_POW_BITS
     MAX_POW = MAX_POW_BITS
 
     # Current baseline

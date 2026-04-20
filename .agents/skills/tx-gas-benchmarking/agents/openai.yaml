@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tx Gas Benchmarking"
+  short_description: "Measure total tx gas for Solidity verifier paths"
+  default_prompt: "Use $tx-gas-benchmarking to measure total transaction gas for the Solidity verifier and break it down into calldata and execution."
