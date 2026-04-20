@@ -4,9 +4,9 @@ pragma solidity ^0.8.28;
 import { Test } from "forge-std/Test.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirBlobCodec4 } from "../src/whir/WhirBlobCodec4_lir6_ff5_rsv1.sol";
-import { WhirBlobVerifier4 } from "../src/whir/WhirBlobVerifier4_lir6_ff5_rsv1.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirBlobCodec4 } from "../src/whir/lir6/WhirBlobCodec4_lir6_ff5_rsv1.sol";
+import { WhirBlobVerifier4 } from "../src/whir/lir6/WhirBlobVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 
 contract WhirBlobVerifier4Test is Test {
     string internal constant TESTDATA = "testdata/";

@@ -335,11 +335,6 @@ library MerkleVerifier {
                 indices, blob, valuesOffset, depth, decommOffset, decommLen
             );
         }
-        if (rowLen == 32) {
-            return _computeRootFromFlatBaseRows20Blob32(
-                indices, blob, valuesOffset, depth, decommOffset, decommLen
-            );
-        }
         return _computeRootFromFlatRows20Blob(
             indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen, false
         );
@@ -356,11 +351,6 @@ library MerkleVerifier {
     ) internal pure returns (bytes32) {
         if (rowLen == 16) {
             return _computeRootFromFlatExtensionRows20Blob16(
-                indices, blob, valuesOffset, depth, decommOffset, decommLen
-            );
-        }
-        if (rowLen == 32) {
-            return _computeRootFromFlatExtensionRows20Blob32(
                 indices, blob, valuesOffset, depth, decommOffset, decommLen
             );
         }
@@ -616,51 +606,6 @@ library MerkleVerifier {
         );
     }
 
-    function _computeRootFromFlatBaseRows20Blob32(
-        uint256[] memory indices,
-        bytes calldata blob,
-        uint256 valuesOffset,
-        uint256 depth,
-        uint256 decommOffset,
-        uint256 decommLen
-    ) private pure returns (bytes32 root) {
-        if (indices.length == 0) {
-            revert EmptyIndices();
-        }
-
-        bytes memory frontier;
-        assembly ("memory-safe") {
-            let frontierLen := shl(6, mload(indices))
-            frontier := mload(0x40)
-            mstore(frontier, frontierLen)
-            mstore(0x40, add(add(frontier, 0x20), frontierLen))
-        }
-
-        unchecked {
-            uint256 prevIdx;
-            for (uint256 i = 0; i < indices.length; ++i) {
-                uint256 idx = indices[i];
-                if (i != 0 && prevIdx >= idx) {
-                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
-                }
-                prevIdx = idx;
-
-                uint256 rowOffset = valuesOffset + i * 128;
-                bytes32 hash = hashLeafBaseSlice20Blob(blob, rowOffset, 32);
-
-                assembly ("memory-safe") {
-                    let dst := add(add(frontier, 0x20), shl(6, i))
-                    mstore(dst, idx)
-                    mstore(add(dst, 0x20), hash)
-                }
-            }
-        }
-
-        return _computeRootFromFrontier20Blob(
-            frontier, indices.length, depth, blob, decommOffset, decommLen
-        );
-    }
-
     function _computeRootFromFlatExtensionRows20Blob16(
         uint256[] memory indices,
         bytes calldata blob,
@@ -692,51 +637,6 @@ library MerkleVerifier {
 
                 uint256 rowOffset = valuesOffset + i * 256;
                 bytes32 hash = hashLeafExtensionSlice20Blob(blob, rowOffset, 16);
-
-                assembly ("memory-safe") {
-                    let dst := add(add(frontier, 0x20), shl(6, i))
-                    mstore(dst, idx)
-                    mstore(add(dst, 0x20), hash)
-                }
-            }
-        }
-
-        return _computeRootFromFrontier20Blob(
-            frontier, indices.length, depth, blob, decommOffset, decommLen
-        );
-    }
-
-    function _computeRootFromFlatExtensionRows20Blob32(
-        uint256[] memory indices,
-        bytes calldata blob,
-        uint256 valuesOffset,
-        uint256 depth,
-        uint256 decommOffset,
-        uint256 decommLen
-    ) private pure returns (bytes32 root) {
-        if (indices.length == 0) {
-            revert EmptyIndices();
-        }
-
-        bytes memory frontier;
-        assembly ("memory-safe") {
-            let frontierLen := shl(6, mload(indices))
-            frontier := mload(0x40)
-            mstore(frontier, frontierLen)
-            mstore(0x40, add(add(frontier, 0x20), frontierLen))
-        }
-
-        unchecked {
-            uint256 prevIdx;
-            for (uint256 i = 0; i < indices.length; ++i) {
-                uint256 idx = indices[i];
-                if (i != 0 && prevIdx >= idx) {
-                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
-                }
-                prevIdx = idx;
-
-                uint256 rowOffset = valuesOffset + i * 512;
-                bytes32 hash = hashLeafExtensionSlice20Blob(blob, rowOffset, 32);
 
                 assembly ("memory-safe") {
                     let dst := add(add(frontier, 0x20), shl(6, i))

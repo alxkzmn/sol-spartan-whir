@@ -7,12 +7,13 @@ import { KoalaBearExt4 } from "../src/field/KoalaBearExt4.sol";
 import { KeccakChallenger } from "../src/transcript/KeccakChallenger.sol";
 import { QuarticWhirFixedConfig } from "../src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
 
 /// @dev Targeted gas calibration for the Python model.
-///      Measures individual verifier phases for the current 1-round schedule.
+///      Measures individual verifier phases for the current 2-round schedule
+///      (Constant(4), lir=6, rs_v=1: 16 → 12 → 8 → 4).
 contract GasCalibrationHarness {
     using KeccakChallenger for KeccakChallenger.State;
 
@@ -22,10 +23,13 @@ contract GasCalibrationHarness {
         uint256 round0Parse;
         uint256 round0Stir;
         uint256 round0Sumcheck;
+        uint256 round1Parse;
+        uint256 round1Stir;
+        uint256 round1Sumcheck;
         uint256 observeFinalPoly;
         uint256 finalStir;
         uint256 finalSumcheck;
-        uint256 constraintRound0;
+        uint256 constraintRounds;
         uint256 constraintInitial;
         uint256 finalValueCheck;
     }
@@ -146,7 +150,63 @@ contract GasCalibrationHarness {
         );
         pg.round0Sumcheck = g - gasleft();
 
-        // --- Phase 6: Observe Final Poly ---
+        // --- Phase 6: Round 1 Parse ---
+        prevCommitment = round0Commitment;
+        QuarticWhirFixedConfig.RoundConfig memory round1Config =
+            QuarticWhirFixedConfig.roundConfig(1);
+        WhirStructs.WhirRoundProof calldata round1Proof = proof.rounds[1];
+
+        g = gasleft();
+        WhirVerifierCore4.FixedParsedCommitment memory round1Commitment =
+            WhirVerifierCore4._parseFixedCommitment2(
+                challenger,
+                round1Proof.commitment,
+                round1Proof.oodAnswers,
+                round1Config.numVariables
+            );
+        pg.round1Parse = g - gasleft();
+
+        // --- Phase 7: Round 1 STIR ---
+        uint256 round1ConstraintChallenge;
+        uint256[] memory round1SelVars;
+        g = gasleft();
+        {
+            uint256 round1Contribution;
+            (round1ConstraintChallenge, round1Contribution, round1SelVars) =
+                WhirVerifierCore4._verifyStirAndCombineConstraint(
+                    challenger,
+                    prevCommitment.root,
+                    round1Config.powBits,
+                    round1Config.numQueries,
+                    round1Config.foldingFactor,
+                    round1Config.domainSize,
+                    round1Config.foldedDomainGen,
+                    round1Proof.queryBatch,
+                    true,
+                    round1Proof.powWitness,
+                    foldingRandomness,
+                    1,
+                    round1Proof.oodAnswers
+                );
+            claimedEval = KoalaBearExt4.add(claimedEval, round1Contribution);
+        }
+        pg.round1Stir = g - gasleft();
+
+        // --- Phase 8: Round 1 Sumcheck ---
+        g = gasleft();
+        (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
+            round1Proof.sumcheck,
+            challenger,
+            claimedEval,
+            round1Config.foldingFactor,
+            round1Config.foldingPowBits,
+            allRandomness,
+            randomnessCursor
+        );
+        pg.round1Sumcheck = g - gasleft();
+
+        // --- Phase 9: Observe Final Poly ---
+        prevCommitment = round1Commitment;
         g = gasleft();
         require(
             proof.finalPoly.length == QuarticWhirFixedConfig.FINAL_POLY_LENGTH, "FINAL_POLY_LEN"
@@ -154,11 +214,11 @@ contract GasCalibrationHarness {
         challenger.observeValidatedPackedExt4Slice(proof.finalPoly);
         pg.observeFinalPoly = g - gasleft();
 
-        // --- Phase 7: Final STIR ---
+        // --- Phase 10: Final STIR ---
         g = gasleft();
         WhirVerifierCore4._verifyFinalStirChallengesRaw(
             challenger,
-            round0Commitment.root,
+            prevCommitment.root,
             QuarticWhirFixedConfig.FINAL_POW_BITS,
             QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
             QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
@@ -173,7 +233,7 @@ contract GasCalibrationHarness {
         );
         pg.finalStir = g - gasleft();
 
-        // --- Phase 8: Final Sumcheck ---
+        // --- Phase 11: Final Sumcheck ---
         g = gasleft();
         (claimedEval, finalSumcheckRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
             proof.finalSumcheck,
@@ -188,15 +248,21 @@ contract GasCalibrationHarness {
 
         require(randomnessCursor == QuarticWhirFixedConfig.NUM_VARIABLES, "RANDOMNESS_LEN");
 
-        // --- Phase 9: Constraint evaluation (round 0) ---
+        // --- Phase 12: Constraint evaluation (rounds) ---
         uint256 evaluationOfWeights;
         g = gasleft();
-        evaluationOfWeights = WhirVerifierCore4._evaluateConstraintGenericRaw(
-            round0ConstraintChallenge, round0Commitment.oodFlatPoints, round0SelVars, allRandomness
+        evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
+            round0ConstraintChallenge,
+            round0Commitment.oodFlatPoints,
+            round0SelVars,
+            round1ConstraintChallenge,
+            round1Commitment.oodFlatPoints,
+            round1SelVars,
+            allRandomness
         );
-        pg.constraintRound0 = g - gasleft();
+        pg.constraintRounds = g - gasleft();
 
-        // --- Phase 10: Constraint evaluation (initial) ---
+        // --- Phase 13: Constraint evaluation (initial) ---
         g = gasleft();
         {
             uint256 initEval = WhirVerifierCore4._hornerStep(
@@ -230,7 +296,7 @@ contract GasCalibrationHarness {
         }
         pg.constraintInitial = g - gasleft();
 
-        // --- Phase 11: Final value check ---
+        // --- Phase 14: Final value check ---
         g = gasleft();
         {
             uint256 finalValue =
@@ -277,21 +343,25 @@ contract GasCalibrationTest is Test {
             harness.measurePhases(proof.initialCommitment, statement, proof);
 
         uint256 total = pg.setup + pg.initialSumcheck + pg.round0Parse + pg.round0Stir
-            + pg.round0Sumcheck + pg.observeFinalPoly + pg.finalStir + pg.finalSumcheck
-            + pg.constraintRound0 + pg.constraintInitial + pg.finalValueCheck;
+            + pg.round0Sumcheck + pg.round1Parse + pg.round1Stir + pg.round1Sumcheck
+            + pg.observeFinalPoly + pg.finalStir + pg.finalSumcheck + pg.constraintRounds
+            + pg.constraintInitial + pg.finalValueCheck;
 
-        console.log("=== Phase-Level Gas Calibration ===");
+        console.log("=== Phase-Level Gas Calibration (2-round ff=4) ===");
         console.log("Setup (pattern+commit+eval):", pg.setup);
-        console.log("Initial sumcheck (5r):      ", pg.initialSumcheck);
+        console.log("Initial sumcheck (4r):      ", pg.initialSumcheck);
         console.log("Round0 parse commitment:    ", pg.round0Parse);
-        console.log("Round0 STIR (5q d22 base):  ", pg.round0Stir);
-        console.log("Round0 sumcheck (5r pow=10):", pg.round0Sumcheck);
-        console.log("Observe finalPoly (64 ext4):", pg.observeFinalPoly);
-        console.log("Final STIR (4q d19 ext4):   ", pg.finalStir);
-        console.log("Final sumcheck (6r pow=0):  ", pg.finalSumcheck);
-        console.log("Constraint round0 (nv=11):  ", pg.constraintRound0);
+        console.log("Round0 STIR (9q):           ", pg.round0Stir);
+        console.log("Round0 sumcheck (4r pow=0): ", pg.round0Sumcheck);
+        console.log("Round1 parse commitment:    ", pg.round1Parse);
+        console.log("Round1 STIR (6q):           ", pg.round1Stir);
+        console.log("Round1 sumcheck (4r pow=4): ", pg.round1Sumcheck);
+        console.log("Observe finalPoly (16 ext4):", pg.observeFinalPoly);
+        console.log("Final STIR (5q):            ", pg.finalStir);
+        console.log("Final sumcheck (4r pow=0):  ", pg.finalSumcheck);
+        console.log("Constraint rounds (2r):     ", pg.constraintRounds);
         console.log("Constraint initial (nv=16): ", pg.constraintInitial);
-        console.log("Final value check (64coeff):", pg.finalValueCheck);
+        console.log("Final value check (16coeff):", pg.finalValueCheck);
         console.log("---");
         console.log("Sum of phases:              ", total);
     }

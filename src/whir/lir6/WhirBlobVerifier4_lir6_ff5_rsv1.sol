@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { WhirStructs } from "./WhirStructs.sol";
+import { WhirStructs } from "../WhirStructs.sol";
 import { WhirBlobCodec4 } from "./WhirBlobCodec4_lir6_ff5_rsv1.sol";
 import { WhirVerifier4 } from "./WhirVerifier4_lir6_ff5_rsv1.sol";
 

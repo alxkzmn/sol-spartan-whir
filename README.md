@@ -31,8 +31,8 @@ The schedule sweep model lives in [whir_param_sweep.py](/Users/alexkuzmin/develo
 Current documented precision for that model:
 
 - execution gas only, not total tx gas
-- `Constant(5), lir=11, rs_v=3`: model `891,844` vs measured `957,712` (`-6.9%`)
-- `Constant(4), lir=6, rs_v=1`: model `1,064,610` vs measured `996,068` (`+6.9%`)
+- `Constant(5), lir=11, rs_v=3`: model `891,844` vs measured `957,778` (`-6.9%`)
+- `Constant(4), lir=6, rs_v=1`: model `1,064,610` vs measured `996,074` (`+6.9%`)
 - current measured calibration band: within `±6.9%` relative error on those two anchor schedules
 - this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
 
@@ -64,9 +64,9 @@ Notes:
 - `sol-spartan-whir` tx numbers are freshly measured on the current `stage4` branch for the production path `WhirBlobVerifierNative4`.
 - `sol-whir` tx numbers come from the current checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
 - current `sol-spartan-whir` reference verifiers are:
-  - typed parity path: `WhirVerifier4` at `996,068`
-  - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,197,438`
-- current execution gas for the deployed verifier path: `903,236`
+  - typed parity path: `WhirVerifier4` at `996,074`
+  - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,197,456`
+- current execution gas for the deployed verifier path: `903,254`
 - current `WhirBlobVerifierNative4` runtime size: `21,889` bytes
 - current success blob size: `10,152` bytes
 
@@ -75,9 +75,9 @@ Notes:
 The repo also keeps one alternate fixed verifier family for schedule tuning work. This same measured family was used as one of the calibration points for [whir_param_sweep.py](/Users/alexkuzmin/development/spartan-p3/sol-spartan-whir/whir_param_sweep.py):
 
 - schedule: `ff=5, lir=11, rs_v=3`
-- typed verifier file: `src/whir/WhirVerifier4_lir11_ff5_rsv3.sol`
-- blob wrapper file: `src/whir/WhirBlobVerifier4_lir11_ff5_rsv3.sol`
-- native blob verifier file: `src/whir/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
+- typed verifier file: `src/whir/lir11/WhirVerifier4_lir11_ff5_rsv3.sol`
+- blob wrapper file: `src/whir/lir11/WhirBlobVerifier4_lir11_ff5_rsv3.sol`
+- native blob verifier file: `src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
 - exporter command: `cargo run --release --bin export-fixtures-lir11-ff5-rsv3 -p spartan-whir-export -- testdata`
 
 Measured execution gas for that alternate family:

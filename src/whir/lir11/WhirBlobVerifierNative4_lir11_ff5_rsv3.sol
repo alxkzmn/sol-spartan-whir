@@ -1,36 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
-import { QuarticWhirFixedConfig } from "../generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
-import { KeccakChallenger } from "../transcript/KeccakChallenger.sol";
-import { WhirBlobCodec4 } from "./WhirBlobCodec4_lir6_ff5_rsv1.sol";
-import { WhirVerifierCore4 } from "./WhirVerifierCore4.sol";
-import { WhirVerifierUtils4 } from "./WhirVerifierUtils4.sol";
+import { KoalaBearExt4 } from "../../field/KoalaBearExt4.sol";
+import {
+    QuarticWhirLir11FixedConfig
+} from "../../generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol";
+import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
+import { WhirBlobCodecLir11 } from "./WhirBlobCodec4_lir11_ff5_rsv3.sol";
+import { WhirVerifierCore4Lir11 as WhirVerifierCore4 } from "./WhirVerifierCore4Lir11.sol";
+import { WhirVerifierUtils4Lir11 as WhirVerifierUtils4 } from "./WhirVerifierUtils4Lir11.sol";
 
-contract WhirBlobVerifierNative4 {
+contract WhirBlobVerifierNativeLir11 {
     using KeccakChallenger for KeccakChallenger.State;
 
     function verify(bytes32 expectedCommitment, bytes calldata blob) external pure returns (bool) {
         (uint256 round0DecommLen, uint256 round1DecommLen, uint256 finalDecommLen) =
-            WhirBlobCodec4.validateHeader(blob);
+            WhirBlobCodecLir11.validateHeader(blob);
         round1DecommLen;
 
-        uint256 offset = WhirBlobCodec4.HEADER_BYTES;
+        uint256 offset = WhirBlobCodecLir11.HEADER_BYTES;
         KeccakChallenger.State memory challenger;
-        QuarticWhirFixedConfig.observePattern(challenger);
+        QuarticWhirLir11FixedConfig.observePattern(challenger);
 
         uint256 statementPointOffset = offset;
         unchecked {
-            for (uint256 i = 0; i < QuarticWhirFixedConfig.NUM_VARIABLES; ++i) {
+            for (uint256 i = 0; i < QuarticWhirLir11FixedConfig.NUM_VARIABLES; ++i) {
                 uint256 pointValue;
-                (pointValue, offset) = WhirBlobCodec4.readExt4(blob, offset);
+                (pointValue, offset) = WhirBlobCodecLir11.readExt4(blob, offset);
                 WhirVerifierUtils4.validatePackedExt4(pointValue);
             }
         }
 
         uint256 statementEval;
-        (statementEval, offset) = WhirBlobCodec4.readExt4(blob, offset);
+        (statementEval, offset) = WhirBlobCodecLir11.readExt4(blob, offset);
         WhirVerifierUtils4.validatePackedExt4(statementEval);
 
         (
@@ -56,14 +58,14 @@ contract WhirBlobVerifierNative4 {
             statementEval
         );
 
-        uint256[] memory allRandomness = new uint256[](QuarticWhirFixedConfig.NUM_VARIABLES);
+        uint256[] memory allRandomness = new uint256[](QuarticWhirLir11FixedConfig.NUM_VARIABLES);
         uint256 randomnessCursor = 0;
         uint256 round0ConstraintChallenge;
         uint256[] memory round0EqFlatPoints;
         uint256[] memory round0SelVars;
         uint256 finalStirRandomnessOffset;
-        QuarticWhirFixedConfig.RoundConfig memory round0Config =
-            QuarticWhirFixedConfig.roundConfig(0);
+        QuarticWhirLir11FixedConfig.RoundConfig memory round0Config =
+            QuarticWhirLir11FixedConfig.roundConfig(0);
 
         uint256 round0RandomnessOffset = randomnessCursor;
         (claimedEval, randomnessCursor, offset) = WhirVerifierCore4._verifySumcheckBlob(
@@ -71,8 +73,8 @@ contract WhirBlobVerifierNative4 {
             offset,
             challenger,
             claimedEval,
-            QuarticWhirFixedConfig.INITIAL_SUMCHECK_ROUNDS,
-            QuarticWhirFixedConfig.STARTING_FOLDING_POW_BITS,
+            QuarticWhirLir11FixedConfig.INITIAL_SUMCHECK_ROUNDS,
+            QuarticWhirLir11FixedConfig.STARTING_FOLDING_POW_BITS,
             allRandomness,
             randomnessCursor
         );
@@ -135,11 +137,11 @@ contract WhirBlobVerifierNative4 {
 
         uint256 finalPolyOffset = offset;
         unchecked {
-            for (uint256 i = 0; i < QuarticWhirFixedConfig.FINAL_POLY_LENGTH; i += 2) {
+            for (uint256 i = 0; i < QuarticWhirLir11FixedConfig.FINAL_POLY_LENGTH; i += 2) {
                 uint256 coeff0;
                 uint256 coeff1;
-                (coeff0, offset) = WhirBlobCodec4.readExt4(blob, offset);
-                (coeff1, offset) = WhirBlobCodec4.readExt4(blob, offset);
+                (coeff0, offset) = WhirBlobCodecLir11.readExt4(blob, offset);
+                (coeff1, offset) = WhirBlobCodecLir11.readExt4(blob, offset);
                 WhirVerifierUtils4.validatePackedExt4(coeff0);
                 WhirVerifierUtils4.validatePackedExt4(coeff1);
                 challenger.observeValidatedPackedExt4Pair(coeff0, coeff1);
@@ -154,14 +156,14 @@ contract WhirBlobVerifierNative4 {
         offset = WhirVerifierCore4._verifyFinalStirChallengesBlob(
             challenger,
             prevCommitment.root,
-            QuarticWhirFixedConfig.FINAL_POW_BITS,
-            QuarticWhirFixedConfig.FINAL_NUM_QUERIES,
-            uint256(1) << QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+            QuarticWhirLir11FixedConfig.FINAL_POW_BITS,
+            QuarticWhirLir11FixedConfig.FINAL_NUM_QUERIES,
+            uint256(1) << QuarticWhirLir11FixedConfig.FINAL_FOLDING_FACTOR,
             WhirVerifierUtils4.log2Strict(
-                QuarticWhirFixedConfig.FINAL_DOMAIN_SIZE
-                    >> QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR
+                QuarticWhirLir11FixedConfig.FINAL_DOMAIN_SIZE
+                    >> QuarticWhirLir11FixedConfig.FINAL_FOLDING_FACTOR
             ),
-            QuarticWhirFixedConfig.FINAL_FOLDED_DOMAIN_GEN,
+            QuarticWhirLir11FixedConfig.FINAL_FOLDED_DOMAIN_GEN,
             blob,
             offset,
             finalDecommLen,
@@ -170,7 +172,7 @@ contract WhirBlobVerifierNative4 {
             finalStirRandomnessOffset,
             1,
             finalPolyOffset,
-            QuarticWhirFixedConfig.FINAL_POLY_LENGTH
+            QuarticWhirLir11FixedConfig.FINAL_POLY_LENGTH
         );
 
         uint256 finalSumcheckStart = randomnessCursor;
@@ -179,15 +181,15 @@ contract WhirBlobVerifierNative4 {
             offset,
             challenger,
             claimedEval,
-            QuarticWhirFixedConfig.FINAL_SUMCHECK_ROUNDS,
+            QuarticWhirLir11FixedConfig.FINAL_SUMCHECK_ROUNDS,
             0,
             allRandomness,
             randomnessCursor
         );
 
-        if (randomnessCursor != QuarticWhirFixedConfig.NUM_VARIABLES) {
+        if (randomnessCursor != QuarticWhirLir11FixedConfig.NUM_VARIABLES) {
             revert WhirVerifierCore4.RandomnessLengthMismatch(
-                QuarticWhirFixedConfig.NUM_VARIABLES, randomnessCursor
+                QuarticWhirLir11FixedConfig.NUM_VARIABLES, randomnessCursor
             );
         }
 
@@ -208,17 +210,17 @@ contract WhirBlobVerifierNative4 {
         uint256 finalValue = WhirVerifierUtils4.evaluateExtensionRowBlobAsExt4(
             blob,
             finalPolyOffset,
-            QuarticWhirFixedConfig.FINAL_POLY_LENGTH,
+            QuarticWhirLir11FixedConfig.FINAL_POLY_LENGTH,
             allRandomness,
             finalSumcheckStart,
-            QuarticWhirFixedConfig.FINAL_SUMCHECK_ROUNDS
+            QuarticWhirLir11FixedConfig.FINAL_SUMCHECK_ROUNDS
         );
         uint256 expected = KoalaBearExt4.mul(evaluationOfWeights, finalValue);
         if (claimedEval != expected) {
             revert WhirVerifierCore4.FinalConstraintMismatch(expected, claimedEval);
         }
         if (offset != blob.length) {
-            revert WhirBlobCodec4.BlobTrailingBytes();
+            revert WhirBlobCodecLir11.BlobTrailingBytes();
         }
         return true;
     }
@@ -237,20 +239,24 @@ contract WhirBlobVerifierNative4 {
                     challenge,
                     WhirVerifierCore4._eqPolyEvalAt(
                         oodFlatPoints,
-                        QuarticWhirFixedConfig.NUM_VARIABLES,
+                        QuarticWhirLir11FixedConfig.NUM_VARIABLES,
                         allRandomness,
                         0,
-                        QuarticWhirFixedConfig.NUM_VARIABLES
+                        QuarticWhirLir11FixedConfig.NUM_VARIABLES
                     )
                 ),
                 challenge,
                 WhirVerifierCore4._eqPolyEvalAt(
-                    oodFlatPoints, 0, allRandomness, 0, QuarticWhirFixedConfig.NUM_VARIABLES
+                    oodFlatPoints, 0, allRandomness, 0, QuarticWhirLir11FixedConfig.NUM_VARIABLES
                 )
             ),
             challenge,
             WhirVerifierCore4._eqPolyEvalAtBlob(
-                blob, statementPointOffset, allRandomness, 0, QuarticWhirFixedConfig.NUM_VARIABLES
+                blob,
+                statementPointOffset,
+                allRandomness,
+                0,
+                QuarticWhirLir11FixedConfig.NUM_VARIABLES
             )
         );
     }

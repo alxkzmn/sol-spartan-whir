@@ -4,14 +4,14 @@ pragma solidity ^0.8.28;
 import { Test } from "forge-std/Test.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirBlobCodecLir11 } from "../src/whir/WhirBlobCodec4_lir11_ff5_rsv3.sol";
-import { WhirBlobVerifierLir11 } from "../src/whir/WhirBlobVerifier4_lir11_ff5_rsv3.sol";
+import { WhirBlobCodecLir11 } from "../src/whir/lir11/WhirBlobCodec4_lir11_ff5_rsv3.sol";
+import { WhirBlobVerifierLir11 } from "../src/whir/lir11/WhirBlobVerifier4_lir11_ff5_rsv3.sol";
 import {
     WhirBlobVerifierNativeLir11
-} from "../src/whir/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol";
+} from "../src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
-import { WhirVerifierLir11 } from "../src/whir/WhirVerifier4_lir11_ff5_rsv3.sol";
+import { WhirVerifierLir11 } from "../src/whir/lir11/WhirVerifier4_lir11_ff5_rsv3.sol";
 
 contract WhirBlobVerifierNativeLir11Test is Test {
     string internal constant TESTDATA = "testdata/";

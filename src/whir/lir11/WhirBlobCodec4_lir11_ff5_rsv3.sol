@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { WhirStructs } from "./WhirStructs.sol";
+import { WhirStructs } from "../WhirStructs.sol";
 
-library WhirBlobCodec4 {
+library WhirBlobCodecLir11 {
     uint32 internal constant MAGIC = 0x57485242; // standalone blob wire magic
     uint16 internal constant VERSION = 1;
     uint8 internal constant EFFECTIVE_DIGEST_BYTES = 20;
@@ -17,11 +17,11 @@ library WhirBlobCodec4 {
     uint256 internal constant INITIAL_OOD_SAMPLES = 2;
     uint256 internal constant ROUND_OOD_SAMPLES = 2;
     uint256 internal constant INITIAL_SUMCHECK_EVALS = 10;
-    uint256 internal constant INITIAL_SUMCHECK_POW_WITNESSES = 0;
+    uint256 internal constant INITIAL_SUMCHECK_POW_WITNESSES = 5;
     uint256 internal constant ROUND_SUMCHECK_EVALS = 10;
-    uint256 internal constant ROUND0_NUM_QUERIES = 9;
+    uint256 internal constant ROUND0_NUM_QUERIES = 5;
     uint256 internal constant ROUND0_SUMCHECK_POW_WITNESSES = 5;
-    uint256 internal constant FINAL_NUM_QUERIES = 6;
+    uint256 internal constant FINAL_NUM_QUERIES = 4;
     uint256 internal constant ROW_LEN = 32;
     uint256 internal constant FINAL_SUMCHECK_EVALS = 12;
     uint256 internal constant FINAL_POLY_LEN = 64;

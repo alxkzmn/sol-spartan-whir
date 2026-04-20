@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 
 contract WhirVerifier4Test is Test {
     string internal constant TESTDATA = "testdata/";

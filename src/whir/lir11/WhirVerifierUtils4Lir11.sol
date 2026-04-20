@@ -3,11 +3,11 @@ pragma solidity ^0.8.28;
 
 import { LibSort } from "solady/utils/LibSort.sol";
 
-import { KoalaBear } from "../field/KoalaBear.sol";
-import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
-import { KeccakChallenger } from "../transcript/KeccakChallenger.sol";
+import { KoalaBear } from "../../field/KoalaBear.sol";
+import { KoalaBearExt4 } from "../../field/KoalaBearExt4.sol";
+import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
 
-library WhirVerifierUtils4 {
+library WhirVerifierUtils4Lir11 {
     using KeccakChallenger for KeccakChallenger.State;
 
     error BaseFieldElementOutOfRange(uint256 value);
@@ -415,6 +415,9 @@ library WhirVerifierUtils4 {
         if (point.length == 4) {
             return _evaluateBaseRowDim4(flatValues, start, point);
         }
+        if (point.length == 5) {
+            return _evaluateBaseRowDim5(flatValues, start, point);
+        }
 
         uint256[] memory evals = new uint256[](rowLen);
         unchecked {
@@ -460,6 +463,9 @@ library WhirVerifierUtils4 {
         if (point.length == 4) {
             return _evaluateExtensionRowDim4(flatValues, start, point);
         }
+        if (point.length == 5) {
+            return _evaluateExtensionRowDim5(flatValues, start, point);
+        }
 
         uint256[] memory evals = new uint256[](rowLen);
         unchecked {
@@ -468,6 +474,73 @@ library WhirVerifierUtils4 {
             }
         }
         return KoalaBearExt4.evaluate_hypercube(evals, point);
+    }
+
+    function evaluateBaseRowBlobAsExt4(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen,
+        uint256[] memory point,
+        uint256 pointOffset,
+        uint256 pointLen
+    ) internal pure returns (uint256) {
+        if (pointLen == 4 && rowLen == 16) {
+            return _evaluateBaseRowDim4BlobWindow(blob, offset, point, pointOffset);
+        }
+        if (pointLen == 5 && rowLen == 32) {
+            return _evaluateBaseRowDim5BlobWindow(blob, offset, point, pointOffset);
+        }
+
+        uint256[] memory evals = new uint256[](rowLen);
+        uint256[] memory window = new uint256[](pointLen);
+        unchecked {
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := shr(224, calldataload(add(add(blob.offset, offset), shl(2, i))))
+                }
+                evals[i] = KoalaBearExt4.fromBase(value);
+            }
+            for (uint256 i = 0; i < pointLen; ++i) {
+                window[i] = point[pointOffset + i];
+            }
+        }
+        return KoalaBearExt4.evaluate_hypercube(evals, window);
+    }
+
+    function evaluateExtensionRowBlobAsExt4(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen,
+        uint256[] memory point,
+        uint256 pointOffset,
+        uint256 pointLen
+    ) internal pure returns (uint256) {
+        if (pointLen == 4 && rowLen == 16) {
+            return _evaluateExtensionRowDim4BlobWindow(blob, offset, point, pointOffset);
+        }
+        if (pointLen == 5 && rowLen == 32) {
+            return _evaluateExtensionRowDim5BlobWindow(blob, offset, point, pointOffset);
+        }
+
+        uint256[] memory evals = new uint256[](rowLen);
+        uint256[] memory window = new uint256[](pointLen);
+        unchecked {
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := and(
+                        calldataload(add(add(blob.offset, offset), shl(4, i))),
+                        not(sub(shl(128, 1), 1))
+                    )
+                }
+                evals[i] = value;
+            }
+            for (uint256 i = 0; i < pointLen; ++i) {
+                window[i] = point[pointOffset + i];
+            }
+        }
+        return KoalaBearExt4.evaluate_hypercube(evals, window);
     }
 
     function _evaluateBaseRowDim3(
@@ -568,6 +641,106 @@ library WhirVerifierUtils4 {
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
     }
 
+    function _evaluateBaseRowDim5(
+        uint256[] calldata flatValues,
+        uint256 start,
+        uint256[] memory point
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(flatValues.offset, shl(5, start))
+        }
+
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(point[0]);
+
+        uint256[16] memory layer1;
+        uint256 a;
+        uint256 b;
+
+        assembly ("memory-safe") {
+            a := calldataload(src)
+            b := calldataload(add(src, 0x200))
+        }
+        layer1[0] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x20))
+            b := calldataload(add(src, 0x220))
+        }
+        layer1[1] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x40))
+            b := calldataload(add(src, 0x240))
+        }
+        layer1[2] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x60))
+            b := calldataload(add(src, 0x260))
+        }
+        layer1[3] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x80))
+            b := calldataload(add(src, 0x280))
+        }
+        layer1[4] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xa0))
+            b := calldataload(add(src, 0x2a0))
+        }
+        layer1[5] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xc0))
+            b := calldataload(add(src, 0x2c0))
+        }
+        layer1[6] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xe0))
+            b := calldataload(add(src, 0x2e0))
+        }
+        layer1[7] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x100))
+            b := calldataload(add(src, 0x300))
+        }
+        layer1[8] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x120))
+            b := calldataload(add(src, 0x320))
+        }
+        layer1[9] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x140))
+            b := calldataload(add(src, 0x340))
+        }
+        layer1[10] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x160))
+            b := calldataload(add(src, 0x360))
+        }
+        layer1[11] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x180))
+            b := calldataload(add(src, 0x380))
+        }
+        layer1[12] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1a0))
+            b := calldataload(add(src, 0x3a0))
+        }
+        layer1[13] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1c0))
+            b := calldataload(add(src, 0x3c0))
+        }
+        layer1[14] = _foldOnceBase(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1e0))
+            b := calldataload(add(src, 0x3e0))
+        }
+        layer1[15] = _foldOnceBase(a, b, r00, r01, r02, r03);
+
+        return _collapseDim5AfterFirstLayer(layer1, point[1], point[2], point[3], point[4]);
+    }
+
     function _evaluateBaseRowDim4BlobWindow(
         bytes calldata blob,
         uint256 offset,
@@ -590,6 +763,32 @@ library WhirVerifierUtils4 {
         }
 
         return _evaluateBaseRowDim4BlobPackedPoints(blob, offset, p0, p1, p2, p3);
+    }
+
+    function _evaluateBaseRowDim5BlobWindow(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory point,
+        uint256 pointOffset
+    ) internal pure returns (uint256) {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(point, 0x20), shl(5, pointOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        uint256 p4;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+            p4 := mload(add(pointBase, 0x80))
+        }
+
+        return _evaluateBaseRowDim5BlobPackedPoints(blob, offset, p0, p1, p2, p3, p4);
     }
 
     function _evaluateBaseRowDim4BlobPackedPoints(
@@ -695,6 +894,137 @@ library WhirVerifierUtils4 {
         evalValue = _evaluateBaseRowDim4FromBlobWords(w0, w1, p0, p1, p2, p3);
     }
 
+    function _hashAndEvaluateBaseRowDim5BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) internal pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        assembly ("memory-safe") {
+            function revertField(x) {
+                mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            let ptr := mload(0x40)
+            let modulus := 0x7f000001
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+
+            {
+                let v0 := shr(224, w0)
+                let v1 := and(shr(192, w0), 0xffffffff)
+                let v2 := and(shr(160, w0), 0xffffffff)
+                let v3 := and(shr(128, w0), 0xffffffff)
+                let v4 := and(shr(96, w0), 0xffffffff)
+                let v5 := and(shr(64, w0), 0xffffffff)
+                let v6 := and(shr(32, w0), 0xffffffff)
+                let v7 := and(w0, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v0, modulus)), iszero(lt(v1, modulus))),
+                        or(iszero(lt(v2, modulus)), iszero(lt(v3, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v4, modulus)), iszero(lt(v5, modulus))),
+                        or(iszero(lt(v6, modulus)), iszero(lt(v7, modulus)))
+                    )
+                ) {
+                    revertField(w0)
+                }
+            }
+            {
+                let v8 := shr(224, w1)
+                let v9 := and(shr(192, w1), 0xffffffff)
+                let v10 := and(shr(160, w1), 0xffffffff)
+                let v11 := and(shr(128, w1), 0xffffffff)
+                let v12 := and(shr(96, w1), 0xffffffff)
+                let v13 := and(shr(64, w1), 0xffffffff)
+                let v14 := and(shr(32, w1), 0xffffffff)
+                let v15 := and(w1, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v8, modulus)), iszero(lt(v9, modulus))),
+                        or(iszero(lt(v10, modulus)), iszero(lt(v11, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v12, modulus)), iszero(lt(v13, modulus))),
+                        or(iszero(lt(v14, modulus)), iszero(lt(v15, modulus)))
+                    )
+                ) {
+                    revertField(w1)
+                }
+            }
+            {
+                let v16 := shr(224, w2)
+                let v17 := and(shr(192, w2), 0xffffffff)
+                let v18 := and(shr(160, w2), 0xffffffff)
+                let v19 := and(shr(128, w2), 0xffffffff)
+                let v20 := and(shr(96, w2), 0xffffffff)
+                let v21 := and(shr(64, w2), 0xffffffff)
+                let v22 := and(shr(32, w2), 0xffffffff)
+                let v23 := and(w2, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v16, modulus)), iszero(lt(v17, modulus))),
+                        or(iszero(lt(v18, modulus)), iszero(lt(v19, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v20, modulus)), iszero(lt(v21, modulus))),
+                        or(iszero(lt(v22, modulus)), iszero(lt(v23, modulus)))
+                    )
+                ) {
+                    revertField(w2)
+                }
+            }
+            {
+                let v24 := shr(224, w3)
+                let v25 := and(shr(192, w3), 0xffffffff)
+                let v26 := and(shr(160, w3), 0xffffffff)
+                let v27 := and(shr(128, w3), 0xffffffff)
+                let v28 := and(shr(96, w3), 0xffffffff)
+                let v29 := and(shr(64, w3), 0xffffffff)
+                let v30 := and(shr(32, w3), 0xffffffff)
+                let v31 := and(w3, 0xffffffff)
+                if or(
+                    or(
+                        or(iszero(lt(v24, modulus)), iszero(lt(v25, modulus))),
+                        or(iszero(lt(v26, modulus)), iszero(lt(v27, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(v28, modulus)), iszero(lt(v29, modulus))),
+                        or(iszero(lt(v30, modulus)), iszero(lt(v31, modulus)))
+                    )
+                ) {
+                    revertField(w3)
+                }
+            }
+
+            mstore8(ptr, 0x00)
+            mstore(add(ptr, 0x01), w0)
+            mstore(add(ptr, 0x21), w1)
+            mstore(add(ptr, 0x41), w2)
+            mstore(add(ptr, 0x61), w3)
+            digest := and(keccak256(ptr, 129), not(sub(shl(96, 1), 1)))
+        }
+
+        evalValue = _evaluateBaseRowDim5FromBlobWords(w0, w1, w2, w3, p0, p1, p2, p3, p4);
+    }
+
     function _evaluateBaseRowDim4FromBlobWords(
         uint256 w0,
         uint256 w1,
@@ -742,6 +1072,68 @@ library WhirVerifierUtils4 {
         uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
         uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
+    }
+
+    function _evaluateBaseRowDim5BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        assembly ("memory-safe") {
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+        }
+
+        return _evaluateBaseRowDim5FromBlobWords(w0, w1, w2, w3, p0, p1, p2, p3, p4);
+    }
+
+    function _evaluateBaseRowDim5FromBlobWords(
+        uint256 w0,
+        uint256 w1,
+        uint256 w2,
+        uint256 w3,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (uint256) {
+        uint256 mask = 0xffffffff;
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(p0);
+
+        uint256[16] memory layer1;
+        layer1[0] = _foldOnceBase(w0 >> 224, w2 >> 224, r00, r01, r02, r03);
+        layer1[1] = _foldOnceBase((w0 >> 192) & mask, (w2 >> 192) & mask, r00, r01, r02, r03);
+        layer1[2] = _foldOnceBase((w0 >> 160) & mask, (w2 >> 160) & mask, r00, r01, r02, r03);
+        layer1[3] = _foldOnceBase((w0 >> 128) & mask, (w2 >> 128) & mask, r00, r01, r02, r03);
+        layer1[4] = _foldOnceBase((w0 >> 96) & mask, (w2 >> 96) & mask, r00, r01, r02, r03);
+        layer1[5] = _foldOnceBase((w0 >> 64) & mask, (w2 >> 64) & mask, r00, r01, r02, r03);
+        layer1[6] = _foldOnceBase((w0 >> 32) & mask, (w2 >> 32) & mask, r00, r01, r02, r03);
+        layer1[7] = _foldOnceBase(w0 & mask, w2 & mask, r00, r01, r02, r03);
+        layer1[8] = _foldOnceBase(w1 >> 224, w3 >> 224, r00, r01, r02, r03);
+        layer1[9] = _foldOnceBase((w1 >> 192) & mask, (w3 >> 192) & mask, r00, r01, r02, r03);
+        layer1[10] = _foldOnceBase((w1 >> 160) & mask, (w3 >> 160) & mask, r00, r01, r02, r03);
+        layer1[11] = _foldOnceBase((w1 >> 128) & mask, (w3 >> 128) & mask, r00, r01, r02, r03);
+        layer1[12] = _foldOnceBase((w1 >> 96) & mask, (w3 >> 96) & mask, r00, r01, r02, r03);
+        layer1[13] = _foldOnceBase((w1 >> 64) & mask, (w3 >> 64) & mask, r00, r01, r02, r03);
+        layer1[14] = _foldOnceBase((w1 >> 32) & mask, (w3 >> 32) & mask, r00, r01, r02, r03);
+        layer1[15] = _foldOnceBase(w1 & mask, w3 & mask, r00, r01, r02, r03);
+
+        return _collapseDim5AfterFirstLayer(layer1, p1, p2, p3, p4);
     }
 
     function _evaluateExtensionRowDim3(
@@ -839,6 +1231,106 @@ library WhirVerifierUtils4 {
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
     }
 
+    function _evaluateExtensionRowDim5(
+        uint256[] calldata flatValues,
+        uint256 start,
+        uint256[] memory point
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(flatValues.offset, shl(5, start))
+        }
+
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(point[0]);
+
+        uint256[16] memory layer1;
+        uint256 a;
+        uint256 b;
+
+        assembly ("memory-safe") {
+            a := calldataload(src)
+            b := calldataload(add(src, 0x200))
+        }
+        layer1[0] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x20))
+            b := calldataload(add(src, 0x220))
+        }
+        layer1[1] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x40))
+            b := calldataload(add(src, 0x240))
+        }
+        layer1[2] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x60))
+            b := calldataload(add(src, 0x260))
+        }
+        layer1[3] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x80))
+            b := calldataload(add(src, 0x280))
+        }
+        layer1[4] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xa0))
+            b := calldataload(add(src, 0x2a0))
+        }
+        layer1[5] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xc0))
+            b := calldataload(add(src, 0x2c0))
+        }
+        layer1[6] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0xe0))
+            b := calldataload(add(src, 0x2e0))
+        }
+        layer1[7] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x100))
+            b := calldataload(add(src, 0x300))
+        }
+        layer1[8] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x120))
+            b := calldataload(add(src, 0x320))
+        }
+        layer1[9] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x140))
+            b := calldataload(add(src, 0x340))
+        }
+        layer1[10] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x160))
+            b := calldataload(add(src, 0x360))
+        }
+        layer1[11] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x180))
+            b := calldataload(add(src, 0x380))
+        }
+        layer1[12] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1a0))
+            b := calldataload(add(src, 0x3a0))
+        }
+        layer1[13] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1c0))
+            b := calldataload(add(src, 0x3c0))
+        }
+        layer1[14] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+        assembly ("memory-safe") {
+            a := calldataload(add(src, 0x1e0))
+            b := calldataload(add(src, 0x3e0))
+        }
+        layer1[15] = _foldOnceWithCoeffs(a, b, r00, r01, r02, r03);
+
+        return _collapseDim5AfterFirstLayer(layer1, point[1], point[2], point[3], point[4]);
+    }
+
     function _evaluateExtensionRowDim4BlobWindow(
         bytes calldata blob,
         uint256 offset,
@@ -861,6 +1353,32 @@ library WhirVerifierUtils4 {
         }
 
         return _evaluateExtensionRowDim4BlobPackedPoints(blob, offset, p0, p1, p2, p3);
+    }
+
+    function _evaluateExtensionRowDim5BlobWindow(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory point,
+        uint256 pointOffset
+    ) internal pure returns (uint256) {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(point, 0x20), shl(5, pointOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        uint256 p4;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+            p4 := mload(add(pointBase, 0x80))
+        }
+
+        return _evaluateExtensionRowDim5BlobPackedPoints(blob, offset, p0, p1, p2, p3, p4);
     }
 
     function _evaluateExtensionRowDim4BlobPackedPoints(
@@ -993,6 +1511,149 @@ library WhirVerifierUtils4 {
         );
     }
 
+    function _hashAndEvaluateExtensionRowDim5BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) internal pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        uint256 w4;
+        uint256 w5;
+        uint256 w6;
+        uint256 w7;
+        uint256 w8;
+        uint256 w9;
+        uint256 w10;
+        uint256 w11;
+        uint256 w12;
+        uint256 w13;
+        uint256 w14;
+        uint256 w15;
+        assembly ("memory-safe") {
+            function revertPacked(x) {
+                mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateWord(word, modulus, coeffMask, lowMask) {
+                let hi := and(word, not(lowMask))
+                let hi0 := shr(224, hi)
+                let hi1 := and(shr(192, hi), coeffMask)
+                let hi2 := and(shr(160, hi), coeffMask)
+                let hi3 := and(shr(128, hi), coeffMask)
+                if or(
+                    or(iszero(lt(hi0, modulus)), iszero(lt(hi1, modulus))),
+                    or(iszero(lt(hi2, modulus)), iszero(lt(hi3, modulus)))
+                ) {
+                    revertPacked(hi)
+                }
+
+                let lo := and(word, lowMask)
+                let lo0 := shr(96, lo)
+                let lo1 := and(shr(64, lo), coeffMask)
+                let lo2 := and(shr(32, lo), coeffMask)
+                let lo3 := and(lo, coeffMask)
+                if or(
+                    or(iszero(lt(lo0, modulus)), iszero(lt(lo1, modulus))),
+                    or(iszero(lt(lo2, modulus)), iszero(lt(lo3, modulus)))
+                ) {
+                    revertPacked(shl(128, lo))
+                }
+            }
+
+            let ptr := mload(0x40)
+            let modulus := 0x7f000001
+            let coeffMask := 0xffffffff
+            let lowMask := sub(shl(128, 1), 1)
+
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+            w4 := calldataload(add(src, 0x80))
+            w5 := calldataload(add(src, 0xa0))
+            w6 := calldataload(add(src, 0xc0))
+            w7 := calldataload(add(src, 0xe0))
+            w8 := calldataload(add(src, 0x100))
+            w9 := calldataload(add(src, 0x120))
+            w10 := calldataload(add(src, 0x140))
+            w11 := calldataload(add(src, 0x160))
+            w12 := calldataload(add(src, 0x180))
+            w13 := calldataload(add(src, 0x1a0))
+            w14 := calldataload(add(src, 0x1c0))
+            w15 := calldataload(add(src, 0x1e0))
+
+            validateWord(w0, modulus, coeffMask, lowMask)
+            validateWord(w1, modulus, coeffMask, lowMask)
+            validateWord(w2, modulus, coeffMask, lowMask)
+            validateWord(w3, modulus, coeffMask, lowMask)
+            validateWord(w4, modulus, coeffMask, lowMask)
+            validateWord(w5, modulus, coeffMask, lowMask)
+            validateWord(w6, modulus, coeffMask, lowMask)
+            validateWord(w7, modulus, coeffMask, lowMask)
+            validateWord(w8, modulus, coeffMask, lowMask)
+            validateWord(w9, modulus, coeffMask, lowMask)
+            validateWord(w10, modulus, coeffMask, lowMask)
+            validateWord(w11, modulus, coeffMask, lowMask)
+            validateWord(w12, modulus, coeffMask, lowMask)
+            validateWord(w13, modulus, coeffMask, lowMask)
+            validateWord(w14, modulus, coeffMask, lowMask)
+            validateWord(w15, modulus, coeffMask, lowMask)
+
+            mstore8(ptr, 0x00)
+            mstore(add(ptr, 0x01), w0)
+            mstore(add(ptr, 0x21), w1)
+            mstore(add(ptr, 0x41), w2)
+            mstore(add(ptr, 0x61), w3)
+            mstore(add(ptr, 0x81), w4)
+            mstore(add(ptr, 0xa1), w5)
+            mstore(add(ptr, 0xc1), w6)
+            mstore(add(ptr, 0xe1), w7)
+            mstore(add(ptr, 0x101), w8)
+            mstore(add(ptr, 0x121), w9)
+            mstore(add(ptr, 0x141), w10)
+            mstore(add(ptr, 0x161), w11)
+            mstore(add(ptr, 0x181), w12)
+            mstore(add(ptr, 0x1a1), w13)
+            mstore(add(ptr, 0x1c1), w14)
+            mstore(add(ptr, 0x1e1), w15)
+            digest := and(keccak256(ptr, 513), not(sub(shl(96, 1), 1)))
+        }
+
+        uint256[16] memory words;
+        words[0] = w0;
+        words[1] = w1;
+        words[2] = w2;
+        words[3] = w3;
+        words[4] = w4;
+        words[5] = w5;
+        words[6] = w6;
+        words[7] = w7;
+        words[8] = w8;
+        words[9] = w9;
+        words[10] = w10;
+        words[11] = w11;
+        words[12] = w12;
+        words[13] = w13;
+        words[14] = w14;
+        words[15] = w15;
+
+        evalValue = _evaluateExtensionRowDim5FromBlobWords(words, p0, p1, p2, p3, p4);
+    }
+
     function _evaluateExtensionRowDim4FromBlobWords(
         uint256 w0,
         uint256 w1,
@@ -1046,6 +1707,133 @@ library WhirVerifierUtils4 {
         uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23);
         uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23);
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33);
+    }
+
+    function _evaluateExtensionRowDim5BlobPackedPoints(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        uint256 w4;
+        uint256 w5;
+        uint256 w6;
+        uint256 w7;
+        uint256 w8;
+        uint256 w9;
+        uint256 w10;
+        uint256 w11;
+        uint256 w12;
+        uint256 w13;
+        uint256 w14;
+        uint256 w15;
+        assembly ("memory-safe") {
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+            w4 := calldataload(add(src, 0x80))
+            w5 := calldataload(add(src, 0xa0))
+            w6 := calldataload(add(src, 0xc0))
+            w7 := calldataload(add(src, 0xe0))
+            w8 := calldataload(add(src, 0x100))
+            w9 := calldataload(add(src, 0x120))
+            w10 := calldataload(add(src, 0x140))
+            w11 := calldataload(add(src, 0x160))
+            w12 := calldataload(add(src, 0x180))
+            w13 := calldataload(add(src, 0x1a0))
+            w14 := calldataload(add(src, 0x1c0))
+            w15 := calldataload(add(src, 0x1e0))
+        }
+
+        uint256[16] memory words;
+        words[0] = w0;
+        words[1] = w1;
+        words[2] = w2;
+        words[3] = w3;
+        words[4] = w4;
+        words[5] = w5;
+        words[6] = w6;
+        words[7] = w7;
+        words[8] = w8;
+        words[9] = w9;
+        words[10] = w10;
+        words[11] = w11;
+        words[12] = w12;
+        words[13] = w13;
+        words[14] = w14;
+        words[15] = w15;
+
+        return _evaluateExtensionRowDim5FromBlobWords(words, p0, p1, p2, p3, p4);
+    }
+
+    function _evaluateExtensionRowDim5FromBlobWords(
+        uint256[16] memory words,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (uint256) {
+        uint256 lowMask = (uint256(1) << 128) - 1;
+        uint256 highMask = ~lowMask;
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03) = _unpackCoeffs(p0);
+
+        uint256[16] memory layer1;
+        layer1[0] =
+            _foldOnceWithCoeffs(words[0] & highMask, words[8] & highMask, r00, r01, r02, r03);
+        layer1[1] = _foldOnceWithCoeffs(
+            (words[0] & lowMask) << 128, (words[8] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[2] =
+            _foldOnceWithCoeffs(words[1] & highMask, words[9] & highMask, r00, r01, r02, r03);
+        layer1[3] = _foldOnceWithCoeffs(
+            (words[1] & lowMask) << 128, (words[9] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[4] =
+            _foldOnceWithCoeffs(words[2] & highMask, words[10] & highMask, r00, r01, r02, r03);
+        layer1[5] = _foldOnceWithCoeffs(
+            (words[2] & lowMask) << 128, (words[10] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[6] =
+            _foldOnceWithCoeffs(words[3] & highMask, words[11] & highMask, r00, r01, r02, r03);
+        layer1[7] = _foldOnceWithCoeffs(
+            (words[3] & lowMask) << 128, (words[11] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[8] =
+            _foldOnceWithCoeffs(words[4] & highMask, words[12] & highMask, r00, r01, r02, r03);
+        layer1[9] = _foldOnceWithCoeffs(
+            (words[4] & lowMask) << 128, (words[12] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[10] =
+            _foldOnceWithCoeffs(words[5] & highMask, words[13] & highMask, r00, r01, r02, r03);
+        layer1[11] = _foldOnceWithCoeffs(
+            (words[5] & lowMask) << 128, (words[13] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[12] =
+            _foldOnceWithCoeffs(words[6] & highMask, words[14] & highMask, r00, r01, r02, r03);
+        layer1[13] = _foldOnceWithCoeffs(
+            (words[6] & lowMask) << 128, (words[14] & lowMask) << 128, r00, r01, r02, r03
+        );
+        layer1[14] =
+            _foldOnceWithCoeffs(words[7] & highMask, words[15] & highMask, r00, r01, r02, r03);
+        layer1[15] = _foldOnceWithCoeffs(
+            (words[7] & lowMask) << 128, (words[15] & lowMask) << 128, r00, r01, r02, r03
+        );
+
+        return _collapseDim5AfterFirstLayer(layer1, p1, p2, p3, p4);
     }
 
     function _loadBaseAsExt4Unchecked(uint256[] calldata flatValues, uint256 index)
@@ -1231,6 +2019,38 @@ library WhirVerifierUtils4 {
                 )
             )
         }
+    }
+
+    function _collapseDim5AfterFirstLayer(
+        uint256[16] memory layer1,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (uint256) {
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13) = _unpackCoeffs(p1);
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23) = _unpackCoeffs(p2);
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33) = _unpackCoeffs(p3);
+        (uint256 r40, uint256 r41, uint256 r42, uint256 r43) = _unpackCoeffs(p4);
+
+        uint256 m0 = _foldOnceWithCoeffs(layer1[0], layer1[8], r10, r11, r12, r13);
+        uint256 m1 = _foldOnceWithCoeffs(layer1[1], layer1[9], r10, r11, r12, r13);
+        uint256 m2 = _foldOnceWithCoeffs(layer1[2], layer1[10], r10, r11, r12, r13);
+        uint256 m3 = _foldOnceWithCoeffs(layer1[3], layer1[11], r10, r11, r12, r13);
+        uint256 m4 = _foldOnceWithCoeffs(layer1[4], layer1[12], r10, r11, r12, r13);
+        uint256 m5 = _foldOnceWithCoeffs(layer1[5], layer1[13], r10, r11, r12, r13);
+        uint256 m6 = _foldOnceWithCoeffs(layer1[6], layer1[14], r10, r11, r12, r13);
+        uint256 m7 = _foldOnceWithCoeffs(layer1[7], layer1[15], r10, r11, r12, r13);
+
+        uint256 n0 = _foldOnceWithCoeffs(m0, m4, r20, r21, r22, r23);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m5, r20, r21, r22, r23);
+        uint256 n2 = _foldOnceWithCoeffs(m2, m6, r20, r21, r22, r23);
+        uint256 n3 = _foldOnceWithCoeffs(m3, m7, r20, r21, r22, r23);
+
+        uint256 o0 = _foldOnceWithCoeffs(n0, n2, r30, r31, r32, r33);
+        uint256 o1 = _foldOnceWithCoeffs(n1, n3, r30, r31, r32, r33);
+
+        return _foldOnceWithCoeffs(o0, o1, r40, r41, r42, r43);
     }
 
     function _unpackCoeffs(uint256 packed)

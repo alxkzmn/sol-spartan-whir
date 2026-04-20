@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import { Script, console2 } from "forge-std/Script.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 
 contract WhirTxBenchmarkScript is Script {
     string internal constant TESTDATA = "testdata/";

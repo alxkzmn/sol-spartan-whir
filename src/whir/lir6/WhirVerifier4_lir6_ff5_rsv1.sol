@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
-import { QuarticWhirFixedConfig } from "../generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
-import { KeccakChallenger } from "../transcript/KeccakChallenger.sol";
-import { WhirStructs } from "./WhirStructs.sol";
-import { WhirVerifierCore4 } from "./WhirVerifierCore4.sol";
-import { WhirVerifierUtils4 } from "./WhirVerifierUtils4.sol";
+import { KoalaBearExt4 } from "../../field/KoalaBearExt4.sol";
+import { QuarticWhirFixedConfig } from "../../generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
+import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
+import { WhirStructs } from "../WhirStructs.sol";
+import { WhirVerifierCore4 } from "../WhirVerifierCore4.sol";
+import { WhirVerifierUtils4 } from "../WhirVerifierUtils4.sol";
 
 contract WhirVerifier4 {
     using KeccakChallenger for KeccakChallenger.State;
@@ -55,6 +55,9 @@ contract WhirVerifier4 {
         uint256 round0ConstraintChallenge;
         uint256[] memory round0EqFlatPoints;
         uint256[] memory round0SelVars;
+        uint256 round1ConstraintChallenge;
+        uint256[] memory round1EqFlatPoints;
+        uint256[] memory round1SelVars;
         uint256 initialConstraintChallenge = WhirVerifierUtils4.sampleExt4(challenger);
         uint256 statementEval;
 
@@ -87,17 +90,12 @@ contract WhirVerifier4 {
         );
 
         WhirVerifierCore4.FixedParsedCommitment memory prevCommitment = parsedCommitment;
-        QuarticWhirFixedConfig.RoundConfig memory round0Config =
-            QuarticWhirFixedConfig.roundConfig(0);
 
         {
             WhirStructs.WhirRoundProof calldata round0Proof = proof.rounds[0];
             WhirVerifierCore4.FixedParsedCommitment memory round0Commitment =
                 WhirVerifierCore4._parseFixedCommitment2(
-                    challenger,
-                    round0Proof.commitment,
-                    round0Proof.oodAnswers,
-                    round0Config.numVariables
+                    challenger, round0Proof.commitment, round0Proof.oodAnswers, 12
                 );
 
             uint256 round0Contribution;
@@ -105,11 +103,11 @@ contract WhirVerifier4 {
                 WhirVerifierCore4._verifyStirAndCombineConstraint(
                     challenger,
                     prevCommitment.root,
-                    round0Config.powBits,
-                    round0Config.numQueries,
-                    round0Config.foldingFactor,
-                    round0Config.domainSize,
-                    round0Config.foldedDomainGen,
+                    26,
+                    9,
+                    QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                    4_194_304,
+                    1_816_824_389,
                     round0Proof.queryBatch,
                     true,
                     round0Proof.powWitness,
@@ -124,13 +122,53 @@ contract WhirVerifier4 {
                 round0Proof.sumcheck,
                 challenger,
                 claimedEval,
-                round0Config.foldingFactor,
-                round0Config.foldingPowBits,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                0,
                 allRandomness,
                 randomnessCursor
             );
 
             prevCommitment = round0Commitment;
+        }
+
+        {
+            WhirStructs.WhirRoundProof calldata round1Proof = proof.rounds[1];
+            WhirVerifierCore4.FixedParsedCommitment memory round1Commitment =
+                WhirVerifierCore4._parseFixedCommitment2(
+                    challenger, round1Proof.commitment, round1Proof.oodAnswers, 8
+                );
+
+            uint256 round1Contribution;
+            (round1ConstraintChallenge, round1Contribution, round1SelVars) =
+                WhirVerifierCore4._verifyStirAndCombineConstraint(
+                    challenger,
+                    prevCommitment.root,
+                    26,
+                    6,
+                    QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                    2_097_152,
+                    373_019_801,
+                    round1Proof.queryBatch,
+                    true,
+                    round1Proof.powWitness,
+                    foldingRandomness,
+                    1,
+                    round1Proof.oodAnswers
+                );
+            claimedEval = KoalaBearExt4.add(claimedEval, round1Contribution);
+            round1EqFlatPoints = round1Commitment.oodFlatPoints;
+
+            (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
+                round1Proof.sumcheck,
+                challenger,
+                claimedEval,
+                QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                4,
+                allRandomness,
+                randomnessCursor
+            );
+
+            prevCommitment = round1Commitment;
         }
 
         if (proof.finalPoly.length != QuarticWhirFixedConfig.FINAL_POLY_LENGTH) {
@@ -168,8 +206,14 @@ contract WhirVerifier4 {
             revert FixedRandomnessLengthMismatch();
         }
 
-        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraintGenericRaw(
-            round0ConstraintChallenge, round0EqFlatPoints, round0SelVars, allRandomness
+        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
+            round0ConstraintChallenge,
+            round0EqFlatPoints,
+            round0SelVars,
+            round1ConstraintChallenge,
+            round1EqFlatPoints,
+            round1SelVars,
+            allRandomness
         );
         evaluationOfWeights = KoalaBearExt4.add(
             evaluationOfWeights,

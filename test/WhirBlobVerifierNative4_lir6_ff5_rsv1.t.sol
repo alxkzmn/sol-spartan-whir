@@ -4,12 +4,14 @@ pragma solidity ^0.8.28;
 import { Test } from "forge-std/Test.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirBlobCodec4 } from "../src/whir/WhirBlobCodec4_lir6_ff5_rsv1.sol";
-import { WhirBlobVerifier4 } from "../src/whir/WhirBlobVerifier4_lir6_ff5_rsv1.sol";
-import { WhirBlobVerifierNative4 } from "../src/whir/WhirBlobVerifierNative4_lir6_ff5_rsv1.sol";
+import { WhirBlobCodec4 } from "../src/whir/lir6/WhirBlobCodec4_lir6_ff5_rsv1.sol";
+import { WhirBlobVerifier4 } from "../src/whir/lir6/WhirBlobVerifier4_lir6_ff5_rsv1.sol";
+import {
+    WhirBlobVerifierNative4
+} from "../src/whir/lir6/WhirBlobVerifierNative4_lir6_ff5_rsv1.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 
 contract WhirBlobVerifierNative4Test is Test {
     string internal constant TESTDATA = "testdata/";
@@ -305,7 +307,6 @@ contract WhirBlobVerifierNative4Test is Test {
 
         offsets.initialSumcheck = offset;
         offset += proof.initialSumcheck.polynomialEvals.length * 16;
-        offset += proof.initialSumcheck.powWitnesses.length * 4;
 
         offset += 20; // round0 commitment
         offset += 2 * 16; // round0 ood
@@ -313,7 +314,14 @@ contract WhirBlobVerifierNative4Test is Test {
         offset += proof.rounds[0].queryBatch.values.length * 4;
         offset += proof.rounds[0].queryBatch.decommitments.length * 20;
         offset += proof.rounds[0].sumcheck.polynomialEvals.length * 16;
-        offset += proof.rounds[0].sumcheck.powWitnesses.length * 4;
+
+        offset += 20; // round1 commitment
+        offset += 2 * 16; // round1 ood
+        offset += 4; // round1 pow
+        offset += proof.rounds[1].queryBatch.values.length * 16;
+        offset += proof.rounds[1].queryBatch.decommitments.length * 20;
+        offset += proof.rounds[1].sumcheck.polynomialEvals.length * 16;
+        offset += proof.rounds[1].sumcheck.powWitnesses.length * 4;
 
         offsets.finalPoly = offset;
         offset += proof.finalPoly.length * 16;

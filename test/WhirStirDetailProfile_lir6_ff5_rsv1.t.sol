@@ -46,9 +46,7 @@ contract WhirStirDetailHarness {
         )
     {
         round0 = _profileRound0Frontier(expectedCommitment, statement, proof);
-        if (QuarticWhirFixedConfig.ROUND_COUNT > 1) {
-            round1 = _profileRound1Frontier(expectedCommitment, statement, proof);
-        }
+        round1 = _profileRound1Frontier(expectedCommitment, statement, proof);
         finalBd = _profileFinalFrontier(expectedCommitment, statement, proof);
     }
 
@@ -255,10 +253,6 @@ contract WhirStirDetailHarness {
         WhirStructs.WhirStatement calldata statement,
         WhirStructs.WhirProof calldata proof
     ) internal view returns (StirFrontierBreakdown memory bd) {
-        if (QuarticWhirFixedConfig.ROUND_COUNT < 2) {
-            return bd;
-        }
-
         KeccakChallenger.State memory challenger;
         QuarticWhirFixedConfig.observePattern(challenger);
 

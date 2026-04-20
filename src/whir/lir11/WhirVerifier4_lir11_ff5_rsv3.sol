@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { KoalaBearExt4 } from "../field/KoalaBearExt4.sol";
+import { KoalaBearExt4 } from "../../field/KoalaBearExt4.sol";
 import {
     QuarticWhirLir11FixedConfig
-} from "../generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol";
-import { KeccakChallenger } from "../transcript/KeccakChallenger.sol";
-import { WhirStructs } from "./WhirStructs.sol";
-import { WhirVerifierCore4 } from "./WhirVerifierCore4.sol";
-import { WhirVerifierUtils4 } from "./WhirVerifierUtils4.sol";
+} from "../../generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol";
+import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
+import { WhirStructs } from "../WhirStructs.sol";
+import { WhirVerifierCore4Lir11 as WhirVerifierCore4 } from "./WhirVerifierCore4Lir11.sol";
+import { WhirVerifierUtils4Lir11 as WhirVerifierUtils4 } from "./WhirVerifierUtils4Lir11.sol";
 
 contract WhirVerifierLir11 {
     using KeccakChallenger for KeccakChallenger.State;

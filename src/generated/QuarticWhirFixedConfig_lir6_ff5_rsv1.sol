@@ -21,16 +21,16 @@ library QuarticWhirFixedConfig {
     uint256 internal constant NUM_VARIABLES = 16;
     uint256 internal constant COMMITMENT_OOD_SAMPLES = 2;
     uint256 internal constant STARTING_FOLDING_POW_BITS = 0;
-    uint256 internal constant INITIAL_SUMCHECK_ROUNDS = 5;
-    uint256 internal constant FINAL_SUMCHECK_ROUNDS = 6;
-    uint256 internal constant FINAL_POLY_LENGTH = 64;
-    uint256 internal constant ROUND_COUNT = 1;
+    uint256 internal constant INITIAL_SUMCHECK_ROUNDS = 4;
+    uint256 internal constant FINAL_SUMCHECK_ROUNDS = 4;
+    uint256 internal constant FINAL_POLY_LENGTH = 16;
+    uint256 internal constant ROUND_COUNT = 2;
     uint256 internal constant FINAL_POW_BITS = 20;
     uint256 internal constant FINAL_FOLDING_POW_BITS = 0;
-    uint256 internal constant FINAL_NUM_QUERIES = 6;
-    uint256 internal constant FINAL_NUM_VARIABLES = 6;
-    uint256 internal constant FINAL_FOLDING_FACTOR = 5;
-    uint256 internal constant FINAL_DOMAIN_SIZE = 2_097_152;
+    uint256 internal constant FINAL_NUM_QUERIES = 5;
+    uint256 internal constant FINAL_NUM_VARIABLES = 4;
+    uint256 internal constant FINAL_FOLDING_FACTOR = 4;
+    uint256 internal constant FINAL_DOMAIN_SIZE = 1_048_576;
     uint256 internal constant FINAL_FOLDED_DOMAIN_GEN = 1_848_593_786;
     uint256 internal constant EFFECTIVE_DIGEST_BYTES = 20;
     uint256 internal constant EXPECT_FINAL_QUERY_BATCH = 1;
@@ -38,7 +38,7 @@ library QuarticWhirFixedConfig {
 
     function observePattern(KeccakChallenger.State memory challenger) internal pure {
         challenger.observeBytes(
-            hex"05000000090000000400000001000000060000000300000006000000030000000600000003000000060000000300000006000000030000000500000009000000040000001f0000000200000004000000260000000f000000040000000600000003000000260000000f0000000600000003000000260000000f0000000600000003000000260000000f0000000600000003000000260000000f0000000600000003000000260000000f00000046000000110000000300000004000000260000000f00000006000000030000000600000003000000060000000300000006000000030000000600000003000000060000000300000005000000"
+            hex"0500000009000000040000000100000006000000030000000600000003000000060000000300000006000000030000000500000009000000040000001f0000000200000004000000260000000f000000040000000600000003000000060000000300000006000000030000000600000003000000050000000900000004000000160000000200000004000000260000000f000000040000000600000003000000260000000f0000000600000003000000260000000f0000000600000003000000260000000f0000000600000003000000260000000f000000160000000f0000000300000004000000260000000f000000060000000300000006000000030000000600000003000000060000000300000005000000"
         );
     }
 
@@ -46,12 +46,24 @@ library QuarticWhirFixedConfig {
         if (index == 0) {
             return RoundConfig({
                 powBits: 26,
-                foldingPowBits: 1,
+                foldingPowBits: 0,
                 numQueries: 9,
                 oodSamples: 2,
-                numVariables: 11,
-                foldingFactor: 5,
+                numVariables: 12,
+                foldingFactor: 4,
                 domainSize: 4_194_304,
+                foldedDomainGen: 1_816_824_389
+            });
+        }
+        if (index == 1) {
+            return RoundConfig({
+                powBits: 26,
+                foldingPowBits: 4,
+                numQueries: 6,
+                oodSamples: 2,
+                numVariables: 8,
+                foldingFactor: 4,
+                domainSize: 2_097_152,
                 foldedDomainGen: 373_019_801
             });
         }

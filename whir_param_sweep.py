@@ -19,9 +19,9 @@ whir-p3/src/parameters/errors.rs (CapacityBound branch). Includes:
 
 Calibration (two-point compromise):
   Point A: Constant(5)/lir=11/rs_v=3 on the alternate fixed verifier family
-    measured=957,712  model=891,844  error=-6.9%
+    measured=957,778  model=891,844  error=-6.9%
   Point B: Constant(4)/lir=6/rs_v=1 on old verifier (specialized constraint kernels)
-    measured=996,068  model=1,064,610  error=+6.9%
+    measured=996,074  model=1,064,610  error=+6.9%
   Current documented precision:
     - execution gas only, not total tx gas
     - both calibration points are within ±6.9% relative error
@@ -75,6 +75,14 @@ MAX_POW_BITS = 30  # hard limit: (1 << bits) < F::ORDER_U32 for 31-bit primes
 TWO_ADICITY = 24  # KoalaBear (BabyBear = 27, irrelevant for num_vars <= 16)
 MAX_SEND = 6  # MAX_NUM_VARIABLES_TO_SEND_COEFFS
 MAX_STARTING_LOG_INV_RATE = 11  # sweep cap and current hard ceiling
+
+CURRENT_LIR11 = (5, 5, 11, 3)
+CURRENT_LIR6 = (4, 4, 6, 1)
+CURRENT_CONFIGS = (
+    (CURRENT_LIR11, "WhirVerifier4_lir11_ff5_rsv3.sol"),
+    (CURRENT_LIR6, "WhirVerifier4_lir6_ff5_rsv1.sol"),
+)
+CURRENT_CONFIG_LABELS = {params: label for params, label in CURRENT_CONFIGS}
 
 
 def eta_cb(log_inv_rate: int) -> float:
@@ -489,7 +497,7 @@ DECOMMIT_CD = 368
 # Micro-benchmark values (generic path): PER_VAR=666, PER_ITER=6487.
 # Compromise at 50% to fit both generic (current) and specialized (old)
 # verifier implementations within ±7% error.
-CONSTRAINT_PER_VAR = 333   # per variable per constraint iteration (compromise)
+CONSTRAINT_PER_VAR = 333  # per variable per constraint iteration (compromise)
 CONSTRAINT_PER_ITER = 3244  # per constraint iteration (compromise)
 # --- Observe final polynomial: 2^fsr ext4 coefficients into challenger ---
 # Measured: 64 elements -> 46,081 gas = 720 gas/element.
@@ -559,7 +567,13 @@ class GasBreakdown:
 
     @property
     def total(self) -> int:
-        return self.stir + self.constraint + self.observe_final + self.final_value_eval + self.fixed
+        return (
+            self.stir
+            + self.constraint
+            + self.observe_final
+            + self.final_value_eval
+            + self.fixed
+        )
 
 
 def final_value_eval_gas(fsr: int) -> int:
@@ -695,12 +709,12 @@ def estimate_calldata_gas(cfg: WhirConfig) -> int:
     return leaf_cd + merkle_cd + ood_cd + sc_cd + fixed_cd
 
 
-def _short_name(name: str) -> str:
+def _short_name(name: str, current_label: str = "") -> str:
     """Shorten config name for table display."""
-    s = name.replace("CURRENT ", "").replace("ConstantFromSecondRound", "CFSR")
+    s = name.replace("ConstantFromSecondRound", "CFSR")
     s = s.replace(",starting_log_inv_rate=", ", lir=")
     s = s.replace(",rs_domain_initial_reduction_factor=", ", rs_v=")
-    return s + (" ◀ WhirVerifier4.sol" if name.startswith("CURRENT") else "")
+    return s + (f" ◀ {current_label}" if current_label else "")
 
 
 _CFG_W = 44  # config name column width
@@ -731,7 +745,7 @@ def _table_row(r: "SweepResult", base_total: int, rank: int = None) -> str:
     """Format one markdown-style table row."""
     d_total = r.total - base_total
     n_rnds = r.cfg.n_rounds + 1
-    sn = _short_name(r.name)
+    sn = _short_name(r.name, r.current_label)
     if rank is not None:
         return (
             f"| {rank:>3} | {sn:<{_CFG_W}} "
@@ -757,7 +771,7 @@ def _table_ellipsis_row() -> str:
 
 
 def make_config_name(
-    ff_0: int, ff_rest: int, lir: int, rs_v: int, is_current: bool = False
+    ff_0: int, ff_rest: int, lir: int, rs_v: int
 ) -> str:
     """Build config name string from parameters."""
     if ff_0 == ff_rest:
@@ -767,8 +781,6 @@ def make_config_name(
     name += f",starting_log_inv_rate={lir}"
     if rs_v != 1:
         name += f",rs_domain_initial_reduction_factor={rs_v}"
-    if is_current:
-        name = "CURRENT " + name
     return name
 
 
@@ -780,6 +792,8 @@ class SweepResult:
     cd: int
     total: int
     group: str  # "Constant(4)", "Constant(5)", "ConstantFromSecondRound(...,4)", etc.
+    params: Tuple[int, int, int, int]
+    current_label: str = ""
 
 
 def max_starting_log_inv_rate(
@@ -826,11 +840,11 @@ def print_sweep(
     #   - all derived PoW values must be <= MAX_POW_BITS
     MAX_POW = MAX_POW_BITS
 
-    # Current baseline
-    CURRENT = (5, 5, 11, 3)  # (ff_0, ff_rest, lir, rs_v)
-
     base_cfg = derive_config(
-        num_vars, *CURRENT[:3], MAX_POW, rs_domain_initial_reduction_factor=CURRENT[3]
+        num_vars,
+        *CURRENT_LIR11[:3],
+        MAX_POW,
+        rs_domain_initial_reduction_factor=CURRENT_LIR11[3],
     )
     base_exec = estimate_execution_gas(base_cfg)
     base_cd = estimate_calldata_gas(base_cfg)
@@ -852,13 +866,23 @@ def print_sweep(
             return
         if not cfg.valid:
             return
-        is_current = (ff_0, ff_rest, lir, rs_v) == CURRENT
-        name = make_config_name(ff_0, ff_rest, lir, rs_v, is_current=is_current)
+        params = (ff_0, ff_rest, lir, rs_v)
+        current_label = CURRENT_CONFIG_LABELS.get(params, "")
+        name = make_config_name(ff_0, ff_rest, lir, rs_v)
         ex = estimate_execution_gas(cfg)
         cd = estimate_calldata_gas(cfg)
         total = ex.total + cd
         results.append(
-            SweepResult(name=name, cfg=cfg, ex=ex, cd=cd, total=total, group=group)
+            SweepResult(
+                name=name,
+                cfg=cfg,
+                ex=ex,
+                cd=cd,
+                total=total,
+                group=group,
+                params=params,
+                current_label=current_label,
+            )
         )
 
     # 1. Constant(ff) — ff_0 == ff_rest
@@ -909,12 +933,18 @@ def print_sweep(
     for i, r in enumerate(results[:top_n], 1):
         print(_table_row(r, base_total, rank=i))
 
-    current_index = next(
-        (i for i, r in enumerate(results, 1) if r.name.startswith("CURRENT ")), None
-    )
-    if current_index is not None and current_index > top_n:
+    pinned_current_rows = []
+    for current_params, _label in CURRENT_CONFIGS:
+        current_index = next(
+            (i for i, r in enumerate(results, 1) if r.params == current_params), None
+        )
+        if current_index is not None and current_index > top_n:
+            pinned_current_rows.append((current_index, results[current_index - 1]))
+
+    if pinned_current_rows:
         print(_table_ellipsis_row())
-        print(_table_row(results[current_index - 1], base_total, rank=current_index))
+        for current_index, current_result in pinned_current_rows:
+            print(_table_row(current_result, base_total, rank=current_index))
 
     # Summary
     print(f"\n{'=' * 80}")

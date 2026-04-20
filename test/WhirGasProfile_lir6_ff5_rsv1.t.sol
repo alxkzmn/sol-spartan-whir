@@ -8,7 +8,7 @@ import { KoalaBearExt4 } from "../src/field/KoalaBearExt4.sol";
 import { KeccakChallenger } from "../src/transcript/KeccakChallenger.sol";
 import { QuarticWhirFixedConfig } from "../src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirVerifier4 } from "../src/whir/WhirVerifier4_lir6_ff5_rsv1.sol";
+import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
 import { MerkleVerifier } from "../src/merkle/MerkleVerifier.sol";
@@ -324,9 +324,7 @@ contract WhirProfileHarness {
                 randomnessCursor,
                 proof.rounds[0],
                 QuarticWhirFixedConfig.roundConfig(0),
-                QuarticWhirFixedConfig.ROUND_COUNT > 1
-                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
-                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
                 0
             );
             prevCommitment = step.nextCommitment;
@@ -342,7 +340,7 @@ contract WhirProfileHarness {
         }
 
         // --- Round 1 ---
-        if (QuarticWhirFixedConfig.ROUND_COUNT > 1) {
+        {
             RoundStepResult memory step = _profileRoundStep(
                 challenger,
                 prevCommitment.root,
@@ -410,19 +408,15 @@ contract WhirProfileHarness {
         // --- Evaluate Constraints ---
         uint256 evaluationOfWeights;
         g = gasleft();
-        evaluationOfWeights = QuarticWhirFixedConfig.ROUND_COUNT > 1
-            ? WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
-                round0ConstraintChallenge,
-                round0EqFlatPoints,
-                round0SelVars,
-                round1ConstraintChallenge,
-                round1EqFlatPoints,
-                round1SelVars,
-                allRandomness
-            )
-            : WhirVerifierCore4._evaluateConstraintGenericRaw(
-                round0ConstraintChallenge, round0EqFlatPoints, round0SelVars, allRandomness
-            );
+        evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
+            round0ConstraintChallenge,
+            round0EqFlatPoints,
+            round0SelVars,
+            round1ConstraintChallenge,
+            round1EqFlatPoints,
+            round1SelVars,
+            allRandomness
+        );
         bd.constraintsFixedSelect = g - gasleft();
 
         g = gasleft();
@@ -623,9 +617,7 @@ contract WhirProfileHarness {
                 rp.sumcheck,
                 challenger,
                 claimedEval,
-                QuarticWhirFixedConfig.ROUND_COUNT > 1
-                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
-                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
                 rc.foldingPowBits,
                 allRandomness,
                 randomnessCursor
@@ -634,7 +626,7 @@ contract WhirProfileHarness {
             prevCommitment = nc;
         }
 
-        if (QuarticWhirFixedConfig.ROUND_COUNT > 1) {
+        {
             QuarticWhirFixedConfig.RoundConfig memory rc = QuarticWhirFixedConfig.roundConfig(1);
             WhirStructs.WhirRoundProof calldata rp = proof.rounds[1];
             WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4._parseCommitment(
@@ -700,7 +692,7 @@ contract WhirProfileHarness {
             proof.finalPowWitness,
             foldingRandomness,
             false,
-            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+            1,
             uint8(QuarticWhirFixedConfig.EFFECTIVE_DIGEST_BYTES)
         );
     }
@@ -779,10 +771,6 @@ contract WhirProfileHarness {
         WhirStructs.WhirStatement calldata statement,
         WhirStructs.WhirProof calldata proof
     ) external view returns (uint256 gasRound1Stir) {
-        if (QuarticWhirFixedConfig.ROUND_COUNT < 2) {
-            return 0;
-        }
-
         KeccakChallenger.State memory challenger;
         QuarticWhirFixedConfig.observePattern(challenger);
 
@@ -856,9 +844,7 @@ contract WhirProfileHarness {
                 rp0.sumcheck,
                 challenger,
                 claimedEval,
-                QuarticWhirFixedConfig.ROUND_COUNT > 1
-                    ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
-                    : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR,
+                QuarticWhirFixedConfig.roundConfig(1).foldingFactor,
                 rc0.foldingPowBits,
                 allRandomness,
                 randomnessCursor
@@ -937,7 +923,7 @@ contract WhirProfileHarness {
             0
         );
 
-        for (uint256 round = 0; round < proof.rounds.length; ++round) {
+        for (uint256 round = 0; round < 2; ++round) {
             QuarticWhirFixedConfig.RoundConfig memory rc = QuarticWhirFixedConfig.roundConfig(round);
             WhirStructs.WhirRoundProof calldata rp = proof.rounds[round];
             WhirVerifierCore4.ParsedCommitment memory nc = WhirVerifierCore4._parseCommitment(
@@ -965,8 +951,8 @@ contract WhirProfileHarness {
                 selStatement: ss
             });
             claimedEval = WhirVerifierCore4._combineConstraintEvals(claimedEval, cArr[round + 1]);
-            uint256 nextFoldingFactor = round + 1 < QuarticWhirFixedConfig.ROUND_COUNT
-                ? QuarticWhirFixedConfig.roundConfig(round + 1).foldingFactor
+            uint256 nextFoldingFactor = round == 0
+                ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
                 : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
             (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
                 rp.sumcheck,
@@ -999,7 +985,7 @@ contract WhirProfileHarness {
             proof.finalQueryBatchPresent,
             proof.finalPowWitness,
             foldingRandomness,
-            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+            1,
             proof.finalPoly
         );
         gasFinalStir = g - gasleft();
@@ -1066,7 +1052,7 @@ contract WhirProfileHarness {
             0
         );
 
-        for (uint256 round = 0; round < proof.rounds.length; ++round) {
+        for (uint256 round = 0; round < 2; ++round) {
             QuarticWhirFixedConfig.RoundConfig memory rc = QuarticWhirFixedConfig.roundConfig(round);
             WhirStructs.WhirRoundProof calldata rp = proof.rounds[round];
             WhirVerifierCore4.FixedParsedCommitment memory nc =
@@ -1098,8 +1084,8 @@ contract WhirProfileHarness {
                 round1EqFlatPoints = nc.oodFlatPoints;
                 round1SelVars = stirVars;
             }
-            uint256 nextFoldingFactor = round + 1 < QuarticWhirFixedConfig.ROUND_COUNT
-                ? QuarticWhirFixedConfig.roundConfig(round + 1).foldingFactor
+            uint256 nextFoldingFactor = round == 0
+                ? QuarticWhirFixedConfig.roundConfig(1).foldingFactor
                 : QuarticWhirFixedConfig.FINAL_FOLDING_FACTOR;
             (claimedEval, foldingRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
                 rp.sumcheck,
@@ -1127,7 +1113,7 @@ contract WhirProfileHarness {
             proof.finalQueryBatchPresent,
             proof.finalPowWitness,
             foldingRandomness,
-            QuarticWhirFixedConfig.ROUND_COUNT == 0 ? 0 : 1,
+            1,
             proof.finalPoly
         );
         (claimedEval, finalSumcheckRandomness, randomnessCursor) = WhirVerifierCore4._verifySumcheck(
@@ -1141,19 +1127,15 @@ contract WhirProfileHarness {
         );
 
         uint256 g = gasleft();
-        uint256 evaluationOfWeights = QuarticWhirFixedConfig.ROUND_COUNT > 1
-            ? WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
-                round0ConstraintChallenge,
-                round0EqFlatPoints,
-                round0SelVars,
-                round1ConstraintChallenge,
-                round1EqFlatPoints,
-                round1SelVars,
-                allRandomness
-            )
-            : WhirVerifierCore4._evaluateConstraintGenericRaw(
-                round0ConstraintChallenge, round0EqFlatPoints, round0SelVars, allRandomness
-            );
+        uint256 evaluationOfWeights = WhirVerifierCore4._evaluateConstraintsFixedSelectRaw(
+            round0ConstraintChallenge,
+            round0EqFlatPoints,
+            round0SelVars,
+            round1ConstraintChallenge,
+            round1EqFlatPoints,
+            round1SelVars,
+            allRandomness
+        );
         {
             uint256[] memory oodFlatPoints = initialParsedCommitment.oodFlatPoints;
             require(
@@ -1805,10 +1787,6 @@ contract WhirGasProfileTest is Test {
     }
 
     function testFlameRound1Stir() external view {
-        if (QuarticWhirFixedConfig.ROUND_COUNT < 2) {
-            return;
-        }
-
         (WhirStructs.WhirStatement memory statement, WhirStructs.WhirProof memory proof) =
             _loadSuccessFixture();
         uint256 gasRound1 = harness.profileRound1StirOnly(proof.initialCommitment, statement, proof);
