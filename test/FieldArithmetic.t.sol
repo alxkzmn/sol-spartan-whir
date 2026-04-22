@@ -168,6 +168,24 @@ contract FieldArithmeticTest is Test {
         }
     }
 
+    function testKoalaBearExt8MulMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+            assertEq(
+                harness.ext8Mul(vector.packed_a, vector.packed_b),
+                harness.ext8MulReference(vector.packed_a, vector.packed_b)
+            );
+            assertEq(
+                harness.ext8Mul(vector.packed_a, vector.packed_a),
+                harness.ext8MulReference(vector.packed_a, vector.packed_a)
+            );
+            assertEq(
+                harness.ext8Square(vector.packed_a),
+                harness.ext8Mul(vector.packed_a, vector.packed_a)
+            );
+        }
+    }
+
     function testKoalaBearExt4ExtrapolateVectors() external view {
         for (uint256 i = 0; i < vectors.quartic_extrapolate.length; ++i) {
             ExtensionExtrapolateVectorFixture memory vector = vectors.quartic_extrapolate[i];
@@ -269,6 +287,45 @@ contract FieldArithmeticTest is Test {
         assertEq(harness.ext8Extrapolate012(e0, e1, e2, _extConst8(2)), e2);
     }
 
+    function testExt8Extrapolate012FromSumcheckMatchesDirectPath() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+            uint256 c0 = vector.packed_a;
+            uint256 delta = vector.packed_b;
+            uint256 claimedEval = harness.ext8Add(c0, delta);
+            uint256 c2 = vector.packed_mul;
+            uint256 r = vector.packed_add;
+
+            assertEq(
+                harness.ext8Extrapolate012FromSumcheck(c0, claimedEval, c2, r),
+                harness.ext8Extrapolate012(c0, harness.ext8Sub(claimedEval, c0), c2, r)
+            );
+        }
+    }
+
+    function testExt8Extrapolate012MatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+
+            assertEq(
+                harness.ext8Extrapolate012(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                ),
+                harness.ext8Extrapolate012Reference(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                )
+            );
+            assertEq(
+                harness.ext8Extrapolate012(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                ),
+                harness.ext8Extrapolate012Reference(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                )
+            );
+        }
+    }
+
     function testExt4EqPolyEvalForBooleanPoints() external view {
         uint256[] memory lhs = new uint256[](3);
         lhs[0] = _extConst4(0);
@@ -355,6 +412,50 @@ contract FieldArithmeticTest is Test {
         assertEq(harness.ext8EvaluateHypercube(evals, point), expected);
     }
 
+    function testExt8FoldOnceMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+
+            uint256 fast0 =
+                harness.ext8FoldOnce(vector.packed_a, vector.packed_b, vector.packed_add);
+            assertEq(
+                fast0,
+                harness.ext8FoldOnceSchoolbook(vector.packed_a, vector.packed_b, vector.packed_add)
+            );
+            assertEq(
+                fast0,
+                harness.ext8FoldOnceReference(vector.packed_a, vector.packed_b, vector.packed_add)
+            );
+
+            uint256 fast1 =
+                harness.ext8FoldOnce(vector.packed_inv, vector.packed_sub, vector.packed_mul);
+            assertEq(
+                fast1,
+                harness.ext8FoldOnceSchoolbook(
+                    vector.packed_inv, vector.packed_sub, vector.packed_mul
+                )
+            );
+            assertEq(
+                fast1,
+                harness.ext8FoldOnceReference(
+                    vector.packed_inv, vector.packed_sub, vector.packed_mul
+                )
+            );
+        }
+    }
+
+    function testExt8FoldOncePseudoRandomMatchesReference() external view {
+        for (uint256 i = 0; i < 16; ++i) {
+            uint256 a0 = _pseudoRandomExt8(i * 3 + 1);
+            uint256 a1 = _pseudoRandomExt8(i * 3 + 2);
+            uint256 r = _pseudoRandomExt8(i * 3 + 3);
+
+            uint256 fast = harness.ext8FoldOnce(a0, a1, r);
+            assertEq(fast, harness.ext8FoldOnceSchoolbook(a0, a1, r));
+            assertEq(fast, harness.ext8FoldOnceReference(a0, a1, r));
+        }
+    }
+
     function testGasExt4PackUnpack() external view {
         uint256 packed =
             harness.ext4Pack(_coeffs4(605_061_430, 867_831_285, 498_902_190, 1_861_564_007));
@@ -411,6 +512,82 @@ contract FieldArithmeticTest is Test {
         assertTrue(harness.ext8EvaluateHypercube(evals, point) != 0);
     }
 
+    function testGasExt8FoldOnce() external view {
+        uint256 a0 = _pseudoRandomExt8(101);
+        uint256 a1 = _pseudoRandomExt8(102);
+        uint256 r = _pseudoRandomExt8(103);
+
+        assertTrue(harness.ext8FoldOnce(a0, a1, r) != 0);
+    }
+
+    function testGasExt8FoldOnceSchoolbook() external view {
+        uint256 a0 = _pseudoRandomExt8(101);
+        uint256 a1 = _pseudoRandomExt8(102);
+        uint256 r = _pseudoRandomExt8(103);
+
+        assertTrue(harness.ext8FoldOnceSchoolbook(a0, a1, r) != 0);
+    }
+
+    function testGasExt8Extrapolate012() external view {
+        uint256 e0 = harness.ext8Pack(
+            _coeffs8(
+                1_183_641_764,
+                916_668_484,
+                1_662_695_301,
+                1_758_839_722,
+                1_364_968_108,
+                932_085_352,
+                580_647_060,
+                1_375_234_661
+            )
+        );
+        uint256 e1 = harness.ext8Pack(_coeffs8(17, 29, 43, 71, 113, 127, 131, 137));
+        uint256 e2 = harness.ext8Pack(_coeffs8(139, 149, 157, 163, 173, 181, 191, 193));
+        uint256 r = harness.ext8Pack(_coeffs8(199, 211, 223, 227, 229, 233, 239, 241));
+
+        assertTrue(harness.ext8Extrapolate012(e0, e1, e2, r) != 0);
+    }
+
+    function testGasExt8Extrapolate012FromSumcheck() external view {
+        uint256 c0 = harness.ext8Pack(
+            _coeffs8(
+                1_183_641_764,
+                916_668_484,
+                1_662_695_301,
+                1_758_839_722,
+                1_364_968_108,
+                932_085_352,
+                580_647_060,
+                1_375_234_661
+            )
+        );
+        uint256 delta = harness.ext8Pack(_coeffs8(17, 29, 43, 71, 113, 127, 131, 137));
+        uint256 claimedEval = harness.ext8Add(c0, delta);
+        uint256 c2 = harness.ext8Pack(_coeffs8(139, 149, 157, 163, 173, 181, 191, 193));
+        uint256 r = harness.ext8Pack(_coeffs8(199, 211, 223, 227, 229, 233, 239, 241));
+
+        assertTrue(harness.ext8Extrapolate012FromSumcheck(c0, claimedEval, c2, r) != 0);
+    }
+
+    function testGasEvaluateHypercubeExt8Dim6() external view {
+        uint256[] memory evals = new uint256[](64);
+        for (uint256 i = 0; i < 64; ++i) {
+            evals[i] = harness.ext8Pack(
+                _coeffs8(i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8)
+            );
+        }
+
+        uint256[] memory point = new uint256[](6);
+        point[0] = _extConst8(3);
+        point[1] = _extConst8(5);
+        point[2] = _extConst8(7);
+        point[3] = _extConst8(11);
+        point[4] = _extConst8(13);
+        point[5] = _extConst8(17);
+
+        assertTrue(harness.ext8EvaluateHypercube(evals, point) != 0);
+    }
+
     function _scaleCoeffs(uint256[] memory coeffs, uint256 scalar)
         internal
         view
@@ -460,6 +637,18 @@ contract FieldArithmeticTest is Test {
         out[5] = a5;
         out[6] = a6;
         out[7] = a7;
+    }
+
+    function _pseudoRandomExt8(uint256 seed) internal pure returns (uint256 packed) {
+        uint256 modulus = 0x7f000001;
+        packed = (uint256(keccak256(abi.encodePacked(seed, uint256(0)))) % modulus) << 224
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(1)))) % modulus) << 192
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(2)))) % modulus) << 160
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(3)))) % modulus) << 128
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(4)))) % modulus) << 96
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(5)))) % modulus) << 64
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(6)))) % modulus) << 32
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(7)))) % modulus);
     }
 
     function _extConst4(uint256 scalar) internal pure returns (uint256) {

@@ -321,6 +321,28 @@ library MerkleVerifier {
         return _computeRootFromFlatRows20(indices, flatValues, rowLen, depth, decommitments, true);
     }
 
+    function computeRootFromFlatExtension8Rows20(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 rowLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) internal pure returns (bytes32) {
+        uint256 expected = indices.length * rowLen;
+        if (flatValues.length != expected) {
+            revert FlattenedRowLengthMismatch(flatValues.length, expected);
+        }
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                leafHashes[i] = hashLeafExtension8Slice20(flatValues, i * rowLen, rowLen);
+            }
+        }
+
+        return _computeRootFromLeafHashes(indices, leafHashes, depth, decommitments, 20);
+    }
+
     function computeRootFromFlatBaseRows20Blob(
         uint256[] memory indices,
         bytes calldata blob,
@@ -356,6 +378,53 @@ library MerkleVerifier {
         }
         return _computeRootFromFlatRows20Blob(
             indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen, true
+        );
+    }
+
+    function computeRootFromFlatExtension8Rows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            uint256 rowBytes = rowLen << 5;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * rowBytes;
+                bytes32 hash = hashLeafExtension8Slice20Blob(blob, rowOffset, rowLen);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
         );
     }
 
@@ -732,8 +801,7 @@ library MerkleVerifier {
                 let ep := frontier
                 let frontierEnd := add(frontier, mul(frontierLen, entrySize))
                 let nextPtr := nextBuf
-                let lastParentIndex := 0
-                let hasLastParent := 0
+                let lastParentIndex := not(0)
                 for { } lt(ep, frontierEnd) { } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
@@ -784,7 +852,7 @@ library MerkleVerifier {
 
                     ep := nextReadPtr
                     let parentIndex := shr(1, node)
-                    let sameParent := and(hasLastParent, eq(lastParentIndex, parentIndex))
+                    let sameParent := eq(lastParentIndex, parentIndex)
 
                     // Dedup: if the previous entry had the same parent index,
                     // overwrite its hash in place instead of appending a new entry.
@@ -797,7 +865,6 @@ library MerkleVerifier {
                         nextPtr := add(nextPtr, entrySize)
                         nextLen := add(nextLen, 1)
                         lastParentIndex := parentIndex
-                        hasLastParent := 1
                     }
                 }
 
@@ -834,6 +901,131 @@ library MerkleVerifier {
         }
     }
 
+    function _computeRootFromPackedFrontier20(
+        uint256[] memory frontierEntries,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) private pure returns (bytes32 root) {
+        assembly ("memory-safe") {
+            let digestMask := not(sub(shl(96, 1), 1))
+            let indexMask := sub(shl(96, 1), 1)
+            let entrySize := 0x20
+            let bufBytes := mul(entrySize, frontierLen)
+            let frontier := add(frontierEntries, 0x20)
+            let nextBuf := mload(0x40)
+            let scratch := add(nextBuf, bufBytes)
+            mstore(0x40, add(scratch, 65))
+            mstore8(scratch, 0x01)
+
+            let decommBase := decommitments.offset
+            let decommPtr := decommBase
+            let decommEnd := add(decommBase, shl(5, decommitments.length))
+
+            for {
+                let level := 0
+            } lt(level, depth) {
+                level := add(level, 1)
+            } {
+                let nextLen := 0
+                let ep := frontier
+                let frontierEnd := add(frontier, mul(frontierLen, entrySize))
+                let nextPtr := nextBuf
+                let lastParentIndex := not(0)
+                for { } lt(ep, frontierEnd) { } {
+                    let packed := mload(ep)
+                    let node := and(packed, indexMask)
+                    let hash := and(packed, digestMask)
+                    let nodeIsRight := and(node, 1)
+                    let nextReadPtr := add(ep, entrySize)
+                    let parentHash
+
+                    let merged := 0
+                    if iszero(nodeIsRight) {
+                        if lt(nextReadPtr, frontierEnd) {
+                            let nextPacked := mload(nextReadPtr)
+                            if eq(and(nextPacked, indexMask), add(node, 1)) {
+                                mstore(add(scratch, 1), hash)
+                                mstore(add(scratch, 0x21), and(nextPacked, digestMask))
+                                parentHash := and(keccak256(scratch, 65), digestMask)
+                                nextReadPtr := add(nextReadPtr, entrySize)
+                                merged := 1
+                            }
+                        }
+                    }
+
+                    if iszero(merged) {
+                        if iszero(lt(decommPtr, decommEnd)) {
+                            mstore(
+                                0x00,
+                                0x90196ee300000000000000000000000000000000000000000000000000000000
+                            )
+                            mstore(0x04, add(shr(5, sub(decommPtr, decommBase)), 1))
+                            mstore(0x24, decommitments.length)
+                            revert(0x00, 0x44)
+                        }
+                        let sibling := calldataload(decommPtr)
+                        decommPtr := add(decommPtr, 0x20)
+
+                        switch nodeIsRight
+                        case 0 {
+                            mstore(add(scratch, 1), hash)
+                            mstore(add(scratch, 0x21), sibling)
+                        }
+                        default {
+                            mstore(add(scratch, 1), sibling)
+                            mstore(add(scratch, 0x21), hash)
+                        }
+                        parentHash := and(keccak256(scratch, 65), digestMask)
+                    }
+
+                    ep := nextReadPtr
+                    let parentIndex := shr(1, node)
+                    let sameParent := eq(lastParentIndex, parentIndex)
+                    let packedParent := or(parentHash, parentIndex)
+                    if sameParent {
+                        mstore(sub(nextPtr, entrySize), packedParent)
+                    }
+                    if iszero(sameParent) {
+                        mstore(nextPtr, packedParent)
+                        nextPtr := add(nextPtr, entrySize)
+                        nextLen := add(nextLen, 1)
+                        lastParentIndex := parentIndex
+                    }
+                }
+
+                let tmp := frontier
+                frontier := nextBuf
+                nextBuf := tmp
+                frontierLen := nextLen
+            }
+
+            if iszero(eq(decommPtr, decommEnd)) {
+                mstore(0x00, 0xb48ec3d200000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, shr(5, sub(decommPtr, decommBase)))
+                mstore(0x24, decommitments.length)
+                revert(0x00, 0x44)
+            }
+
+            let finalPacked := 0
+            if gt(frontierLen, 0) {
+                finalPacked := mload(frontier)
+            }
+            if or(iszero(eq(frontierLen, 1)), iszero(iszero(and(finalPacked, indexMask)))) {
+                let idx := sub(0, 1)
+                if gt(frontierLen, 0) {
+                    idx := and(finalPacked, indexMask)
+                }
+                mstore(0x00, 0x1d72965600000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, frontierLen)
+                mstore(0x24, idx)
+                revert(0x00, 0x44)
+            }
+
+            root := and(finalPacked, digestMask)
+        }
+    }
+
     function _computeRootFromFrontier20Blob(
         bytes memory frontierBytes,
         uint256 frontierLen,
@@ -865,8 +1057,7 @@ library MerkleVerifier {
                 let ep := frontier
                 let frontierEnd := add(frontier, mul(frontierLen, entrySize))
                 let nextPtr := nextBuf
-                let lastParentIndex := 0
-                let hasLastParent := 0
+                let lastParentIndex := not(0)
                 for { } lt(ep, frontierEnd) { } {
                     let node := mload(ep)
                     let hash := mload(add(ep, 0x20))
@@ -914,7 +1105,7 @@ library MerkleVerifier {
 
                     ep := nextReadPtr
                     let parentIndex := shr(1, node)
-                    let sameParent := and(hasLastParent, eq(lastParentIndex, parentIndex))
+                    let sameParent := eq(lastParentIndex, parentIndex)
                     if sameParent {
                         mstore(sub(nextPtr, 0x20), parentHash)
                     }
@@ -924,7 +1115,6 @@ library MerkleVerifier {
                         nextPtr := add(nextPtr, entrySize)
                         nextLen := add(nextLen, 1)
                         lastParentIndex := parentIndex
-                        hasLastParent := 1
                     }
                 }
 
@@ -956,6 +1146,133 @@ library MerkleVerifier {
         }
     }
 
+    function _computeRootFromPackedFrontier20Blob(
+        uint256[] memory frontierEntries,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) private pure returns (bytes32 root) {
+        assembly ("memory-safe") {
+            let digestMask := not(sub(shl(96, 1), 1))
+            let indexMask := sub(shl(96, 1), 1)
+            let entrySize := 0x20
+            let bufBytes := mul(entrySize, frontierLen)
+            let frontier := add(frontierEntries, 0x20)
+            let nextBuf := mload(0x40)
+            let scratch := add(nextBuf, bufBytes)
+            mstore(0x40, add(scratch, 65))
+            mstore8(scratch, 0x01)
+
+            let decommBase := add(blob.offset, decommOffset)
+            let decommPtr := decommBase
+            let decommEnd := add(decommBase, mul(decommLen, 20))
+
+            for {
+                let level := 0
+            } lt(level, depth) {
+                level := add(level, 1)
+            } {
+                let nextLen := 0
+                let ep := frontier
+                let frontierEnd := add(frontier, mul(frontierLen, entrySize))
+                let nextPtr := nextBuf
+                let lastParentIndex := not(0)
+                for { } lt(ep, frontierEnd) { } {
+                    let packed := mload(ep)
+                    let node := and(packed, indexMask)
+                    let hash := and(packed, digestMask)
+                    let nodeIsRight := and(node, 1)
+                    let nextReadPtr := add(ep, entrySize)
+                    let parentHash
+
+                    let merged := 0
+                    if iszero(nodeIsRight) {
+                        if lt(nextReadPtr, frontierEnd) {
+                            let nextPacked := mload(nextReadPtr)
+                            if eq(and(nextPacked, indexMask), add(node, 1)) {
+                                mstore(add(scratch, 1), hash)
+                                mstore(add(scratch, 0x21), and(nextPacked, digestMask))
+                                parentHash := and(keccak256(scratch, 65), digestMask)
+                                nextReadPtr := add(nextReadPtr, entrySize)
+                                merged := 1
+                            }
+                        }
+                    }
+
+                    if iszero(merged) {
+                        if iszero(lt(decommPtr, decommEnd)) {
+                            mstore(
+                                0x00,
+                                0x90196ee300000000000000000000000000000000000000000000000000000000
+                            )
+                            mstore(0x04, add(div(sub(decommPtr, decommBase), 20), 1))
+                            mstore(0x24, decommLen)
+                            revert(0x00, 0x44)
+                        }
+                        let sibling := and(calldataload(decommPtr), digestMask)
+                        decommPtr := add(decommPtr, 20)
+
+                        switch nodeIsRight
+                        case 0 {
+                            mstore(add(scratch, 1), hash)
+                            mstore(add(scratch, 0x21), sibling)
+                        }
+                        default {
+                            mstore(add(scratch, 1), sibling)
+                            mstore(add(scratch, 0x21), hash)
+                        }
+                        parentHash := and(keccak256(scratch, 65), digestMask)
+                    }
+
+                    ep := nextReadPtr
+                    let parentIndex := shr(1, node)
+                    let sameParent := eq(lastParentIndex, parentIndex)
+                    let packedParent := or(parentHash, parentIndex)
+                    if sameParent {
+                        mstore(sub(nextPtr, entrySize), packedParent)
+                    }
+                    if iszero(sameParent) {
+                        mstore(nextPtr, packedParent)
+                        nextPtr := add(nextPtr, entrySize)
+                        nextLen := add(nextLen, 1)
+                        lastParentIndex := parentIndex
+                    }
+                }
+
+                let tmp := frontier
+                frontier := nextBuf
+                nextBuf := tmp
+                frontierLen := nextLen
+            }
+
+            if iszero(eq(decommPtr, decommEnd)) {
+                mstore(0x00, 0xb48ec3d200000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, div(sub(decommPtr, decommBase), 20))
+                mstore(0x24, decommLen)
+                revert(0x00, 0x44)
+            }
+
+            let finalPacked := 0
+            if gt(frontierLen, 0) {
+                finalPacked := mload(frontier)
+            }
+            if or(iszero(eq(frontierLen, 1)), iszero(iszero(and(finalPacked, indexMask)))) {
+                let idx := sub(0, 1)
+                if gt(frontierLen, 0) {
+                    idx := and(finalPacked, indexMask)
+                }
+                mstore(0x00, 0x1d72965600000000000000000000000000000000000000000000000000000000)
+                mstore(0x04, frontierLen)
+                mstore(0x24, idx)
+                revert(0x00, 0x44)
+            }
+
+            root := and(finalPacked, digestMask)
+        }
+    }
+
     function computeRootFromFrontier20Blob(
         bytes memory frontierBytes,
         uint256 frontierLen,
@@ -967,6 +1284,37 @@ library MerkleVerifier {
         return _computeRootFromFrontier20Blob(
             frontierBytes, frontierLen, depth, blob, decommOffset, decommLen
         );
+    }
+
+    function computeRootFromPackedFrontier20Blob(
+        uint256[] memory frontierEntries,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes calldata blob,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32 root) {
+        return _computeRootFromPackedFrontier20Blob(
+            frontierEntries, frontierLen, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function computeRootFromFrontier20(
+        bytes memory frontierBytes,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) internal pure returns (bytes32 root) {
+        return _computeRootFromFrontier20(frontierBytes, frontierLen, depth, decommitments);
+    }
+
+    function computeRootFromPackedFrontier20(
+        uint256[] memory frontierEntries,
+        uint256 frontierLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) internal pure returns (bytes32 root) {
+        return _computeRootFromPackedFrontier20(frontierEntries, frontierLen, depth, decommitments);
     }
 
     function hashLeafBaseSlice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
@@ -1035,6 +1383,105 @@ library MerkleVerifier {
             }
 
             calldatacopy(add(ptr, 1), src, shl(4, rowLen))
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
+    function hashLeafExtension8Slice20(uint256[] calldata values, uint256 start, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        assembly ("memory-safe") {
+            let size := add(1, shl(5, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let src := add(values.offset, shl(5, start))
+            let dst := add(ptr, 1)
+            let end := add(src, shl(5, rowLen))
+            for { } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 0x20)
+            } {
+                let packed := calldataload(src)
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                let c4 := and(shr(96, packed), coeffMask)
+                let c5 := and(shr(64, packed), coeffMask)
+                let c6 := and(shr(32, packed), coeffMask)
+                let c7 := and(packed, coeffMask)
+                if or(
+                    or(
+                        or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                        or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(c4, modulus)), iszero(lt(c5, modulus))),
+                        or(iszero(lt(c6, modulus)), iszero(lt(c7, modulus)))
+                    )
+                ) {
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+                mstore(dst, packed)
+            }
+
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
+    function hashLeafExtension8Slice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        assembly ("memory-safe") {
+            let size := add(1, shl(5, rowLen))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, shl(5, rowLen))
+            for { } lt(check, end) {
+                check := add(check, 0x20)
+            } {
+                let packed := calldataload(check)
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                let c4 := and(shr(96, packed), coeffMask)
+                let c5 := and(shr(64, packed), coeffMask)
+                let c6 := and(shr(32, packed), coeffMask)
+                let c7 := and(packed, coeffMask)
+                if or(
+                    or(
+                        or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                        or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                    ),
+                    or(
+                        or(iszero(lt(c4, modulus)), iszero(lt(c5, modulus))),
+                        or(iszero(lt(c6, modulus)), iszero(lt(c7, modulus)))
+                    )
+                ) {
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, shl(5, rowLen))
             digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
         }
     }

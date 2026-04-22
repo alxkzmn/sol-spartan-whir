@@ -1,0 +1,3400 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import { KoalaBear } from "../../field/KoalaBear.sol";
+import { KoalaBearExt8 } from "../../field/KoalaBearExt8.sol";
+import { MerkleVerifier } from "../../merkle/MerkleVerifier.sol";
+import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
+import { WhirStructs } from "../WhirStructs.sol";
+import { WhirBlobCodec8 } from "./WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol";
+import { WhirVerifierUtils8 } from "./WhirVerifierUtils8.sol";
+
+library WhirVerifierCore8 {
+    using KeccakChallenger for KeccakChallenger.State;
+
+    struct EqStatement {
+        uint256 numVariables;
+        uint256[] flatPoints;
+        uint256[] evaluations;
+    }
+
+    struct SelectStatement {
+        uint256 numVariables;
+        uint256[] vars;
+    }
+
+    struct Constraint {
+        uint256 challenge;
+        EqStatement eqStatement;
+        SelectStatement selStatement;
+    }
+
+    struct ParsedCommitment {
+        bytes32 root;
+        EqStatement oodStatement;
+    }
+
+    struct FixedParsedCommitment {
+        bytes32 root;
+        uint256[] oodFlatPoints;
+        uint256 oodEvaluation;
+    }
+
+    error CommitmentMismatch(bytes32 expected, bytes32 actual);
+    error ProofRoundCountMismatch(uint256 expected, uint256 actual);
+    error StatementLengthMismatch(uint256 points, uint256 evaluations);
+    error StatementPointArityMismatch(uint256 index, uint256 expected, uint256 actual);
+    error OodAnswerCountMismatch(uint256 expected, uint256 actual);
+    error FinalPolyLengthMismatch(uint256 expected, uint256 actual);
+    error FinalQueryBatchPresenceMismatch(bool expected, bool actual);
+    error FinalSumcheckPresenceMismatch(bool expected, bool actual);
+    error QueryBatchKindMismatch(uint8 expected, uint8 actual);
+    error QueryBatchCountMismatch(uint256 expected, uint256 actual);
+    error QueryBatchRowLengthMismatch(uint256 expected, uint256 actual);
+    error MerkleRootMismatch(bytes32 expected, bytes32 actual);
+    error InvalidPowWitness();
+    error SumcheckPolynomialLengthMismatch(uint256 expected, uint256 actual);
+    error SumcheckPowWitnessLengthMismatch(uint256 expected, uint256 actual);
+    error StirConstraintFailed(uint256 index);
+    error FinalConstraintMismatch(uint256 expected, uint256 actual);
+    error InconsistentConstraintArity(uint256 eqNumVariables, uint256 selNumVariables);
+    error RandomnessLengthMismatch(uint256 expected, uint256 actual);
+
+    function _computeBaseRootAndEvalsBlob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        uint256[] memory frontierEntries;
+        assembly ("memory-safe") {
+            frontierEntries := mload(0x40)
+            mstore(frontierEntries, count)
+            rowEvals := add(add(frontierEntries, 0x20), shl(5, count))
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 64;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
+                    blob, rowOffset, p0, p1, p2, p3
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    mstore(add(add(frontierEntries, 0x20), shl(5, i)), or(hash, idx))
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromPackedFrontier20Blob(
+            frontierEntries, count, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeExtension8RootAndEvalsBlob16(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        uint256[] memory frontierEntries;
+        assembly ("memory-safe") {
+            frontierEntries := mload(0x40)
+            mstore(frontierEntries, count)
+            rowEvals := add(add(frontierEntries, 0x20), shl(5, count))
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        // Unpack folding coefficients once before the row loop.
+        (
+            uint256 r00,
+            uint256 r01,
+            uint256 r02,
+            uint256 r03,
+            uint256 r04,
+            uint256 r05,
+            uint256 r06,
+            uint256 r07
+        ) = WhirVerifierUtils8._unpackCoeffs(p0);
+        (
+            uint256 r10,
+            uint256 r11,
+            uint256 r12,
+            uint256 r13,
+            uint256 r14,
+            uint256 r15,
+            uint256 r16,
+            uint256 r17
+        ) = WhirVerifierUtils8._unpackCoeffs(p1);
+        (
+            uint256 r20,
+            uint256 r21,
+            uint256 r22,
+            uint256 r23,
+            uint256 r24,
+            uint256 r25,
+            uint256 r26,
+            uint256 r27
+        ) = WhirVerifierUtils8._unpackCoeffs(p2);
+        (
+            uint256 r30,
+            uint256 r31,
+            uint256 r32,
+            uint256 r33,
+            uint256 r34,
+            uint256 r35,
+            uint256 r36,
+            uint256 r37
+        ) = WhirVerifierUtils8._unpackCoeffs(p3);
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * 512;
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
+                    blob,
+                    rowOffset,
+                    r00,
+                    r01,
+                    r02,
+                    r03,
+                    r04,
+                    r05,
+                    r06,
+                    r07,
+                    r10,
+                    r11,
+                    r12,
+                    r13,
+                    r14,
+                    r15,
+                    r16,
+                    r17,
+                    r20,
+                    r21,
+                    r22,
+                    r23,
+                    r24,
+                    r25,
+                    r26,
+                    r27,
+                    r30,
+                    r31,
+                    r32,
+                    r33,
+                    r34,
+                    r35,
+                    r36,
+                    r37
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    mstore(add(add(frontierEntries, 0x20), shl(5, i)), or(hash, idx))
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromPackedFrontier20Blob(
+            frontierEntries, count, depth, blob, decommOffset, decommLen
+        );
+    }
+
+    function _computeBaseRootAndEvals16(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        uint256[] memory frontierEntries;
+        assembly ("memory-safe") {
+            frontierEntries := mload(0x40)
+            mstore(frontierEntries, count)
+            rowEvals := add(add(frontierEntries, 0x20), shl(5, count))
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4PackedPoints(
+                    flatValues, i * 16, p0, p1, p2, p3
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    mstore(add(add(frontierEntries, 0x20), shl(5, i)), or(hash, idx))
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromPackedFrontier20(
+            frontierEntries, count, depth, decommitments
+        );
+    }
+
+    function _computeExtension8RootAndEvals16(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 depth,
+        bytes32[] calldata decommitments,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private pure returns (bytes32 root, uint256[] memory rowEvals) {
+        uint256 count = indices.length;
+        if (count == 0) {
+            revert MerkleVerifier.EmptyIndices();
+        }
+
+        uint256[] memory frontierEntries;
+        assembly ("memory-safe") {
+            frontierEntries := mload(0x40)
+            mstore(frontierEntries, count)
+            rowEvals := add(add(frontierEntries, 0x20), shl(5, count))
+            mstore(rowEvals, count)
+            mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            for (uint256 i = 0; i < count; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4PackedPoints(
+                    flatValues, i * 16, p0, p1, p2, p3
+                );
+                rowEvals[i] = evalValue;
+
+                assembly ("memory-safe") {
+                    mstore(add(add(frontierEntries, 0x20), shl(5, i)), or(hash, idx))
+                }
+            }
+        }
+
+        root = MerkleVerifier.computeRootFromPackedFrontier20(
+            frontierEntries, count, depth, decommitments
+        );
+    }
+
+    function _verifyStirAndCombineConstraintBlob16(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory indices,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 oodAnswer
+    )
+        private
+        pure
+        returns (uint256 challenge, uint256 claimedContribution, uint256[] memory selVars)
+    {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(allRandomness, 0x20), shl(5, randomnessOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        bytes32 computedRoot;
+        uint256[] memory rowEvals;
+        if (expectedKind == 0) {
+            (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+            );
+        } else {
+            (computedRoot, rowEvals) = _computeExtension8RootAndEvalsBlob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+            );
+        }
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        challenge = WhirVerifierUtils8.sampleExt8(challenger);
+        selVars = indices;
+
+        unchecked {
+            for (uint256 i = numQueries; i > 0; --i) {
+                uint256 idx = i - 1;
+                selVars[idx] = KoalaBear.pow(foldedDomainGen, indices[idx]);
+                claimedContribution = _hornerStep(claimedContribution, challenge, rowEvals[idx]);
+            }
+        }
+
+        claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswer);
+    }
+
+    function _verifyFinalStirChallengesBlob16(
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory indices,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 finalPolyOffset,
+        uint256 finalPolyLength
+    ) private pure {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(allRandomness, 0x20), shl(5, randomnessOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        bytes32 computedRoot;
+        uint256[] memory rowEvals;
+        if (expectedKind == 0) {
+            (computedRoot, rowEvals) = _computeBaseRootAndEvalsBlob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+            );
+        } else {
+            (computedRoot, rowEvals) = _computeExtension8RootAndEvalsBlob16(
+                indices, blob, valuesOffset, depth, decommOffset, decommLen, p0, p1, p2, p3
+            );
+        }
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        unchecked {
+            if (finalPolyLength == 64) {
+                uint256 rowEvalsBase;
+                uint256 idx0;
+                uint256 idx1;
+                uint256 idx2;
+                uint256 idx3;
+                uint256 idx4;
+                uint256 idx5;
+                uint256 idx6;
+                uint256 idx7;
+                uint256 idx8;
+                uint256 idx9;
+                assembly ("memory-safe") {
+                    rowEvalsBase := add(rowEvals, 0x20)
+                    let indicesBase := add(indices, 0x20)
+                    idx0 := mload(indicesBase)
+                    idx1 := mload(add(indicesBase, 0x20))
+                    idx2 := mload(add(indicesBase, 0x40))
+                    idx3 := mload(add(indicesBase, 0x60))
+                    idx4 := mload(add(indicesBase, 0x80))
+                    idx5 := mload(add(indicesBase, 0xa0))
+                    idx6 := mload(add(indicesBase, 0xc0))
+                    idx7 := mload(add(indicesBase, 0xe0))
+                    idx8 := mload(add(indicesBase, 0x100))
+                    idx9 := mload(add(indicesBase, 0x120))
+                }
+
+                uint256 mismatchPlusOne = WhirVerifierUtils8.checkHornerBaseBlob64Matches5Raw(
+                    blob,
+                    finalPolyOffset,
+                    KoalaBear.pow(foldedDomainGen, idx0),
+                    KoalaBear.pow(foldedDomainGen, idx1),
+                    KoalaBear.pow(foldedDomainGen, idx2),
+                    KoalaBear.pow(foldedDomainGen, idx3),
+                    KoalaBear.pow(foldedDomainGen, idx4),
+                    rowEvalsBase,
+                    0
+                );
+                if (mismatchPlusOne != 0) {
+                    revert StirConstraintFailed(mismatchPlusOne - 1);
+                }
+                mismatchPlusOne = WhirVerifierUtils8.checkHornerBaseBlob64Matches5Raw(
+                    blob,
+                    finalPolyOffset,
+                    KoalaBear.pow(foldedDomainGen, idx5),
+                    KoalaBear.pow(foldedDomainGen, idx6),
+                    KoalaBear.pow(foldedDomainGen, idx7),
+                    KoalaBear.pow(foldedDomainGen, idx8),
+                    KoalaBear.pow(foldedDomainGen, idx9),
+                    rowEvalsBase,
+                    5
+                );
+                if (mismatchPlusOne != 0) {
+                    revert StirConstraintFailed(mismatchPlusOne + 4);
+                }
+                return;
+            }
+
+            for (uint256 i = 0; i < numQueries; ++i) {
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                if (
+                    WhirVerifierUtils8.hornerBaseBlob(blob, finalPolyOffset, finalPolyLength, point)
+                        != rowEvals[i]
+                ) {
+                    revert StirConstraintFailed(i);
+                }
+            }
+        }
+    }
+
+    function _verifyStirAndCombineConstraintBlob16NativeFused(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory indices,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 oodAnswer
+    )
+        private
+        pure
+        returns (uint256 challenge, uint256 claimedContribution, uint256[] memory selVars)
+    {
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(allRandomness, 0x20), shl(5, randomnessOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        challenge = WhirVerifierUtils8.sampleExt8(challenger);
+        selVars = indices;
+
+        uint256[] memory frontierEntries;
+        assembly ("memory-safe") {
+            frontierEntries := mload(0x40)
+            mstore(frontierEntries, numQueries)
+            mstore(0x40, add(add(frontierEntries, 0x20), shl(5, numQueries)))
+        }
+
+        unchecked {
+            uint256 rowOffset;
+            uint256 frontierPtr;
+            assembly ("memory-safe") {
+                frontierPtr := add(add(frontierEntries, 0x20), shl(5, numQueries))
+            }
+
+            if (expectedKind == 0) {
+                rowOffset = valuesOffset + numQueries * 64;
+                uint256 nextHigher;
+                for (uint256 i = numQueries; i > 0; --i) {
+                    uint256 pos = i - 1;
+                    uint256 idx = indices[pos];
+                    if (i != numQueries && idx >= nextHigher) {
+                        revert MerkleVerifier.IndicesNotStrictlyIncreasing(idx, nextHigher);
+                    }
+                    nextHigher = idx;
+                    rowOffset -= 64;
+
+                    (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
+                        blob, rowOffset, p0, p1, p2, p3
+                    );
+                    claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
+                    selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
+
+                    assembly ("memory-safe") {
+                        frontierPtr := sub(frontierPtr, 0x20)
+                        mstore(frontierPtr, or(hash, idx))
+                    }
+                }
+            } else {
+                rowOffset = valuesOffset + numQueries * 512;
+                (
+                    uint256 r00,
+                    uint256 r01,
+                    uint256 r02,
+                    uint256 r03,
+                    uint256 r04,
+                    uint256 r05,
+                    uint256 r06,
+                    uint256 r07
+                ) = WhirVerifierUtils8._unpackCoeffs(p0);
+                (
+                    uint256 r10,
+                    uint256 r11,
+                    uint256 r12,
+                    uint256 r13,
+                    uint256 r14,
+                    uint256 r15,
+                    uint256 r16,
+                    uint256 r17
+                ) = WhirVerifierUtils8._unpackCoeffs(p1);
+                (
+                    uint256 r20,
+                    uint256 r21,
+                    uint256 r22,
+                    uint256 r23,
+                    uint256 r24,
+                    uint256 r25,
+                    uint256 r26,
+                    uint256 r27
+                ) = WhirVerifierUtils8._unpackCoeffs(p2);
+                (
+                    uint256 r30,
+                    uint256 r31,
+                    uint256 r32,
+                    uint256 r33,
+                    uint256 r34,
+                    uint256 r35,
+                    uint256 r36,
+                    uint256 r37
+                ) = WhirVerifierUtils8._unpackCoeffs(p3);
+
+                uint256 nextHigher;
+                for (uint256 i = numQueries; i > 0; --i) {
+                    uint256 pos = i - 1;
+                    uint256 idx = indices[pos];
+                    if (i != numQueries && idx >= nextHigher) {
+                        revert MerkleVerifier.IndicesNotStrictlyIncreasing(idx, nextHigher);
+                    }
+                    nextHigher = idx;
+                    rowOffset -= 512;
+
+                    (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
+                        blob,
+                        rowOffset,
+                        r00,
+                        r01,
+                        r02,
+                        r03,
+                        r04,
+                        r05,
+                        r06,
+                        r07,
+                        r10,
+                        r11,
+                        r12,
+                        r13,
+                        r14,
+                        r15,
+                        r16,
+                        r17,
+                        r20,
+                        r21,
+                        r22,
+                        r23,
+                        r24,
+                        r25,
+                        r26,
+                        r27,
+                        r30,
+                        r31,
+                        r32,
+                        r33,
+                        r34,
+                        r35,
+                        r36,
+                        r37
+                    );
+                    claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
+                    selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
+
+                    assembly ("memory-safe") {
+                        frontierPtr := sub(frontierPtr, 0x20)
+                        mstore(frontierPtr, or(hash, idx))
+                    }
+                }
+            }
+        }
+
+        bytes32 computedRoot = MerkleVerifier.computeRootFromPackedFrontier20Blob(
+            frontierEntries, numQueries, depth, blob, decommOffset, decommLen
+        );
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswer);
+    }
+
+    function _verifyRound0StirAndCombineConstraintBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint256 oodAnswer
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        _checkWitnessBaseLeBlob(challenger, 29, blob, powWitnessOffset);
+        challenger.sampleBase();
+
+        uint256[] memory indices =
+            WhirVerifierUtils8.sampleStirQueries(challenger, 268_435_456, 4, 24);
+        if (indices.length != 24) {
+            revert QueryBatchCountMismatch(24, indices.length);
+        }
+
+        uint256 decommOffset = valuesOffset + 24 * 16 * 4;
+        nextOffset = decommOffset + decommLen * 20;
+
+        (challenge, claimedContribution, selVars) = _verifyStirAndCombineConstraintBlob16NativeFused(
+            challenger,
+            expectedRoot,
+            24,
+            24,
+            1_791_270_792,
+            blob,
+            valuesOffset,
+            decommOffset,
+            decommLen,
+            indices,
+            allRandomness,
+            randomnessOffset,
+            0,
+            oodAnswer
+        );
+    }
+
+    function _verifyRound1StirAndCombineConstraintBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint256 oodAnswer
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        _checkWitnessBaseLeBlob(challenger, 29, blob, powWitnessOffset);
+        challenger.sampleBase();
+
+        uint256[] memory indices =
+            WhirVerifierUtils8.sampleStirQueries(challenger, 134_217_728, 4, 16);
+        if (indices.length != 16) {
+            revert QueryBatchCountMismatch(16, indices.length);
+        }
+
+        uint256 decommOffset = valuesOffset + 16 * 16 * 32;
+        nextOffset = decommOffset + decommLen * 20;
+
+        (challenge, claimedContribution, selVars) = _verifyStirAndCombineConstraintBlob16NativeFused(
+            challenger,
+            expectedRoot,
+            16,
+            23,
+            1_760_025_929,
+            blob,
+            valuesOffset,
+            decommOffset,
+            decommLen,
+            indices,
+            allRandomness,
+            randomnessOffset,
+            1,
+            oodAnswer
+        );
+    }
+
+    function _verifyRound2StirAndCombineConstraintBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint256 oodAnswer
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        _checkWitnessBaseLeBlob(challenger, 28, blob, powWitnessOffset);
+        challenger.sampleBase();
+
+        uint256[] memory indices =
+            WhirVerifierUtils8.sampleStirQueries(challenger, 67_108_864, 4, 12);
+        if (indices.length != 12) {
+            revert QueryBatchCountMismatch(12, indices.length);
+        }
+
+        uint256 decommOffset = valuesOffset + 12 * 16 * 32;
+        nextOffset = decommOffset + decommLen * 20;
+
+        (challenge, claimedContribution, selVars) = _verifyStirAndCombineConstraintBlob16NativeFused(
+            challenger,
+            expectedRoot,
+            12,
+            22,
+            542_991_299,
+            blob,
+            valuesOffset,
+            decommOffset,
+            decommLen,
+            indices,
+            allRandomness,
+            randomnessOffset,
+            1,
+            oodAnswer
+        );
+    }
+
+    function _verifyFinalStirChallengesBlobFixed(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint256 finalPolyOffset
+    ) internal pure returns (uint256 nextOffset) {
+        _checkWitnessBaseLeBlob(challenger, 25, blob, powWitnessOffset);
+
+        uint256[] memory indices =
+            WhirVerifierUtils8.sampleStirQueries(challenger, 33_554_432, 4, 10);
+        if (indices.length != 10) {
+            revert QueryBatchCountMismatch(10, indices.length);
+        }
+
+        uint256 decommOffset = valuesOffset + 10 * 16 * 32;
+        nextOffset = decommOffset + decommLen * 20;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(allRandomness, 0x20), shl(5, randomnessOffset))
+        }
+        uint256 p0;
+        uint256 p1;
+        uint256 p2;
+        uint256 p3;
+        assembly ("memory-safe") {
+            p0 := mload(pointBase)
+            p1 := mload(add(pointBase, 0x20))
+            p2 := mload(add(pointBase, 0x40))
+            p3 := mload(add(pointBase, 0x60))
+        }
+
+        _verifyFinalStirChallengesBlob16(
+            expectedRoot,
+            10,
+            21,
+            1_213_133_211,
+            blob,
+            valuesOffset,
+            decommOffset,
+            decommLen,
+            indices,
+            allRandomness,
+            randomnessOffset,
+            1,
+            finalPolyOffset,
+            64
+        );
+        return nextOffset;
+    }
+
+    function _statementFromCalldata(
+        WhirStructs.WhirStatement calldata statement,
+        uint256 numVariables
+    ) internal pure returns (EqStatement memory eqStatement) {
+        if (statement.points.length != statement.evaluations.length) {
+            revert StatementLengthMismatch(statement.points.length, statement.evaluations.length);
+        }
+
+        eqStatement.numVariables = numVariables;
+        eqStatement.flatPoints = new uint256[](statement.points.length * numVariables);
+        eqStatement.evaluations = new uint256[](statement.evaluations.length);
+
+        unchecked {
+            for (uint256 i = 0; i < statement.points.length; ++i) {
+                if (statement.points[i].length != numVariables) {
+                    revert StatementPointArityMismatch(i, numVariables, statement.points[i].length);
+                }
+
+                for (uint256 j = 0; j < numVariables; ++j) {
+                    uint256 pointValue = statement.points[i][j];
+                    WhirVerifierUtils8.validatePackedExt8(pointValue);
+                    eqStatement.flatPoints[i * numVariables + j] = pointValue;
+                }
+
+                uint256 evalValue = statement.evaluations[i];
+                WhirVerifierUtils8.validatePackedExt8(evalValue);
+                eqStatement.evaluations[i] = evalValue;
+            }
+        }
+    }
+
+    function _concatenateEq(EqStatement memory lhs, EqStatement memory rhs)
+        internal
+        pure
+        returns (EqStatement memory out)
+    {
+        if (lhs.numVariables != rhs.numVariables) {
+            revert InconsistentConstraintArity(lhs.numVariables, rhs.numVariables);
+        }
+
+        uint256 pointCountL = lhs.evaluations.length;
+        uint256 pointCountR = rhs.evaluations.length;
+        uint256 numVariables = lhs.numVariables;
+
+        out.numVariables = numVariables;
+        out.flatPoints = new uint256[]((pointCountL + pointCountR) * numVariables);
+        out.evaluations = new uint256[](pointCountL + pointCountR);
+
+        unchecked {
+            for (uint256 i = 0; i < lhs.flatPoints.length; ++i) {
+                out.flatPoints[i] = lhs.flatPoints[i];
+            }
+            for (uint256 i = 0; i < rhs.flatPoints.length; ++i) {
+                out.flatPoints[lhs.flatPoints.length + i] = rhs.flatPoints[i];
+            }
+            for (uint256 i = 0; i < pointCountL; ++i) {
+                out.evaluations[i] = lhs.evaluations[i];
+            }
+            for (uint256 i = 0; i < pointCountR; ++i) {
+                out.evaluations[pointCountL + i] = rhs.evaluations[i];
+            }
+        }
+    }
+
+    function _emptySelect(uint256 numVariables) internal pure returns (SelectStatement memory sel) {
+        sel.numVariables = numVariables;
+        sel.vars = new uint256[](0);
+    }
+
+    function _parseCommitment(
+        KeccakChallenger.State memory challenger,
+        bytes32 root,
+        uint256[] calldata oodAnswers,
+        uint256 numVariables,
+        uint256 oodSamples
+    ) internal pure returns (ParsedCommitment memory parsed) {
+        if (oodAnswers.length != oodSamples) {
+            revert OodAnswerCountMismatch(oodSamples, oodAnswers.length);
+        }
+
+        challenger.observeHashU64Digest(root);
+
+        parsed.root = root;
+        parsed.oodStatement.numVariables = numVariables;
+        parsed.oodStatement.flatPoints = new uint256[](oodSamples * numVariables);
+        parsed.oodStatement.evaluations = new uint256[](oodSamples);
+
+        unchecked {
+            for (uint256 i = 0; i < oodSamples; ++i) {
+                uint256 point = WhirVerifierUtils8.sampleExt8(challenger);
+                WhirVerifierUtils8.expandFromUnivariateExtInto(
+                    parsed.oodStatement.flatPoints, i * numVariables, point, numVariables
+                );
+
+                uint256 evalValue = oodAnswers[i];
+                WhirVerifierUtils8.observeValidatedExt8(challenger, evalValue);
+                parsed.oodStatement.evaluations[i] = evalValue;
+            }
+        }
+    }
+
+    function _parseFixedCommitment1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset,
+        uint256 numVariables
+    ) internal pure returns (FixedParsedCommitment memory parsed, uint256 nextOffset) {
+        (parsed.root, offset) = WhirBlobCodec8.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(parsed.root);
+
+        parsed.oodFlatPoints = new uint256[](numVariables);
+        uint256 point = WhirVerifierUtils8.sampleExt8(challenger);
+        WhirVerifierUtils8.expandFromUnivariateExtInto(parsed.oodFlatPoints, 0, point, numVariables);
+        parsed.oodEvaluation = challenger.observeReadValidatedPackedExt8Le(blob, offset);
+        nextOffset = offset + 32;
+    }
+
+    function _parseFixedCommitment22x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitment18x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitment14x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitment10x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitmentPointBlob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        private
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        (root, offset) = WhirBlobCodec8.readDigest20(blob, offset);
+        challenger.observeHashU64Digest(root);
+        oodPoint = WhirVerifierUtils8.sampleExt8(challenger);
+        oodEvaluation = challenger.observeReadValidatedPackedExt8Le(blob, offset);
+        nextOffset = offset + 32;
+    }
+
+    function _checkWitnessBaseLeBlob(
+        KeccakChallenger.State memory challenger,
+        uint256 bits,
+        bytes calldata blob,
+        uint256 offset
+    ) internal pure {
+        if (bits == 0) {
+            return;
+        }
+
+        challenger.observeBytesCalldata(blob, offset, 4);
+        if (challenger.sampleBitsUnchecked(bits) != 0) {
+            revert InvalidPowWitness();
+        }
+    }
+
+    function _verifySumcheck(
+        WhirStructs.SumcheckData calldata sumcheck,
+        KeccakChallenger.State memory challenger,
+        uint256 claimedEval,
+        uint256 expectedRounds,
+        uint256 powBits,
+        uint256[] memory allRandomness,
+        uint256 randomnessCursor
+    )
+        internal
+        pure
+        returns (
+            uint256 updatedClaimedEval,
+            uint256[] memory foldingRandomness,
+            uint256 updatedCursor
+        )
+    {
+        uint256 expectedPolyEvals = expectedRounds * 2;
+        if (sumcheck.polynomialEvals.length != expectedPolyEvals) {
+            revert SumcheckPolynomialLengthMismatch(
+                expectedPolyEvals, sumcheck.polynomialEvals.length
+            );
+        }
+
+        uint256 expectedWitnesses = powBits > 0 ? expectedRounds : 0;
+        if (sumcheck.powWitnesses.length != expectedWitnesses) {
+            revert SumcheckPowWitnessLengthMismatch(expectedWitnesses, sumcheck.powWitnesses.length);
+        }
+
+        updatedClaimedEval = claimedEval;
+        updatedCursor = randomnessCursor;
+        foldingRandomness = new uint256[](expectedRounds);
+
+        unchecked {
+            for (uint256 i = 0; i < expectedRounds; ++i) {
+                uint256 c0 = sumcheck.polynomialEvals[2 * i];
+                uint256 c2 = sumcheck.polynomialEvals[2 * i + 1];
+
+                challenger.observeValidatedPackedExt8Pair(c0, c2);
+
+                if (powBits > 0) {
+                    if (!challenger.checkWitness(powBits, sumcheck.powWitnesses[i])) {
+                        revert InvalidPowWitness();
+                    }
+                }
+
+                uint256 r = WhirVerifierUtils8.sampleExt8(challenger);
+                foldingRandomness[i] = r;
+                allRandomness[updatedCursor] = r;
+                updatedCursor += 1;
+                updatedClaimedEval = KoalaBearExt8.extrapolate_012(
+                    c0, KoalaBearExt8.sub(updatedClaimedEval, c0), c2, r
+                );
+            }
+        }
+    }
+
+    function _verifySumcheckBlob(
+        bytes calldata blob,
+        uint256 offset,
+        KeccakChallenger.State memory challenger,
+        uint256 claimedEval,
+        uint256 expectedRounds,
+        uint256 powBits,
+        uint256[] memory allRandomness,
+        uint256 randomnessCursor
+    )
+        internal
+        pure
+        returns (uint256 updatedClaimedEval, uint256 updatedCursor, uint256 nextOffset)
+    {
+        updatedClaimedEval = claimedEval;
+        updatedCursor = randomnessCursor;
+        nextOffset = offset;
+
+        unchecked {
+            for (uint256 i = 0; i < expectedRounds; ++i) {
+                (uint256 c0, uint256 c2) =
+                    challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+                nextOffset += 64;
+
+                if (powBits > 0) {
+                    _checkWitnessBaseLeBlob(
+                        challenger, powBits, blob, offset + expectedRounds * 64 + i * 4
+                    );
+                }
+
+                uint256 r = WhirVerifierUtils8.sampleExt8(challenger);
+                allRandomness[updatedCursor] = r;
+                updatedCursor += 1;
+                updatedClaimedEval =
+                    KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+            }
+        }
+
+        if (powBits > 0) {
+            nextOffset = offset + expectedRounds * 64 + expectedRounds * 4;
+        }
+    }
+
+    function _verifySumcheckBlob4NoPow(
+        bytes calldata blob,
+        uint256 offset,
+        KeccakChallenger.State memory challenger,
+        uint256 claimedEval,
+        uint256[] memory allRandomness,
+        uint256 randomnessCursor
+    )
+        internal
+        pure
+        returns (uint256 updatedClaimedEval, uint256 updatedCursor, uint256 nextOffset)
+    {
+        updatedClaimedEval = claimedEval;
+        updatedCursor = randomnessCursor;
+        nextOffset = offset;
+
+        (uint256 c0, uint256 c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        uint256 r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+    }
+
+    function _verifySumcheckBlob6NoPow(
+        bytes calldata blob,
+        uint256 offset,
+        KeccakChallenger.State memory challenger,
+        uint256 claimedEval,
+        uint256[] memory allRandomness,
+        uint256 randomnessCursor
+    )
+        internal
+        pure
+        returns (uint256 updatedClaimedEval, uint256 updatedCursor, uint256 nextOffset)
+    {
+        updatedClaimedEval = claimedEval;
+        updatedCursor = randomnessCursor;
+        nextOffset = offset;
+
+        (uint256 c0, uint256 c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        uint256 r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+
+        (c0, c2) = challenger.observeReadValidatedPackedExt8LePair(blob, nextOffset);
+        nextOffset += 64;
+        r = WhirVerifierUtils8.sampleExt8(challenger);
+        allRandomness[updatedCursor] = r;
+        updatedCursor += 1;
+        updatedClaimedEval =
+            KoalaBearExt8.extrapolate_012_from_sumcheck(c0, updatedClaimedEval, c2, r);
+    }
+
+    function _verifyStirAndCombineConstraint(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        WhirStructs.QueryBatchOpening calldata queryBatch,
+        bool queryBatchPresent,
+        uint256 powWitness,
+        uint256[] memory foldingRandomness,
+        uint8 expectedKind,
+        uint256[] calldata oodAnswers
+    )
+        internal
+        pure
+        returns (uint256 challenge, uint256 claimedContribution, uint256[] memory selVars)
+    {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        challenger.sampleBase();
+
+        if (!queryBatchPresent) {
+            if (numQueries != 0) {
+                revert FinalQueryBatchPresenceMismatch(true, false);
+            }
+            challenge = WhirVerifierUtils8.sampleExt8(challenger);
+            unchecked {
+                for (uint256 i = oodAnswers.length; i > 0; --i) {
+                    claimedContribution =
+                        _hornerStep(claimedContribution, challenge, oodAnswers[i - 1]);
+                }
+            }
+            selVars = new uint256[](0);
+            return (challenge, claimedContribution, selVars);
+        }
+
+        uint256[] memory indices = WhirVerifierUtils8.sampleStirQueries(
+            challenger, domainSize, foldingFactor, numQueries
+        );
+
+        if (queryBatch.kind != expectedKind) {
+            revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
+        }
+        if (queryBatch.numQueries != indices.length) {
+            revert QueryBatchCountMismatch(indices.length, queryBatch.numQueries);
+        }
+
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
+        if (queryBatch.rowLen != expectedRowLen) {
+            revert QueryBatchRowLengthMismatch(expectedRowLen, queryBatch.rowLen);
+        }
+
+        uint256 depth = WhirVerifierUtils8.log2Strict(domainSize >> foldingFactor);
+
+        if (expectedRowLen == 16 && foldingFactor == 4) {
+            bytes32 fastRoot;
+            uint256[] memory rowEvals;
+            if (expectedKind == 0) {
+                (fastRoot, rowEvals) = _computeBaseRootAndEvals16(
+                    indices,
+                    queryBatch.values,
+                    depth,
+                    queryBatch.decommitments,
+                    foldingRandomness[0],
+                    foldingRandomness[1],
+                    foldingRandomness[2],
+                    foldingRandomness[3]
+                );
+            } else {
+                (fastRoot, rowEvals) = _computeExtension8RootAndEvals16(
+                    indices,
+                    queryBatch.values,
+                    depth,
+                    queryBatch.decommitments,
+                    foldingRandomness[0],
+                    foldingRandomness[1],
+                    foldingRandomness[2],
+                    foldingRandomness[3]
+                );
+            }
+
+            if (fastRoot != expectedRoot) {
+                revert MerkleRootMismatch(expectedRoot, fastRoot);
+            }
+
+            challenge = WhirVerifierUtils8.sampleExt8(challenger);
+            selVars = indices;
+
+            unchecked {
+                for (uint256 i = indices.length; i > 0; --i) {
+                    uint256 idx = i - 1;
+                    selVars[idx] = KoalaBear.pow(foldedDomainGen, indices[idx]);
+                    claimedContribution = _hornerStep(claimedContribution, challenge, rowEvals[idx]);
+                }
+
+                for (uint256 i = oodAnswers.length; i > 0; --i) {
+                    claimedContribution =
+                        _hornerStep(claimedContribution, challenge, oodAnswers[i - 1]);
+                }
+            }
+            return (challenge, claimedContribution, selVars);
+        }
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20(
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
+            )
+            : MerkleVerifier.computeRootFromFlatExtension8Rows20(
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        challenge = WhirVerifierUtils8.sampleExt8(challenger);
+        selVars = indices;
+
+        unchecked {
+            for (uint256 i = indices.length; i > 0; --i) {
+                uint256 idx = i - 1;
+                selVars[idx] = KoalaBear.pow(foldedDomainGen, indices[idx]);
+
+                uint256 rowStart = idx * queryBatch.rowLen;
+                uint256 evalValue = expectedKind == 0
+                    ? WhirVerifierUtils8.evaluateBaseRowAsExt8(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
+                    )
+                    : WhirVerifierUtils8.evaluateExtensionRowAsExt8(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
+                    );
+                claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
+            }
+
+            for (uint256 i = oodAnswers.length; i > 0; --i) {
+                claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswers[i - 1]);
+            }
+        }
+    }
+
+    function _verifyFinalStirChallengesRaw(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        WhirStructs.QueryBatchOpening calldata queryBatch,
+        bool queryBatchPresent,
+        uint256 powWitness,
+        uint256[] memory foldingRandomness,
+        uint8 expectedKind,
+        uint256[] calldata finalPoly
+    ) internal pure {
+        if (powBits > 0 && !challenger.checkWitness(powBits, powWitness)) {
+            revert InvalidPowWitness();
+        }
+
+        if (!queryBatchPresent) {
+            if (numQueries != 0) {
+                revert FinalQueryBatchPresenceMismatch(true, false);
+            }
+            return;
+        }
+
+        uint256[] memory indices = WhirVerifierUtils8.sampleStirQueries(
+            challenger, domainSize, foldingFactor, numQueries
+        );
+
+        if (queryBatch.kind != expectedKind) {
+            revert QueryBatchKindMismatch(expectedKind, queryBatch.kind);
+        }
+        if (queryBatch.numQueries != indices.length) {
+            revert QueryBatchCountMismatch(indices.length, queryBatch.numQueries);
+        }
+
+        uint256 expectedRowLen = uint256(1) << foldingFactor;
+        if (queryBatch.rowLen != expectedRowLen) {
+            revert QueryBatchRowLengthMismatch(expectedRowLen, queryBatch.rowLen);
+        }
+
+        uint256 depth = WhirVerifierUtils8.log2Strict(domainSize >> foldingFactor);
+
+        if (expectedRowLen == 16 && foldingFactor == 4) {
+            bytes32 fastRoot;
+            uint256[] memory rowEvals;
+            if (expectedKind == 0) {
+                (fastRoot, rowEvals) = _computeBaseRootAndEvals16(
+                    indices,
+                    queryBatch.values,
+                    depth,
+                    queryBatch.decommitments,
+                    foldingRandomness[0],
+                    foldingRandomness[1],
+                    foldingRandomness[2],
+                    foldingRandomness[3]
+                );
+            } else {
+                (fastRoot, rowEvals) = _computeExtension8RootAndEvals16(
+                    indices,
+                    queryBatch.values,
+                    depth,
+                    queryBatch.decommitments,
+                    foldingRandomness[0],
+                    foldingRandomness[1],
+                    foldingRandomness[2],
+                    foldingRandomness[3]
+                );
+            }
+
+            if (fastRoot != expectedRoot) {
+                revert MerkleRootMismatch(expectedRoot, fastRoot);
+            }
+
+            unchecked {
+                for (uint256 i = 0; i < indices.length; ++i) {
+                    uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                    if (WhirVerifierUtils8.hornerBase(finalPoly, point) != rowEvals[i]) {
+                        revert StirConstraintFailed(i);
+                    }
+                }
+            }
+            return;
+        }
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20(
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
+            )
+            : MerkleVerifier.computeRootFromFlatExtension8Rows20(
+                indices, queryBatch.values, queryBatch.rowLen, depth, queryBatch.decommitments
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                uint256 rowStart = i * queryBatch.rowLen;
+                uint256 expectedEval = expectedKind == 0
+                    ? WhirVerifierUtils8.evaluateBaseRowAsExt8(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
+                    )
+                    : WhirVerifierUtils8.evaluateExtensionRowAsExt8(
+                        queryBatch.values, rowStart, queryBatch.rowLen, foldingRandomness
+                    );
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point) != expectedEval) {
+                    revert StirConstraintFailed(i);
+                }
+            }
+        }
+    }
+
+    function _verifyStirAndCombineConstraintBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 oodAnswer
+    )
+        internal
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
+        return _verifyStirAndCombineConstraintBlobAfterWitness(
+            challenger,
+            expectedRoot,
+            numQueries,
+            foldingFactor,
+            domainSize,
+            foldedDomainGen,
+            blob,
+            valuesOffset,
+            decommLen,
+            allRandomness,
+            randomnessOffset,
+            expectedKind,
+            oodAnswer
+        );
+    }
+
+    function _verifyStirAndCombineConstraintBlobAfterWitness(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 oodAnswer
+    )
+        private
+        pure
+        returns (
+            uint256 challenge,
+            uint256 claimedContribution,
+            uint256[] memory selVars,
+            uint256 nextOffset
+        )
+    {
+        challenger.sampleBase();
+
+        uint256[] memory indices = WhirVerifierUtils8.sampleStirQueries(
+            challenger, domainSize, foldingFactor, numQueries
+        );
+        if (indices.length != numQueries) {
+            revert QueryBatchCountMismatch(numQueries, indices.length);
+        }
+
+        uint256 rowLen = uint256(1) << foldingFactor;
+        uint256 stride = expectedKind == 0 ? 4 : 32;
+        uint256 depth = WhirVerifierUtils8.log2Strict(domainSize >> foldingFactor);
+        uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
+        nextOffset = decommOffset + decommLen * 20;
+
+        if (rowLen == 16 && foldingFactor == 4) {
+            (challenge, claimedContribution, selVars) = _verifyStirAndCombineConstraintBlob16(
+                challenger,
+                expectedRoot,
+                numQueries,
+                depth,
+                foldedDomainGen,
+                blob,
+                valuesOffset,
+                decommOffset,
+                decommLen,
+                indices,
+                allRandomness,
+                randomnessOffset,
+                expectedKind,
+                oodAnswer
+            );
+            return (challenge, claimedContribution, selVars, nextOffset);
+        }
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
+                indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+            )
+            : MerkleVerifier.computeRootFromFlatExtension8Rows20Blob(
+                indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        challenge = WhirVerifierUtils8.sampleExt8(challenger);
+        selVars = indices;
+
+        unchecked {
+            for (uint256 i = numQueries; i > 0; --i) {
+                uint256 idx = i - 1;
+                selVars[idx] = KoalaBear.pow(foldedDomainGen, indices[idx]);
+                uint256 rowOffset = valuesOffset + idx * rowLen * stride;
+                uint256 evalValue = expectedKind == 0
+                    ? WhirVerifierUtils8.evaluateBaseRowAsExt8Blob(
+                        blob, rowOffset, rowLen, allRandomness, randomnessOffset, foldingFactor
+                    )
+                    : WhirVerifierUtils8.evaluateExtensionRowAsExt8Blob(
+                        blob, rowOffset, rowLen, allRandomness, randomnessOffset, foldingFactor
+                    );
+                claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
+            }
+        }
+
+        claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswer);
+    }
+
+    function _verifyFinalStirChallengesBlob(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 powBits,
+        uint256 numQueries,
+        uint256 foldingFactor,
+        uint256 domainSize,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommLen,
+        uint256 powWitnessOffset,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 finalPolyOffset,
+        uint256 finalPolyLength
+    ) internal pure returns (uint256 nextOffset) {
+        _checkWitnessBaseLeBlob(challenger, powBits, blob, powWitnessOffset);
+
+        uint256[] memory indices = WhirVerifierUtils8.sampleStirQueries(
+            challenger, domainSize, foldingFactor, numQueries
+        );
+        if (indices.length != numQueries) {
+            revert QueryBatchCountMismatch(numQueries, indices.length);
+        }
+
+        uint256 rowLen = uint256(1) << foldingFactor;
+        uint256 stride = expectedKind == 0 ? 4 : 32;
+        uint256 depth = WhirVerifierUtils8.log2Strict(domainSize >> foldingFactor);
+        uint256 decommOffset = valuesOffset + numQueries * rowLen * stride;
+        nextOffset = decommOffset + decommLen * 20;
+
+        if (rowLen == 16 && foldingFactor == 4) {
+            _verifyFinalStirChallengesBlob16(
+                expectedRoot,
+                numQueries,
+                depth,
+                foldedDomainGen,
+                blob,
+                valuesOffset,
+                decommOffset,
+                decommLen,
+                indices,
+                allRandomness,
+                randomnessOffset,
+                expectedKind,
+                finalPolyOffset,
+                finalPolyLength
+            );
+            return nextOffset;
+        }
+
+        bytes32 computedRoot = expectedKind == 0
+            ? MerkleVerifier.computeRootFromFlatBaseRows20Blob(
+                indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+            )
+            : MerkleVerifier.computeRootFromFlatExtension8Rows20Blob(
+                indices, blob, valuesOffset, rowLen, depth, decommOffset, decommLen
+            );
+
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        unchecked {
+            for (uint256 i = 0; i < numQueries; ++i) {
+                uint256 point = KoalaBear.pow(foldedDomainGen, indices[i]);
+                uint256 rowOffset = valuesOffset + i * rowLen * stride;
+                uint256 expectedEval = expectedKind == 0
+                    ? WhirVerifierUtils8.evaluateBaseRowAsExt8Blob(
+                        blob, rowOffset, rowLen, allRandomness, randomnessOffset, foldingFactor
+                    )
+                    : WhirVerifierUtils8.evaluateExtensionRowAsExt8Blob(
+                        blob, rowOffset, rowLen, allRandomness, randomnessOffset, foldingFactor
+                    );
+                if (
+                    WhirVerifierUtils8.hornerBaseBlob(blob, finalPolyOffset, finalPolyLength, point)
+                        != expectedEval
+                ) {
+                    revert StirConstraintFailed(i);
+                }
+            }
+        }
+    }
+
+    function _combineEqEvals(uint256 challenge, EqStatement memory eqStatement)
+        internal
+        pure
+        returns (uint256 total)
+    {
+        unchecked {
+            for (uint256 i = eqStatement.evaluations.length; i > 0; --i) {
+                total = _hornerStep(total, challenge, eqStatement.evaluations[i - 1]);
+            }
+        }
+    }
+
+    function _combineInitialConstraintEvalsSingleRaw(
+        uint256 challenge,
+        uint256 statementEval,
+        uint256 oodEval
+    ) internal pure returns (uint256 total) {
+        total = _hornerStep(total, challenge, oodEval);
+        total = _hornerStep(total, challenge, statementEval);
+    }
+
+    function _evaluateInitialConstraintSingleBlobRaw(
+        uint256 challenge,
+        bytes calldata blob,
+        uint256 statementPointOffset,
+        uint256 oodPoint,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        total = _hornerStep(total, challenge, _eqPolyEvalExpandedPointAt22At0(oodPoint, fullPoint));
+        total = _hornerStep(
+            total, challenge, _eqPolyEvalAtBlob22(blob, statementPointOffset, fullPoint)
+        );
+    }
+
+    function _evaluateFixedEqTermsBlobRaw(
+        bytes calldata blob,
+        uint256 statementPointOffset,
+        uint256 initialOodPoint,
+        uint256 round0OodPoint,
+        uint256 round1OodPoint,
+        uint256 round2OodPoint,
+        uint256[] memory fullPoint
+    )
+        internal
+        pure
+        returns (
+            uint256 statementEq,
+            uint256 initialEq,
+            uint256 round0Eq,
+            uint256 round1Eq,
+            uint256 round2Eq
+        )
+    {
+        statementEq = KoalaBearExt8.ONE;
+        initialEq = KoalaBearExt8.ONE;
+        round0Eq = KoalaBearExt8.ONE;
+        round1Eq = KoalaBearExt8.ONE;
+        round2Eq = KoalaBearExt8.ONE;
+
+        uint256 initialCurrent = initialOodPoint;
+        uint256 round0Current = round0OodPoint;
+        uint256 round1Current = round1OodPoint;
+        uint256 round2Current = round2OodPoint;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(fullPoint, 0x20)
+        }
+
+        unchecked {
+            for (uint256 i = 22; i > 0; --i) {
+                uint256 q;
+                uint256 statementPointValue;
+                assembly ("memory-safe") {
+                    let pointOffset := shl(5, sub(i, 1))
+                    q := mload(add(pointBase, pointOffset))
+                    statementPointValue := calldataload(
+                        add(add(blob.offset, statementPointOffset), pointOffset)
+                    )
+                }
+
+                statementEq = KoalaBearExt8.mul(statementEq, _eqTerm(statementPointValue, q));
+                initialEq = KoalaBearExt8.mul(initialEq, _eqTerm(initialCurrent, q));
+                initialCurrent = KoalaBearExt8.square(initialCurrent);
+
+                if (i > 4) {
+                    round0Eq = KoalaBearExt8.mul(round0Eq, _eqTerm(round0Current, q));
+                    round0Current = KoalaBearExt8.square(round0Current);
+                    if (i > 8) {
+                        round1Eq = KoalaBearExt8.mul(round1Eq, _eqTerm(round1Current, q));
+                        round1Current = KoalaBearExt8.square(round1Current);
+                        if (i > 12) {
+                            round2Eq = KoalaBearExt8.mul(round2Eq, _eqTerm(round2Current, q));
+                            round2Current = KoalaBearExt8.square(round2Current);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function _evaluateInitialConstraintSingleCalldataRaw(
+        uint256 challenge,
+        uint256[] calldata statementPoint,
+        uint256[] memory oodFlatPoints,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 numVariables = statementPoint.length;
+        uint256 pointOffset = fullPoint.length - numVariables;
+
+        total = _hornerStep(
+            total, challenge, _eqPolyEvalAt(oodFlatPoints, 0, fullPoint, pointOffset, numVariables)
+        );
+        total = _hornerStep(
+            total,
+            challenge,
+            _eqPolyEvalAtCalldata(statementPoint, fullPoint, pointOffset, numVariables)
+        );
+    }
+
+    function _evaluateInitialConstraintSingleMemoryRaw(
+        uint256 challenge,
+        uint256[] memory statementPoint,
+        uint256[] memory oodFlatPoints,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 numVariables = statementPoint.length;
+        uint256 pointOffset = fullPoint.length - numVariables;
+
+        total = _hornerStep(
+            total, challenge, _eqPolyEvalAt(oodFlatPoints, 0, fullPoint, pointOffset, numVariables)
+        );
+        total = _hornerStep(
+            total,
+            challenge,
+            _eqPolyEvalAtMemory(statementPoint, fullPoint, pointOffset, numVariables)
+        );
+    }
+
+    function _evaluateConstraintSelectRaw(
+        uint256 challenge,
+        uint256[] memory eqFlatPoints,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 numVariables = eqFlatPoints.length;
+        uint256 pointOffset = fullPoint.length - numVariables;
+
+        unchecked {
+            for (uint256 i = selVars.length; i > 0; --i) {
+                total = _hornerStep(
+                    total,
+                    challenge,
+                    WhirVerifierUtils8.selectPolyEval(
+                        selVars[i - 1], fullPoint, pointOffset, numVariables
+                    )
+                );
+            }
+        }
+
+        total = _hornerStep(
+            total, challenge, _eqPolyEvalAt(eqFlatPoints, 0, fullPoint, pointOffset, numVariables)
+        );
+    }
+
+    function _evaluateConstraintSelectRaw18(
+        uint256 challenge,
+        uint256 oodPoint,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        return _evaluateConstraintSelectRaw18WithPrecomputedEq(
+            challenge, _eqPolyEvalExpandedPointAt18At4(oodPoint, fullPoint), selVars, fullPoint
+        );
+    }
+
+    function _evaluateConstraintSelectRaw18WithPrecomputedEq(
+        uint256 challenge,
+        uint256 eqEval,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        uint256 ch4;
+        uint256 ch5;
+        uint256 ch6;
+        uint256 ch7;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+            ch4 := and(shr(96, challenge), 0xffffffff)
+            ch5 := and(shr(64, challenge), 0xffffffff)
+            ch6 := and(shr(32, challenge), 0xffffffff)
+            ch7 := and(challenge, 0xffffffff)
+        }
+        unchecked {
+            for (uint256 i = 24; i > 0; --i) {
+                total = _hornerStepWithChallengeCoeffs(
+                    total,
+                    _selectPolyEvalAt18At4(selVars[i - 1], fullPoint),
+                    ch0,
+                    ch1,
+                    ch2,
+                    ch3,
+                    ch4,
+                    ch5,
+                    ch6,
+                    ch7
+                );
+            }
+        }
+        total =
+            _hornerStepWithChallengeCoeffs(total, eqEval, ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7);
+    }
+
+    function _evaluateConstraintSelectRaw14(
+        uint256 challenge,
+        uint256 oodPoint,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        return _evaluateConstraintSelectRaw14WithPrecomputedEq(
+            challenge, _eqPolyEvalExpandedPointAt14At8(oodPoint, fullPoint), selVars, fullPoint
+        );
+    }
+
+    function _evaluateConstraintSelectRaw14WithPrecomputedEq(
+        uint256 challenge,
+        uint256 eqEval,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        uint256 ch4;
+        uint256 ch5;
+        uint256 ch6;
+        uint256 ch7;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+            ch4 := and(shr(96, challenge), 0xffffffff)
+            ch5 := and(shr(64, challenge), 0xffffffff)
+            ch6 := and(shr(32, challenge), 0xffffffff)
+            ch7 := and(challenge, 0xffffffff)
+        }
+        unchecked {
+            for (uint256 i = 16; i > 0; --i) {
+                total = _hornerStepWithChallengeCoeffs(
+                    total,
+                    _selectPolyEvalAt14At8(selVars[i - 1], fullPoint),
+                    ch0,
+                    ch1,
+                    ch2,
+                    ch3,
+                    ch4,
+                    ch5,
+                    ch6,
+                    ch7
+                );
+            }
+        }
+        total =
+            _hornerStepWithChallengeCoeffs(total, eqEval, ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7);
+    }
+
+    function _evaluateConstraintSelectRaw10(
+        uint256 challenge,
+        uint256 oodPoint,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        return _evaluateConstraintSelectRaw10WithPrecomputedEq(
+            challenge, _eqPolyEvalExpandedPointAt10At12(oodPoint, fullPoint), selVars, fullPoint
+        );
+    }
+
+    function _evaluateConstraintSelectRaw10WithPrecomputedEq(
+        uint256 challenge,
+        uint256 eqEval,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 total) {
+        uint256 ch0;
+        uint256 ch1;
+        uint256 ch2;
+        uint256 ch3;
+        uint256 ch4;
+        uint256 ch5;
+        uint256 ch6;
+        uint256 ch7;
+        assembly ("memory-safe") {
+            ch0 := shr(224, challenge)
+            ch1 := and(shr(192, challenge), 0xffffffff)
+            ch2 := and(shr(160, challenge), 0xffffffff)
+            ch3 := and(shr(128, challenge), 0xffffffff)
+            ch4 := and(shr(96, challenge), 0xffffffff)
+            ch5 := and(shr(64, challenge), 0xffffffff)
+            ch6 := and(shr(32, challenge), 0xffffffff)
+            ch7 := and(challenge, 0xffffffff)
+        }
+        unchecked {
+            for (uint256 i = 12; i > 0; --i) {
+                total = _hornerStepWithChallengeCoeffs(
+                    total,
+                    _selectPolyEvalAt10At12(selVars[i - 1], fullPoint),
+                    ch0,
+                    ch1,
+                    ch2,
+                    ch3,
+                    ch4,
+                    ch5,
+                    ch6,
+                    ch7
+                );
+            }
+        }
+        total =
+            _hornerStepWithChallengeCoeffs(total, eqEval, ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7);
+    }
+
+    function _selectPolyEvalAt18At4(uint256 var_, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let w := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let a4 := 0
+            let a5 := 0
+            let a6 := 0
+            let a7 := 0
+            let current := var_
+            let pointBase := add(add(fullPoint, 0x20), 0x80)
+
+            for { let i := 18 } gt(i, 0) { i := sub(i, 1) } {
+                let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
+                let scalar := sub(current, 1)
+                if iszero(current) { scalar := sub(modulus, 1) }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+                let p4 := and(shr(96, pointValue), mask)
+                let p5 := and(shr(64, pointValue), mask)
+                let p6 := and(shr(32, pointValue), mask)
+                let p7 := and(pointValue, mask)
+
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+                let t4 := mul(scalar, p4)
+                let t5 := mul(scalar, p5)
+                let t6 := mul(scalar, p6)
+                let t7 := mul(scalar, p7)
+
+                let n0 :=
+                    mod(
+                        add(
+                            mul(a0, t0),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a1, t7), mul(a2, t6)),
+                                        add(mul(a3, t5), mul(a4, t4))
+                                    ),
+                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n1 :=
+                    mod(
+                        add(
+                            add(mul(a0, t1), mul(a1, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a2, t7), mul(a3, t6)),
+                                        add(mul(a4, t5), mul(a5, t4))
+                                    ),
+                                    add(mul(a6, t3), mul(a7, t2))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n2 :=
+                    mod(
+                        add(
+                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(mul(a3, t7), mul(a4, t6)),
+                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n3 :=
+                    mod(
+                        add(
+                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
+                            mul(
+                                w,
+                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
+                            )
+                        ),
+                        modulus
+                    )
+                let n4 :=
+                    mod(
+                        add(
+                            add(
+                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
+                                mul(a4, t0)
+                            ),
+                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
+                        ),
+                        modulus
+                    )
+                let n5 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
+                                        mul(a3, t2)
+                                    ),
+                                    mul(a4, t1)
+                                ),
+                                mul(a5, t0)
+                            ),
+                            mul(w, add(mul(a6, t7), mul(a7, t6)))
+                        ),
+                        modulus
+                    )
+                let n6 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
+                                            mul(a3, t3)
+                                        ),
+                                        mul(a4, t2)
+                                    ),
+                                    mul(a5, t1)
+                                ),
+                                mul(a6, t0)
+                            ),
+                            mul(w, mul(a7, t7))
+                        ),
+                        modulus
+                    )
+                let n7 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
+                                            mul(a3, t4)
+                                        ),
+                                        mul(a4, t3)
+                                    ),
+                                    mul(a5, t2)
+                                ),
+                                mul(a6, t1)
+                            ),
+                            mul(a7, t0)
+                        ),
+                        modulus
+                    )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+                a4 := n4
+                a5 := n5
+                a6 := n6
+                a7 := n7
+                current := mulmod(current, current, modulus)
+            }
+
+            acc := or(
+                or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3))),
+                or(or(shl(96, a4), shl(64, a5)), or(shl(32, a6), a7))
+            )
+        }
+    }
+
+    function _selectPolyEvalAt14At8(uint256 var_, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let w := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let a4 := 0
+            let a5 := 0
+            let a6 := 0
+            let a7 := 0
+            let current := var_
+            let pointBase := add(add(fullPoint, 0x20), 0x100)
+
+            for { let i := 14 } gt(i, 0) { i := sub(i, 1) } {
+                let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
+                let scalar := sub(current, 1)
+                if iszero(current) { scalar := sub(modulus, 1) }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+                let p4 := and(shr(96, pointValue), mask)
+                let p5 := and(shr(64, pointValue), mask)
+                let p6 := and(shr(32, pointValue), mask)
+                let p7 := and(pointValue, mask)
+
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+                let t4 := mul(scalar, p4)
+                let t5 := mul(scalar, p5)
+                let t6 := mul(scalar, p6)
+                let t7 := mul(scalar, p7)
+
+                let n0 :=
+                    mod(
+                        add(
+                            mul(a0, t0),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a1, t7), mul(a2, t6)),
+                                        add(mul(a3, t5), mul(a4, t4))
+                                    ),
+                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n1 :=
+                    mod(
+                        add(
+                            add(mul(a0, t1), mul(a1, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a2, t7), mul(a3, t6)),
+                                        add(mul(a4, t5), mul(a5, t4))
+                                    ),
+                                    add(mul(a6, t3), mul(a7, t2))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n2 :=
+                    mod(
+                        add(
+                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(mul(a3, t7), mul(a4, t6)),
+                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n3 :=
+                    mod(
+                        add(
+                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
+                            mul(
+                                w,
+                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
+                            )
+                        ),
+                        modulus
+                    )
+                let n4 :=
+                    mod(
+                        add(
+                            add(
+                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
+                                mul(a4, t0)
+                            ),
+                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
+                        ),
+                        modulus
+                    )
+                let n5 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
+                                        mul(a3, t2)
+                                    ),
+                                    mul(a4, t1)
+                                ),
+                                mul(a5, t0)
+                            ),
+                            mul(w, add(mul(a6, t7), mul(a7, t6)))
+                        ),
+                        modulus
+                    )
+                let n6 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
+                                            mul(a3, t3)
+                                        ),
+                                        mul(a4, t2)
+                                    ),
+                                    mul(a5, t1)
+                                ),
+                                mul(a6, t0)
+                            ),
+                            mul(w, mul(a7, t7))
+                        ),
+                        modulus
+                    )
+                let n7 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
+                                            mul(a3, t4)
+                                        ),
+                                        mul(a4, t3)
+                                    ),
+                                    mul(a5, t2)
+                                ),
+                                mul(a6, t1)
+                            ),
+                            mul(a7, t0)
+                        ),
+                        modulus
+                    )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+                a4 := n4
+                a5 := n5
+                a6 := n6
+                a7 := n7
+                current := mulmod(current, current, modulus)
+            }
+
+            acc := or(
+                or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3))),
+                or(or(shl(96, a4), shl(64, a5)), or(shl(32, a6), a7))
+            )
+        }
+    }
+
+    function _selectPolyEvalAt10At12(uint256 var_, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let w := 3
+
+            let a0 := 1
+            let a1 := 0
+            let a2 := 0
+            let a3 := 0
+            let a4 := 0
+            let a5 := 0
+            let a6 := 0
+            let a7 := 0
+            let current := var_
+            let pointBase := add(add(fullPoint, 0x20), 0x180)
+
+            for { let i := 10 } gt(i, 0) { i := sub(i, 1) } {
+                let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
+                let scalar := sub(current, 1)
+                if iszero(current) { scalar := sub(modulus, 1) }
+
+                let p0 := shr(224, pointValue)
+                let p1 := and(shr(192, pointValue), mask)
+                let p2 := and(shr(160, pointValue), mask)
+                let p3 := and(shr(128, pointValue), mask)
+                let p4 := and(shr(96, pointValue), mask)
+                let p5 := and(shr(64, pointValue), mask)
+                let p6 := and(shr(32, pointValue), mask)
+                let p7 := and(pointValue, mask)
+
+                let t0 := add(1, mul(scalar, p0))
+                let t1 := mul(scalar, p1)
+                let t2 := mul(scalar, p2)
+                let t3 := mul(scalar, p3)
+                let t4 := mul(scalar, p4)
+                let t5 := mul(scalar, p5)
+                let t6 := mul(scalar, p6)
+                let t7 := mul(scalar, p7)
+
+                let n0 :=
+                    mod(
+                        add(
+                            mul(a0, t0),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a1, t7), mul(a2, t6)),
+                                        add(mul(a3, t5), mul(a4, t4))
+                                    ),
+                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n1 :=
+                    mod(
+                        add(
+                            add(mul(a0, t1), mul(a1, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(
+                                        add(mul(a2, t7), mul(a3, t6)),
+                                        add(mul(a4, t5), mul(a5, t4))
+                                    ),
+                                    add(mul(a6, t3), mul(a7, t2))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n2 :=
+                    mod(
+                        add(
+                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
+                            mul(
+                                w,
+                                add(
+                                    add(mul(a3, t7), mul(a4, t6)),
+                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
+                                )
+                            )
+                        ),
+                        modulus
+                    )
+                let n3 :=
+                    mod(
+                        add(
+                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
+                            mul(
+                                w,
+                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
+                            )
+                        ),
+                        modulus
+                    )
+                let n4 :=
+                    mod(
+                        add(
+                            add(
+                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
+                                mul(a4, t0)
+                            ),
+                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
+                        ),
+                        modulus
+                    )
+                let n5 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
+                                        mul(a3, t2)
+                                    ),
+                                    mul(a4, t1)
+                                ),
+                                mul(a5, t0)
+                            ),
+                            mul(w, add(mul(a6, t7), mul(a7, t6)))
+                        ),
+                        modulus
+                    )
+                let n6 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
+                                            mul(a3, t3)
+                                        ),
+                                        mul(a4, t2)
+                                    ),
+                                    mul(a5, t1)
+                                ),
+                                mul(a6, t0)
+                            ),
+                            mul(w, mul(a7, t7))
+                        ),
+                        modulus
+                    )
+                let n7 :=
+                    mod(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
+                                            mul(a3, t4)
+                                        ),
+                                        mul(a4, t3)
+                                    ),
+                                    mul(a5, t2)
+                                ),
+                                mul(a6, t1)
+                            ),
+                            mul(a7, t0)
+                        ),
+                        modulus
+                    )
+
+                a0 := n0
+                a1 := n1
+                a2 := n2
+                a3 := n3
+                a4 := n4
+                a5 := n5
+                a6 := n6
+                a7 := n7
+                current := mulmod(current, current, modulus)
+            }
+
+            acc := or(
+                or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3))),
+                or(or(shl(96, a4), shl(64, a5)), or(shl(32, a6), a7))
+            )
+        }
+    }
+
+    function _evaluateConstraints(Constraint[] memory constraints, uint256[] memory allRandomness)
+        internal
+        pure
+        returns (uint256 total)
+    {
+        unchecked {
+            for (uint256 i = 0; i < constraints.length; ++i) {
+                total = KoalaBearExt8.add(total, _evaluateConstraint(constraints[i], allRandomness));
+            }
+        }
+    }
+
+    function _evaluateConstraint(Constraint memory constraint, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 total)
+    {
+        uint256 numVariables = constraint.eqStatement.numVariables;
+        if (
+            constraint.selStatement.vars.length != 0
+                && constraint.selStatement.numVariables != numVariables
+        ) {
+            revert InconsistentConstraintArity(numVariables, constraint.selStatement.numVariables);
+        }
+        uint256 pointOffset = fullPoint.length - numVariables;
+
+        unchecked {
+            for (uint256 i = constraint.selStatement.vars.length; i > 0; --i) {
+                total = _hornerStep(
+                    total,
+                    constraint.challenge,
+                    WhirVerifierUtils8.selectPolyEval(
+                        constraint.selStatement.vars[i - 1], fullPoint, pointOffset, numVariables
+                    )
+                );
+            }
+            for (uint256 i = constraint.eqStatement.evaluations.length; i > 0; --i) {
+                total = _hornerStep(
+                    total,
+                    constraint.challenge,
+                    _eqPolyEvalAt(
+                        constraint.eqStatement.flatPoints,
+                        (i - 1) * numVariables,
+                        fullPoint,
+                        pointOffset,
+                        numVariables
+                    )
+                );
+            }
+        }
+    }
+
+    function _eqPolyEvalAt(
+        uint256[] memory flatPoints,
+        uint256 pointStart,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt8.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 p = flatPoints[pointStart + i];
+                uint256 q = fullPoint[pointOffset + i];
+                uint256 term = KoalaBearExt8.sub(
+                    KoalaBearExt8.sub(
+                        KoalaBearExt8.add(
+                            KoalaBearExt8.mulBase(KoalaBearExt8.mul(p, q), 2), KoalaBearExt8.ONE
+                        ),
+                        p
+                    ),
+                    q
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+            }
+        }
+    }
+
+    function _eqPolyEvalExpandedPoint(
+        uint256 point,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = point;
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 q = fullPoint[pointOffset + i - 1];
+                uint256 term = KoalaBearExt8.sub(
+                    KoalaBearExt8.sub(
+                        KoalaBearExt8.add(
+                            KoalaBearExt8.mulBase(KoalaBearExt8.mul(current, q), 2),
+                            KoalaBearExt8.ONE
+                        ),
+                        current
+                    ),
+                    q
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+                current = KoalaBearExt8.square(current);
+            }
+        }
+    }
+
+    function _eqPolyEvalExpandedPointAt22At0(uint256 point, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = point;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(fullPoint, 0x20)
+        }
+
+        unchecked {
+            for (uint256 i = 22; i > 0; --i) {
+                uint256 q;
+                assembly ("memory-safe") {
+                    q := mload(add(pointBase, shl(5, sub(i, 1))))
+                }
+                acc = KoalaBearExt8.mul(acc, _eqTerm(current, q));
+                current = KoalaBearExt8.square(current);
+            }
+        }
+    }
+
+    function _eqPolyEvalExpandedPointAt18At4(uint256 point, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = point;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(fullPoint, 0x20), 0x80)
+        }
+
+        unchecked {
+            for (uint256 i = 18; i > 0; --i) {
+                uint256 q;
+                assembly ("memory-safe") {
+                    q := mload(add(pointBase, shl(5, sub(i, 1))))
+                }
+                acc = KoalaBearExt8.mul(acc, _eqTerm(current, q));
+                current = KoalaBearExt8.square(current);
+            }
+        }
+    }
+
+    function _eqPolyEvalExpandedPointAt14At8(uint256 point, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = point;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(fullPoint, 0x20), 0x100)
+        }
+
+        unchecked {
+            for (uint256 i = 14; i > 0; --i) {
+                uint256 q;
+                assembly ("memory-safe") {
+                    q := mload(add(pointBase, shl(5, sub(i, 1))))
+                }
+                acc = KoalaBearExt8.mul(acc, _eqTerm(current, q));
+                current = KoalaBearExt8.square(current);
+            }
+        }
+    }
+
+    function _eqPolyEvalExpandedPointAt10At12(uint256 point, uint256[] memory fullPoint)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = point;
+        uint256 pointBase;
+        assembly ("memory-safe") {
+            pointBase := add(add(fullPoint, 0x20), 0x180)
+        }
+
+        unchecked {
+            for (uint256 i = 10; i > 0; --i) {
+                uint256 q;
+                assembly ("memory-safe") {
+                    q := mload(add(pointBase, shl(5, sub(i, 1))))
+                }
+                acc = KoalaBearExt8.mul(acc, _eqTerm(current, q));
+                current = KoalaBearExt8.square(current);
+            }
+        }
+    }
+
+    function _eqPolyEvalAtCalldata(
+        uint256[] calldata point,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        if (point.length != numVariables) {
+            revert StatementPointArityMismatch(0, numVariables, point.length);
+        }
+
+        acc = KoalaBearExt8.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 p = point[i];
+                uint256 q = fullPoint[pointOffset + i];
+                uint256 term = KoalaBearExt8.sub(
+                    KoalaBearExt8.sub(
+                        KoalaBearExt8.add(
+                            KoalaBearExt8.mulBase(KoalaBearExt8.mul(p, q), 2), KoalaBearExt8.ONE
+                        ),
+                        p
+                    ),
+                    q
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+            }
+        }
+    }
+
+    function _eqPolyEvalAtBlob(
+        bytes calldata blob,
+        uint256 blobOffset,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt8.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 p;
+                assembly ("memory-safe") {
+                    p := calldataload(add(add(blob.offset, blobOffset), shl(5, i)))
+                }
+                uint256 q = fullPoint[pointOffset + i];
+                uint256 term = KoalaBearExt8.sub(
+                    KoalaBearExt8.sub(
+                        KoalaBearExt8.add(
+                            KoalaBearExt8.mulBase(KoalaBearExt8.mul(p, q), 2), KoalaBearExt8.ONE
+                        ),
+                        p
+                    ),
+                    q
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+            }
+        }
+    }
+
+    function _eqPolyEvalAtBlob22(
+        bytes calldata blob,
+        uint256 blobOffset,
+        uint256[] memory fullPoint
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt8.ONE;
+        unchecked {
+            for (uint256 i = 0; i < 22; ++i) {
+                uint256 p;
+                assembly ("memory-safe") {
+                    p := calldataload(add(add(blob.offset, blobOffset), shl(5, i)))
+                }
+                acc = KoalaBearExt8.mul(acc, _eqTerm(p, fullPoint[i]));
+            }
+        }
+    }
+
+    function _eqPolyEvalAtMemory(
+        uint256[] memory point,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        if (point.length != numVariables) {
+            revert StatementPointArityMismatch(0, numVariables, point.length);
+        }
+
+        acc = KoalaBearExt8.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 p = point[i];
+                uint256 q = fullPoint[pointOffset + i];
+                uint256 term = KoalaBearExt8.sub(
+                    KoalaBearExt8.sub(
+                        KoalaBearExt8.add(
+                            KoalaBearExt8.mulBase(KoalaBearExt8.mul(p, q), 2), KoalaBearExt8.ONE
+                        ),
+                        p
+                    ),
+                    q
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+            }
+        }
+    }
+
+    function _evaluateFinalValue(
+        uint256[] calldata finalPoly,
+        uint256[] memory finalSumcheckRandomness
+    ) internal pure returns (uint256) {
+        if (finalSumcheckRandomness.length == 0) {
+            return finalPoly[0];
+        }
+
+        uint256[] memory evals = new uint256[](finalPoly.length);
+        unchecked {
+            for (uint256 i = 0; i < finalPoly.length; ++i) {
+                uint256 value = finalPoly[i];
+                WhirVerifierUtils8.validatePackedExt8(value);
+                evals[i] = value;
+            }
+        }
+        return WhirVerifierUtils8.evaluateHypercubeMemory(evals, finalSumcheckRandomness);
+    }
+
+    function _evaluateFinalValueBlob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 polyLen,
+        uint256[] memory allRandomness,
+        uint256 pointOffset,
+        uint256 pointLen
+    ) internal pure returns (uint256) {
+        if (polyLen == 64 && pointLen == 6) {
+            return WhirVerifierUtils8.evaluateFinalValueBlob64Dim6(
+                blob, offset, allRandomness, pointOffset
+            );
+        }
+        return WhirVerifierUtils8.evaluateExtensionRowAsExt8Blob(
+            blob, offset, polyLen, allRandomness, pointOffset, pointLen
+        );
+    }
+
+    function _selectPolyEvalFixed(
+        uint256 var_,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt8.ONE;
+        uint256 current = var_;
+
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                uint256 term = KoalaBearExt8.add(
+                    KoalaBearExt8.ONE, KoalaBearExt8.mulBase(fullPoint[pointOffset + i - 1], scalar)
+                );
+                acc = KoalaBearExt8.mul(acc, term);
+                current = KoalaBear.mul(current, current);
+            }
+        }
+    }
+
+    function _hornerStep(uint256 total, uint256 challenge, uint256 weight)
+        internal
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt8.add(KoalaBearExt8.mul(total, challenge), weight);
+    }
+
+    function _hornerStepWithChallengeCoeffs(
+        uint256 total,
+        uint256 weight,
+        uint256 ch0,
+        uint256 ch1,
+        uint256 ch2,
+        uint256 ch3,
+        uint256 ch4,
+        uint256 ch5,
+        uint256 ch6,
+        uint256 ch7
+    ) internal pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let m := 0xffffffff
+
+            let a0 := shr(224, total)
+            let a1 := and(shr(192, total), m)
+            let a2 := and(shr(160, total), m)
+            let a3 := and(shr(128, total), m)
+            let a4 := and(shr(96, total), m)
+            let a5 := and(shr(64, total), m)
+            let a6 := and(shr(32, total), m)
+            let a7 := and(total, m)
+
+            let w0 := shr(224, weight)
+            let w1 := and(shr(192, weight), m)
+            let w2 := and(shr(160, weight), m)
+            let w3 := and(shr(128, weight), m)
+            let w4 := and(shr(96, weight), m)
+            let w5 := and(shr(64, weight), m)
+            let w6 := and(shr(32, weight), m)
+            let w7 := and(weight, m)
+
+            let c0 :=
+                mod(
+                    add(
+                        add(
+                            mul(a0, ch0),
+                            mul(
+                                3,
+                                add(
+                                    add(
+                                        add(mul(a1, ch7), mul(a2, ch6)),
+                                        add(mul(a3, ch5), mul(a4, ch4))
+                                    ),
+                                    add(add(mul(a5, ch3), mul(a6, ch2)), mul(a7, ch1))
+                                )
+                            )
+                        ),
+                        w0
+                    ),
+                    M
+                )
+            let c1 :=
+                mod(
+                    add(
+                        add(
+                            add(mul(a0, ch1), mul(a1, ch0)),
+                            mul(
+                                3,
+                                add(
+                                    add(
+                                        add(mul(a2, ch7), mul(a3, ch6)),
+                                        add(mul(a4, ch5), mul(a5, ch4))
+                                    ),
+                                    add(mul(a6, ch3), mul(a7, ch2))
+                                )
+                            )
+                        ),
+                        w1
+                    ),
+                    M
+                )
+            let c2 :=
+                mod(
+                    add(
+                        add(
+                            add(add(mul(a0, ch2), mul(a1, ch1)), mul(a2, ch0)),
+                            mul(
+                                3,
+                                add(
+                                    add(mul(a3, ch7), mul(a4, ch6)),
+                                    add(mul(a5, ch5), add(mul(a6, ch4), mul(a7, ch3)))
+                                )
+                            )
+                        ),
+                        w2
+                    ),
+                    M
+                )
+            let c3 :=
+                mod(
+                    add(
+                        add(
+                            add(add(add(mul(a0, ch3), mul(a1, ch2)), mul(a2, ch1)), mul(a3, ch0)),
+                            mul(
+                                3,
+                                add(
+                                    add(mul(a4, ch7), mul(a5, ch6)),
+                                    add(mul(a6, ch5), mul(a7, ch4))
+                                )
+                            )
+                        ),
+                        w3
+                    ),
+                    M
+                )
+            let c4 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(add(mul(a0, ch4), mul(a1, ch3)), mul(a2, ch2)),
+                                    mul(a3, ch1)
+                                ),
+                                mul(a4, ch0)
+                            ),
+                            mul(3, add(add(mul(a5, ch7), mul(a6, ch6)), mul(a7, ch5)))
+                        ),
+                        w4
+                    ),
+                    M
+                )
+            let c5 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, ch5), mul(a1, ch4)), mul(a2, ch3)),
+                                        mul(a3, ch2)
+                                    ),
+                                    mul(a4, ch1)
+                                ),
+                                mul(a5, ch0)
+                            ),
+                            mul(3, add(mul(a6, ch7), mul(a7, ch6)))
+                        ),
+                        w5
+                    ),
+                    M
+                )
+            let c6 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, ch6), mul(a1, ch5)), mul(a2, ch4)),
+                                        mul(a3, ch3)
+                                    ),
+                                    mul(a4, ch2)
+                                ),
+                                mul(a5, ch1)
+                            ),
+                            add(mul(a6, ch0), mul(3, mul(a7, ch7)))
+                        ),
+                        w6
+                    ),
+                    M
+                )
+            let c7 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(
+                                            add(add(mul(a0, ch7), mul(a1, ch6)), mul(a2, ch5)),
+                                            mul(a3, ch4)
+                                        ),
+                                        mul(a4, ch3)
+                                    ),
+                                    mul(a5, ch2)
+                                ),
+                                mul(a6, ch1)
+                            ),
+                            mul(a7, ch0)
+                        ),
+                        w7
+                    ),
+                    M
+                )
+
+            out := or(
+                or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
+                or(or(shl(96, c4), shl(64, c5)), or(shl(32, c6), c7))
+            )
+        }
+    }
+
+    function _eqTerm(uint256 p, uint256 q) internal pure returns (uint256) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let twoM := 0xfe000002
+            let mask := 0xffffffff
+
+            let p0 := shr(224, p)
+            let p1 := and(shr(192, p), mask)
+            let p2 := and(shr(160, p), mask)
+            let p3 := and(shr(128, p), mask)
+            let p4 := and(shr(96, p), mask)
+            let p5 := and(shr(64, p), mask)
+            let p6 := and(shr(32, p), mask)
+            let p7 := and(p, mask)
+
+            let q0 := shr(224, q)
+            let q1 := and(shr(192, q), mask)
+            let q2 := and(shr(160, q), mask)
+            let q3 := and(shr(128, q), mask)
+            let q4 := and(shr(96, q), mask)
+            let q5 := and(shr(64, q), mask)
+            let q6 := and(shr(32, q), mask)
+            let q7 := and(q, mask)
+
+            let m0 :=
+                add(
+                    mul(p0, q0),
+                    mul(
+                        3,
+                        add(
+                            add(add(mul(p1, q7), mul(p2, q6)), add(mul(p3, q5), mul(p4, q4))),
+                            add(add(mul(p5, q3), mul(p6, q2)), mul(p7, q1))
+                        )
+                    )
+                )
+            let m1 :=
+                add(
+                    add(mul(p0, q1), mul(p1, q0)),
+                    mul(
+                        3,
+                        add(
+                            add(add(mul(p2, q7), mul(p3, q6)), add(mul(p4, q5), mul(p5, q4))),
+                            add(mul(p6, q3), mul(p7, q2))
+                        )
+                    )
+                )
+            let m2 :=
+                add(
+                    add(add(mul(p0, q2), mul(p1, q1)), mul(p2, q0)),
+                    mul(
+                        3,
+                        add(
+                            add(mul(p3, q7), mul(p4, q6)),
+                            add(mul(p5, q5), add(mul(p6, q4), mul(p7, q3)))
+                        )
+                    )
+                )
+            let m3 :=
+                add(
+                    add(add(add(mul(p0, q3), mul(p1, q2)), mul(p2, q1)), mul(p3, q0)),
+                    mul(3, add(add(mul(p4, q7), mul(p5, q6)), add(mul(p6, q5), mul(p7, q4))))
+                )
+            let m4 :=
+                add(
+                    add(
+                        add(add(add(mul(p0, q4), mul(p1, q3)), mul(p2, q2)), mul(p3, q1)),
+                        mul(p4, q0)
+                    ),
+                    mul(3, add(add(mul(p5, q7), mul(p6, q6)), mul(p7, q5)))
+                )
+            let m5 :=
+                add(
+                    add(
+                        add(
+                            add(add(add(mul(p0, q5), mul(p1, q4)), mul(p2, q3)), mul(p3, q2)),
+                            mul(p4, q1)
+                        ),
+                        mul(p5, q0)
+                    ),
+                    mul(3, add(mul(p6, q7), mul(p7, q6)))
+                )
+            let m6 :=
+                add(
+                    add(
+                        add(
+                            add(
+                                add(add(add(mul(p0, q6), mul(p1, q5)), mul(p2, q4)), mul(p3, q3)),
+                                mul(p4, q2)
+                            ),
+                            mul(p5, q1)
+                        ),
+                        mul(p6, q0)
+                    ),
+                    mul(3, mul(p7, q7))
+                )
+            let m7 :=
+                add(
+                    add(
+                        add(
+                            add(
+                                add(add(add(mul(p0, q7), mul(p1, q6)), mul(p2, q5)), mul(p3, q4)),
+                                mul(p4, q3)
+                            ),
+                            mul(p5, q2)
+                        ),
+                        mul(p6, q1)
+                    ),
+                    mul(p7, q0)
+                )
+
+            let c0 := mod(add(add(mul(2, m0), 1), sub(twoM, add(p0, q0))), M)
+            let c1 := mod(add(mul(2, m1), sub(twoM, add(p1, q1))), M)
+            let c2 := mod(add(mul(2, m2), sub(twoM, add(p2, q2))), M)
+            let c3 := mod(add(mul(2, m3), sub(twoM, add(p3, q3))), M)
+            let c4 := mod(add(mul(2, m4), sub(twoM, add(p4, q4))), M)
+            let c5 := mod(add(mul(2, m5), sub(twoM, add(p5, q5))), M)
+            let c6 := mod(add(mul(2, m6), sub(twoM, add(p6, q6))), M)
+            let c7 := mod(add(mul(2, m7), sub(twoM, add(p7, q7))), M)
+
+            p := or(
+                or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
+                or(or(shl(96, c4), shl(64, c5)), or(shl(32, c6), c7))
+            )
+        }
+        return p;
+    }
+}

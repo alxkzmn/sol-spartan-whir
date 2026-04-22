@@ -26,29 +26,29 @@ forge test
 cargo run --release --bin export-fixtures -p spartan-whir-export -- testdata
 ```
 
-The schedule sweep model lives in [whir_param_sweep.py](/Users/alexkuzmin/development/spartan-p3/sol-spartan-whir/whir_param_sweep.py).
+The schedule sweep model lives in [whir_param_sweep.py](./whir_param_sweep.py).
 
-Current documented precision for that model:
+Documented precision for that model:
 
 - execution gas only, not total tx gas
-- `Constant(5), lir=11, rs_v=3`: model `891,844` vs measured `957,778` (`-6.9%`)
-- `Constant(4), lir=6, rs_v=1`: model `1,064,610` vs measured `996,074` (`+6.9%`)
-- current measured calibration band: within `±6.9%` relative error on those two anchor schedules
+- `Constant(5)` with starting log inverse rate `11` and RS domain initial reduction factor `3`: model `891,844` vs measured `957,778` (`-6.9%`)
+- `Constant(4)` with starting log inverse rate `6` and RS domain initial reduction factor `1`: model `1,064,610` vs measured `996,074` (`+6.9%`)
+- measured calibration band: within `±6.9%` relative error on those two anchor schedules
 - this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
 
 ## Gas
 
-The current deployment target on `stage4` is:
+For the quartic configuration used in this repository, the contract with the lowest measured gas is:
 
 - `WhirBlobVerifierNative4`
 
-It is the lowest-gas verifier in this repo, verifies directly from the standalone blob format used on this branch, and has materially more bytecode headroom than the typed verifier.
+It verifies directly from the standalone blob format used by the quartic fixtures and benchmark scripts in this repository.
 
-### Current comparison: optimized `sol-spartan-whir` vs `sol-whir`
+### Comparison: `sol-spartan-whir` vs `sol-whir`
 
 | Metric                    |                           `sol-spartan-whir` |                            `sol-whir` |
 | ------------------------- | -------------------------------------------: | ------------------------------------: |
-| Main verifier path        | `EOA -> WhirBlobVerifierNative4.verify(...)` | `EOA -> WhirContract.callVerify(...)` |
+| Main verifier call        | `EOA -> WhirBlobVerifierNative4.verify(...)` | `EOA -> WhirContract.callVerify(...)` |
 | Field                     |                             KoalaBear + ext4 |                                 BN254 |
 | Security target           |                                       80-bit |                                80-bit |
 | Total verification tx gas |                                    `978,550` |                           `1,135,052` |
@@ -61,34 +61,11 @@ It is the lowest-gas verifier in this repo, verifies directly from the standalon
 
 Notes:
 
-- `sol-spartan-whir` tx numbers are freshly measured on the current `stage4` branch for the production path `WhirBlobVerifierNative4`.
-- `sol-whir` tx numbers come from the current checked-in benchmark artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
-- current `sol-spartan-whir` reference verifiers are:
-  - typed parity path: `WhirVerifier4` at `996,074`
-  - blob decode-and-delegate path: `WhirBlobVerifier4` at `1,197,456`
-- current execution gas for the deployed verifier path: `903,254`
-- current `WhirBlobVerifierNative4` runtime size: `21,889` bytes
-- current success blob size: `10,152` bytes
-
-#### Hard schedule tuning example
-
-The repo also keeps one alternate fixed verifier family for schedule tuning work. This same measured family was used as one of the calibration points for [whir_param_sweep.py](/Users/alexkuzmin/development/spartan-p3/sol-spartan-whir/whir_param_sweep.py):
-
-- schedule: `ff=5, lir=11, rs_v=3`
-- typed verifier file: `src/whir/lir11/WhirVerifier4_lir11_ff5_rsv3.sol`
-- blob wrapper file: `src/whir/lir11/WhirBlobVerifier4_lir11_ff5_rsv3.sol`
-- native blob verifier file: `src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
-- exporter command: `cargo run --release --bin export-fixtures-lir11-ff5-rsv3 -p spartan-whir-export -- testdata`
-
-Measured execution gas for that alternate family:
-
-| Path                                                                 |         Gas |
-| -------------------------------------------------------------------- | ----------: |
-| `WhirVerifierLir11Test.testGasWhirVerifyFixed()`                     |   `957,778` |
-| `WhirBlobVerifierLir11Test.testGasWhirVerifyBlobFixed()`             | `1,125,188` |
-| `WhirBlobVerifierNativeLir11Test.testGasWhirVerifyBlobNativeFixed()` |   `914,723` |
-
-This is documented as a standalone example of hard schedule tuning and sweep-model calibration. It is not part of the `sol-whir` comparison table above, and it is not the default deployment target on this branch.
+- `sol-spartan-whir` tx numbers are measured from `WhirBlobVerifierNative4` in this repository.
+- `sol-whir` tx numbers come from the broadcast artifact committed at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
+- Foundry execution gas for `WhirBlobVerifierNative4`: `903,254`
+- `WhirBlobVerifierNative4` runtime size: `21,889` bytes
+- success blob size: `10,152` bytes
 
 #### Arithmetic and proof-structure differences
 
@@ -111,9 +88,81 @@ Implications:
 - The one structural delta we can price directly is the final sumcheck: ~`27.1k` gas in `sol-spartan-whir`, while the `sol-whir` benchmark config has `finalSumcheckRound = 0`.
 - Proof structure explains part of the gap; the rest is execution cost inside the verifier.
 
+### Other Schedules
+
+#### Quartic Schedule Tuning Example
+
+This repository also includes one quartic schedule variant used for schedule-tuning measurements and for calibrating [whir_param_sweep.py](./whir_param_sweep.py):
+
+- schedule: folding factor `5`, starting log inverse rate `11`, RS domain initial reduction factor `3`
+- contract file: `src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol`
+- exporter command: `cargo run --release --bin export-fixtures-lir11-ff5-rsv3 -p spartan-whir-export -- testdata`
+
+Measured execution gas:
+
+- `WhirBlobVerifierNativeLir11Test.testGasWhirVerifyBlobNativeFixed()`: `914,723`
+
+This quartic schedule variant is included for benchmarking and calibration. The quartic contract in the comparison table above is `WhirBlobVerifierNative4`.
+
+#### Octic JohnsonBound example
+
+This repository also includes a separate octic standalone-WHIR configuration for the `2^22` JohnsonBound target:
+
+- schedule: `22` variables, JohnsonBound soundness target, folding factor `4`, starting log inverse rate `6`, RS domain initial reduction factor `1`
+- contract file: `src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol`
+- exporter command: `cargo run --release --bin export-fixtures-octic-k22-jb100-lir6-ff4-rsv1 -p spartan-whir-export -- testdata`
+
+Metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
+
+| Metric                                                                   |          Value |
+| ------------------------------------------------------------------------ | -------------: |
+| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()` |    `7,865,125` |
+| `verify(bytes32,bytes)` calldata bytes                                   |       `47,780` |
+| `verify(bytes32,bytes)` calldata gas                                     |      `753,800` |
+| success blob size                                                        | `47,666` bytes |
+
+The calldata number above is the exact ABI-encoded call payload for `verify(bytes32,bytes)`: function selector, expected commitment, dynamic-bytes head, blob payload, and trailing padding.
+
+#### Quartic and octic schedule comparison
+
+The quartic contract and the octic JohnsonBound configuration use different proof parameters.
+
+| Item                               | Quartic contract | Octic JohnsonBound configuration |
+| ---------------------------------- | ---------------: | -------------------------------: |
+| number of variables                |             `16` |                             `22` |
+| soundness assumption               |    CapacityBound |                     JohnsonBound |
+| security target                    |           80-bit |                          100-bit |
+| extension degree                   |              `4` |                              `8` |
+| folding factor                     |              `5` |                              `4` |
+| starting log inverse rate          |              `6` |                              `6` |
+| RS domain initial reduction factor |              `1` |                              `1` |
+| commitment OOD samples             |              `2` |                              `1` |
+| initial sumcheck rounds            |              `4` |                              `4` |
+| configured WHIR rounds             |              `2` |                              `3` |
+| round variable counts              |          `12, 8` |                     `18, 14, 10` |
+| per-round STIR query counts        |           `9, 6` |                     `24, 16, 12` |
+| final STIR query count             |              `5` |                             `10` |
+| final polynomial length            |             `16` |                             `64` |
+| final sumcheck rounds              |              `4` |                              `6` |
+| total STIR queries including final |             `20` |                             `62` |
+| Merkle depths                      |     `18, 17, 16` |                 `24, 23, 22, 21` |
+
+#### Applied octic optimizations
+
+- The octic contract is `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`. Its external entrypoint is `verify(bytes32 expectedCommitment, bytes blob)`, and it reads the proof blob directly from calldata.
+- The STIR row kernel is specialized for `rowLen=16` and uses the combined blob-side hash-and-evaluate path with packed 20-byte frontier reduction.
+- Ext8 folding uses direct arithmetic kernels, including the Karatsuba-based `_foldOnceWithCoeffs(...)` implementation used in the contract.
+- Round-constraint accumulation uses fixed `18/14/10` select kernels and a fused ext8 equality-term path instead of the generic ext8 multiplication helpers in the shared verifier code.
+- Final STIR uses two fixed five-query checks for the `64`-coefficient final polynomial.
+- Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
+- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The row for this configuration is fitted to the measured `7,865,125` execution gas of the native verifier.
+
 ### Measurement methodology
 
-**Execution gas** is measured via `forge test --match-contract WhirVerifier4Test -vv`, which reports the gas used by the verifier call in the Foundry harness.
+**Execution gas** is measured via the Foundry gas tests for the deployed contract entrypoints, for example:
+
+- `forge test --match-contract WhirBlobVerifierNative4Test --match-test testGasWhirVerifyBlobNativeFixed -vv`
+- `forge test --match-contract WhirBlobVerifierNative8K22Jb100Test --match-test testGasWhirVerifyBlobNativeFixed -vv`
 
 **Total tx gas** is measured from real transaction receipts, then split as:
 
@@ -126,17 +175,17 @@ where:
 - `calldata gas = 4 * zero_bytes + 16 * nonzero_bytes`
 - `execution remainder = receipt.gasUsed - 21,000 - calldata gas`
 
-For `sol-spartan-whir`, the current tx numbers were remeasured by:
+For `sol-spartan-whir`, the quartic tx numbers in the table above were measured by:
 
 1. A wrapper contract stores the `verify()` result in state, making the call state-changing.
-2. Deploying the current bytecode to a local Anvil node.
+2. Deploying the verifier bytecode to a local Anvil node.
 3. Replaying the benchmark calldata over raw JSON-RPC and reading the receipt.
 
-The direct-call typed calldata footprint comes from `script/WhirTxBenchmark_lir6_ff5_rsv1.s.sol`, the typed wrapper footprint comes from `script/MeasureTxGas_lir6_ff5_rsv1.s.sol`, the standalone blob wrapper footprint comes from `script/WhirBlobTxBenchmark_lir6_ff5_rsv1.s.sol`, and the standalone native blob footprint comes from `script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol`.
+The documented quartic production calldata footprint comes from `script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol`.
 
-For `sol-whir`, the tx numbers come from the checked-in broadcast artifact at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that checked-in measurement remains the source of truth.
+For `sol-whir`, the tx numbers come from the broadcast artifact committed at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that committed measurement remains the source of truth.
 
-`sol-spartan-whir` current deployable config:
+`sol-spartan-whir` Foundry build settings for the quartic contract:
 
 ```sh
 via_ir = true
