@@ -161,6 +161,333 @@ The quartic contract and the octic JohnsonBound configuration use different proo
 - Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
 - [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The measured native verifier execution gas is `7,861,397`.
 
+#### Precompile-backed octic experiment
+
+This repository includes a local-only precompile-backed octic verifier variant for measuring generic KoalaBear ext8 arithmetic precompiles. It is an A/B measurement target, not the baseline verifier.
+
+The experiment does not change:
+
+- WHIR protocol parameters
+- verifier external ABI
+- proof blob format
+- transcript ordering
+- Merkle tree layout
+- calldata encoding
+- the baseline native octic verifier source
+
+The custom node is an embedded Anvil launcher built from the Foundry fork submodule at `../foundry-b0a9dd9/`. It registers local precompiles with `NodeConfig::with_precompile_factory(...)`.
+
+This avoids patching stock `anvil` or stock `forge`, but it also means:
+
+- stock `forge test` cannot execute the precompile-backed verifier path
+- `forge script` is not a reliable measurement driver because Forge simulates the script body in its own local EVM before broadcasting, and that local simulation does not know about the custom precompile addresses
+- precompile measurements use direct RPC transactions through the Python scripts in `script/`
+- the custom node uses port `18547` by default to avoid colliding with a normal Anvil process on `8545`
+- the custom node sets `code_size_limit = 50,000` bytes so local measurement contracts can be deployed even if they are not EIP-170 deployable
+
+Relevant files:
+
+| Path | Role |
+| ---- | ---- |
+| `../foundry-b0a9dd9/` | Foundry fork submodule with the custom local Anvil runner |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/` | Rust implementations of the local ext8 precompiles |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/precompiles.rs` | precompile dispatch, input validation, and Rust arithmetic calls |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/gas_model.rs` | native runtime calibration and locked gas schedule generation |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/vectors.rs` | deterministic arithmetic differential vector generation |
+| `src/field/KoalaBearExt8Precompile.sol` | Solidity wrapper for scalar and batch precompile calls |
+| `src/whir/k22_jb100_lir6_ff4_rsv1/` | unchanged baseline native octic verifier |
+| `src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/` | precompile-backed octic verifier variant |
+| `test/helpers/Ext8PrecompileHarness.sol` | arithmetic, transport, row-layout, and candidate benchmark harness |
+| `script/run_ext8_precompile_phase1_rpc.py` | arithmetic differential plus equality/select A/B benchmark |
+| `script/run_ext8_precompile_stir_transport_rpc.py` | STIR extension-row transport gate |
+| `script/run_ext8_precompile_full_verifier_rpc.py` | full baseline-vs-precompile verifier A/B script |
+| `script/run_ext8_precompile_eip_candidate_rpc.py` | standalone and batch EIP-compatible candidate sweep |
+
+The precompile-backed verifier exposes the same external entrypoint:
+
+```solidity
+verify(bytes32 expectedCommitment, bytes calldata blob) returns (bool)
+```
+
+The Rust arithmetic implementation calls the same Plonky3 field stack used by the prover/verifier without depending on the `spartan-whir` workspace crate:
+
+- `p3_koala_bear::KoalaBear`
+- `p3_field::extension::BinomialExtensionField<KoalaBear, 8>`
+
+There is intentionally no parallel hand-written Rust implementation of ext8 multiplication.
+
+##### Precompile interface
+
+All ext8 values use the same packed Solidity representation as the existing octic verifier: one `uint256` containing 8 big-endian 32-bit KoalaBear limbs.
+
+For scalar inputs, the scalar is a 32-byte `uint256`; the Rust precompile rejects it unless the high 28 bytes are zero and the low `u32` value is `< 0x7f000001`.
+
+Batch inputs have no length prefix. The precompile derives `N` from calldata length and rejects malformed lengths.
+
+| Address  | Name | Input bytes | Output bytes | Status in verifier |
+| -------- | ---- | ----------- | ------------ | ------------------ |
+| `0x0801` | `EXT8_MUL` | `64 = a || b` | `32 = a*b` | integrated |
+| `0x0802` | `EXT8_SQUARE` | `32 = a` | `32 = a^2` | integrated |
+| `0x0803` | `EXT8_ADD` | `64 = a || b` | `32 = a+b` | measured, rejected |
+| `0x0804` | `EXT8_SUB` | `64 = a || b` | `32 = a-b` | measured, rejected |
+| `0x0805` | `EXT8_MUL_BASE` | `64 = a || scalar` | `32 = a*scalar` | measured, rejected |
+| `0x0811` | `EXT8_MUL_BATCH` | `N * 64` | `N * 32` | integrated for fixed equality |
+| `0x0812` | `EXT8_SQUARE_BATCH` | `N * 32` | `N * 32` | measured, rejected |
+| `0x0813` | `EXT8_MUL_BASE_BATCH` | `N * 64` | `N * 32` | measured, rejected |
+| `0x08f1` | no-op 64-to-32 | `64` | `32` | transport calibration |
+| `0x08f2` | no-op 32-to-32 | `32` | `32` | transport calibration |
+| `0x08f3` | no-op batch 64-to-32 | `N * 64` | `N * 32` | transport calibration |
+| `0x08f4` | no-op batch 32-to-32 | `N * 32` | `N * 32` | transport calibration |
+
+##### Gas calibration
+
+The local runner locks assigned precompile gas before Solidity A/B measurements. The assignment formula is:
+
+```text
+assigned_base_gas(op) = ceil_50(8 * 25.86 * median_runtime_us(op))
+```
+
+Parameters:
+
+- `25.86 gas / microsecond`, using the EIP-1108-style fairness anchor
+- `8x` safety multiplier
+- round up to the nearest `50` gas
+- do not treat sub-`700` effective gas as realistic when a normal `STATICCALL` is involved
+
+The assigned base gas is not the same thing as effective verifier gas. Effective gas also includes input marshalling, memory writes, `STATICCALL`, returndata copy, and repacking into the caller layout. The no-op precompiles measure that transport path with the same Solidity wrapper code.
+
+Locked schedule:
+
+| Operation | Median native runtime | Assigned base gas |
+| --------- | --------------------- | ----------------- |
+| `EXT8_MUL` | `8 ns` | `50` |
+| `EXT8_SQUARE` | `9 ns` | `50` |
+| `EXT8_ADD` | `2 ns` | `50` |
+| `EXT8_SUB` | `2 ns` | `50` |
+| `EXT8_MUL_BASE` | `2 ns` | `50` |
+| `EXT8_MUL_BATCH` | `8 ns` per item | `50` per item |
+| `EXT8_SQUARE_BATCH` | `9 ns` per item | `50` per item |
+| `EXT8_MUL_BASE_BATCH` | `2 ns` per item | `50` per item |
+
+##### Integrated verifier path
+
+The baseline native octic verifier is unchanged and remains `pure`:
+
+```text
+src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol
+```
+
+The precompile-backed verifier is a parallel variant and is `view` because it uses `STATICCALL`:
+
+```text
+src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1_precompile_phase1.sol
+```
+
+The precompile-backed verifier routes these ext8-heavy paths through `EXT8_MUL`, `EXT8_SQUARE`, or `EXT8_MUL_BATCH`:
+
+- expanded equality products
+- select accumulator products
+- final-value folding
+- final closing multiplication
+- generic Horner-step extension multiplications
+- Round 1, Round 2, and final STIR extension-row folds
+
+The precompile-backed verifier keeps these paths on existing software arithmetic:
+
+- ext8 add and subtract
+- ext8-by-base multiplication
+- Round 0 STIR base rows, because their first layer is a base-row fold rather than a pure ext8 row fold
+- rejected batch candidates other than `EXT8_MUL_BATCH`
+
+The helper functions `addViaPrecompile`, `subViaPrecompile`, `mulBaseViaPrecompile`, and the rejected batch wrappers remain available in `KoalaBearExt8Precompile.sol` for measurement harnesses. They are not used by the precompile-backed verifier.
+
+##### Fixed equality batch use
+
+The fixed equality evaluator in the precompile-backed verifier uses `EXT8_MUL_BATCH` inside each loop iteration. The first batch computes the independent `p * q` products needed by the equality terms. The second batch computes the accumulator products and the `current * current` updates for the active tracks.
+
+This keeps the serial dependencies unchanged while reducing this loop from `236` scalar precompile calls to `44` batch precompile calls. The measured full-verifier saving from this local rewrite is `16,663` execution gas relative to the previously documented scalar precompile wiring.
+
+##### Measurement commands
+
+Initialize the Foundry fork submodule from the workspace root:
+
+```sh
+git submodule update --init foundry-b0a9dd9
+```
+
+Build the Solidity project and check the local runner:
+
+```sh
+forge build
+cd ..
+cargo check --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner
+cd sol-spartan-whir
+```
+
+Regenerate the locked gas schedule and arithmetic vectors:
+
+```sh
+cd ..
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin calibrate-ext8-precompile-gas -- sol-spartan-whir/testdata/ext8_precompile_gas_schedule.json
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin export-ext8-precompile-vectors -- sol-spartan-whir/testdata
+cd sol-spartan-whir
+```
+
+Start the custom node in a dedicated terminal from the workspace root:
+
+```sh
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin ext8-precompile-node -- sol-spartan-whir/testdata/ext8_precompile_gas_schedule.json 18547
+```
+
+Run the RPC measurements from this Foundry project:
+
+```sh
+python3 script/run_ext8_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --skip-arithmetic
+python3 script/run_ext8_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --skip-benchmarks
+python3 script/run_ext8_precompile_stir_transport_rpc.py --rpc-url http://127.0.0.1:18547
+python3 script/run_ext8_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547
+python3 script/run_ext8_precompile_eip_candidate_rpc.py --rpc-url http://127.0.0.1:18547
+```
+
+All RPC measurement scripts use state-changing transactions and write a derived value into `lastResult` so the compiler and EVM cannot remove output copying or arithmetic consumption.
+
+##### Arithmetic differential
+
+The arithmetic differential uses deterministic Rust-generated vectors and checks exact bitwise equality between:
+
+- Rust expected outputs
+- Solidity software arithmetic
+- Solidity scalar precompile wrappers
+- Solidity batch precompile wrappers where applicable
+
+Current vector result:
+
+| Check | Result |
+| ----- | ------ |
+| Random ext8 vector pairs | `10,000` |
+| Compared operations | `a+b`, `a-b`, `a*b`, `a^2`, `a*scalar` |
+| Rust precompile vs Solidity | exact |
+| Total differential harness gas | `122,841,384` |
+
+##### Equality and select gate
+
+The first integrated subsystem was equality/select arithmetic. This deliberately avoided STIR row folding until transport overhead had been measured separately.
+
+Subsystem gas from state-changing RPC transactions against the custom node:
+
+| Harness path | Software | No-op transport | Precompile | Software minus precompile |
+| ------------ | -------- | --------------- | ---------- | ------------------------- |
+| `eq22` | `170,060` | `117,709` | `92,963` | `77,097` |
+| `eq18` | `145,585` | `101,027` | `85,570` | `60,015` |
+| `eq14` | `119,729` | `89,166` | `59,696` | `60,033` |
+| `eq10` | `94,715` | `73,209` | `51,808` | `42,907` |
+| equality total | `530,089` | `381,111` | `290,037` | `240,052` |
+| select-only total | `2,159,629` | `1,073,162` | `1,079,648` | `1,079,981` |
+| equality plus select total | `2,424,530` | `1,216,663` | `1,164,825` | `1,259,705` |
+
+Clean no-op transport transactions:
+
+| Call shape | Transaction gas |
+| ---------- | --------------- |
+| no-op mul wrapper | `24,594` |
+| no-op square wrapper | `24,014` |
+
+Gate result: pass. Equality-only saves more than `100,000`, select-only does not regress, and combined equality plus select saves more than `300,000`.
+
+##### STIR row-layout gate
+
+STIR row folding was gated separately because row folds operate on contiguous packed row bytes, while a generic ext8 precompile consumes normalized 32-byte words. A microbenchmark using clean `bytes32` locals would understate the transport cost.
+
+The row-layout benchmark extracts real extension rows from `octic_whir_k22_jb100_lir6_ff4_rsv1_success.blob`. It excludes Round 0 base rows and covers Round 1, Round 2, and final STIR extension rows.
+
+| Rows | Count | Software | No-op transport | Precompile | Software minus precompile |
+| ---- | ----- | -------- | --------------- | ---------- | ------------------------- |
+| Round 1 extension rows | `16` | `1,051,347` | `492,078` | `503,616` | `547,731` |
+| Round 2 extension rows | `12` | `795,771` | `376,040` | `384,578` | `411,193` |
+| Final extension rows | `10` | `668,085` | `318,131` | `325,169` | `342,916` |
+| Combined extension rows | `38` | `2,455,869` | `1,129,499` | `1,157,537` | `1,298,332` |
+
+Gate calculation:
+
+```text
+fold_mul_count = 38 * 15 = 570
+assigned_mul_total = 570 * 50 = 28,500
+projected_saving = 2,455,869 - 1,129,499 - 28,500 = 1,297,870
+```
+
+Gate result: pass. The projected saving is above the `300,000` gas threshold, so Round 1, Round 2, and final extension-row STIR folds are integrated in the precompile-backed verifier.
+
+##### Full-verifier A/B
+
+The full-verifier A/B deploys both verifier variants on the custom node and sends the same calldata to both. Execution gas is computed as:
+
+```text
+execution_gas = receipt_gas_used - 21,000 - calldata_gas
+```
+
+Correctness result:
+
+| Fixture | Result |
+| ------- | ------ |
+| success blob | both return `true` |
+| bad commitment blob | both revert |
+| bad STIR query blob | both revert |
+| bad OOD / transcript mismatch blob | both revert |
+
+Gas result:
+
+| Verifier | Total tx gas | Calldata gas | Execution gas |
+| -------- | ------------ | ------------ | ------------- |
+| baseline native octic | `8,095,104` | `753,800` | `7,320,304` |
+| precompile-backed native octic | `5,057,190` | `753,800` | `4,282,390` |
+| savings | `3,037,914` | `0` | `3,037,914` |
+
+The calldata gas is identical because the protocol and blob format are unchanged.
+
+##### EIP-compatible candidate sweep
+
+The candidate sweep checks whether any generic operation beyond multiplication and squaring should be integrated into the precompile-backed verifier.
+
+Standalone gates:
+
+- no-op-shaped transport must beat the software loop by at least `15%`
+- real precompile calls must beat the software loop by at least `15%`
+- projected full-verifier saving must be at least `50,000` gas
+
+State-changing RPC measurements for `256` loop iterations:
+
+| Candidate | Software | No-op transport | Precompile | Projected full-verifier saving | Decision |
+| --------- | -------- | --------------- | ---------- | ------------------------------ | -------- |
+| `EXT8_ADD` | `675,100` | `675,100` | `675,100` | `0` | reject |
+| `EXT8_SUB` | `675,100` | `675,070` | `675,100` | `0` | reject |
+| `EXT8_MUL_BASE` | `461,350` | `461,350` | `461,350` | `0` | reject |
+
+Batch gates:
+
+- no-op batch transport must amortize below scalar precompile transport by `N <= 16`
+- real batch per-op effective gas must beat the scalar precompile path by at least `20%`
+- the win must appear at realistic verifier batch sizes, not only at `N = 256`
+
+Representative `N = 16` state-changing RPC measurements:
+
+| Candidate | Software | Scalar no-op | Scalar precompile | Batch no-op | Batch precompile | Decision |
+| --------- | -------- | ------------ | ----------------- | ----------- | ---------------- | -------- |
+| `EXT8_MUL_BATCH` | `92,395` | `63,400` | `63,400` | `63,400` | `63,400` | reject as a general replacement; integrated only in the fixed equality loop |
+| `EXT8_SQUARE_BATCH` | `58,490` | `46,243` | `45,745` | `45,017` | `45,451` | reject |
+| `EXT8_MUL_BASE_BATCH` | `52,350` | `50,100` | `52,076` | `50,020` | `50,799` | reject |
+
+Decision: no generic candidate beyond `EXT8_MUL`, `EXT8_SQUARE`, and the narrowly applied `EXT8_MUL_BATCH` fixed-equality use passes the integration gates.
+
+##### Interpretation
+
+The useful generic precompile boundary is ext8 multiplication and squaring. Those operations are expensive enough in Solidity and frequent enough in the verifier that the `STATICCALL` transport overhead is still worth paying.
+
+Ext8 add, ext8 sub, and ext8-by-base multiplication are too cheap in software. For this verifier, a generic precompile call does not beat the local arithmetic once transport is included.
+
+Generic batch precompiles are not good blanket replacements for scalar precompile calls. The fixed equality evaluator is the exception because it has multiple independent ext8 multiplications per loop iteration and can reuse one scratch buffer without changing dependencies.
+
+For this codebase, further precompile work should focus on making `EXT8_MUL` and `EXT8_SQUARE` more EIP-ready: clearer gas rationale, cleaner specification, more cross-client implementation notes, and broader benchmark coverage. It should not drift into WHIR-only fused kernels unless the goal changes from EIP-compatible candidate to local project-specific accelerator.
+
 ### Measurement methodology
 
 **Execution gas** is measured via the Foundry gas tests for the deployed contract entrypoints, for example:

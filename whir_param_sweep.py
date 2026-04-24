@@ -5,8 +5,7 @@ WHIR parameter sweep for EVM verifier gas estimation.
 Models the WHIR parameter derivation from whir-p3 and estimates
 execution gas + calldata gas for various configurations including:
   - Constant(folding_factor) folding
-  - ConstantFromSecondRound(first_ff, rest_ff) folding  [exploratory — not yet
-    wired in spartan-whir, which hardcodes FoldingFactor::Constant(...)]
+  - ConstantFromSecondRound(first_ff, rest_ff) folding
   - rs_domain_initial_reduction_factor
   - starting_log_inv_rate
 
@@ -56,9 +55,9 @@ Known constraints:
   - Constraint: log_folded_domain_size = (num_vars + lir - ff_0) <= TWO_ADICITY
   - rs_domain_initial_reduction_factor (v) must be <= ff_0
   - Rust-level schedule validity is not the same thing as current stage4 Solidity
-    compatibility. The script can rank broader schedules, but only the current
-    selected schedule has been fully benchmarked end-to-end on the current
-    stage4 fixed verifier path.
+    compatibility. The script can rank broader schedules, but generated
+    Solidity verifiers and end-to-end benchmarks only exist for the schedules
+    that have been emitted into sol-spartan-whir/src.
 
 Usage:
   python3 whir_param_sweep.py
@@ -1215,9 +1214,7 @@ def print_sweep(
         group_results = [r for r in results if r.group == group]
         group_results.sort(key=lambda r: r.total)
 
-        is_exploratory = "ConstantFromSecondRound" in group
-        label = f"[EXPLORATORY] {group}" if is_exploratory else group
-        print(f"\n### {label} ({len(group_results)} configs)\n")
+        print(f"\n### {group} ({len(group_results)} configs)\n")
         print(_table_header(ranked=True))
         for i, r in enumerate(group_results, 1):
             print(_table_row(r, base_total, rank=i))
