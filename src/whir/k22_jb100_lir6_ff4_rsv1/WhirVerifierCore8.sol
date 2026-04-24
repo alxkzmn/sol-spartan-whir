@@ -60,6 +60,76 @@ library WhirVerifierCore8 {
     error InconsistentConstraintArity(uint256 eqNumVariables, uint256 selNumVariables);
     error RandomnessLengthMismatch(uint256 expected, uint256 actual);
 
+    function _powBatch10(
+        uint256 base,
+        uint256 e0,
+        uint256 e1,
+        uint256 e2,
+        uint256 e3,
+        uint256 e4,
+        uint256 e5,
+        uint256 e6,
+        uint256 e7,
+        uint256 e8,
+        uint256 e9
+    )
+        private
+        pure
+        returns (
+            uint256 p0,
+            uint256 p1,
+            uint256 p2,
+            uint256 p3,
+            uint256 p4,
+            uint256 p5,
+            uint256 p6,
+            uint256 p7,
+            uint256 p8,
+            uint256 p9
+        )
+    {
+        p0 = 1;
+        p1 = 1;
+        p2 = 1;
+        p3 = 1;
+        p4 = 1;
+        p5 = 1;
+        p6 = 1;
+        p7 = 1;
+        p8 = 1;
+        p9 = 1;
+
+        unchecked {
+            while (true) {
+                if ((e0 & 1) != 0) p0 = KoalaBear.mul(p0, base);
+                if ((e1 & 1) != 0) p1 = KoalaBear.mul(p1, base);
+                if ((e2 & 1) != 0) p2 = KoalaBear.mul(p2, base);
+                if ((e3 & 1) != 0) p3 = KoalaBear.mul(p3, base);
+                if ((e4 & 1) != 0) p4 = KoalaBear.mul(p4, base);
+                if ((e5 & 1) != 0) p5 = KoalaBear.mul(p5, base);
+                if ((e6 & 1) != 0) p6 = KoalaBear.mul(p6, base);
+                if ((e7 & 1) != 0) p7 = KoalaBear.mul(p7, base);
+                if ((e8 & 1) != 0) p8 = KoalaBear.mul(p8, base);
+                if ((e9 & 1) != 0) p9 = KoalaBear.mul(p9, base);
+
+                e0 >>= 1;
+                e1 >>= 1;
+                e2 >>= 1;
+                e3 >>= 1;
+                e4 >>= 1;
+                e5 >>= 1;
+                e6 >>= 1;
+                e7 >>= 1;
+                e8 >>= 1;
+                e9 >>= 1;
+
+                if ((e0 | e1 | e2 | e3 | e4 | e5 | e6 | e7 | e8 | e9) == 0) break;
+
+                base = KoalaBear.mul(base, base);
+            }
+        }
+    }
+
     function _computeBaseRootAndEvalsBlob16(
         uint256[] memory indices,
         bytes calldata blob,
@@ -476,31 +546,29 @@ library WhirVerifierCore8 {
                     idx8 := mload(add(indicesBase, 0x100))
                     idx9 := mload(add(indicesBase, 0x120))
                 }
+                (
+                    uint256 point0,
+                    uint256 point1,
+                    uint256 point2,
+                    uint256 point3,
+                    uint256 point4,
+                    uint256 point5,
+                    uint256 point6,
+                    uint256 point7,
+                    uint256 point8,
+                    uint256 point9
+                ) = _powBatch10(
+                    foldedDomainGen, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9
+                );
 
                 uint256 mismatchPlusOne = WhirVerifierUtils8.checkHornerBaseBlob64Matches5Raw(
-                    blob,
-                    finalPolyOffset,
-                    KoalaBear.pow(foldedDomainGen, idx0),
-                    KoalaBear.pow(foldedDomainGen, idx1),
-                    KoalaBear.pow(foldedDomainGen, idx2),
-                    KoalaBear.pow(foldedDomainGen, idx3),
-                    KoalaBear.pow(foldedDomainGen, idx4),
-                    rowEvalsBase,
-                    0
+                    blob, finalPolyOffset, point0, point1, point2, point3, point4, rowEvalsBase, 0
                 );
                 if (mismatchPlusOne != 0) {
                     revert StirConstraintFailed(mismatchPlusOne - 1);
                 }
                 mismatchPlusOne = WhirVerifierUtils8.checkHornerBaseBlob64Matches5Raw(
-                    blob,
-                    finalPolyOffset,
-                    KoalaBear.pow(foldedDomainGen, idx5),
-                    KoalaBear.pow(foldedDomainGen, idx6),
-                    KoalaBear.pow(foldedDomainGen, idx7),
-                    KoalaBear.pow(foldedDomainGen, idx8),
-                    KoalaBear.pow(foldedDomainGen, idx9),
-                    rowEvalsBase,
-                    5
+                    blob, finalPolyOffset, point5, point6, point7, point8, point9, rowEvalsBase, 5
                 );
                 if (mismatchPlusOne != 0) {
                     revert StirConstraintFailed(mismatchPlusOne + 4);
@@ -1539,6 +1607,78 @@ library WhirVerifierCore8 {
 
             if (fastRoot != expectedRoot) {
                 revert MerkleRootMismatch(expectedRoot, fastRoot);
+            }
+
+            if (indices.length == 10) {
+                uint256 idx0;
+                uint256 idx1;
+                uint256 idx2;
+                uint256 idx3;
+                uint256 idx4;
+                uint256 idx5;
+                uint256 idx6;
+                uint256 idx7;
+                uint256 idx8;
+                uint256 idx9;
+                assembly ("memory-safe") {
+                    let indicesBase := add(indices, 0x20)
+                    idx0 := mload(indicesBase)
+                    idx1 := mload(add(indicesBase, 0x20))
+                    idx2 := mload(add(indicesBase, 0x40))
+                    idx3 := mload(add(indicesBase, 0x60))
+                    idx4 := mload(add(indicesBase, 0x80))
+                    idx5 := mload(add(indicesBase, 0xa0))
+                    idx6 := mload(add(indicesBase, 0xc0))
+                    idx7 := mload(add(indicesBase, 0xe0))
+                    idx8 := mload(add(indicesBase, 0x100))
+                    idx9 := mload(add(indicesBase, 0x120))
+                }
+                (
+                    uint256 point0,
+                    uint256 point1,
+                    uint256 point2,
+                    uint256 point3,
+                    uint256 point4,
+                    uint256 point5,
+                    uint256 point6,
+                    uint256 point7,
+                    uint256 point8,
+                    uint256 point9
+                ) = _powBatch10(
+                    foldedDomainGen, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9
+                );
+
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point0) != rowEvals[0]) {
+                    revert StirConstraintFailed(0);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point1) != rowEvals[1]) {
+                    revert StirConstraintFailed(1);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point2) != rowEvals[2]) {
+                    revert StirConstraintFailed(2);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point3) != rowEvals[3]) {
+                    revert StirConstraintFailed(3);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point4) != rowEvals[4]) {
+                    revert StirConstraintFailed(4);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point5) != rowEvals[5]) {
+                    revert StirConstraintFailed(5);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point6) != rowEvals[6]) {
+                    revert StirConstraintFailed(6);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point7) != rowEvals[7]) {
+                    revert StirConstraintFailed(7);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point8) != rowEvals[8]) {
+                    revert StirConstraintFailed(8);
+                }
+                if (WhirVerifierUtils8.hornerBase(finalPoly, point9) != rowEvals[9]) {
+                    revert StirConstraintFailed(9);
+                }
+                return;
             }
 
             unchecked {
@@ -3381,14 +3521,14 @@ library WhirVerifierCore8 {
                     mul(p7, q0)
                 )
 
-            let c0 := mod(add(add(mul(2, m0), 1), sub(twoM, add(p0, q0))), M)
-            let c1 := mod(add(mul(2, m1), sub(twoM, add(p1, q1))), M)
-            let c2 := mod(add(mul(2, m2), sub(twoM, add(p2, q2))), M)
-            let c3 := mod(add(mul(2, m3), sub(twoM, add(p3, q3))), M)
-            let c4 := mod(add(mul(2, m4), sub(twoM, add(p4, q4))), M)
-            let c5 := mod(add(mul(2, m5), sub(twoM, add(p5, q5))), M)
-            let c6 := mod(add(mul(2, m6), sub(twoM, add(p6, q6))), M)
-            let c7 := mod(add(mul(2, m7), sub(twoM, add(p7, q7))), M)
+            let c0 := mod(add(add(shl(1, m0), 1), sub(twoM, add(p0, q0))), M)
+            let c1 := mod(add(shl(1, m1), sub(twoM, add(p1, q1))), M)
+            let c2 := mod(add(shl(1, m2), sub(twoM, add(p2, q2))), M)
+            let c3 := mod(add(shl(1, m3), sub(twoM, add(p3, q3))), M)
+            let c4 := mod(add(shl(1, m4), sub(twoM, add(p4, q4))), M)
+            let c5 := mod(add(shl(1, m5), sub(twoM, add(p5, q5))), M)
+            let c6 := mod(add(shl(1, m6), sub(twoM, add(p6, q6))), M)
+            let c7 := mod(add(shl(1, m7), sub(twoM, add(p7, q7))), M)
 
             p := or(
                 or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),

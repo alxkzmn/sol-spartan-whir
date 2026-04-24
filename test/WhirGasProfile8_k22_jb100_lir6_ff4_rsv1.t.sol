@@ -10,6 +10,9 @@ import {
     OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1 as OcticWhirFixedConfig
 } from "../src/generated/OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1.sol";
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
+import {
+    WhirBlobCodec8
+} from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol";
 import { WhirVerifierCore8 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierCore8.sol";
 import { WhirVerifierUtils8 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol";
 import { MerkleVerifier } from "../src/merkle/MerkleVerifier.sol";
@@ -54,6 +57,35 @@ contract WhirProfileHarness8 {
         uint256 queryCount;
         uint256 rowLen;
         uint256 depth;
+    }
+
+    struct NativeBreakdown {
+        uint256 total;
+        uint256 header;
+        uint256 setupStatement;
+        uint256 initialParse;
+        uint256 initialClaim;
+        uint256 allocations;
+        uint256 initialSumcheck;
+        uint256 round0Parse;
+        uint256 round0Stir;
+        uint256 round0Sumcheck;
+        uint256 round1Parse;
+        uint256 round1Stir;
+        uint256 round1Sumcheck;
+        uint256 round2Parse;
+        uint256 round2Stir;
+        uint256 round2Sumcheck;
+        uint256 observeFinalPoly;
+        uint256 finalStir;
+        uint256 finalSumcheck;
+        uint256 eqTerms;
+        uint256 constraintInitial;
+        uint256 constraintRound0Select;
+        uint256 constraintRound1Select;
+        uint256 constraintRound2Select;
+        uint256 finalValue;
+        uint256 finalMulCheck;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -361,6 +393,324 @@ contract WhirProfileHarness8 {
             require(claimedEval == expected, "FINAL_CHECK");
         }
         bd.finalCheck = g - gasleft();
+    }
+
+    function profileNativeBlobBreakdown(bytes32 expectedCommitment, bytes calldata blob)
+        external
+        view
+        returns (NativeBreakdown memory bd)
+    {
+        uint256 startGas = gasleft();
+        uint256 g;
+
+        uint256 round0DecommLen;
+        uint256 round1DecommLen;
+        uint256 round2DecommLen;
+        uint256 finalDecommLen;
+        g = gasleft();
+        (round0DecommLen, round1DecommLen, round2DecommLen, finalDecommLen) =
+            WhirBlobCodec8.validateHeader(blob);
+        bd.header = g - gasleft();
+
+        uint256 offset = WhirBlobCodec8.HEADER_BYTES;
+        KeccakChallenger.State memory challenger;
+        uint256 statementPointOffset = offset;
+        uint256 initialConstraintChallenge;
+        uint256 statementEval;
+        uint256 initialOodPoint;
+        uint256 round0ConstraintChallenge;
+        uint256 round0OodPoint;
+        uint256[] memory round0SelVars;
+        uint256 round1ConstraintChallenge;
+        uint256 round1OodPoint;
+        uint256[] memory round1SelVars;
+        uint256 round2ConstraintChallenge;
+        uint256 round2OodPoint;
+        uint256[] memory round2SelVars;
+
+        g = gasleft();
+        OcticWhirFixedConfig.observePattern(challenger);
+        unchecked {
+            for (uint256 i = 0; i < OcticWhirFixedConfig.NUM_VARIABLES; ++i) {
+                uint256 pointValue;
+                (pointValue, offset) = WhirBlobCodec8.readExt8(blob, offset);
+                WhirVerifierUtils8.validatePackedExt8(pointValue);
+            }
+        }
+        (statementEval, offset) = WhirBlobCodec8.readExt8(blob, offset);
+        WhirVerifierUtils8.validatePackedExt8(statementEval);
+        bd.setupStatement = g - gasleft();
+
+        g = gasleft();
+        {
+            bytes32 prevRoot;
+            uint256 initialOodEvaluation;
+            uint256 nextOffset;
+            (prevRoot, initialOodPoint, initialOodEvaluation, nextOffset) =
+                WhirVerifierCore8._parseFixedCommitment22x1Blob(challenger, blob, offset);
+            offset = nextOffset;
+
+            if (prevRoot != expectedCommitment) {
+                revert WhirVerifierCore8.CommitmentMismatch(expectedCommitment, prevRoot);
+            }
+
+            initialConstraintChallenge = WhirVerifierUtils8.sampleExt8(challenger);
+            bd.initialParse = g - gasleft();
+
+            g = gasleft();
+            uint256 claimedEval = WhirVerifierCore8._combineInitialConstraintEvalsSingleRaw(
+                initialConstraintChallenge, statementEval, initialOodEvaluation
+            );
+            bd.initialClaim = g - gasleft();
+
+            g = gasleft();
+            uint256[] memory allRandomness = new uint256[](OcticWhirFixedConfig.NUM_VARIABLES);
+            uint256 randomnessCursor = 0;
+            uint256 round0RandomnessOffset = randomnessCursor;
+            uint256 round1RandomnessOffset;
+            uint256 round2RandomnessOffset;
+            uint256 finalStirRandomnessOffset;
+            bd.allocations = g - gasleft();
+
+            g = gasleft();
+            (claimedEval, randomnessCursor, offset) = WhirVerifierCore8._verifySumcheckBlob4NoPow(
+                blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+            );
+            bd.initialSumcheck = g - gasleft();
+
+            {
+                bytes32 round0Root;
+                uint256 round0OodEvaluation;
+                g = gasleft();
+                (round0Root, round0OodPoint, round0OodEvaluation, offset) =
+                    WhirVerifierCore8._parseFixedCommitment18x1Blob(challenger, blob, offset);
+                bd.round0Parse = g - gasleft();
+
+                uint256 round0PowWitnessOffset = offset;
+                unchecked {
+                    offset += 4;
+                }
+
+                g = gasleft();
+                uint256 round0Contribution;
+                (round0ConstraintChallenge, round0Contribution, round0SelVars, offset) =
+                    WhirVerifierCore8._verifyRound0StirAndCombineConstraintBlob(
+                        challenger,
+                        expectedCommitment,
+                        blob,
+                        offset,
+                        round0DecommLen,
+                        round0PowWitnessOffset,
+                        allRandomness,
+                        round0RandomnessOffset,
+                        round0OodEvaluation
+                    );
+                claimedEval = KoalaBearExt8.add(claimedEval, round0Contribution);
+                bd.round0Stir = g - gasleft();
+
+                g = gasleft();
+                round1RandomnessOffset = randomnessCursor;
+                (claimedEval, randomnessCursor, offset) = WhirVerifierCore8._verifySumcheckBlob4NoPow(
+                    blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+                );
+                bd.round0Sumcheck = g - gasleft();
+                expectedCommitment = round0Root;
+            }
+
+            {
+                bytes32 round1Root;
+                uint256 round1OodEvaluation;
+                g = gasleft();
+                (round1Root, round1OodPoint, round1OodEvaluation, offset) =
+                    WhirVerifierCore8._parseFixedCommitment14x1Blob(challenger, blob, offset);
+                bd.round1Parse = g - gasleft();
+
+                uint256 round1PowWitnessOffset = offset;
+                unchecked {
+                    offset += 4;
+                }
+
+                g = gasleft();
+                uint256 round1Contribution;
+                (round1ConstraintChallenge, round1Contribution, round1SelVars, offset) =
+                    WhirVerifierCore8._verifyRound1StirAndCombineConstraintBlob(
+                        challenger,
+                        expectedCommitment,
+                        blob,
+                        offset,
+                        round1DecommLen,
+                        round1PowWitnessOffset,
+                        allRandomness,
+                        round1RandomnessOffset,
+                        round1OodEvaluation
+                    );
+                claimedEval = KoalaBearExt8.add(claimedEval, round1Contribution);
+                bd.round1Stir = g - gasleft();
+
+                g = gasleft();
+                round2RandomnessOffset = randomnessCursor;
+                (claimedEval, randomnessCursor, offset) = WhirVerifierCore8._verifySumcheckBlob4NoPow(
+                    blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+                );
+                bd.round1Sumcheck = g - gasleft();
+                expectedCommitment = round1Root;
+            }
+
+            {
+                bytes32 round2Root;
+                uint256 round2OodEvaluation;
+                g = gasleft();
+                (round2Root, round2OodPoint, round2OodEvaluation, offset) =
+                    WhirVerifierCore8._parseFixedCommitment10x1Blob(challenger, blob, offset);
+                bd.round2Parse = g - gasleft();
+
+                uint256 round2PowWitnessOffset = offset;
+                unchecked {
+                    offset += 4;
+                }
+
+                g = gasleft();
+                uint256 round2Contribution;
+                (round2ConstraintChallenge, round2Contribution, round2SelVars, offset) =
+                    WhirVerifierCore8._verifyRound2StirAndCombineConstraintBlob(
+                        challenger,
+                        expectedCommitment,
+                        blob,
+                        offset,
+                        round2DecommLen,
+                        round2PowWitnessOffset,
+                        allRandomness,
+                        round2RandomnessOffset,
+                        round2OodEvaluation
+                    );
+                claimedEval = KoalaBearExt8.add(claimedEval, round2Contribution);
+                bd.round2Stir = g - gasleft();
+
+                g = gasleft();
+                finalStirRandomnessOffset = randomnessCursor;
+                (claimedEval, randomnessCursor, offset) = WhirVerifierCore8._verifySumcheckBlob4NoPow(
+                    blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+                );
+                bd.round2Sumcheck = g - gasleft();
+                expectedCommitment = round2Root;
+            }
+
+            uint256 finalPolyOffset = offset;
+            g = gasleft();
+            unchecked {
+                for (uint256 i = 0; i < OcticWhirFixedConfig.FINAL_POLY_LENGTH; i += 2) {
+                    uint256 coeff0;
+                    uint256 coeff1;
+                    (coeff0, offset) = WhirBlobCodec8.readExt8(blob, offset);
+                    (coeff1, offset) = WhirBlobCodec8.readExt8(blob, offset);
+                    challenger.observeValidatedPackedExt8Pair(coeff0, coeff1);
+                }
+            }
+            bd.observeFinalPoly = g - gasleft();
+
+            uint256 finalPowWitnessOffset = offset;
+            unchecked {
+                offset += 4;
+            }
+
+            g = gasleft();
+            offset = WhirVerifierCore8._verifyFinalStirChallengesBlobFixed(
+                challenger,
+                expectedCommitment,
+                blob,
+                offset,
+                finalDecommLen,
+                finalPowWitnessOffset,
+                allRandomness,
+                finalStirRandomnessOffset,
+                finalPolyOffset
+            );
+            bd.finalStir = g - gasleft();
+
+            uint256 finalSumcheckStart = randomnessCursor;
+            g = gasleft();
+            (claimedEval, randomnessCursor, offset) = WhirVerifierCore8._verifySumcheckBlob6NoPow(
+                blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+            );
+            if (randomnessCursor != OcticWhirFixedConfig.NUM_VARIABLES) {
+                revert WhirVerifierCore8.RandomnessLengthMismatch(
+                    OcticWhirFixedConfig.NUM_VARIABLES, randomnessCursor
+                );
+            }
+            bd.finalSumcheck = g - gasleft();
+
+            uint256 statementEq;
+            uint256 initialEq;
+            uint256 round0Eq;
+            uint256 round1Eq;
+            uint256 round2Eq;
+            g = gasleft();
+            (statementEq, initialEq, round0Eq, round1Eq, round2Eq) =
+                WhirVerifierCore8._evaluateFixedEqTermsBlobRaw(
+                    blob,
+                    statementPointOffset,
+                    initialOodPoint,
+                    round0OodPoint,
+                    round1OodPoint,
+                    round2OodPoint,
+                    allRandomness
+                );
+            bd.eqTerms = g - gasleft();
+
+            g = gasleft();
+            uint256 evaluationOfWeights = WhirVerifierCore8._combineInitialConstraintEvalsSingleRaw(
+                initialConstraintChallenge, statementEq, initialEq
+            );
+            bd.constraintInitial = g - gasleft();
+
+            g = gasleft();
+            evaluationOfWeights = KoalaBearExt8.add(
+                evaluationOfWeights,
+                WhirVerifierCore8._evaluateConstraintSelectRaw18WithPrecomputedEq(
+                    round0ConstraintChallenge, round0Eq, round0SelVars, allRandomness
+                )
+            );
+            bd.constraintRound0Select = g - gasleft();
+
+            g = gasleft();
+            evaluationOfWeights = KoalaBearExt8.add(
+                evaluationOfWeights,
+                WhirVerifierCore8._evaluateConstraintSelectRaw14WithPrecomputedEq(
+                    round1ConstraintChallenge, round1Eq, round1SelVars, allRandomness
+                )
+            );
+            bd.constraintRound1Select = g - gasleft();
+
+            g = gasleft();
+            evaluationOfWeights = KoalaBearExt8.add(
+                evaluationOfWeights,
+                WhirVerifierCore8._evaluateConstraintSelectRaw10WithPrecomputedEq(
+                    round2ConstraintChallenge, round2Eq, round2SelVars, allRandomness
+                )
+            );
+            bd.constraintRound2Select = g - gasleft();
+
+            uint256 finalValue;
+            g = gasleft();
+            finalValue = WhirVerifierCore8._evaluateFinalValueBlob(
+                blob,
+                finalPolyOffset,
+                OcticWhirFixedConfig.FINAL_POLY_LENGTH,
+                allRandomness,
+                finalSumcheckStart,
+                OcticWhirFixedConfig.FINAL_SUMCHECK_ROUNDS
+            );
+            bd.finalValue = g - gasleft();
+
+            g = gasleft();
+            uint256 expected = KoalaBearExt8.mul(evaluationOfWeights, finalValue);
+            if (claimedEval != expected) {
+                revert WhirVerifierCore8.FinalConstraintMismatch(expected, claimedEval);
+            }
+            bd.finalMulCheck = g - gasleft();
+        }
+
+        bd.total = startGas - gasleft();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1428,6 +1778,55 @@ contract WhirGasProfile8Test is Test {
         console.log("Sumcheck subtotal:             ", totalSumchecks);
         console.log("Constraint subtotal:           ", totalConstraints);
         console.log("Sum of phases:                 ", sumOfPhases);
+    }
+
+    function testProfileNativeBlobBreakdown8() external view {
+        (, WhirStructs.WhirProof memory proof) = _loadSuccessFixture();
+        bytes memory blob = vm.readFileBinary(
+            string.concat(TESTDATA, "octic_whir_k22_jb100_lir6_ff4_rsv1_success.blob")
+        );
+
+        WhirProfileHarness8.NativeBreakdown memory bd =
+            harness.profileNativeBlobBreakdown(proof.initialCommitment, blob);
+
+        uint256 subtotal = bd.header + bd.setupStatement + bd.initialParse + bd.initialClaim
+            + bd.allocations + bd.initialSumcheck + bd.round0Parse + bd.round0Stir
+            + bd.round0Sumcheck + bd.round1Parse + bd.round1Stir + bd.round1Sumcheck
+            + bd.round2Parse + bd.round2Stir + bd.round2Sumcheck + bd.observeFinalPoly
+            + bd.finalStir + bd.finalSumcheck + bd.eqTerms + bd.constraintInitial
+            + bd.constraintRound0Select + bd.constraintRound1Select + bd.constraintRound2Select
+            + bd.finalValue + bd.finalMulCheck;
+
+        console.log("=== Octic Native Blob Breakdown ===");
+        console.log("Header validation:             ", bd.header);
+        console.log("Setup + statement read:        ", bd.setupStatement);
+        console.log("Initial commitment parse:      ", bd.initialParse);
+        console.log("Initial claim combine:         ", bd.initialClaim);
+        console.log("Randomness allocation:         ", bd.allocations);
+        console.log("Initial sumcheck blob:         ", bd.initialSumcheck);
+        console.log("Round0 parse commitment:       ", bd.round0Parse);
+        console.log("Round0 fused STIR+constraint:  ", bd.round0Stir);
+        console.log("Round0 sumcheck blob:          ", bd.round0Sumcheck);
+        console.log("Round1 parse commitment:       ", bd.round1Parse);
+        console.log("Round1 fused STIR+constraint:  ", bd.round1Stir);
+        console.log("Round1 sumcheck blob:          ", bd.round1Sumcheck);
+        console.log("Round2 parse commitment:       ", bd.round2Parse);
+        console.log("Round2 fused STIR+constraint:  ", bd.round2Stir);
+        console.log("Round2 sumcheck blob:          ", bd.round2Sumcheck);
+        console.log("Observe final poly blob:       ", bd.observeFinalPoly);
+        console.log("Final STIR blob:               ", bd.finalStir);
+        console.log("Final sumcheck blob:           ", bd.finalSumcheck);
+        console.log("Fixed eq terms blob:           ", bd.eqTerms);
+        console.log("Constraint initial combine:    ", bd.constraintInitial);
+        console.log("Constraint round0 select:      ", bd.constraintRound0Select);
+        console.log("Constraint round1 select:      ", bd.constraintRound1Select);
+        console.log("Constraint round2 select:      ", bd.constraintRound2Select);
+        console.log("Final value blob eval:         ", bd.finalValue);
+        console.log("Final mul + check:             ", bd.finalMulCheck);
+        console.log("---");
+        console.log("Subtotal:                      ", subtotal);
+        console.log("Harness total:                 ", bd.total);
+        console.log("Unattributed harness overhead: ", bd.total - subtotal);
     }
 
     function testProfileStirBreakdown8() external view {

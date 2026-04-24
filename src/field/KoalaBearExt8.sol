@@ -504,52 +504,148 @@ library KoalaBearExt8 {
     }
 
     function _mulPacked(uint256 a, uint256 b) internal pure returns (uint256 out) {
-        uint256 a0 = a >> 224;
-        uint256 a1 = (a >> 192) & COEFF_MASK;
-        uint256 a2 = (a >> 160) & COEFF_MASK;
-        uint256 a3 = (a >> 128) & COEFF_MASK;
-        uint256 a4 = (a >> 96) & COEFF_MASK;
-        uint256 a5 = (a >> 64) & COEFF_MASK;
-        uint256 a6 = (a >> 32) & COEFF_MASK;
-        uint256 a7 = a & COEFF_MASK;
-        uint256 b0 = b >> 224;
-        uint256 b1 = (b >> 192) & COEFF_MASK;
-        uint256 b2 = (b >> 160) & COEFF_MASK;
-        uint256 b3 = (b >> 128) & COEFF_MASK;
-        uint256 b4 = (b >> 96) & COEFF_MASK;
-        uint256 b5 = (b >> 64) & COEFF_MASK;
-        uint256 b6 = (b >> 32) & COEFF_MASK;
-        uint256 b7 = b & COEFF_MASK;
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
 
-        unchecked {
-            uint256 c0 =
-                a0 * b0 + 3 * (a1 * b7 + a2 * b6 + a3 * b5 + a4 * b4 + a5 * b3 + a6 * b2 + a7 * b1);
-            uint256 c1 =
-                a0 * b1 + a1 * b0 + 3 * (a2 * b7 + a3 * b6 + a4 * b5 + a5 * b4 + a6 * b3 + a7 * b2);
-            uint256 c2 =
-                a0 * b2 + a1 * b1 + a2 * b0 + 3 * (a3 * b7 + a4 * b6 + a5 * b5 + a6 * b4 + a7 * b3);
-            uint256 c3 =
-                a0 * b3 + a1 * b2 + a2 * b1 + a3 * b0 + 3 * (a4 * b7 + a5 * b6 + a6 * b5 + a7 * b4);
-            uint256 c4 =
-                a0 * b4 + a1 * b3 + a2 * b2 + a3 * b1 + a4 * b0 + 3 * (a5 * b7 + a6 * b6 + a7 * b5);
-            uint256 c5 =
-                a0 * b5 + a1 * b4 + a2 * b3 + a3 * b2 + a4 * b1 + a5 * b0 + 3 * (a6 * b7 + a7 * b6);
-            uint256 c6 =
-                a0 * b6 + a1 * b5 + a2 * b4 + a3 * b3 + a4 * b2 + a5 * b1 + a6 * b0 + 3 * (a7 * b7);
-            uint256 c7 =
-                a0 * b7 + a1 * b6 + a2 * b5 + a3 * b4 + a4 * b3 + a5 * b2 + a6 * b1 + a7 * b0;
+            let a0 := shr(224, a)
+            let a1 := and(shr(192, a), mask)
+            let a2 := and(shr(160, a), mask)
+            let a3 := and(shr(128, a), mask)
+            let a4 := and(shr(96, a), mask)
+            let a5 := and(shr(64, a), mask)
+            let a6 := and(shr(32, a), mask)
+            let a7 := and(a, mask)
 
-            c0 %= KoalaBear.MODULUS;
-            c1 %= KoalaBear.MODULUS;
-            c2 %= KoalaBear.MODULUS;
-            c3 %= KoalaBear.MODULUS;
-            c4 %= KoalaBear.MODULUS;
-            c5 %= KoalaBear.MODULUS;
-            c6 %= KoalaBear.MODULUS;
-            c7 %= KoalaBear.MODULUS;
+            let b0 := shr(224, b)
+            let b1 := and(shr(192, b), mask)
+            let b2 := and(shr(160, b), mask)
+            let b3 := and(shr(128, b), mask)
+            let b4 := and(shr(96, b), mask)
+            let b5 := and(shr(64, b), mask)
+            let b6 := and(shr(32, b), mask)
+            let b7 := and(b, mask)
 
-            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128) | (c4 << 96) | (c5 << 64)
-                | (c6 << 32) | c7;
+            let c0 :=
+                mod(
+                    add(
+                        mul(a0, b0),
+                        mul(
+                            3,
+                            add(
+                                add(add(mul(a1, b7), mul(a2, b6)), add(mul(a3, b5), mul(a4, b4))),
+                                add(add(mul(a5, b3), mul(a6, b2)), mul(a7, b1))
+                            )
+                        )
+                    ),
+                    M
+                )
+            let c1 :=
+                mod(
+                    add(
+                        add(mul(a0, b1), mul(a1, b0)),
+                        mul(
+                            3,
+                            add(
+                                add(add(mul(a2, b7), mul(a3, b6)), add(mul(a4, b5), mul(a5, b4))),
+                                add(mul(a6, b3), mul(a7, b2))
+                            )
+                        )
+                    ),
+                    M
+                )
+            let c2 :=
+                mod(
+                    add(
+                        add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)),
+                        mul(
+                            3,
+                            add(
+                                add(mul(a3, b7), mul(a4, b6)),
+                                add(mul(a5, b5), add(mul(a6, b4), mul(a7, b3)))
+                            )
+                        )
+                    ),
+                    M
+                )
+            let c3 :=
+                mod(
+                    add(
+                        add(add(add(mul(a0, b3), mul(a1, b2)), mul(a2, b1)), mul(a3, b0)),
+                        mul(3, add(add(mul(a4, b7), mul(a5, b6)), add(mul(a6, b5), mul(a7, b4))))
+                    ),
+                    M
+                )
+            let c4 :=
+                mod(
+                    add(
+                        add(
+                            add(add(add(mul(a0, b4), mul(a1, b3)), mul(a2, b2)), mul(a3, b1)),
+                            mul(a4, b0)
+                        ),
+                        mul(3, add(add(mul(a5, b7), mul(a6, b6)), mul(a7, b5)))
+                    ),
+                    M
+                )
+            let c5 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(add(add(mul(a0, b5), mul(a1, b4)), mul(a2, b3)), mul(a3, b2)),
+                                mul(a4, b1)
+                            ),
+                            mul(a5, b0)
+                        ),
+                        mul(3, add(mul(a6, b7), mul(a7, b6)))
+                    ),
+                    M
+                )
+            let c6 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, b6), mul(a1, b5)), mul(a2, b4)),
+                                        mul(a3, b3)
+                                    ),
+                                    mul(a4, b2)
+                                ),
+                                mul(a5, b1)
+                            ),
+                            mul(a6, b0)
+                        ),
+                        mul(3, mul(a7, b7))
+                    ),
+                    M
+                )
+            let c7 :=
+                mod(
+                    add(
+                        add(
+                            add(
+                                add(
+                                    add(
+                                        add(add(mul(a0, b7), mul(a1, b6)), mul(a2, b5)),
+                                        mul(a3, b4)
+                                    ),
+                                    mul(a4, b3)
+                                ),
+                                mul(a5, b2)
+                            ),
+                            mul(a6, b1)
+                        ),
+                        mul(a7, b0)
+                    ),
+                    M
+                )
+
+            out := or(
+                or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
+                or(or(shl(96, c4), shl(64, c5)), or(shl(32, c6), c7))
+            )
         }
     }
 

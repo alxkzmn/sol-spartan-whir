@@ -24,6 +24,21 @@ Foundry flamegraphs can crash on deep call trees because of trace-decoding issue
 
 For total transaction gas measurement, use the tx-gas benchmarking skill.
 
+## Tx Benchmarking Caveat
+
+Codex tool-side `forge script` failures are not enough evidence that Foundry is broken on the machine. If a tx benchmark fails from the agent in a way that looks environment-specific or tool-specific, retry the exact `anvil` + `forge script` flow in the direct local shell before claiming the benchmark path is broken.
+
+For the native verifier tx benchmark:
+
+- start Anvil with `--code-size-limit 50000`
+- keep that Anvil process running until the benchmark and receipt parsing are complete
+- remember that `--code-size-limit 50000` must be present on Anvil, not only on `forge script`
+- inspect `broadcast/*/31337/run-latest.json` before concluding that the run failed in a meaningful verifier-specific way
+
+If the direct shell run succeeds and the agent-run does not, treat the direct shell result as the source of truth and describe the agent failure as a tool-context issue instead of a machine-wide Foundry issue.
+
+This caveat is temporary. If agent-side `forge script` runs stop showing tool-context-specific failures and behave the same as direct shell runs, remove or simplify this note.
+
 ## Optimization Validation Workflow
 
 1. Run `forge test` — the full Solidity suite must pass

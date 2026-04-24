@@ -1956,6 +1956,39 @@ library WhirVerifierUtils8 {
                 let M := 0x7f000001
                 let m := 0xffffffff
 
+                function mul2(a0_, a1_, b0_, b1_) -> p0_, p1_, p2_ {
+                    p0_ := mul(a0_, b0_)
+                    p1_ := add(mul(a0_, b1_), mul(a1_, b0_))
+                    p2_ := mul(a1_, b1_)
+                }
+
+                function mul4(a0_, a1_, a2_, a3_, b0_, b1_, b2_, b3_) ->
+                    p0_,
+                    p1_,
+                    p2_,
+                    p3_,
+                    p4_,
+                    p5_,
+                    p6_
+                {
+                    let l0_, l1_, l2_ := mul2(a0_, a1_, b0_, b1_)
+                    let h0_, h1_, h2_ := mul2(a2_, a3_, b2_, b3_)
+                    let m0_, m1_, m2_ :=
+                        mul2(add(a0_, a2_), add(a1_, a3_), add(b0_, b2_), add(b1_, b3_))
+
+                    let x0_ := sub(sub(m0_, l0_), h0_)
+                    let x1_ := sub(sub(m1_, l1_), h1_)
+                    let x2_ := sub(sub(m2_, l2_), h2_)
+
+                    p0_ := l0_
+                    p1_ := l1_
+                    p2_ := add(l2_, x0_)
+                    p3_ := x1_
+                    p4_ := add(x2_, h0_)
+                    p5_ := h1_
+                    p6_ := h2_
+                }
+
                 let a00 := shr(224, a0)
                 let a01 := and(shr(192, a0), m)
                 let a02 := and(shr(160, a0), m)
@@ -2010,133 +2043,78 @@ library WhirVerifierUtils8 {
                 let d6 := sub(add(b06, M), a06)
                 let d7 := sub(add(b07, M), a07)
 
-                let s0 :=
-                    add(
-                        add(add(mul(rr1, d7), mul(rr2, d6)), add(mul(rr3, d5), mul(rr4, d4))),
-                        add(add(mul(rr5, d3), mul(rr6, d2)), mul(rr7, d1))
-                    )
-                let s1 :=
-                    add(
-                        add(add(mul(rr2, d7), mul(rr3, d6)), add(mul(rr4, d5), mul(rr5, d4))),
-                        add(mul(rr6, d3), mul(rr7, d2))
-                    )
-                let s2 :=
-                    add(
-                        add(add(mul(rr3, d7), mul(rr4, d6)), add(mul(rr5, d5), mul(rr6, d4))),
-                        mul(rr7, d3)
-                    )
-                let s3 := add(add(add(mul(rr4, d7), mul(rr5, d6)), mul(rr6, d5)), mul(rr7, d4))
-                let s4 := add(add(mul(rr5, d7), mul(rr6, d6)), mul(rr7, d5))
-                let s5 := add(mul(rr6, d7), mul(rr7, d6))
-                let s6 := mul(rr7, d7)
+                let scratch := add(mload(0x40), 0x220)
 
-                let c0 := mod(add(a00, add(mul(rr0, d0), mul(3, s0))), M)
-                let c1 := mod(add(a01, add(add(mul(rr1, d0), mul(rr0, d1)), mul(3, s1))), M)
-                let c2 :=
-                    mod(
-                        add(
-                            a02,
-                            add(add(add(mul(rr2, d0), mul(rr1, d1)), mul(rr0, d2)), mul(3, s2))
-                        ),
-                        M
+                {
+                    let p00, p01, p02, p03, p04, p05, p06 :=
+                        mul4(d0, d1, d2, d3, rr0, rr1, rr2, rr3)
+                    mstore(scratch, p00)
+                    mstore(add(scratch, 0x20), p01)
+                    mstore(add(scratch, 0x40), p02)
+                    mstore(add(scratch, 0x60), p03)
+                    mstore(add(scratch, 0x80), p04)
+                    mstore(add(scratch, 0xa0), p05)
+                    mstore(add(scratch, 0xc0), p06)
+                }
+
+                {
+                    let p20, p21, p22, p23, p24, p25, p26 :=
+                        mul4(d4, d5, d6, d7, rr4, rr5, rr6, rr7)
+                    let hiBase := add(scratch, 0xe0)
+                    mstore(hiBase, p20)
+                    mstore(add(hiBase, 0x20), p21)
+                    mstore(add(hiBase, 0x40), p22)
+                    mstore(add(hiBase, 0x60), p23)
+                    mstore(add(hiBase, 0x80), p24)
+                    mstore(add(hiBase, 0xa0), p25)
+                    mstore(add(hiBase, 0xc0), p26)
+                }
+
+                let q0, q1, q2, q3, q4, q5, q6 :=
+                    mul4(
+                        add(d0, d4),
+                        add(d1, d5),
+                        add(d2, d6),
+                        add(d3, d7),
+                        add(rr0, rr4),
+                        add(rr1, rr5),
+                        add(rr2, rr6),
+                        add(rr3, rr7)
                     )
-                let c3 :=
-                    mod(
-                        add(
-                            a03,
-                            add(
-                                add(
-                                    add(add(mul(rr3, d0), mul(rr2, d1)), mul(rr1, d2)),
-                                    mul(rr0, d3)
-                                ),
-                                mul(3, s3)
-                            )
-                        ),
-                        M
-                    )
-                let c4 :=
-                    mod(
-                        add(
-                            a04,
-                            add(
-                                add(
-                                    add(
-                                        add(add(mul(rr4, d0), mul(rr3, d1)), mul(rr2, d2)),
-                                        mul(rr1, d3)
-                                    ),
-                                    mul(rr0, d4)
-                                ),
-                                mul(3, s4)
-                            )
-                        ),
-                        M
-                    )
-                let c5 :=
-                    mod(
-                        add(
-                            a05,
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(rr5, d0), mul(rr4, d1)), mul(rr3, d2)),
-                                            mul(rr2, d3)
-                                        ),
-                                        mul(rr1, d4)
-                                    ),
-                                    mul(rr0, d5)
-                                ),
-                                mul(3, s5)
-                            )
-                        ),
-                        M
-                    )
-                let c6 :=
-                    mod(
-                        add(
-                            a06,
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(
-                                                add(add(mul(rr6, d0), mul(rr5, d1)), mul(rr4, d2)),
-                                                mul(rr3, d3)
-                                            ),
-                                            mul(rr2, d4)
-                                        ),
-                                        mul(rr1, d5)
-                                    ),
-                                    mul(rr0, d6)
-                                ),
-                                mul(3, s6)
-                            )
-                        ),
-                        M
-                    )
-                let c7 :=
-                    mod(
-                        add(
-                            a07,
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(
-                                                add(add(mul(rr7, d0), mul(rr6, d1)), mul(rr5, d2)),
-                                                mul(rr4, d3)
-                                            ),
-                                            mul(rr3, d4)
-                                        ),
-                                        mul(rr2, d5)
-                                    ),
-                                    mul(rr1, d6)
-                                ),
-                                mul(rr0, d7)
-                            )
-                        ),
-                        M
-                    )
+
+                let hiBase := add(scratch, 0xe0)
+
+                let l0 := mload(scratch)
+                let h0 := mload(hiBase)
+                let l4 := mload(add(scratch, 0x80))
+                let h4 := mload(add(hiBase, 0x80))
+                let x0 := sub(sub(q0, l0), h0)
+                let x4 := sub(sub(q4, l4), h4)
+                let c0 := mod(add(a00, add(l0, mul(3, add(h0, x4)))), M)
+                let c4 := mod(add(a04, add(add(l4, mul(3, h4)), x0)), M)
+
+                let l1 := mload(add(scratch, 0x20))
+                let h1 := mload(add(hiBase, 0x20))
+                let l5 := mload(add(scratch, 0xa0))
+                let h5 := mload(add(hiBase, 0xa0))
+                let x1 := sub(sub(q1, l1), h1)
+                let x5 := sub(sub(q5, l5), h5)
+                let c1 := mod(add(a01, add(l1, mul(3, add(h1, x5)))), M)
+                let c5 := mod(add(a05, add(add(l5, mul(3, h5)), x1)), M)
+
+                let l2 := mload(add(scratch, 0x40))
+                let h2 := mload(add(hiBase, 0x40))
+                let l6 := mload(add(scratch, 0xc0))
+                let h6 := mload(add(hiBase, 0xc0))
+                let x2 := sub(sub(q2, l2), h2)
+                let x6 := sub(sub(q6, l6), h6)
+                let c2 := mod(add(a02, add(l2, mul(3, add(h2, x6)))), M)
+                let c6 := mod(add(a06, add(add(l6, mul(3, h6)), x2)), M)
+
+                let l3 := mload(add(scratch, 0x60))
+                let h3 := mload(add(hiBase, 0x60))
+                let c3 := mod(add(a03, add(l3, mul(3, h3))), M)
+                let c7 := mod(add(a07, sub(sub(q3, l3), h3)), M)
 
                 out := or(
                     or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
@@ -2433,12 +2411,12 @@ library WhirVerifierUtils8 {
             let d := sub(add(a1, M), a0)
             out := or(
                 or(
-                    or(shl(224, mod(add(a0, mul(r0, d)), M)), shl(192, mod(mul(r1, d), M))),
-                    or(shl(160, mod(mul(r2, d), M)), shl(128, mod(mul(r3, d), M)))
+                    or(shl(224, mod(add(a0, mul(r0, d)), M)), shl(192, mulmod(r1, d, M))),
+                    or(shl(160, mulmod(r2, d, M)), shl(128, mulmod(r3, d, M)))
                 ),
                 or(
-                    or(shl(96, mod(mul(r4, d), M)), shl(64, mod(mul(r5, d), M))),
-                    or(shl(32, mod(mul(r6, d), M)), mod(mul(r7, d), M))
+                    or(shl(96, mulmod(r4, d, M)), shl(64, mulmod(r5, d, M))),
+                    or(shl(32, mulmod(r6, d, M)), mulmod(r7, d, M))
                 )
             )
         }
@@ -2755,64 +2733,37 @@ library WhirVerifierUtils8 {
 
             let hiBase := add(scratch, 0xe0)
 
-            let p10 := sub(sub(q0, mload(scratch)), mload(hiBase))
-            let p11 := sub(sub(q1, mload(add(scratch, 0x20))), mload(add(hiBase, 0x20)))
-            let p12 := sub(sub(q2, mload(add(scratch, 0x40))), mload(add(hiBase, 0x40)))
-            let p13 := sub(sub(q3, mload(add(scratch, 0x60))), mload(add(hiBase, 0x60)))
-            let p14 := sub(sub(q4, mload(add(scratch, 0x80))), mload(add(hiBase, 0x80)))
-            let p15 := sub(sub(q5, mload(add(scratch, 0xa0))), mload(add(hiBase, 0xa0)))
-            let p16 := sub(sub(q6, mload(add(scratch, 0xc0))), mload(add(hiBase, 0xc0)))
+            let l0 := mload(scratch)
+            let h0 := mload(hiBase)
+            let l4 := mload(add(scratch, 0x80))
+            let h4 := mload(add(hiBase, 0x80))
+            let x0 := sub(sub(q0, l0), h0)
+            let x4 := sub(sub(q4, l4), h4)
+            let c0 := mod(add(a00, add(l0, mul(3, add(h0, x4)))), M)
+            let c4 := mod(add(a04, add(add(l4, mul(3, h4)), x0)), M)
 
-            let c0 := mod(add(a00, add(add(mload(scratch), mul(3, mload(hiBase))), mul(3, p14))), M)
-            let c1 :=
-                mod(
-                    add(
-                        a01,
-                        add(
-                            add(mload(add(scratch, 0x20)), mul(3, mload(add(hiBase, 0x20)))),
-                            mul(3, p15)
-                        )
-                    ),
-                    M
-                )
-            let c2 :=
-                mod(
-                    add(
-                        a02,
-                        add(
-                            add(mload(add(scratch, 0x40)), mul(3, mload(add(hiBase, 0x40)))),
-                            mul(3, p16)
-                        )
-                    ),
-                    M
-                )
-            let c3 :=
-                mod(add(a03, add(mload(add(scratch, 0x60)), mul(3, mload(add(hiBase, 0x60))))), M)
-            let c4 :=
-                mod(
-                    add(
-                        a04,
-                        add(add(mload(add(scratch, 0x80)), mul(3, mload(add(hiBase, 0x80)))), p10)
-                    ),
-                    M
-                )
-            let c5 :=
-                mod(
-                    add(
-                        a05,
-                        add(add(mload(add(scratch, 0xa0)), mul(3, mload(add(hiBase, 0xa0)))), p11)
-                    ),
-                    M
-                )
-            let c6 :=
-                mod(
-                    add(
-                        a06,
-                        add(add(mload(add(scratch, 0xc0)), mul(3, mload(add(hiBase, 0xc0)))), p12)
-                    ),
-                    M
-                )
-            let c7 := mod(add(a07, p13), M)
+            let l1 := mload(add(scratch, 0x20))
+            let h1 := mload(add(hiBase, 0x20))
+            let l5 := mload(add(scratch, 0xa0))
+            let h5 := mload(add(hiBase, 0xa0))
+            let x1 := sub(sub(q1, l1), h1)
+            let x5 := sub(sub(q5, l5), h5)
+            let c1 := mod(add(a01, add(l1, mul(3, add(h1, x5)))), M)
+            let c5 := mod(add(a05, add(add(l5, mul(3, h5)), x1)), M)
+
+            let l2 := mload(add(scratch, 0x40))
+            let h2 := mload(add(hiBase, 0x40))
+            let l6 := mload(add(scratch, 0xc0))
+            let h6 := mload(add(hiBase, 0xc0))
+            let x2 := sub(sub(q2, l2), h2)
+            let x6 := sub(sub(q6, l6), h6)
+            let c2 := mod(add(a02, add(l2, mul(3, add(h2, x6)))), M)
+            let c6 := mod(add(a06, add(add(l6, mul(3, h6)), x2)), M)
+
+            let l3 := mload(add(scratch, 0x60))
+            let h3 := mload(add(hiBase, 0x60))
+            let c3 := mod(add(a03, add(l3, mul(3, h3))), M)
+            let c7 := mod(add(a07, sub(sub(q3, l3), h3)), M)
 
             out := or(
                 or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
