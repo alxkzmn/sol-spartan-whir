@@ -27,7 +27,7 @@ library KoalaBear {
     }
 
     function pow(uint256 a, uint256 exponent) internal pure returns (uint256 result) {
-        assembly {
+        assembly ("memory-safe") {
             result := 1
             let m := 0x7f000001
             for { } gt(exponent, 0) {

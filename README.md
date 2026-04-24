@@ -51,10 +51,10 @@ It verifies directly from the standalone blob format used by the quartic fixture
 | Main verifier call        | `EOA -> WhirBlobVerifierNative4.verify(...)` | `EOA -> WhirContract.callVerify(...)` |
 | Field                     |                             KoalaBear + ext4 |                                 BN254 |
 | Security target           |                                       80-bit |                                80-bit |
-| Total verification tx gas |                                    `978,550` |                           `1,135,052` |
+| Total verification tx gas |                                    `975,202` |                           `1,135,052` |
 | Intrinsic gas             |                                     `21,000` |                              `21,000` |
 | Calldata gas              |                                    `159,640` |                             `414,876` |
-| Execution remainder       |                                    `797,910` |                             `699,176` |
+| Execution remainder       |                                    `794,562` |                             `699,176` |
 | Calldata bytes            |                                     `10,276` |                              `28,740` |
 | Zero bytes                |                                        `398` |                               `3,747` |
 | Non-zero bytes            |                                      `9,878` |                              `24,993` |
@@ -63,8 +63,8 @@ Notes:
 
 - `sol-spartan-whir` tx numbers are measured from `WhirBlobVerifierNative4` in this repository.
 - `sol-whir` tx numbers come from the broadcast artifact committed at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json)
-- Foundry execution gas for `WhirBlobVerifierNative4`: `903,254`
-- `WhirBlobVerifierNative4` runtime size: `21,889` bytes
+- Foundry execution gas for `WhirBlobVerifierNative4`: `899,906`
+- `WhirBlobVerifierNative4` runtime size: `21,877` bytes
 - success blob size: `10,152` bytes
 
 #### Arithmetic and proof-structure differences
@@ -114,12 +114,16 @@ This repository also includes a separate octic standalone-WHIR configuration for
 
 Metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
 
-| Metric                                                                   |          Value |
-| ------------------------------------------------------------------------ | -------------: |
-| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()` |    `7,865,125` |
-| `verify(bytes32,bytes)` calldata bytes                                   |       `47,780` |
-| `verify(bytes32,bytes)` calldata gas                                     |      `753,800` |
-| success blob size                                                        | `47,666` bytes |
+| Metric                                                                       |          Value |
+| ---------------------------------------------------------------------------- | -------------: |
+| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `7,861,397` |
+| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `7,861,485` |
+| `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,888,020` |
+| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `8,143,089` |
+| execution remainder                                                          |    `7,368,289` |
+| `verify(bytes32,bytes)` calldata bytes                                       |       `47,780` |
+| `verify(bytes32,bytes)` calldata gas                                         |      `753,800` |
+| success blob size                                                            | `47,666` bytes |
 
 The calldata number above is the exact ABI-encoded call payload for `verify(bytes32,bytes)`: function selector, expected commitment, dynamic-bytes head, blob payload, and trailing padding.
 
@@ -155,7 +159,7 @@ The quartic contract and the octic JohnsonBound configuration use different proo
 - Round-constraint accumulation uses fixed `18/14/10` select kernels and a fused ext8 equality-term path instead of the generic ext8 multiplication helpers in the shared verifier code.
 - Final STIR uses two fixed five-query checks for the `64`-coefficient final polynomial.
 - Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
-- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The row for this configuration is fitted to the measured `7,865,125` execution gas of the native verifier.
+- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The measured native verifier execution gas is `7,861,397`.
 
 ### Measurement methodology
 
@@ -183,6 +187,8 @@ For `sol-spartan-whir`, the quartic tx numbers in the table above were measured 
 
 The documented quartic production calldata footprint comes from `script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol`.
 
+The documented octic production calldata footprint comes from `script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol`.
+
 For `sol-whir`, the tx numbers come from the broadcast artifact committed at [../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json](./../sol-whir/broadcast/Verify.s.sol/31337/run-latest.json). The `sol-whir` benchmark harness does not compile under the toolchain used in this workspace (`stack too deep` / Yul stack-too-deep), so that committed measurement remains the source of truth.
 
 `sol-spartan-whir` Foundry build settings for the quartic contract:
@@ -191,7 +197,7 @@ For `sol-whir`, the tx numbers come from the broadcast artifact committed at [..
 via_ir = true
 optimizer = true
 optimizer_runs = 833
-WhirVerifier4 deployed bytecode = 24,412 bytes
+WhirVerifier4 deployed bytecode = 24,008 bytes
 ```
 
 ## Dependencies

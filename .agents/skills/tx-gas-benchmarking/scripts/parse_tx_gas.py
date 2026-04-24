@@ -83,6 +83,10 @@ def classify_mode(raw: str) -> str:
     raise ValueError(f"Unknown mode or script path: {raw}. Use one of: {known}")
 
 
+def explicit_broadcast_json(raw: str) -> Path:
+    return BROADCAST_DIR / Path(raw).name / "31337" / "run-latest.json"
+
+
 def find_broadcast_json(mode: str) -> Path | None:
     family = MODE_SPECS[mode]["script_family"]
     matches = sorted(
@@ -94,12 +98,16 @@ def find_broadcast_json(mode: str) -> Path | None:
         return None
 
     if len(matches) > 1:
-        print(f"Multiple broadcast artifacts matched {family}; using newest: {matches[0]}")
+        print(
+            f"Multiple broadcast artifacts matched {family}; using newest: {matches[0]}"
+        )
 
     return matches[0]
 
 
-def _parse_broadcast(json_path: Path, label: str, verify_receipt_idx: int, min_receipts: int):
+def _parse_broadcast(
+    json_path: Path, label: str, verify_receipt_idx: int, min_receipts: int
+):
     if not json_path.exists():
         print(f"Not found: {json_path}")
         print("Run the corresponding benchmark script against Anvil first.")
@@ -135,18 +143,21 @@ def _parse_broadcast(json_path: Path, label: str, verify_receipt_idx: int, min_r
 def parse_target(raw: str):
     mode = classify_mode(raw)
     spec = MODE_SPECS[mode]
-    json_path = find_broadcast_json(mode)
+    is_explicit = raw not in MODE_SPECS
+    json_path = (
+        explicit_broadcast_json(raw) if is_explicit else find_broadcast_json(mode)
+    )
     if json_path is None:
         family = spec["script_family"]
-        print(
-            f"Not found: {BROADCAST_DIR}/{family}*.s.sol/31337/run-latest.json"
-        )
+        print(f"Not found: {BROADCAST_DIR}/{family}*.s.sol/31337/run-latest.json")
         print("Run the corresponding benchmark script against Anvil first.")
         return None
 
+    label = f"{spec['label']} [{Path(raw).name}]" if is_explicit else spec["label"]
+
     return _parse_broadcast(
         json_path,
-        spec["label"],
+        label,
         verify_receipt_idx=spec["verify_receipt_idx"],
         min_receipts=spec["min_receipts"],
     )

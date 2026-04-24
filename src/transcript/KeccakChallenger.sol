@@ -594,18 +594,69 @@ library KeccakChallenger {
         bytes calldata data,
         uint256 offset
     ) internal pure returns (uint256 packed) {
-        unchecked {
-            for (uint256 i = 0; i < 8; ++i) {
-                uint256 word;
-                assembly ("memory-safe") {
-                    word := calldataload(add(add(data.offset, offset), shl(2, i)))
-                }
-                uint256 coeff = _bswap32(uint32(word >> 224));
-                require(coeff < KOALABEAR_MODULUS, "PACKED_EXT8_RANGE");
-                packed |= coeff << (224 - (i << 5));
+        uint256 oldLen = self.inputLen;
+        uint256 newLen = oldLen + 32;
+        _ensureCapacity(self, newLen);
+        bytes memory buffer = self.inputBuffer;
+        assembly ("memory-safe") {
+            function bswap32(x) -> y {
+                y := or(
+                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
+                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
+                )
             }
+
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            let raw := calldataload(add(data.offset, offset))
+            let modulus := 0x7f000001
+            let x0 := bswap32(shr(224, raw))
+            if iszero(lt(x0, modulus)) {
+                revertPacked(raw)
+            }
+            let x1 := bswap32(and(shr(192, raw), 0xffffffff))
+            if iszero(lt(x1, modulus)) {
+                revertPacked(raw)
+            }
+            let x2 := bswap32(and(shr(160, raw), 0xffffffff))
+            if iszero(lt(x2, modulus)) {
+                revertPacked(raw)
+            }
+            let x3 := bswap32(and(shr(128, raw), 0xffffffff))
+            if iszero(lt(x3, modulus)) {
+                revertPacked(raw)
+            }
+            let x4 := bswap32(and(shr(96, raw), 0xffffffff))
+            if iszero(lt(x4, modulus)) {
+                revertPacked(raw)
+            }
+            let x5 := bswap32(and(shr(64, raw), 0xffffffff))
+            if iszero(lt(x5, modulus)) {
+                revertPacked(raw)
+            }
+            let x6 := bswap32(and(shr(32, raw), 0xffffffff))
+            if iszero(lt(x6, modulus)) {
+                revertPacked(raw)
+            }
+            let x7 := bswap32(and(raw, 0xffffffff))
+            if iszero(lt(x7, modulus)) {
+                revertPacked(raw)
+            }
+
+            packed := or(
+                or(or(shl(224, x0), shl(192, x1)), or(shl(160, x2), shl(128, x3))),
+                or(or(shl(96, x4), shl(64, x5)), or(shl(32, x6), x7))
+            )
+
+            mstore(add(add(buffer, 0x20), oldLen), raw)
         }
-        observeBytesCalldata(self, data, offset, 32);
+
+        self.inputLen = newLen;
+        self.outputIndex = 0;
     }
 
     function observeReadValidatedPackedExt8LePair(
@@ -875,12 +926,15 @@ library KeccakChallenger {
             newCapacity <<= 1;
         }
 
-        bytes memory newBuffer = new bytes(newCapacity);
+        bytes memory newBuffer;
         bytes memory oldBuffer = self.inputBuffer;
         uint256 usedLen = self.inputLen;
 
-        if (usedLen != 0) {
-            assembly ("memory-safe") {
+        assembly ("memory-safe") {
+            newBuffer := mload(0x40)
+            mstore(newBuffer, newCapacity)
+            mstore(0x40, add(newBuffer, and(add(add(newCapacity, 0x20), 0x1f), not(0x1f))))
+            if usedLen {
                 mcopy(add(newBuffer, 0x20), add(oldBuffer, 0x20), usedLen)
             }
         }
@@ -894,7 +948,7 @@ library KeccakChallenger {
     }
 
     function _bswap64(uint64 x) private pure returns (uint256 r) {
-        assembly {
+        assembly ("memory-safe") {
             // Swap adjacent bytes
             r := or(shr(8, and(x, 0xFF00FF00FF00FF00)), shl(8, and(x, 0x00FF00FF00FF00FF)))
             // Swap adjacent 16-bit pairs

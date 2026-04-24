@@ -1072,7 +1072,7 @@ library WhirVerifierUtils4 {
         pure
         returns (uint256 out)
     {
-        assembly {
+        assembly ("memory-safe") {
             let M := 0x7f000001
             let d := sub(add(a1, M), a0)
             out := or(
@@ -1083,7 +1083,7 @@ library WhirVerifierUtils4 {
     }
 
     function _foldOnce(uint256 a0, uint256 a1, uint256 r) private pure returns (uint256 out) {
-        assembly {
+        assembly ("memory-safe") {
             let M := 0x7f000001
             let m := 0xffffffff
 
@@ -1162,7 +1162,7 @@ library WhirVerifierUtils4 {
         uint256 r2,
         uint256 r3
     ) private pure returns (uint256 out) {
-        assembly {
+        assembly ("memory-safe") {
             let M := 0x7f000001
             let m := 0xffffffff
 

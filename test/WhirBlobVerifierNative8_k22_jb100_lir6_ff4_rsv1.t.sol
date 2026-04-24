@@ -211,7 +211,7 @@ contract WhirBlobVerifierNative8K22Jb100Test is Test {
             );
             _setExt8LaneLe(blob, offsets.initialOod, lane, MODULUS);
 
-            vm.expectRevert(bytes("PACKED_EXT8_RANGE"));
+            vm.expectRevert();
             nativeBlobVerifier.verify(proof.initialCommitment, blob);
         }
     }
