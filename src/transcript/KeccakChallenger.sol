@@ -168,6 +168,77 @@ library KeccakChallenger {
         self.outputIndex = 0;
     }
 
+    function observeValidatedPackedExt5Slice(State memory self, uint256[] calldata values)
+        internal
+        pure
+    {
+        uint256 oldLen = self.inputLen;
+        uint256 appendLen = values.length * 20;
+        uint256 newLen = oldLen + appendLen;
+        _ensureCapacity(self, newLen + 12);
+        bytes memory buffer = self.inputBuffer;
+        assembly ("memory-safe") {
+            function bswap32(x) -> y {
+                y := or(
+                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
+                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
+                )
+            }
+
+            function revertPacked(x) {
+                mstore(0x00, shl(224, 0xd53cfe5c))
+                mstore(0x04, x)
+                revert(0x00, 0x24)
+            }
+
+            function validateAndEncode(x, modulus, mask) -> encoded {
+                if and(x, sub(shl(96, 1), 1)) {
+                    revertPacked(x)
+                }
+
+                let x0 := shr(224, x)
+                let x1 := and(shr(192, x), mask)
+                let x2 := and(shr(160, x), mask)
+                let x3 := and(shr(128, x), mask)
+                let x4 := and(shr(96, x), mask)
+
+                if or(
+                    or(
+                        or(iszero(lt(x0, modulus)), iszero(lt(x1, modulus))),
+                        iszero(lt(x2, modulus))
+                    ),
+                    or(iszero(lt(x3, modulus)), iszero(lt(x4, modulus)))
+                ) {
+                    revertPacked(x)
+                }
+
+                encoded := or(
+                    or(
+                        or(shl(224, bswap32(x0)), shl(192, bswap32(x1))),
+                        or(shl(160, bswap32(x2)), shl(128, bswap32(x3)))
+                    ),
+                    shl(96, bswap32(x4))
+                )
+            }
+
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            let src := values.offset
+            let end := add(src, shl(5, values.length))
+            let dst := add(add(buffer, 0x20), oldLen)
+
+            for { } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 20)
+            } {
+                mstore(dst, validateAndEncode(calldataload(src), modulus, mask))
+            }
+        }
+
+        self.inputLen = newLen;
+        self.outputIndex = 0;
+    }
+
     function observeValidatedPackedExt4Slice(State memory self, uint256[] calldata values)
         internal
         pure

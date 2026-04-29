@@ -26,7 +26,7 @@ forge test
 cargo run --release --bin export-fixtures -p spartan-whir-export -- testdata
 ```
 
-The schedule sweep model lives in [whir_param_sweep.py](./whir_param_sweep.py).
+Use [whir_param_sweep.py](./whir_param_sweep.py) for the historical quartic schedule model.
 
 Documented precision for that model:
 
@@ -35,6 +35,72 @@ Documented precision for that model:
 - `Constant(4)` with starting log inverse rate `6` and RS domain initial reduction factor `1`: model `1,064,610` vs measured `996,074` (`+6.9%`)
 - measured calibration band: within `±6.9%` relative error on those two anchor schedules
 - this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
+
+### Quintic Schedule Search
+
+#### Why
+
+The quintic verifier uses `QuinticTrinomialExtensionField<KoalaBear>` with `X^5 + X^2 - 1`. Before writing schedule-specific Solidity for it, we score candidate WHIR schedules by verifier work and prover time. This keeps schedule selection driven by measurements rather than by a full verifier export for every parameter set.
+
+The search targets `num_variables = 22`, `security_bits_achieved >= 100`, `merkle_security_bits_achieved >= 80`, and `max_derived_pow_bits <= 30`. The Rust dump derives with `security_level_bits = 101` as a guard and filters rows against the actual 100-bit target through each row's `target_evaluation` block.
+
+#### How
+
+The scorer reads three inputs:
+
+- Rust schedule data from `whir-p3`: rounds, security, query counts, Merkle geometry, and derived PoW schedules.
+- Solidity `BENCH:{...}` gas microbenchmark lines under solc `0.8.28`, `via_ir = true`, optimizer runs `833`.
+- Rust prover measurements: PoW calibrated through `TraceChallenger::grind` and full 22-variable commit+prove timings for selected candidates.
+
+`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier score is ordinal and unitless: lower is better. The ordinal check uses existing standard-EVM native blob verifiers:
+
+- `WhirBlobVerifierNative4_lir6_ff5_rsv1` on the checked-in `lir6_ff5_rsv1` fixture.
+- `WhirBlobVerifierNative4_lir11_ff5_rsv3` on the checked-in `lir11_ff5_rsv3` fixture.
+- `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1` on the checked-in `k22_jb100_lir6_ff4_rsv1` fixture.
+
+The scorer also reports per-bucket score/measured ratios in `schedule_scores.json`. Those ratios explain a candidate's rank: a bucket whose ratio is far from 1.0 is the one driving its score. `quartic_lir11_ff5_rsv3` contributes total transaction gas only; its phase breakdown does not compile cleanly under `via_ir`, so it is excluded from per-bucket validation. The `lir6` transcript bucket currently includes setup and round commitment parsing, while the scorer charges transcript-observe work. The folding bucket is intentionally over-counted as a unit-cost sum; a real end-to-end per-round benchmark would replace it, but that benchmark isn't built yet.
+
+`ConstantFromSecondRound` is included because it changes the round shape and can reduce verifier work without changing the target security.
+
+Prover work is ranked with measured full 22-variable commit+prove timings when available. `estimated_prover_time_score` fills in unmeasured candidates on the plots. Auxiliary `pow24`, `pow25`, and `pow26` schedule dumps attach previously-collected PoW timings to the prover estimator so it can score candidates whose PoW bits fall outside the current calibration sweep.
+
+The default SVGs are:
+
+- `pareto_verifier_vs_prover.svg`: ordinal verifier score against measured-or-estimated prover seconds.
+- `pareto_verifier_vs_measured_prover.svg`: ordinal verifier score against measured prover seconds.
+
+The SVGs use distinct markers for `ConstantFromSecondRound` candidates because they use a different WHIR schedule shape.
+
+Real prover timings are release builds with `RUSTFLAGS="-C target-cpu=native"`. The Rust prover benchmark reports `measurement_kind = "actual_whir_commit_prove"`, and timing reports record `target_cpu_native = true`.
+
+#### Commands
+
+```sh
+cargo run --manifest-path ../spartan-whir-export/Cargo.toml --bin dump_quintic_schedule_microbench -- testdata/quintic_schedule_microbench_dump.json
+cargo run --manifest-path ../spartan-whir-export/Cargo.toml --bin dump_calibration_references > testdata/calibration_reference_schedules.json
+forge test --match-path test/QuinticMicroBenchmarks.t.sol -vv > <forge-microbench-log>
+RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin bench_quintic_pow_calibration -- --min-bits 20 --max-bits 22 --samples-per-bit 5 testdata/quintic_pow_calibration.json
+RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin bench_quintic_prover_micro -- --max-candidates <N> --repetitions 3 testdata/quintic_prover_microbench.json
+RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin profile_quintic_prover -- <candidate-label>
+RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin profile_quintic_pow -- <candidate-label> --max-bits <N>
+forge test --match-path test/GasCalibration_native_compare.t.sol -vv > <forge-calibration-log>
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol
+python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --out testdata/quintic_calibration.json
+python3 quintic_schedule_scorer.py \
+  --schedule testdata/quintic_schedule_microbench_dump.json \
+  --prover-calibration-schedule testdata/quintic_schedule_microbench_pow24.json \
+  --prover-calibration-schedule testdata/quintic_schedule_microbench_pow25.json \
+  --prover-calibration-schedule testdata/quintic_schedule_microbench_pow26.json \
+  --gas <forge-microbench-log> \
+  --rust-timings testdata/quintic_prover_microbench.json \
+  --pow-calibration testdata/quintic_pow_calibration.json \
+  --calibration testdata/quintic_calibration.json \
+  --require-calibration \
+  --target-security-bits 100 \
+  --out-dir testdata/quintic_scores
+```
 
 ## Gas
 
@@ -187,21 +253,21 @@ This avoids patching stock `anvil` or stock `forge`, but it also means:
 
 Relevant files:
 
-| Path | Role |
-| ---- | ---- |
-| `../foundry-b0a9dd9/` | Foundry fork submodule with the custom local Anvil runner |
-| `../foundry-b0a9dd9/crates/ext8-precompile-runner/` | Rust implementations of the local ext8 precompiles |
-| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/precompiles.rs` | precompile dispatch, input validation, and Rust arithmetic calls |
-| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/gas_model.rs` | native runtime calibration and locked gas schedule generation |
-| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/vectors.rs` | deterministic arithmetic differential vector generation |
-| `src/field/KoalaBearExt8Precompile.sol` | Solidity wrapper for scalar and batch precompile calls |
-| `src/whir/k22_jb100_lir6_ff4_rsv1/` | unchanged baseline native octic verifier |
-| `src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/` | precompile-backed octic verifier variant |
-| `test/helpers/Ext8PrecompileHarness.sol` | arithmetic, transport, row-layout, and candidate benchmark harness |
-| `script/run_ext8_precompile_phase1_rpc.py` | arithmetic differential plus equality/select A/B benchmark |
-| `script/run_ext8_precompile_stir_transport_rpc.py` | STIR extension-row transport gate |
-| `script/run_ext8_precompile_full_verifier_rpc.py` | full baseline-vs-precompile verifier A/B script |
-| `script/run_ext8_precompile_eip_candidate_rpc.py` | standalone and batch EIP-compatible candidate sweep |
+| Path                                                                  | Role                                                               |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `../foundry-b0a9dd9/`                                                 | Foundry fork submodule with the custom local Anvil runner          |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/`                   | Rust implementations of the local ext8 precompiles                 |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/precompiles.rs` | precompile dispatch, input validation, and Rust arithmetic calls   |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/gas_model.rs`   | native runtime calibration and locked gas schedule generation      |
+| `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/vectors.rs`     | deterministic arithmetic differential vector generation            |
+| `src/field/KoalaBearExt8Precompile.sol`                               | Solidity wrapper for scalar and batch precompile calls             |
+| `src/whir/k22_jb100_lir6_ff4_rsv1/`                                   | unchanged baseline native octic verifier                           |
+| `src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/`                 | precompile-backed octic verifier variant                           |
+| `test/helpers/Ext8PrecompileHarness.sol`                              | arithmetic, transport, row-layout, and candidate benchmark harness |
+| `script/run_ext8_precompile_phase1_rpc.py`                            | arithmetic differential plus equality/select A/B benchmark         |
+| `script/run_ext8_precompile_stir_transport_rpc.py`                    | STIR extension-row transport gate                                  |
+| `script/run_ext8_precompile_full_verifier_rpc.py`                     | full baseline-vs-precompile verifier A/B script                    |
+| `script/run_ext8_precompile_eip_candidate_rpc.py`                     | standalone and batch EIP-compatible candidate sweep                |
 
 The precompile-backed verifier exposes the same external entrypoint:
 
@@ -224,20 +290,20 @@ For scalar inputs, the scalar is a 32-byte `uint256`; the Rust precompile reject
 
 Batch inputs have no length prefix. The precompile derives `N` from calldata length and rejects malformed lengths.
 
-| Address  | Name | Input bytes | Output bytes | Status in verifier |
-| -------- | ---- | ----------- | ------------ | ------------------ |
-| `0x0801` | `EXT8_MUL` | `64 = a || b` | `32 = a*b` | integrated |
-| `0x0802` | `EXT8_SQUARE` | `32 = a` | `32 = a^2` | integrated |
-| `0x0803` | `EXT8_ADD` | `64 = a || b` | `32 = a+b` | measured, rejected |
-| `0x0804` | `EXT8_SUB` | `64 = a || b` | `32 = a-b` | measured, rejected |
-| `0x0805` | `EXT8_MUL_BASE` | `64 = a || scalar` | `32 = a*scalar` | measured, rejected |
-| `0x0811` | `EXT8_MUL_BATCH` | `N * 64` | `N * 32` | integrated for fixed equality |
-| `0x0812` | `EXT8_SQUARE_BATCH` | `N * 32` | `N * 32` | measured, rejected |
-| `0x0813` | `EXT8_MUL_BASE_BATCH` | `N * 64` | `N * 32` | measured, rejected |
-| `0x08f1` | no-op 64-to-32 | `64` | `32` | transport calibration |
-| `0x08f2` | no-op 32-to-32 | `32` | `32` | transport calibration |
-| `0x08f3` | no-op batch 64-to-32 | `N * 64` | `N * 32` | transport calibration |
-| `0x08f4` | no-op batch 32-to-32 | `N * 32` | `N * 32` | transport calibration |
+| Address  | Name                  | Input bytes | Output bytes | Status in verifier            |
+| -------- | --------------------- | ----------- | ------------ | ----------------------------- | --------------- | ------------------ |
+| `0x0801` | `EXT8_MUL`            | `64 = a     |              | b`                            | `32 = a*b`      | integrated         |
+| `0x0802` | `EXT8_SQUARE`         | `32 = a`    | `32 = a^2`   | integrated                    |
+| `0x0803` | `EXT8_ADD`            | `64 = a     |              | b`                            | `32 = a+b`      | measured, rejected |
+| `0x0804` | `EXT8_SUB`            | `64 = a     |              | b`                            | `32 = a-b`      | measured, rejected |
+| `0x0805` | `EXT8_MUL_BASE`       | `64 = a     |              | scalar`                       | `32 = a*scalar` | measured, rejected |
+| `0x0811` | `EXT8_MUL_BATCH`      | `N * 64`    | `N * 32`     | integrated for fixed equality |
+| `0x0812` | `EXT8_SQUARE_BATCH`   | `N * 32`    | `N * 32`     | measured, rejected            |
+| `0x0813` | `EXT8_MUL_BASE_BATCH` | `N * 64`    | `N * 32`     | measured, rejected            |
+| `0x08f1` | no-op 64-to-32        | `64`        | `32`         | transport calibration         |
+| `0x08f2` | no-op 32-to-32        | `32`        | `32`         | transport calibration         |
+| `0x08f3` | no-op batch 64-to-32  | `N * 64`    | `N * 32`     | transport calibration         |
+| `0x08f4` | no-op batch 32-to-32  | `N * 32`    | `N * 32`     | transport calibration         |
 
 ##### Gas calibration
 
@@ -258,16 +324,16 @@ The assigned base gas is not the same thing as effective verifier gas. Effective
 
 Locked schedule:
 
-| Operation | Median native runtime | Assigned base gas |
-| --------- | --------------------- | ----------------- |
-| `EXT8_MUL` | `8 ns` | `50` |
-| `EXT8_SQUARE` | `9 ns` | `50` |
-| `EXT8_ADD` | `2 ns` | `50` |
-| `EXT8_SUB` | `2 ns` | `50` |
-| `EXT8_MUL_BASE` | `2 ns` | `50` |
-| `EXT8_MUL_BATCH` | `8 ns` per item | `50` per item |
-| `EXT8_SQUARE_BATCH` | `9 ns` per item | `50` per item |
-| `EXT8_MUL_BASE_BATCH` | `2 ns` per item | `50` per item |
+| Operation             | Median native runtime | Assigned base gas |
+| --------------------- | --------------------- | ----------------- |
+| `EXT8_MUL`            | `8 ns`                | `50`              |
+| `EXT8_SQUARE`         | `9 ns`                | `50`              |
+| `EXT8_ADD`            | `2 ns`                | `50`              |
+| `EXT8_SUB`            | `2 ns`                | `50`              |
+| `EXT8_MUL_BASE`       | `2 ns`                | `50`              |
+| `EXT8_MUL_BATCH`      | `8 ns` per item       | `50` per item     |
+| `EXT8_SQUARE_BATCH`   | `9 ns` per item       | `50` per item     |
+| `EXT8_MUL_BASE_BATCH` | `2 ns` per item       | `50` per item     |
 
 ##### Integrated verifier path
 
@@ -303,7 +369,7 @@ The helper functions `addViaPrecompile`, `subViaPrecompile`, `mulBaseViaPrecompi
 
 ##### Fixed equality batch use
 
-The fixed equality evaluator in the precompile-backed verifier uses `EXT8_MUL_BATCH` inside each loop iteration. The first batch computes the independent `p * q` products needed by the equality terms. The second batch computes the accumulator products and the `current * current` updates for the active tracks.
+The fixed equality evaluator in the precompile-backed verifier uses `EXT8_MUL_BATCH` inside each loop iteration. The first batch computes the independent `p * q` products needed by the equality terms. The second batch computes the accumulator products and the `current * current` updates for the active accumulators.
 
 This keeps the serial dependencies unchanged while reducing this loop from `236` scalar precompile calls to `44` batch precompile calls. The measured full-verifier saving from this local rewrite is `16,663` execution gas relative to the previously documented scalar precompile wiring.
 
@@ -362,12 +428,12 @@ The arithmetic differential uses deterministic Rust-generated vectors and checks
 
 Current vector result:
 
-| Check | Result |
-| ----- | ------ |
-| Random ext8 vector pairs | `10,000` |
-| Compared operations | `a+b`, `a-b`, `a*b`, `a^2`, `a*scalar` |
-| Rust precompile vs Solidity | exact |
-| Total differential harness gas | `122,841,384` |
+| Check                          | Result                                 |
+| ------------------------------ | -------------------------------------- |
+| Random ext8 vector pairs       | `10,000`                               |
+| Compared operations            | `a+b`, `a-b`, `a*b`, `a^2`, `a*scalar` |
+| Rust precompile vs Solidity    | exact                                  |
+| Total differential harness gas | `122,841,384`                          |
 
 ##### Equality and select gate
 
@@ -375,22 +441,22 @@ The first integrated subsystem was equality/select arithmetic. This deliberately
 
 Subsystem gas from state-changing RPC transactions against the custom node:
 
-| Harness path | Software | No-op transport | Precompile | Software minus precompile |
-| ------------ | -------- | --------------- | ---------- | ------------------------- |
-| `eq22` | `170,060` | `117,709` | `92,963` | `77,097` |
-| `eq18` | `145,585` | `101,027` | `85,570` | `60,015` |
-| `eq14` | `119,729` | `89,166` | `59,696` | `60,033` |
-| `eq10` | `94,715` | `73,209` | `51,808` | `42,907` |
-| equality total | `530,089` | `381,111` | `290,037` | `240,052` |
-| select-only total | `2,159,629` | `1,073,162` | `1,079,648` | `1,079,981` |
-| equality plus select total | `2,424,530` | `1,216,663` | `1,164,825` | `1,259,705` |
+| Harness path               | Software    | No-op transport | Precompile  | Software minus precompile |
+| -------------------------- | ----------- | --------------- | ----------- | ------------------------- |
+| `eq22`                     | `170,060`   | `117,709`       | `92,963`    | `77,097`                  |
+| `eq18`                     | `145,585`   | `101,027`       | `85,570`    | `60,015`                  |
+| `eq14`                     | `119,729`   | `89,166`        | `59,696`    | `60,033`                  |
+| `eq10`                     | `94,715`    | `73,209`        | `51,808`    | `42,907`                  |
+| equality total             | `530,089`   | `381,111`       | `290,037`   | `240,052`                 |
+| select-only total          | `2,159,629` | `1,073,162`     | `1,079,648` | `1,079,981`               |
+| equality plus select total | `2,424,530` | `1,216,663`     | `1,164,825` | `1,259,705`               |
 
 Clean no-op transport transactions:
 
-| Call shape | Transaction gas |
-| ---------- | --------------- |
-| no-op mul wrapper | `24,594` |
-| no-op square wrapper | `24,014` |
+| Call shape           | Transaction gas |
+| -------------------- | --------------- |
+| no-op mul wrapper    | `24,594`        |
+| no-op square wrapper | `24,014`        |
 
 Gate result: pass. Equality-only saves more than `100,000`, select-only does not regress, and combined equality plus select saves more than `300,000`.
 
@@ -400,12 +466,12 @@ STIR row folding was gated separately because row folds operate on contiguous pa
 
 The row-layout benchmark extracts real extension rows from `octic_whir_k22_jb100_lir6_ff4_rsv1_success.blob`. It excludes Round 0 base rows and covers Round 1, Round 2, and final STIR extension rows.
 
-| Rows | Count | Software | No-op transport | Precompile | Software minus precompile |
-| ---- | ----- | -------- | --------------- | ---------- | ------------------------- |
-| Round 1 extension rows | `16` | `1,051,347` | `492,078` | `503,616` | `547,731` |
-| Round 2 extension rows | `12` | `795,771` | `376,040` | `384,578` | `411,193` |
-| Final extension rows | `10` | `668,085` | `318,131` | `325,169` | `342,916` |
-| Combined extension rows | `38` | `2,455,869` | `1,129,499` | `1,157,537` | `1,298,332` |
+| Rows                    | Count | Software    | No-op transport | Precompile  | Software minus precompile |
+| ----------------------- | ----- | ----------- | --------------- | ----------- | ------------------------- |
+| Round 1 extension rows  | `16`  | `1,051,347` | `492,078`       | `503,616`   | `547,731`                 |
+| Round 2 extension rows  | `12`  | `795,771`   | `376,040`       | `384,578`   | `411,193`                 |
+| Final extension rows    | `10`  | `668,085`   | `318,131`       | `325,169`   | `342,916`                 |
+| Combined extension rows | `38`  | `2,455,869` | `1,129,499`     | `1,157,537` | `1,298,332`               |
 
 Gate calculation:
 
@@ -427,20 +493,20 @@ execution_gas = receipt_gas_used - 21,000 - calldata_gas
 
 Correctness result:
 
-| Fixture | Result |
-| ------- | ------ |
-| success blob | both return `true` |
-| bad commitment blob | both revert |
-| bad STIR query blob | both revert |
-| bad OOD / transcript mismatch blob | both revert |
+| Fixture                            | Result             |
+| ---------------------------------- | ------------------ |
+| success blob                       | both return `true` |
+| bad commitment blob                | both revert        |
+| bad STIR query blob                | both revert        |
+| bad OOD / transcript mismatch blob | both revert        |
 
 Gas result:
 
-| Verifier | Total tx gas | Calldata gas | Execution gas |
-| -------- | ------------ | ------------ | ------------- |
-| baseline native octic | `8,095,104` | `753,800` | `7,320,304` |
-| precompile-backed native octic | `5,057,190` | `753,800` | `4,282,390` |
-| savings | `3,037,914` | `0` | `3,037,914` |
+| Verifier                       | Total tx gas | Calldata gas | Execution gas |
+| ------------------------------ | ------------ | ------------ | ------------- |
+| baseline native octic          | `8,095,104`  | `753,800`    | `7,320,304`   |
+| precompile-backed native octic | `5,057,190`  | `753,800`    | `4,282,390`   |
+| savings                        | `3,037,914`  | `0`          | `3,037,914`   |
 
 The calldata gas is identical because the protocol and blob format are unchanged.
 
@@ -456,11 +522,11 @@ Standalone gates:
 
 State-changing RPC measurements for `256` loop iterations:
 
-| Candidate | Software | No-op transport | Precompile | Projected full-verifier saving | Decision |
-| --------- | -------- | --------------- | ---------- | ------------------------------ | -------- |
-| `EXT8_ADD` | `675,100` | `675,100` | `675,100` | `0` | reject |
-| `EXT8_SUB` | `675,100` | `675,070` | `675,100` | `0` | reject |
-| `EXT8_MUL_BASE` | `461,350` | `461,350` | `461,350` | `0` | reject |
+| Candidate       | Software  | No-op transport | Precompile | Projected full-verifier saving | Decision |
+| --------------- | --------- | --------------- | ---------- | ------------------------------ | -------- |
+| `EXT8_ADD`      | `675,100` | `675,100`       | `675,100`  | `0`                            | reject   |
+| `EXT8_SUB`      | `675,100` | `675,070`       | `675,100`  | `0`                            | reject   |
+| `EXT8_MUL_BASE` | `461,350` | `461,350`       | `461,350`  | `0`                            | reject   |
 
 Batch gates:
 
@@ -470,11 +536,11 @@ Batch gates:
 
 Representative `N = 16` state-changing RPC measurements:
 
-| Candidate | Software | Scalar no-op | Scalar precompile | Batch no-op | Batch precompile | Decision |
-| --------- | -------- | ------------ | ----------------- | ----------- | ---------------- | -------- |
-| `EXT8_MUL_BATCH` | `92,395` | `63,400` | `63,400` | `63,400` | `63,400` | reject as a general replacement; integrated only in the fixed equality loop |
-| `EXT8_SQUARE_BATCH` | `58,490` | `46,243` | `45,745` | `45,017` | `45,451` | reject |
-| `EXT8_MUL_BASE_BATCH` | `52,350` | `50,100` | `52,076` | `50,020` | `50,799` | reject |
+| Candidate             | Software | Scalar no-op | Scalar precompile | Batch no-op | Batch precompile | Decision                                                                    |
+| --------------------- | -------- | ------------ | ----------------- | ----------- | ---------------- | --------------------------------------------------------------------------- |
+| `EXT8_MUL_BATCH`      | `92,395` | `63,400`     | `63,400`          | `63,400`    | `63,400`         | reject as a general replacement; integrated only in the fixed equality loop |
+| `EXT8_SQUARE_BATCH`   | `58,490` | `46,243`     | `45,745`          | `45,017`    | `45,451`         | reject                                                                      |
+| `EXT8_MUL_BASE_BATCH` | `52,350` | `50,100`     | `52,076`          | `50,020`    | `50,799`         | reject                                                                      |
 
 Decision: no generic candidate beyond `EXT8_MUL`, `EXT8_SQUARE`, and the narrowly applied `EXT8_MUL_BATCH` fixed-equality use passes the integration gates.
 

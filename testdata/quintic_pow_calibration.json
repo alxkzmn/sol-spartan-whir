@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "measurement_kind": "quintic_pow_grind_calibration",
+  "build_profile": "release",
+  "compile_rustflags": "-C target-cpu=native",
+  "target_cpu_native": true,
+  "min_bits": 20,
+  "max_bits": 22,
+  "samples_per_bit": 5,
+  "thread_count": 12,
+  "seconds_per_pow_unit_median": 2.706443965435028e-7,
+  "seconds_per_pow_unit_mean": 4.3136192959149685e-7,
+  "by_bits": [
+    {
+      "bits": 20,
+      "work_units": 1048576,
+      "median_seconds": 0.373292917,
+      "mean_seconds": 0.45835115000000004,
+      "median_seconds_per_pow_unit": 3.5599986743927e-7,
+      "mean_seconds_per_pow_unit": 4.371177196502686e-7,
+      "samples": [
+        {
+          "sample_index": 0,
+          "witness": 181001,
+          "seconds": 0.072026458,
+          "seconds_per_pow_unit": 6.868978309631348e-8
+        },
+        {
+          "sample_index": 1,
+          "witness": 2528766,
+          "seconds": 0.719080333,
+          "seconds_per_pow_unit": 6.857684450149536e-7
+        },
+        {
+          "sample_index": 2,
+          "witness": 2848070,
+          "seconds": 0.844399083,
+          "seconds_per_pow_unit": 8.052817182540894e-7
+        },
+        {
+          "sample_index": 3,
+          "witness": 947197,
+          "seconds": 0.282956959,
+          "seconds_per_pow_unit": 2.698487844467163e-7
+        },
+        {
+          "sample_index": 4,
+          "witness": 1301351,
+          "seconds": 0.373292917,
+          "seconds_per_pow_unit": 3.5599986743927e-7
+        }
+      ]
+    },
+    {
+      "bits": 21,
+      "work_units": 2097152,
+      "median_seconds": 0.396789292,
+      "mean_seconds": 0.7478891752000001,
+      "median_seconds_per_pow_unit": 1.8920387840270997e-7,
+      "mean_seconds_per_pow_unit": 3.566213489532471e-7,
+      "samples": [
+        {
+          "sample_index": 0,
+          "witness": 485303,
+          "seconds": 0.1477585,
+          "seconds_per_pow_unit": 7.045674324035644e-8
+        },
+        {
+          "sample_index": 1,
+          "witness": 1369233,
+          "seconds": 0.396789292,
+          "seconds_per_pow_unit": 1.8920387840270997e-7
+        },
+        {
+          "sample_index": 2,
+          "witness": 669204,
+          "seconds": 0.198107167,
+          "seconds_per_pow_unit": 9.44648585319519e-8
+        },
+        {
+          "sample_index": 3,
+          "witness": 4501630,
+          "seconds": 1.2869717920000001,
+          "seconds_per_pow_unit": 6.136759719848633e-7
+        },
+        {
+          "sample_index": 4,
+          "witness": 6026589,
+          "seconds": 1.709819125,
+          "seconds_per_pow_unit": 8.153052926063538e-7
+        }
+      ]
+    },
+    {
+      "bits": 22,
+      "work_units": 4194304,
+      "median_seconds": 1.135164875,
+      "mean_seconds": 2.0986062498000004,
+      "median_seconds_per_pow_unit": 2.706443965435028e-7,
+      "mean_seconds_per_pow_unit": 5.003467201709748e-7,
+      "samples": [
+        {
+          "sample_index": 0,
+          "witness": 4009824,
+          "seconds": 1.135164875,
+          "seconds_per_pow_unit": 2.706443965435028e-7
+        },
+        {
+          "sample_index": 1,
+          "witness": 12022539,
+          "seconds": 3.399510583,
+          "seconds_per_pow_unit": 8.105064828395844e-7
+        },
+        {
+          "sample_index": 2,
+          "witness": 17608213,
+          "seconds": 4.987220333,
+          "seconds_per_pow_unit": 1.1890459854602813e-6
+        },
+        {
+          "sample_index": 3,
+          "witness": 2519516,
+          "seconds": 0.710282208,
+          "seconds_per_pow_unit": 1.6934447479248046e-7
+        },
+        {
+          "sample_index": 4,
+          "witness": 924182,
+          "seconds": 0.26085325,
+          "seconds_per_pow_unit": 6.219226121902465e-8
+        }
+      ]
+    }
+  ]
+}

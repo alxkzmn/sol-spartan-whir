@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import { KoalaBear } from "../../src/field/KoalaBear.sol";
 import { KoalaBearExt4 } from "../../src/field/KoalaBearExt4.sol";
+import { KoalaBearExt5 } from "../../src/field/KoalaBearExt5.sol";
 import { KoalaBearExt8 } from "../../src/field/KoalaBearExt8.sol";
 import { WhirVerifierUtils4 } from "../../src/whir/WhirVerifierUtils4.sol";
 import { WhirVerifierUtils8 } from "../../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol";
@@ -98,6 +99,66 @@ contract FieldHarness {
 
     function ext8Pack(uint256[] memory coeffs) external pure returns (uint256) {
         return KoalaBearExt8.pack(_to8(coeffs));
+    }
+
+    function ext5Pack(uint256[] memory coeffs) external pure returns (uint256) {
+        return KoalaBearExt5.pack(_to5(coeffs));
+    }
+
+    function ext5Unpack(uint256 packed) external pure returns (uint256[] memory coeffs) {
+        return _from5(KoalaBearExt5.unpack(packed));
+    }
+
+    function ext5Validate(uint256 packed) external pure {
+        KoalaBearExt5.validatePacked(packed);
+    }
+
+    function ext5Add(uint256 a, uint256 b) external pure returns (uint256) {
+        return KoalaBearExt5.add(a, b);
+    }
+
+    function ext5Sub(uint256 a, uint256 b) external pure returns (uint256) {
+        return KoalaBearExt5.sub(a, b);
+    }
+
+    function ext5Mul(uint256 a, uint256 b) external pure returns (uint256) {
+        return KoalaBearExt5.mul(a, b);
+    }
+
+    function ext5Square(uint256 a) external pure returns (uint256) {
+        return KoalaBearExt5.square(a);
+    }
+
+    function ext5MulReference(uint256 a, uint256 b) external pure returns (uint256) {
+        return KoalaBearExt5.mulReference(a, b);
+    }
+
+    function ext5Inv(uint256 a) external pure returns (uint256) {
+        return KoalaBearExt5.inv(a);
+    }
+
+    function ext5Extrapolate012(uint256 e0, uint256 e1, uint256 e2, uint256 r)
+        external
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt5.extrapolate_012(e0, e1, e2, r);
+    }
+
+    function ext5EqPolyEval(uint256[] memory p, uint256[] memory q)
+        external
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt5.eq_poly_eval(p, q);
+    }
+
+    function ext5EvaluateHypercube(uint256[] memory evals, uint256[] memory point)
+        external
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt5.evaluate_hypercube(evals, point);
     }
 
     function ext8Unpack(uint256 packed) external pure returns (uint256[] memory coeffs) {
@@ -205,6 +266,24 @@ contract FieldHarness {
         out = new uint256[](4);
         unchecked {
             for (uint256 i = 0; i < 4; ++i) {
+                out[i] = coeffs[i];
+            }
+        }
+    }
+
+    function _to5(uint256[] memory coeffs) internal pure returns (uint256[5] memory out) {
+        require(coeffs.length == 5, "LEN5");
+        unchecked {
+            for (uint256 i = 0; i < 5; ++i) {
+                out[i] = coeffs[i];
+            }
+        }
+    }
+
+    function _from5(uint256[5] memory coeffs) internal pure returns (uint256[] memory out) {
+        out = new uint256[](5);
+        unchecked {
+            for (uint256 i = 0; i < 5; ++i) {
                 out[i] = coeffs[i];
             }
         }

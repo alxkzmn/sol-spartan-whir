@@ -96,6 +96,7 @@ forge script "$script_path" \
   --rpc-url "$rpc_url" \
   --broadcast \
   --slow \
+  --code-size-limit 50000 \
   --private-key "$private_key" \
   "${target_contract[@]}" \
   "$@"

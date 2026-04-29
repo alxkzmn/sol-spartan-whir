@@ -11,7 +11,7 @@ Detailed workflow guides live under `.agents/skills/*/SKILL.md`:
 
 ## Gas Profiling with Forge Flamegraphs
 
-The detailed profiling workflow lives in the flamegraph profiling skill above.
+Use the flamegraph profiling skill above for the detailed profiling workflow.
 
 Use that skill for:
 

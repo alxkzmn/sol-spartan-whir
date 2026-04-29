@@ -52,10 +52,14 @@ struct ExtensionHypercubeVectorFixture {
 struct FieldVectorFixture {
     BaseFieldVectorFixture[] base;
     ExtensionFieldVectorFixture[] quartic;
+    ExtensionFieldVectorFixture[] quintic;
     ExtensionFieldVectorFixture[] octic;
     ExtensionExtrapolateVectorFixture[] quartic_extrapolate;
     ExtensionEqPolyVectorFixture[] quartic_eq_poly;
     ExtensionHypercubeVectorFixture[] quartic_hypercube;
+    ExtensionExtrapolateVectorFixture[] quintic_extrapolate;
+    ExtensionEqPolyVectorFixture[] quintic_eq_poly;
+    ExtensionHypercubeVectorFixture[] quintic_hypercube;
     ExtensionExtrapolateVectorFixture[] octic_extrapolate;
     ExtensionEqPolyVectorFixture[] octic_eq_poly;
     ExtensionHypercubeVectorFixture[] octic_hypercube;
@@ -168,6 +172,45 @@ contract FieldArithmeticTest is Test {
         }
     }
 
+    function testKoalaBearExt5Vectors() external view {
+        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
+            assertEq(harness.ext5Pack(vector.a), vector.packed_a);
+            assertEq(harness.ext5Pack(vector.b), vector.packed_b);
+            _assertEqArray(harness.ext5Unpack(vector.packed_a), vector.a);
+            _assertEqArray(harness.ext5Unpack(vector.packed_b), vector.b);
+
+            assertEq(harness.ext5Add(vector.packed_a, vector.packed_b), vector.packed_add);
+            assertEq(harness.ext5Sub(vector.packed_a, vector.packed_b), vector.packed_sub);
+            assertEq(harness.ext5Mul(vector.packed_a, vector.packed_b), vector.packed_mul);
+            assertEq(harness.ext5Inv(vector.packed_a), vector.packed_inv);
+        }
+    }
+
+    function testKoalaBearExt5MulMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
+            assertEq(
+                harness.ext5Mul(vector.packed_a, vector.packed_b),
+                harness.ext5MulReference(vector.packed_a, vector.packed_b)
+            );
+            assertEq(
+                harness.ext5Square(vector.packed_a),
+                harness.ext5Mul(vector.packed_a, vector.packed_a)
+            );
+        }
+    }
+
+    function testKoalaBearExt5RejectsNonCanonicalLowBits() external {
+        uint256 packed = (uint256(1) << 224) | (uint256(2) << 192) | (uint256(3) << 160)
+            | (uint256(4) << 128) | (uint256(5) << 96) | 1;
+
+        vm.expectRevert(
+            abi.encodeWithSignature("PackedExtensionElementOutOfRange(uint256)", packed)
+        );
+        harness.ext5Validate(packed);
+    }
+
     function testKoalaBearExt8MulMatchesReference() external view {
         for (uint256 i = 0; i < vectors.octic.length; ++i) {
             ExtensionFieldVectorFixture memory vector = vectors.octic[i];
@@ -210,6 +253,18 @@ contract FieldArithmeticTest is Test {
         }
     }
 
+    function testKoalaBearExt5ExtrapolateVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_extrapolate.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors.quintic_extrapolate[i];
+            assertEq(
+                harness.ext5Extrapolate012(
+                    vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
+                ),
+                vector.packed_result
+            );
+        }
+    }
+
     function testKoalaBearExt4EqPolyVectors() external view {
         for (uint256 i = 0; i < vectors.quartic_eq_poly.length; ++i) {
             ExtensionEqPolyVectorFixture memory vector = vectors.quartic_eq_poly[i];
@@ -221,6 +276,13 @@ contract FieldArithmeticTest is Test {
         for (uint256 i = 0; i < vectors.octic_eq_poly.length; ++i) {
             ExtensionEqPolyVectorFixture memory vector = vectors.octic_eq_poly[i];
             assertEq(harness.ext8EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
+        }
+    }
+
+    function testKoalaBearExt5EqPolyVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_eq_poly.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors.quintic_eq_poly[i];
+            assertEq(harness.ext5EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
@@ -239,6 +301,16 @@ contract FieldArithmeticTest is Test {
             ExtensionHypercubeVectorFixture memory vector = vectors.octic_hypercube[i];
             assertEq(
                 harness.ext8EvaluateHypercube(vector.packed_evals, vector.packed_point),
+                vector.packed_result
+            );
+        }
+    }
+
+    function testKoalaBearExt5HypercubeVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_hypercube.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors.quintic_hypercube[i];
+            assertEq(
+                harness.ext5EvaluateHypercube(vector.packed_evals, vector.packed_point),
                 vector.packed_result
             );
         }

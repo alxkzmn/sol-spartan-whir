@@ -18,6 +18,9 @@ import {
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
 import {
+    WhirBlobVerifierNativeLir11
+} from "../src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol";
+import {
     WhirBlobCodec8
 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol";
 import {
@@ -669,11 +672,13 @@ contract GasCalibrationNativeCompareTest is Test {
 
     NativePhaseCalibrationHarness internal harness;
     WhirBlobVerifierNative4 internal quarticNative;
+    WhirBlobVerifierNativeLir11 internal quarticLir11Native;
     WhirBlobVerifierNative8 internal octicNative;
 
     function setUp() external {
         harness = new NativePhaseCalibrationHarness();
         quarticNative = new WhirBlobVerifierNative4();
+        quarticLir11Native = new WhirBlobVerifierNativeLir11();
         octicNative = new WhirBlobVerifierNative8();
     }
 
@@ -685,6 +690,55 @@ contract GasCalibrationNativeCompareTest is Test {
         }
     }
 
+    function _emitCalibrationReference(
+        string memory refLabel,
+        string memory contractName,
+        string memory fixtureName,
+        uint256 nativeExecutionGas,
+        uint256 phaseSum,
+        uint256 merkle,
+        uint256 folding,
+        uint256 transcript,
+        uint256 sumcheck
+    ) internal view {
+        console.log(
+            string.concat(
+                "CALIBRATION:{\"schema_version\":1,\"reference\":\"",
+                refLabel,
+                "\",\"kind\":\"metadata\",\"contract\":\"",
+                contractName,
+                "\",\"fixture\":\"",
+                fixtureName,
+                "\",\"native_execution_gas\":",
+                vm.toString(nativeExecutionGas),
+                ",\"phase_sum\":",
+                vm.toString(phaseSum),
+                "}"
+            )
+        );
+        _emitCalibrationBucket(refLabel, "merkle", merkle);
+        _emitCalibrationBucket(refLabel, "folding", folding);
+        _emitCalibrationBucket(refLabel, "transcript", transcript);
+        _emitCalibrationBucket(refLabel, "sumcheck", sumcheck);
+    }
+
+    function _emitCalibrationBucket(string memory refLabel, string memory bucket, uint256 gas)
+        internal
+        view
+    {
+        console.log(
+            string.concat(
+                "CALIBRATION:{\"schema_version\":1,\"reference\":\"",
+                refLabel,
+                "\",\"kind\":\"bucket\",\"bucket\":\"",
+                bucket,
+                "\",\"gas\":",
+                vm.toString(gas),
+                "}"
+            )
+        );
+    }
+
     function testCompareNativePhaseBreakdown() external view {
         WhirStructs.WhirProof memory quarticProof = abi.decode(
             vm.readFileBinary(
@@ -694,6 +748,16 @@ contract GasCalibrationNativeCompareTest is Test {
         );
         bytes memory quarticBlob =
             vm.readFileBinary(string.concat(TESTDATA, "quartic_whir_lir6_ff5_rsv1_success.blob"));
+
+        WhirStructs.WhirProof memory quarticLir11Proof = abi.decode(
+            vm.readFileBinary(
+                string.concat(TESTDATA, "quartic_whir_lir11_ff5_rsv3_success_proof.abi")
+            ),
+            (WhirStructs.WhirProof)
+        );
+        bytes memory quarticLir11Blob = vm.readFileBinary(
+            string.concat(TESTDATA, "quartic_whir_lir11_ff5_rsv3_success.blob")
+        );
 
         WhirStructs.WhirProof memory octicProof = abi.decode(
             vm.readFileBinary(
@@ -709,6 +773,12 @@ contract GasCalibrationNativeCompareTest is Test {
         bool quarticOk = quarticNative.verify(quarticProof.initialCommitment, quarticBlob);
         uint256 quarticNativeGas = g - gasleft();
         assertTrue(quarticOk);
+
+        g = gasleft();
+        bool quarticLir11Ok =
+            quarticLir11Native.verify(quarticLir11Proof.initialCommitment, quarticLir11Blob);
+        uint256 quarticLir11NativeGas = g - gasleft();
+        assertTrue(quarticLir11Ok);
 
         g = gasleft();
         bool octicOk = octicNative.verify(octicProof.initialCommitment, octicBlob);
@@ -729,10 +799,63 @@ contract GasCalibrationNativeCompareTest is Test {
             + o.round2Stir + o.round2Sumcheck + o.observeFinalPoly + o.finalStir + o.finalSumcheck
             + o.constraintEqTerms + o.constraintRounds + o.constraintInitial + o.finalValueCheck;
 
+        _emitCalibrationReference(
+            "quartic_lir6_ff5_rsv1",
+            "WhirBlobVerifierNative4_lir6_ff5_rsv1",
+            "quartic_whir_lir6_ff5_rsv1_success",
+            quarticNativeGas,
+            quarticPhaseSum,
+            q.round0Stir + q.round1Stir + q.finalStir,
+            q.constraintRounds + q.constraintInitial + q.finalValueCheck,
+            q.setup + q.round0Parse + q.round1Parse + q.observeFinalPoly,
+            q.initialSumcheck + q.round0Sumcheck + q.round1Sumcheck + q.finalSumcheck
+        );
+        _emitCalibrationBucket("quartic_lir6_ff5_rsv1", "transcript_setup", q.setup);
+        _emitCalibrationBucket(
+            "quartic_lir6_ff5_rsv1", "transcript_round_parse", q.round0Parse + q.round1Parse
+        );
+        _emitCalibrationBucket(
+            "quartic_lir6_ff5_rsv1", "transcript_observe_final_poly", q.observeFinalPoly
+        );
+        _emitCalibrationReference(
+            "quartic_lir11_ff5_rsv3",
+            "WhirBlobVerifierNative4_lir11_ff5_rsv3",
+            "quartic_whir_lir11_ff5_rsv3_success",
+            quarticLir11NativeGas,
+            0,
+            0,
+            0,
+            0,
+            0
+        );
+        _emitCalibrationReference(
+            "octic_k22_jb100_lir6_ff4_rsv1",
+            "WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1",
+            "octic_whir_k22_jb100_lir6_ff4_rsv1_success",
+            octicNativeGas,
+            octicPhaseSum,
+            o.round0Stir + o.round1Stir + o.round2Stir + o.finalStir,
+            o.constraintEqTerms + o.constraintRounds + o.constraintInitial + o.finalValueCheck,
+            o.setup + o.round0Parse + o.round1Parse + o.round2Parse + o.observeFinalPoly,
+            o.initialSumcheck + o.round0Sumcheck + o.round1Sumcheck + o.round2Sumcheck
+                + o.finalSumcheck
+        );
+        _emitCalibrationBucket("octic_k22_jb100_lir6_ff4_rsv1", "transcript_setup", o.setup);
+        _emitCalibrationBucket(
+            "octic_k22_jb100_lir6_ff4_rsv1",
+            "transcript_round_parse",
+            o.round0Parse + o.round1Parse + o.round2Parse
+        );
+        _emitCalibrationBucket(
+            "octic_k22_jb100_lir6_ff4_rsv1", "transcript_observe_final_poly", o.observeFinalPoly
+        );
+
         console.log("=== Native verifier totals ===");
-        console.log("Quartic native total:", quarticNativeGas);
-        console.log("Octic native total:  ", octicNativeGas);
-        console.log("Delta (octic-q):     ", octicNativeGas - quarticNativeGas);
+        console.log("Quartic lir6 native total: ", quarticNativeGas);
+        console.log("Quartic lir11 native total:", quarticLir11NativeGas);
+        console.log("Octic native total:        ", octicNativeGas);
+        _logSignedDelta("Delta (lir11-lir6):        ", quarticLir11NativeGas, quarticNativeGas);
+        _logSignedDelta("Delta (octic-lir11):       ", octicNativeGas, quarticLir11NativeGas);
         console.log("---");
 
         console.log("=== Quartic native phase sum ===");

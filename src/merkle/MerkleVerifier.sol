@@ -1437,6 +1437,50 @@ library MerkleVerifier {
         }
     }
 
+    function hashLeafExtension5Slice20(uint256[] calldata values, uint256 start, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        assembly ("memory-safe") {
+            let size := add(1, mul(rowLen, 20))
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let src := add(values.offset, shl(5, start))
+            let dst := add(ptr, 1)
+            let end := add(src, shl(5, rowLen))
+            for { } lt(src, end) {
+                src := add(src, 0x20)
+                dst := add(dst, 20)
+            } {
+                let packed := calldataload(src)
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                let c4 := and(shr(96, packed), coeffMask)
+                if or(
+                    or(
+                        or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                        or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                    ),
+                    or(iszero(lt(c4, modulus)), and(packed, sub(shl(96, 1), 1)))
+                ) {
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+                mstore(dst, packed)
+            }
+
+            digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
     function hashLeafExtension8Slice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
         internal
         pure
