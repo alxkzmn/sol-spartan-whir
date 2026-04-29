@@ -29,6 +29,11 @@ DEFAULT_TX_ARTIFACTS = {
     / "WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol"
     / "31337"
     / "run-latest.json",
+    "quintic_k22_jb100_ext5_lir4_ff4_rsv4": PROJECT_ROOT
+    / "broadcast"
+    / "WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol"
+    / "31337"
+    / "run-latest.json",
 }
 VERIFY_RECEIPT_INDEX = 1
 CALIBRATION_BUCKETS = ("merkle", "folding", "transcript", "sumcheck", "calldata")
@@ -41,17 +46,49 @@ TRANSCRIPT_SUBPHASE_BUCKETS = {
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase-log", required=True, help="Forge -vv output with CALIBRATION lines")
-    parser.add_argument("--gas-log", required=True, help="Forge -vv output with BENCH lines")
+    parser.add_argument(
+        "--phase-log", required=True, help="Forge -vv output with CALIBRATION lines"
+    )
+    parser.add_argument(
+        "--gas-log", required=True, help="Forge -vv output with BENCH lines"
+    )
     parser.add_argument(
         "--reference-schedule",
         required=True,
         help="Rust-emitted calibration reference schedule JSON",
     )
     parser.add_argument("--out", required=True, help="Calibration JSON output path")
-    parser.add_argument("--quartic-tx-artifact", type=Path, default=DEFAULT_TX_ARTIFACTS["quartic_lir6_ff5_rsv1"])
-    parser.add_argument("--quartic-lir11-tx-artifact", type=Path, default=DEFAULT_TX_ARTIFACTS["quartic_lir11_ff5_rsv3"])
-    parser.add_argument("--octic-tx-artifact", type=Path, default=DEFAULT_TX_ARTIFACTS["octic_k22_jb100_lir6_ff4_rsv1"])
+    parser.add_argument(
+        "--quartic-tx-artifact",
+        type=Path,
+        default=DEFAULT_TX_ARTIFACTS["quartic_lir6_ff5_rsv1"],
+    )
+    parser.add_argument(
+        "--quartic-lir11-tx-artifact",
+        type=Path,
+        default=DEFAULT_TX_ARTIFACTS["quartic_lir11_ff5_rsv3"],
+    )
+    parser.add_argument(
+        "--octic-tx-artifact",
+        type=Path,
+        default=DEFAULT_TX_ARTIFACTS["octic_k22_jb100_lir6_ff4_rsv1"],
+    )
+    parser.add_argument(
+        "--quintic-schedule",
+        type=Path,
+        help="Optional quintic schedule dump containing an optimized native verifier reference candidate",
+    )
+    parser.add_argument(
+        "--quintic-label",
+        default="constant_pow27_ff4_lir4_rsv4",
+        help="Candidate label in --quintic-schedule to add as a score-only calibration reference",
+    )
+    parser.add_argument(
+        "--quintic-tx-artifact",
+        type=Path,
+        default=DEFAULT_TX_ARTIFACTS["quintic_k22_jb100_ext5_lir4_ff4_rsv4"],
+        help="Tx benchmark artifact for --quintic-label",
+    )
     args = parser.parse_args()
 
     phase_rows = read_phase_rows(Path(args.phase_log))
@@ -65,13 +102,29 @@ def main() -> None:
         "octic_k22_jb100_lir6_ff4_rsv1": Path(args.octic_tx_artifact),
     }
     references = [
-        build_reference(reference, rows, tx_artifacts[reference], gas, reference_schedule["candidates"])
+        build_reference(
+            reference,
+            rows,
+            tx_artifacts[reference],
+            gas,
+            reference_schedule["candidates"],
+        )
         for reference, rows in sorted(phase_rows.items())
     ]
+    if args.quintic_schedule is not None:
+        references.append(
+            build_score_only_reference(
+                schedule_path=args.quintic_schedule,
+                label=args.quintic_label,
+                tx_artifact=args.quintic_tx_artifact,
+                gas=gas,
+                reference_schedule=reference_schedule,
+            )
+        )
 
     out = {
         "schema_version": 1,
-        "method": "ordinal verifier score checked against native verifier ordering",
+        "method": "quintic Pareto score calibrated to optimized native quintic tx gas; legacy quartic/octic references retained as diagnostics",
         "phase_source": display_path(Path(args.phase_log)),
         "gas_source": display_path(Path(args.gas_log)),
         "gas_metrics_available": sorted(gas.keys()),
@@ -118,8 +171,7 @@ def read_reference_schedule(path: Path) -> dict[str, Any]:
         raise SystemExit(f"missing calibration reference schedule: {path}")
     data = json.loads(path.read_text())
     candidates = {
-        entry["reference"]: entry["candidate"]
-        for entry in data.get("references", [])
+        entry["reference"]: entry["candidate"] for entry in data.get("references", [])
     }
     if not candidates:
         raise SystemExit(f"{path}: no calibration reference candidates found")
@@ -141,20 +193,28 @@ def build_reference(
     if metadata is None:
         raise SystemExit(f"{reference}: missing metadata row")
     buckets = dict(rows.get("buckets") or {})
-    missing = [bucket for bucket in CALIBRATION_BUCKETS if bucket != "calldata" and bucket not in buckets]
+    missing = [
+        bucket
+        for bucket in CALIBRATION_BUCKETS
+        if bucket != "calldata" and bucket not in buckets
+    ]
     if missing:
         raise SystemExit(f"{reference}: missing phase buckets {missing}")
 
     tx = read_tx_artifact(tx_artifact)
     buckets["calldata"] = tx["calldata_gas"]
     if reference not in reference_candidates:
-        raise SystemExit(f"{reference}: missing Rust-emitted calibration reference schedule")
+        raise SystemExit(
+            f"{reference}: missing Rust-emitted calibration reference schedule"
+        )
     reference_candidate = copy.deepcopy(reference_candidates[reference])
     counts = reference_candidate.setdefault("encoding_counts", {})
     counts["native_blob_nonzero_bytes"] = tx["nonzero_bytes"]
     counts["native_blob_zero_bytes"] = tx["zero_bytes"]
     tracking_gas = scorer.MetricTrackingGas(gas)
-    bucket_scores, largest_terms = scorer.score_bucket_details(reference_candidate, tracking_gas)
+    bucket_scores, largest_terms = scorer.score_bucket_details(
+        reference_candidate, tracking_gas
+    )
     verifier_score = sum(bucket_scores.values())
     bucket_ratios = {
         bucket: (
@@ -176,6 +236,7 @@ def build_reference(
         "measured_native_execution_gas": metadata["native_execution_gas"],
         "phase_sum": metadata["phase_sum"],
         "phase_breakdown_available": int(metadata["phase_sum"]) > 0,
+        "ordinal_gate_participant": True,
         "tx_execution_remainder": tx["execution_remainder"],
         "measured_buckets": buckets,
         "measured_transcript_subphase": transcript_subphase(buckets),
@@ -184,6 +245,74 @@ def build_reference(
         "largest_weighted_terms": largest_terms,
         "metrics_used": sorted(tracking_gas.metrics_used),
         "reference_counts": reference_candidate,
+    }
+
+
+def build_score_only_reference(
+    schedule_path: Path,
+    label: str,
+    tx_artifact: Path,
+    gas: dict[str, int],
+    reference_schedule: dict[str, Any],
+) -> dict[str, Any]:
+    schedule = json.loads(schedule_path.read_text())
+    if schedule.get("whir_p3_revision") != reference_schedule["whir_p3_revision"]:
+        raise SystemExit(
+            f"{schedule_path}: whir-p3 revision {schedule.get('whir_p3_revision')} does not match "
+            f"reference schedule {reference_schedule['whir_p3_revision']}"
+        )
+    if bool(schedule.get("whir_p3_dirty")) != reference_schedule["whir_p3_dirty"]:
+        raise SystemExit(
+            f"{schedule_path}: whir-p3 dirty flag does not match reference schedule"
+        )
+    candidates = {
+        candidate["label"]: candidate for candidate in schedule.get("candidates", [])
+    }
+    if label not in candidates:
+        raise SystemExit(f"{schedule_path}: missing candidate label {label}")
+
+    tx = read_tx_artifact(tx_artifact)
+    candidate = copy.deepcopy(candidates[label])
+    counts = candidate.setdefault("encoding_counts", {})
+    counts["native_blob_nonzero_bytes"] = tx["nonzero_bytes"]
+    counts["native_blob_zero_bytes"] = tx["zero_bytes"]
+    tracking_gas = scorer.MetricTrackingGas(gas)
+    bucket_scores, largest_terms = scorer.score_bucket_details(candidate, tracking_gas)
+    verifier_score = sum(bucket_scores.values())
+    measured_buckets = {
+        "calldata": tx["calldata_gas"],
+    }
+    bucket_ratios = {
+        "calldata": (
+            bucket_scores["calldata"] / measured_buckets["calldata"]
+            if measured_buckets["calldata"] > 0
+            else None
+        )
+    }
+
+    return {
+        "label": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv4",
+        "reference": f"quintic_{label}",
+        "fixture": "quintic_whir_k22_jb100_ext5_lir4_ff4_rsv4",
+        "tx_artifact": display_path(tx_artifact),
+        "measured_total_tx_gas": tx["total_tx_gas"],
+        "verifier_score": verifier_score,
+        "measured_native_execution_gas": tx["execution_remainder"],
+        "phase_sum": 0,
+        "phase_breakdown_available": False,
+        "ordinal_gate_participant": False,
+        "ordinal_gate_skip_reason": (
+            "optimized ext5 native reference calibrates quintic score scale; "
+            "cross-degree ordinal ordering is not a quintic Pareto requirement"
+        ),
+        "tx_execution_remainder": tx["execution_remainder"],
+        "measured_buckets": measured_buckets,
+        "measured_transcript_subphase": None,
+        "bucket_scores": bucket_scores,
+        "bucket_score_ratios": bucket_ratios,
+        "largest_weighted_terms": largest_terms,
+        "metrics_used": sorted(tracking_gas.metrics_used),
+        "reference_counts": candidate,
     }
 
 
@@ -201,9 +330,13 @@ def read_tx_artifact(path: Path) -> dict[str, int]:
         raise SystemExit(f"missing tx benchmark artifact: {path}")
     data = json.loads(path.read_text())
     if len(data.get("receipts", [])) <= VERIFY_RECEIPT_INDEX:
-        raise SystemExit(f"{path}: receipts array does not contain verify tx at index {VERIFY_RECEIPT_INDEX}")
+        raise SystemExit(
+            f"{path}: receipts array does not contain verify tx at index {VERIFY_RECEIPT_INDEX}"
+        )
     if len(data.get("transactions", [])) <= VERIFY_RECEIPT_INDEX:
-        raise SystemExit(f"{path}: transactions array does not contain verify tx at index {VERIFY_RECEIPT_INDEX}")
+        raise SystemExit(
+            f"{path}: transactions array does not contain verify tx at index {VERIFY_RECEIPT_INDEX}"
+        )
 
     gas_used = int(data["receipts"][VERIFY_RECEIPT_INDEX]["gasUsed"], 16)
     tx = data["transactions"][VERIFY_RECEIPT_INDEX]

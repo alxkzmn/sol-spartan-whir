@@ -210,25 +210,25 @@
     "verify_pow_bits_24",
     "verify_pow_bits_8"
   ],
-  "gas_source": "quintic_microbench.log",
-  "method": "ordinal verifier score checked against native verifier ordering",
-  "phase_source": "quintic_calibration.log",
+  "gas_source": "quintic_microbench_optimized_offline.log",
+  "method": "quintic Pareto score calibrated to optimized native quintic tx gas; legacy quartic/octic references retained as diagnostics",
+  "phase_source": "quintic_calibration_phase_offline.log",
   "reference_schedule_source": "testdata/calibration_reference_schedules.json",
   "references": [
     {
       "bucket_score_ratios": {
         "calldata": 1.0,
         "folding": 2.1659434910991675,
-        "merkle": 1.1211762287129576,
-        "sumcheck": 0.9866979623715493,
-        "transcript": 1.0971044187574903
+        "merkle": 1.1107443802304289,
+        "sumcheck": 0.9867879238925532,
+        "transcript": 1.0971198824757413
       },
       "bucket_scores": {
         "calldata": 753800,
         "folding": 6077945,
-        "merkle": 4657162,
-        "sumcheck": 241296,
-        "transcript": 141894
+        "merkle": 4613830,
+        "sumcheck": 241318,
+        "transcript": 141896
       },
       "fixture": "octic_whir_k22_jb100_lir6_ff4_rsv1_success",
       "label": "WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1",
@@ -237,7 +237,7 @@
         "folding": 5607000,
         "merkle": 1585944,
         "sumcheck": 160292,
-        "transcript": 136626
+        "transcript": 136627
       },
       "measured_buckets": {
         "calldata": 753800,
@@ -275,6 +275,7 @@
         "sample_stir_queries_bits_24",
         "verify_pow_bits_24"
       ],
+      "ordinal_gate_participant": true,
       "phase_breakdown_available": true,
       "phase_sum": 7333844,
       "reference": "octic_k22_jb100_lir6_ff4_rsv1",
@@ -444,7 +445,7 @@
       },
       "tx_artifact": "broadcast/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol/31337/run-latest.json",
       "tx_execution_remainder": 7320304,
-      "verifier_score": 11872097
+      "verifier_score": 11828789
     },
     {
       "bucket_score_ratios": {
@@ -456,16 +457,16 @@
       },
       "bucket_scores": {
         "calldata": 124396,
-        "folding": 772282,
-        "merkle": 461617,
+        "folding": 601643,
+        "merkle": 439955,
         "sumcheck": 75296,
-        "transcript": 75317
+        "transcript": 75318
       },
       "fixture": "quartic_whir_lir11_ff5_rsv3_success",
       "label": "WhirBlobVerifierNative4_lir11_ff5_rsv3",
       "largest_weighted_terms": {
         "calldata": 122832,
-        "folding": 661542,
+        "folding": 490903,
         "merkle": 179920,
         "sumcheck": 39504,
         "transcript": 71160
@@ -499,6 +500,7 @@
         "sample_stir_queries_bits_24",
         "verify_pow_bits_24"
       ],
+      "ordinal_gate_participant": true,
       "phase_breakdown_available": false,
       "phase_sum": 0,
       "reference": "quartic_lir11_ff5_rsv3",
@@ -606,28 +608,28 @@
       },
       "tx_artifact": "broadcast/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol/31337/run-latest.json",
       "tx_execution_remainder": 824298,
-      "verifier_score": 1508908
+      "verifier_score": 1316608
     },
     {
       "bucket_score_ratios": {
         "calldata": 1.0,
-        "folding": 7.114603936832975,
-        "merkle": 1.0402390118346099,
+        "folding": 5.431856403964334,
+        "merkle": 0.9784898270532134,
         "sumcheck": 1.0125737954035046,
-        "transcript": 0.5231080230474991
+        "transcript": 0.5231201278264659
       },
       "bucket_scores": {
         "calldata": 159640,
-        "folding": 1345272,
-        "merkle": 466387,
+        "folding": 1027088,
+        "merkle": 438702,
         "sumcheck": 75296,
-        "transcript": 43215
+        "transcript": 43216
       },
       "fixture": "quartic_whir_lir6_ff5_rsv1_success",
       "label": "WhirBlobVerifierNative4_lir6_ff5_rsv1",
       "largest_weighted_terms": {
         "calldata": 158048,
-        "folding": 1233552,
+        "folding": 915368,
         "merkle": 122814,
         "sumcheck": 39504,
         "transcript": 38246
@@ -669,6 +671,7 @@
         "sample_stir_queries_bits_24",
         "verify_pow_bits_24"
       ],
+      "ordinal_gate_participant": true,
       "phase_breakdown_available": true,
       "phase_sum": 794405,
       "reference": "quartic_lir6_ff5_rsv1",
@@ -807,7 +810,251 @@
       },
       "tx_artifact": "broadcast/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol/31337/run-latest.json",
       "tx_execution_remainder": 794562,
-      "verifier_score": 2089810
+      "verifier_score": 1743942
+    },
+    {
+      "bucket_score_ratios": {
+        "calldata": 1.0
+      },
+      "bucket_scores": {
+        "calldata": 942260,
+        "folding": 4824118,
+        "merkle": 3443499,
+        "sumcheck": 126742,
+        "transcript": 93160
+      },
+      "fixture": "quintic_whir_k22_jb100_ext5_lir4_ff4_rsv4",
+      "label": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv4",
+      "largest_weighted_terms": {
+        "calldata": 935472,
+        "folding": 4112328,
+        "merkle": 912171,
+        "sumcheck": 69828,
+        "transcript": 87891
+      },
+      "measured_buckets": {
+        "calldata": 942260
+      },
+      "measured_native_execution_gas": 7587919,
+      "measured_total_tx_gas": 8551179,
+      "measured_transcript_subphase": null,
+      "metrics_used": [
+        "base_to_ext5_hypercube_dim4",
+        "ext5_eq_poly_step",
+        "ext5_extrapolate_012",
+        "ext5_hypercube_dim4",
+        "ext5_validate_packed",
+        "hash_leaf_base_row_len_16",
+        "hash_leaf_ext5_row_len_1",
+        "hash_leaf_ext5_row_len_16",
+        "merkle_compress_node",
+        "observe_base_batch_1",
+        "observe_base_batch_16",
+        "observe_ext5_batch_1",
+        "observe_ext5_batch_16",
+        "observe_hash_u64_batch_1",
+        "observe_hash_u64_batch_16",
+        "sample_stir_queries_bits_16",
+        "sample_stir_queries_bits_24",
+        "verify_pow_bits_24"
+      ],
+      "ordinal_gate_participant": false,
+      "ordinal_gate_skip_reason": "optimized ext5 native reference calibrates quintic score scale; cross-degree ordinal ordering is not a quintic Pareto requirement",
+      "phase_breakdown_available": false,
+      "phase_sum": 0,
+      "reference": "quintic_constant_pow27_ff4_lir4_rsv4",
+      "reference_counts": {
+        "commitment_ood_samples": 1,
+        "encoding_counts": {
+          "abi_uint256_slots": 3464,
+          "abi_zero_padding_bytes": 16116,
+          "base_elements": 624,
+          "ext5_elements": 1343,
+          "merkle_hashes": 1497,
+          "native_blob_nonzero_bytes": 58467,
+          "native_blob_zero_bytes": 1697,
+          "transcript_base_elements": 1,
+          "transcript_ext5_elements": 111,
+          "transcript_hashes": 4
+        },
+        "eq_poly_count": 120,
+        "eq_poly_depth_counts": [
+          {
+            "count": 16,
+            "depth": 6
+          },
+          {
+            "count": 23,
+            "depth": 10
+          },
+          {
+            "count": 40,
+            "depth": 14
+          },
+          {
+            "count": 40,
+            "depth": 18
+          },
+          {
+            "count": 1,
+            "depth": 22
+          }
+        ],
+        "extension_degree": 5,
+        "extrapolate_count": 22,
+        "field_bits": 155,
+        "final_folding_pow_bits": 0,
+        "final_pow_bits": 22,
+        "final_round": {
+          "depth": 16,
+          "domain_size": 1048576,
+          "folding_factor": 4,
+          "folding_pow_bits": 0,
+          "log_inv_rate": 10,
+          "merkle_geometry": {
+            "compressions": 191,
+            "decommitments": 176,
+            "dedup_events": 0,
+            "depth": 16,
+            "frontier_init_nodes": 16,
+            "in_frontier_merges": 15,
+            "query_count": 16,
+            "seed": 2807555517907745716
+          },
+          "next_log_inv_rate": null,
+          "num_queries_requested": 16,
+          "num_queries_sampled": 16,
+          "num_variables": 6,
+          "ood_samples": 0,
+          "phase": "final",
+          "pow_bits": 22,
+          "round_index": null,
+          "row_kind": "ext5",
+          "row_len": 16
+        },
+        "final_sumcheck_rounds": 6,
+        "folding_schedule": {
+          "first_round": 4,
+          "rest": 4,
+          "variant": "Constant"
+        },
+        "inverse_count": 0,
+        "label": "constant_pow27_ff4_lir4_rsv4",
+        "max_derived_pow_bits": 27,
+        "merkle_security_bits_achieved": 160,
+        "not_selectable_reason": null,
+        "packing_validation_count": 1343,
+        "pow_bits_schedule": [27, 25, 19, 25, 21, 25, 24, 22],
+        "pow_work_units": 258473984,
+        "rejection_reason": "achieved security 100.247 below requested 101",
+        "requested_pow_bits": 27,
+        "rounds": [
+          {
+            "depth": 22,
+            "domain_size": 67108864,
+            "folding_factor": 4,
+            "folding_pow_bits": 19,
+            "log_inv_rate": 4,
+            "merkle_geometry": {
+              "compressions": 656,
+              "decommitments": 618,
+              "dedup_events": 0,
+              "depth": 22,
+              "frontier_init_nodes": 39,
+              "in_frontier_merges": 38,
+              "query_count": 39,
+              "seed": 15723253156095153172
+            },
+            "next_log_inv_rate": 4,
+            "num_queries_requested": 39,
+            "num_queries_sampled": 39,
+            "num_variables": 18,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 25,
+            "round_index": 0,
+            "row_kind": "base",
+            "row_len": 16
+          },
+          {
+            "depth": 18,
+            "domain_size": 4194304,
+            "folding_factor": 4,
+            "folding_pow_bits": 21,
+            "log_inv_rate": 4,
+            "merkle_geometry": {
+              "compressions": 473,
+              "decommitments": 435,
+              "dedup_events": 0,
+              "depth": 18,
+              "frontier_init_nodes": 39,
+              "in_frontier_merges": 38,
+              "query_count": 39,
+              "seed": 4901506811129404981
+            },
+            "next_log_inv_rate": 7,
+            "num_queries_requested": 39,
+            "num_queries_sampled": 39,
+            "num_variables": 14,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 25,
+            "round_index": 1,
+            "row_kind": "ext5",
+            "row_len": 16
+          },
+          {
+            "depth": 17,
+            "domain_size": 2097152,
+            "folding_factor": 4,
+            "folding_pow_bits": 24,
+            "log_inv_rate": 7,
+            "merkle_geometry": {
+              "compressions": 285,
+              "decommitments": 264,
+              "dedup_events": 0,
+              "depth": 17,
+              "frontier_init_nodes": 22,
+              "in_frontier_merges": 21,
+              "query_count": 22,
+              "seed": 12526504539873208406
+            },
+            "next_log_inv_rate": 10,
+            "num_queries_requested": 22,
+            "num_queries_sampled": 22,
+            "num_variables": 10,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 25,
+            "round_index": 2,
+            "row_kind": "ext5",
+            "row_len": 16
+          }
+        ],
+        "rs_domain_initial_reduction_factor": 4,
+        "security_bits_achieved": 100.24650333578847,
+        "selectable": true,
+        "starting_folding_pow_bits": 27,
+        "starting_log_inv_rate": 4,
+        "structural_score": 5309,
+        "target_evaluation": {
+          "passes_merkle_security": true,
+          "passes_pow": true,
+          "passes_security": true,
+          "passes_target_thresholds": true,
+          "target_eligible": true,
+          "target_max_derived_pow_bits": 30,
+          "target_merkle_security_bits": 80,
+          "target_security_bits": 100.0
+        },
+        "total_query_rows": 116,
+        "total_row_values": 1856,
+        "transcript_elements": 239,
+        "valid": false
+      },
+      "tx_artifact": "broadcast/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol/31337/run-latest.json",
+      "tx_execution_remainder": 7587919,
+      "verifier_score": 9429779
     }
   ],
   "schema_version": 1,

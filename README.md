@@ -44,6 +44,53 @@ The quintic verifier uses `QuinticTrinomialExtensionField<KoalaBear>` with `X^5 
 
 The search targets `num_variables = 22`, `security_bits_achieved >= 100`, `merkle_security_bits_achieved >= 80`, and `max_derived_pow_bits <= 30`. The Rust dump derives with `security_level_bits = 101` as a guard and filters rows against the actual 100-bit target through each row's `target_evaluation` block.
 
+#### Selected build target
+
+The current quintic Solidity build target is `k22_jb100_ext5_lir4_ff4_rsv4`:
+
+| Item                               |            Value |
+| ---------------------------------- | ---------------: |
+| folding schedule                   |    `Constant(4)` |
+| requested PoW bits                 |             `27` |
+| starting log inverse rate          |              `4` |
+| RS domain initial reduction factor |              `4` |
+| achieved security bits             |       `100.2465` |
+| achieved Merkle security bits      |            `160` |
+| measured prover time               | `133.516761291s` |
+| native blob transaction gas        |      `8,551,179` |
+| native blob execution gas          |      `7,587,919` |
+| native blob calldata bytes         |         `60,164` |
+
+The execution gas figure is the transaction gas with the `21,000` base cost
+and the calldata cost subtracted, so it reflects only the code that runs
+inside the verifier contract.
+
+Generated fixture prefix:
+
+```text
+quintic_whir_k22_jb100_ext5_lir4_ff4_rsv4
+```
+
+Generated fixed config:
+
+```text
+src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv4.sol
+```
+
+Release-mode fixture export:
+
+```sh
+cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml \
+  --bin export-fixtures-quintic-k22-jb100-ext5-lir4-ff4-rsv4 -- testdata
+```
+
+Native transaction benchmark script:
+
+```sh
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh \
+  script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol
+```
+
 #### How
 
 The scorer reads three inputs:
@@ -52,7 +99,7 @@ The scorer reads three inputs:
 - Solidity `BENCH:{...}` gas microbenchmark lines under solc `0.8.28`, `via_ir = true`, optimizer runs `833`.
 - Rust prover measurements: PoW calibrated through `TraceChallenger::grind` and full 22-variable commit+prove timings for selected candidates.
 
-`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier score is ordinal and unitless: lower is better. The ordinal check uses existing standard-EVM native blob verifiers:
+`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow27_ff4_lir4_rsv4`, with raw score `9,429,779`, measured native transaction gas `8,551,179`, and scale factor `0.9068270847068632`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
 
 - `WhirBlobVerifierNative4_lir6_ff5_rsv1` on the checked-in `lir6_ff5_rsv1` fixture.
 - `WhirBlobVerifierNative4_lir11_ff5_rsv3` on the checked-in `lir11_ff5_rsv3` fixture.
@@ -60,14 +107,16 @@ The scorer reads three inputs:
 
 The scorer also reports per-bucket score/measured ratios in `schedule_scores.json`. Those ratios explain a candidate's rank: a bucket whose ratio is far from 1.0 is the one driving its score. `quartic_lir11_ff5_rsv3` contributes total transaction gas only; its phase breakdown does not compile cleanly under `via_ir`, so it is excluded from per-bucket validation. The `lir6` transcript bucket currently includes setup and round commitment parsing, while the scorer charges transcript-observe work. The folding bucket is intentionally over-counted as a unit-cost sum; a real end-to-end per-round benchmark would replace it, but that benchmark isn't built yet.
 
+The quartic and octic references are retained as diagnostic comparisons for the microbenchmark suite. They no longer scale the quintic Pareto axis.
+
 `ConstantFromSecondRound` is included because it changes the round shape and can reduce verifier work without changing the target security.
 
 Prover work is ranked with measured full 22-variable commit+prove timings when available. `estimated_prover_time_score` fills in unmeasured candidates on the plots. Auxiliary `pow24`, `pow25`, and `pow26` schedule dumps attach previously-collected PoW timings to the prover estimator so it can score candidates whose PoW bits fall outside the current calibration sweep.
 
 The default SVGs are:
 
-- `pareto_verifier_vs_prover.svg`: ordinal verifier score against measured-or-estimated prover seconds.
-- `pareto_verifier_vs_measured_prover.svg`: ordinal verifier score against measured prover seconds.
+- `pareto_verifier_vs_prover.svg`: quintic-calibrated verifier score against measured-or-estimated prover seconds.
+- `pareto_verifier_vs_measured_prover.svg`: quintic-calibrated verifier score against measured prover seconds.
 
 The SVGs use distinct markers for `ConstantFromSecondRound` candidates because they use a different WHIR schedule shape.
 
@@ -78,16 +127,17 @@ Real prover timings are release builds with `RUSTFLAGS="-C target-cpu=native"`. 
 ```sh
 cargo run --manifest-path ../spartan-whir-export/Cargo.toml --bin dump_quintic_schedule_microbench -- testdata/quintic_schedule_microbench_dump.json
 cargo run --manifest-path ../spartan-whir-export/Cargo.toml --bin dump_calibration_references > testdata/calibration_reference_schedules.json
-forge test --match-path test/QuinticMicroBenchmarks.t.sol -vv > <forge-microbench-log>
+forge test --match-path test/QuinticMicroBenchmarks.t.sol -vv --offline > <forge-microbench-log>
 RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin bench_quintic_pow_calibration -- --min-bits 20 --max-bits 22 --samples-per-bit 5 testdata/quintic_pow_calibration.json
 RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin bench_quintic_prover_micro -- --max-candidates <N> --repetitions 3 testdata/quintic_prover_microbench.json
 RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin profile_quintic_prover -- <candidate-label>
 RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml --bin profile_quintic_pow -- <candidate-label> --max-bits <N>
-forge test --match-path test/GasCalibration_native_compare.t.sol -vv > <forge-calibration-log>
+forge test --match-path test/GasCalibration_native_compare.t.sol -vv --offline > <forge-calibration-log>
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol
-python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --out testdata/quintic_calibration.json
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol
+python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --quintic-schedule testdata/quintic_schedule_microbench_dump.json --out testdata/quintic_calibration.json
 python3 quintic_schedule_scorer.py \
   --schedule testdata/quintic_schedule_microbench_dump.json \
   --prover-calibration-schedule testdata/quintic_schedule_microbench_pow24.json \

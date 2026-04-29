@@ -343,6 +343,28 @@ library MerkleVerifier {
         return _computeRootFromLeafHashes(indices, leafHashes, depth, decommitments, 20);
     }
 
+    function computeRootFromFlatExtension5Rows20(
+        uint256[] memory indices,
+        uint256[] calldata flatValues,
+        uint256 rowLen,
+        uint256 depth,
+        bytes32[] calldata decommitments
+    ) internal pure returns (bytes32) {
+        uint256 expected = indices.length * rowLen;
+        if (flatValues.length != expected) {
+            revert FlattenedRowLengthMismatch(flatValues.length, expected);
+        }
+
+        bytes32[] memory leafHashes = new bytes32[](indices.length);
+        unchecked {
+            for (uint256 i = 0; i < indices.length; ++i) {
+                leafHashes[i] = hashLeafExtension5Slice20(flatValues, i * rowLen, rowLen);
+            }
+        }
+
+        return _computeRootFromLeafHashes(indices, leafHashes, depth, decommitments, 20);
+    }
+
     function computeRootFromFlatBaseRows20Blob(
         uint256[] memory indices,
         bytes calldata blob,

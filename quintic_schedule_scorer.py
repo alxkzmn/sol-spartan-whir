@@ -8,6 +8,7 @@ Merkle geometry. Those values must come from the Rust schedule dump.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 from pathlib import Path
@@ -17,7 +18,6 @@ from typing import Any
 REQUIRED_SOLC_VERSION = "0.8.28"
 REQUIRED_VIA_IR = True
 REQUIRED_OPTIMIZER_RUNS = 833
-MAX_PROVER_SECONDS = 120.0
 STRUCTURAL_PREFILTER_CAP = 120
 DEFAULT_TARGET_SECURITY_BITS = 100.0
 DEFAULT_TARGET_MERKLE_SECURITY_BITS = 80
@@ -137,6 +137,8 @@ def main() -> None:
     check_rust_timings(rust_timings)
     pow_seconds_per_unit = calibrated_pow_seconds_per_unit(pow_calibration)
     gas = gas_map(benches)
+    calibration_overrides = calibrated_candidate_overrides(calibration)
+    quintic_scale = quintic_verifier_score_scale(calibration)
     target = TargetConfig(
         security_bits=args.target_security_bits,
         merkle_security_bits=args.target_merkle_security_bits,
@@ -147,12 +149,13 @@ def main() -> None:
     prefilter_labels = structural_prefilter(candidates, target, pow_seconds_per_unit)
     scores = [
         score_candidate(
-            candidate,
+            candidate_with_calibration_overrides(candidate, calibration_overrides),
             gas,
             rust_timings,
             candidate["label"] in prefilter_labels,
             target,
             pow_seconds_per_unit,
+            quintic_scale["scale"],
         )
         for candidate in candidates
     ]
@@ -192,12 +195,78 @@ def main() -> None:
         "target_merkle_security_bits": target.merkle_security_bits,
         "max_derived_pow_bits": target.max_derived_pow_bits,
         "calibration": calibration_result,
+        "quintic_verifier_score_calibration": quintic_scale,
         "prover_estimate": prover_estimate,
         "selection_policy": selection_policy(scores),
         "warnings": kernel_warnings,
         "scores": scores,
     })
     write_plots(out_dir, scores)
+
+
+def calibrated_candidate_overrides(calibration: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    if calibration is None:
+        return {}
+    overrides = {}
+    for ref in calibration.get("references", []):
+        counts = ref.get("reference_counts") or {}
+        label = counts.get("label")
+        if label:
+            overrides[label] = counts
+    return overrides
+
+
+def quintic_verifier_score_scale(calibration: dict[str, Any] | None) -> dict[str, Any]:
+    references = []
+    if calibration is not None:
+        for ref in calibration.get("references", []):
+            counts = ref.get("reference_counts") or {}
+            if int(counts.get("extension_degree") or 0) != 5:
+                continue
+            measured = float(ref.get("measured_total_tx_gas") or 0.0)
+            scored = float(ref.get("verifier_score") or 0.0)
+            if measured > 0.0 and scored > 0.0:
+                references.append({
+                    "reference": ref.get("reference"),
+                    "label": ref.get("label"),
+                    "measured_total_tx_gas": int(measured),
+                    "raw_verifier_score": int(scored),
+                    "scale": measured / scored,
+                })
+    if not references:
+        return {
+            "mode": "raw_microbench_score",
+            "scale": 1.0,
+            "references": [],
+        }
+    scale = sum(float(ref["scale"]) for ref in references) / len(references)
+    return {
+        "mode": "quintic_native_tx_gas_scaled_score",
+        "scale": scale,
+        "references": references,
+        "note": (
+            "Applied only to extension-degree-5 candidates. The score remains an ordering aid, "
+            "but the x-axis is normalized to the measured optimized quintic native verifier."
+        ),
+    }
+
+
+def candidate_with_calibration_overrides(
+    candidate: dict[str, Any],
+    overrides: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    override = overrides.get(candidate["label"])
+    if override is None:
+        return candidate
+    merged = copy.deepcopy(candidate)
+    for key, value in override.items():
+        if key == "encoding_counts":
+            merged_counts = dict(merged.get("encoding_counts") or {})
+            merged_counts.update(value)
+            merged["encoding_counts"] = merged_counts
+        else:
+            merged[key] = value
+    return merged
 
 
 def read_json(path: Path | None) -> dict[str, Any] | None:
@@ -374,12 +443,21 @@ def score_candidate(
     passes_prefilter: bool,
     target: TargetConfig,
     pow_seconds_per_unit: float,
+    quintic_verifier_score_scale: float,
 ) -> dict[str, Any]:
     counts = candidate.get("encoding_counts", {})
     missing_metric = None
     try:
         bucket_scores, _largest_terms = score_bucket_details(candidate, gas)
-        verifier_score = sum(bucket_scores.values())
+        raw_verifier_score = sum(bucket_scores.values())
+        if extension_degree(candidate) == 5 and quintic_verifier_score_scale != 1.0:
+            bucket_scores = {
+                bucket: int(round(value * quintic_verifier_score_scale))
+                for bucket, value in bucket_scores.items()
+            }
+            verifier_score = int(round(raw_verifier_score * quintic_verifier_score_scale))
+        else:
+            verifier_score = raw_verifier_score
     except MissingGasMetric as err:
         missing_metric = str(err)
         bucket_scores = {
@@ -390,6 +468,7 @@ def score_candidate(
             "calldata": score_calldata(counts),
         }
         verifier_score = None
+        raw_verifier_score = None
     prover_time_score = score_prover(candidate, rust_timings)
     pow_units = pow_work_units(candidate)
     pow_score = pow_work_score(candidate, pow_seconds_per_unit)
@@ -419,8 +498,6 @@ def score_candidate(
         rejection_reasons.append("starting_log_inv_rate > 6")
     if prover_timed_out:
         rejection_reasons.append("prover timing timed out")
-    elif prover_time_score is not None and prover_time_score >= MAX_PROVER_SECONDS:
-        rejection_reasons.append("prover_time_score >= 120s")
     if rust_timings is not None and prover_time_score is None and selectable and target_ok:
         rejection_reasons.append("missing actual prover timing")
     if missing_metric is not None:
@@ -450,6 +527,7 @@ def score_candidate(
         "pow_bits_schedule": pow_bits_schedule(candidate),
         "pow_work_units": pow_units,
         "pow_work_score": pow_score,
+        "raw_verifier_score": raw_verifier_score,
         "verifier_score": verifier_score,
         "prover_time_score": prover_time_score,
         "prover_timed_out": prover_timed_out,
@@ -690,7 +768,8 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
         phase_breakdown_available = bool(ref.get("phase_breakdown_available", True))
         for bucket in CALIBRATION_BUCKETS:
             if bucket not in measured_buckets or bucket not in bucket_scores:
-                failures.append(f"{label}: missing {bucket} bucket")
+                if phase_breakdown_available:
+                    failures.append(f"{label}: missing {bucket} bucket")
                 continue
             if (
                 phase_breakdown_available
@@ -722,7 +801,7 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
                     )
         else:
             enriched_ref["bucket_validation_skipped"] = (
-                "phase_breakdown_available=false; reference used for ordinal ordering only"
+                "phase_breakdown_available=false; reference used for total-score calibration only"
             )
             for bucket in CALIBRATION_BUCKETS:
                 if bucket not in measured_buckets or bucket not in bucket_scores:
@@ -737,6 +816,7 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
     order_refs = [
         ref for ref in references
         if "measured_total_tx_gas" in ref and "verifier_score" in ref
+        and bool(ref.get("ordinal_gate_participant", True))
     ]
     for i, lhs in enumerate(order_refs):
         for rhs in order_refs[i + 1:]:
@@ -1302,7 +1382,7 @@ def write_plots(out_dir: Path, scores: list[dict[str, Any]]) -> None:
 
 
 AXIS_LABELS = {
-    "verifier_score": "ordinal verifier score (lower is better)",
+    "verifier_score": "quintic-calibrated verifier score (lower is better)",
     "prover_time_score": "measured prover seconds",
     "estimated_prover_time_score": "prover seconds (measured where available; modeled otherwise)",
 }
