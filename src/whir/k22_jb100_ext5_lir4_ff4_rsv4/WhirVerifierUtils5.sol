@@ -116,18 +116,161 @@ library WhirVerifierUtils5 {
         }
     }
 
-    function _loadWeight(uint256 weightsPtr, uint256 offset) private pure returns (uint256 weight) {
-        assembly ("memory-safe") {
-            weight := mload(add(weightsPtr, offset))
-        }
-    }
-
-    function _mulWeightBase(uint256 weightsPtr, uint256 offset, uint256 scalar)
+    function _dotBaseRowWeights16Packed(uint256 weightsPtr, uint256 w0, uint256 w1)
         private
         pure
-        returns (uint256)
+        returns (uint256 out)
     {
-        return KoalaBearExt5.mulBase(_loadWeight(weightsPtr, offset), scalar);
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
+            function accumulate(scalar, weight, c0, c1, c2, c3, c4) -> d0, d1, d2, d3, d4 {
+                d0 := add(c0, mul(scalar, shr(224, weight)))
+                d1 := add(c1, mul(scalar, and(shr(192, weight), 0xffffffff)))
+                d2 := add(c2, mul(scalar, and(shr(160, weight), 0xffffffff)))
+                d3 := add(c3, mul(scalar, and(shr(128, weight), 0xffffffff)))
+                d4 := add(c4, mul(scalar, and(shr(96, weight), 0xffffffff)))
+            }
+
+            let c0 := 0
+            let c1 := 0
+            let c2 := 0
+            let c3 := 0
+            let c4 := 0
+
+            c0, c1, c2, c3, c4 := accumulate(shr(224, w0), mload(weightsPtr), c0, c1, c2, c3, c4)
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(192, w0), mask),
+                mload(add(weightsPtr, 0x020)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(160, w0), mask),
+                mload(add(weightsPtr, 0x040)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(128, w0), mask),
+                mload(add(weightsPtr, 0x060)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(96, w0), mask),
+                mload(add(weightsPtr, 0x080)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(64, w0), mask),
+                mload(add(weightsPtr, 0x0a0)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(32, w0), mask),
+                mload(add(weightsPtr, 0x0c0)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(and(w0, mask), mload(add(weightsPtr, 0x0e0)), c0, c1, c2, c3, c4)
+            c0, c1, c2, c3, c4 :=
+                accumulate(shr(224, w1), mload(add(weightsPtr, 0x100)), c0, c1, c2, c3, c4)
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(192, w1), mask),
+                mload(add(weightsPtr, 0x120)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(160, w1), mask),
+                mload(add(weightsPtr, 0x140)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(128, w1), mask),
+                mload(add(weightsPtr, 0x160)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(96, w1), mask),
+                mload(add(weightsPtr, 0x180)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(64, w1), mask),
+                mload(add(weightsPtr, 0x1a0)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(
+                and(shr(32, w1), mask),
+                mload(add(weightsPtr, 0x1c0)),
+                c0,
+                c1,
+                c2,
+                c3,
+                c4
+            )
+            c0, c1, c2, c3, c4 :=
+                accumulate(and(w1, mask), mload(add(weightsPtr, 0x1e0)), c0, c1, c2, c3, c4)
+
+            out := or(
+                or(or(shl(224, mod(c0, M)), shl(192, mod(c1, M))), shl(160, mod(c2, M))),
+                or(shl(128, mod(c3, M)), shl(96, mod(c4, M)))
+            )
+        }
     }
 
     function validateBase(uint256 value) internal pure {
@@ -1502,35 +1645,7 @@ library WhirVerifierUtils5 {
             digest := and(keccak256(ptr, 65), not(sub(shl(96, 1), 1)))
         }
 
-        uint256 mask = 0xffffffff;
-        evalValue = _mulWeightBase(weightsPtr, 0x000, w0 >> 224);
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x020, (w0 >> 192) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x040, (w0 >> 160) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x060, (w0 >> 128) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x080, (w0 >> 96) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0a0, (w0 >> 64) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0c0, (w0 >> 32) & mask));
-        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0e0, w0 & mask));
-        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x100, w1 >> 224));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x120, (w1 >> 192) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x140, (w1 >> 160) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x160, (w1 >> 128) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x180, (w1 >> 96) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1a0, (w1 >> 64) & mask));
-        evalValue =
-            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1c0, (w1 >> 32) & mask));
-        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1e0, w1 & mask));
+        evalValue = _dotBaseRowWeights16Packed(weightsPtr, w0, w1);
     }
 
     function _evaluateExtensionRowDim4BlobWindow(
