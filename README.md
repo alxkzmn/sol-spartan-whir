@@ -44,51 +44,58 @@ The quintic verifier uses `QuinticTrinomialExtensionField<KoalaBear>` with `X^5 
 
 The search targets `num_variables = 22`, `security_bits_achieved >= 100`, `merkle_security_bits_achieved >= 80`, and `max_derived_pow_bits <= 30`. The Rust dump derives with `security_level_bits = 101` as a guard and filters rows against the actual 100-bit target through each row's `target_evaluation` block.
 
-#### Selected build target
+#### Current quintic verifier target
 
-The current quintic Solidity build target is `k22_jb100_ext5_lir4_ff4_rsv4`:
+The current build target is `k22_jb100_ext5_lir4_ff4_rsv3_pow28`:
 
 | Item                               |            Value |
 | ---------------------------------- | ---------------: |
 | folding schedule                   |    `Constant(4)` |
-| requested PoW bits                 |             `27` |
+| requested PoW bits                 |             `28` |
 | starting log inverse rate          |              `4` |
-| RS domain initial reduction factor |              `4` |
-| achieved security bits             |       `100.2465` |
+| RS domain initial reduction factor |              `3` |
+| achieved security bits             |       `100.0145` |
 | achieved Merkle security bits      |            `160` |
-| measured prover time               | `133.516761291s` |
-| native blob transaction gas        |      `8,551,179` |
-| native blob execution gas          |      `7,587,919` |
-| native blob calldata bytes         |         `60,164` |
+| measured prover time               | `274.163664792s` |
+| native blob Foundry gas            |      `5,903,484` |
+| native blob transaction gas        |      `6,022,631` |
+| native blob execution gas          |      `5,145,295` |
+| native blob calldata bytes         |         `54,436` |
 
-The execution gas figure is the transaction gas with the `21,000` base cost
-and the calldata cost subtracted, so it reflects only the code that runs
-inside the verifier contract.
+The transaction gas rows are from the latest Anvil transaction benchmark for
+this target. The execution gas figure is the transaction gas with the `21,000`
+base cost and the calldata cost subtracted, so it reflects only the code that
+runs inside the verifier contract.
+
+The previous quintic build target, `k22_jb100_ext5_lir4_ff4_rsv4`, is still
+checked in for comparison. It uses `pow_bits = 27`,
+`rs_domain_initial_reduction_factor = 4`, measured `133.516761291s` prover
+time, and measured `8,551,179` native blob transaction gas.
 
 Generated fixture prefix:
 
 ```text
-quintic_whir_k22_jb100_ext5_lir4_ff4_rsv4
+quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28
 ```
 
 Generated fixed config:
 
 ```text
-src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv4.sol
+src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
 ```
 
 Release-mode fixture export:
 
 ```sh
 cargo run --release --manifest-path ../spartan-whir-export/Cargo.toml \
-  --bin export-fixtures-quintic-k22-jb100-ext5-lir4-ff4-rsv4 -- testdata
+  --bin export_fixtures_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28 -- testdata
 ```
 
 Native transaction benchmark script:
 
 ```sh
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh \
-  script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol
+  script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol
 ```
 
 #### How
@@ -99,7 +106,7 @@ The scorer reads three inputs:
 - Solidity `BENCH:{...}` gas microbenchmark lines under solc `0.8.28`, `via_ir = true`, optimizer runs `833`.
 - Rust prover measurements: PoW calibrated through `TraceChallenger::grind` and full 22-variable commit+prove timings for selected candidates.
 
-`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow27_ff4_lir4_rsv4`, with raw score `9,429,779`, measured native transaction gas `8,551,179`, and scale factor `0.9068270847068632`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
+`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow28_ff4_lir4_rsv3`, with raw score `8,408,842`, measured native transaction gas `6,022,631`, and scale factor `0.7162259678562161`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
 
 - `WhirBlobVerifierNative4_lir6_ff5_rsv1` on the checked-in `lir6_ff5_rsv1` fixture.
 - `WhirBlobVerifierNative4_lir11_ff5_rsv3` on the checked-in `lir11_ff5_rsv3` fixture.
@@ -137,9 +144,10 @@ bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/W
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol
 bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol
-python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --quintic-schedule testdata/quintic_schedule_microbench_dump.json --out testdata/quintic_calibration.json
+bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol
+python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --quintic-schedule testdata/quintic_schedule_microbench_pow27_30_full.json --out testdata/quintic_calibration.json
 python3 quintic_schedule_scorer.py \
-  --schedule testdata/quintic_schedule_microbench_dump.json \
+  --schedule testdata/quintic_schedule_microbench_pow27_30_full.json \
   --prover-calibration-schedule testdata/quintic_schedule_microbench_pow24.json \
   --prover-calibration-schedule testdata/quintic_schedule_microbench_pow25.json \
   --prover-calibration-schedule testdata/quintic_schedule_microbench_pow26.json \

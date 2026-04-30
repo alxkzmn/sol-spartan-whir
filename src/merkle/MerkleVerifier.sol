@@ -450,6 +450,53 @@ library MerkleVerifier {
         );
     }
 
+    function computeRootFromFlatExtension5Rows20Blob(
+        uint256[] memory indices,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 rowLen,
+        uint256 depth,
+        uint256 decommOffset,
+        uint256 decommLen
+    ) internal pure returns (bytes32 root) {
+        if (indices.length == 0) {
+            revert EmptyIndices();
+        }
+
+        bytes memory frontier;
+        assembly ("memory-safe") {
+            let frontierLen := shl(6, mload(indices))
+            frontier := mload(0x40)
+            mstore(frontier, frontierLen)
+            mstore(0x40, add(add(frontier, 0x20), frontierLen))
+        }
+
+        unchecked {
+            uint256 prevIdx;
+            uint256 rowBytes = rowLen * 20;
+            for (uint256 i = 0; i < indices.length; ++i) {
+                uint256 idx = indices[i];
+                if (i != 0 && prevIdx >= idx) {
+                    revert IndicesNotStrictlyIncreasing(prevIdx, idx);
+                }
+                prevIdx = idx;
+
+                uint256 rowOffset = valuesOffset + i * rowBytes;
+                bytes32 hash = hashLeafExtension5Slice20Blob(blob, rowOffset, rowLen);
+
+                assembly ("memory-safe") {
+                    let dst := add(add(frontier, 0x20), shl(6, i))
+                    mstore(dst, idx)
+                    mstore(add(dst, 0x20), hash)
+                }
+            }
+        }
+
+        return _computeRootFromFrontier20Blob(
+            frontier, indices.length, depth, blob, decommOffset, decommLen
+        );
+    }
+
     function _computeRootFromLeafHashes(
         uint256[] memory indices,
         bytes32[] memory leafHashes,
@@ -1549,6 +1596,52 @@ library MerkleVerifier {
 
             calldatacopy(add(ptr, 1), src, shl(5, rowLen))
             digest := and(keccak256(ptr, size), not(sub(shl(96, 1), 1)))
+        }
+    }
+
+    function hashLeafExtension5Slice20Blob(bytes calldata blob, uint256 offset, uint256 rowLen)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        assembly ("memory-safe") {
+            let rowBytes := mul(rowLen, 20)
+            let size := add(1, rowBytes)
+            let ptr := mload(0x40)
+
+            mstore8(ptr, 0x00)
+
+            let modulus := KOALABEAR_MODULUS
+            let coeffMask := COEFF_MASK
+            let low96Mask := sub(shl(96, 1), 1)
+            let high160Mask := not(low96Mask)
+            let src := add(blob.offset, offset)
+            let check := src
+            let end := add(src, rowBytes)
+            for { } lt(check, end) {
+                check := add(check, 20)
+            } {
+                let packed := and(calldataload(check), high160Mask)
+                let c0 := shr(224, packed)
+                let c1 := and(shr(192, packed), coeffMask)
+                let c2 := and(shr(160, packed), coeffMask)
+                let c3 := and(shr(128, packed), coeffMask)
+                let c4 := and(shr(96, packed), coeffMask)
+                if or(
+                    or(
+                        or(iszero(lt(c0, modulus)), iszero(lt(c1, modulus))),
+                        or(iszero(lt(c2, modulus)), iszero(lt(c3, modulus)))
+                    ),
+                    iszero(lt(c4, modulus))
+                ) {
+                    mstore(0x00, 0xf512b67800000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            calldatacopy(add(ptr, 1), src, rowBytes)
+            digest := and(keccak256(ptr, size), not(low96Mask))
         }
     }
 

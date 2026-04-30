@@ -14,7 +14,6 @@ import math
 from pathlib import Path
 from typing import Any
 
-
 REQUIRED_SOLC_VERSION = "0.8.28"
 REQUIRED_VIA_IR = True
 REQUIRED_OPTIMIZER_RUNS = 833
@@ -75,7 +74,9 @@ class MetricTrackingGas(dict[str, int]):
 
 
 class TargetConfig:
-    def __init__(self, security_bits: float, merkle_security_bits: int, max_derived_pow_bits: int):
+    def __init__(
+        self, security_bits: float, merkle_security_bits: int, max_derived_pow_bits: int
+    ):
         self.security_bits = security_bits
         self.merkle_security_bits = merkle_security_bits
         self.max_derived_pow_bits = max_derived_pow_bits
@@ -84,7 +85,9 @@ class TargetConfig:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--schedule", required=True, help="Rust schedule dump JSON")
-    parser.add_argument("--gas", required=True, help="Forge output containing BENCH:{...} lines")
+    parser.add_argument(
+        "--gas", required=True, help="Forge output containing BENCH:{...} lines"
+    )
     parser.add_argument("--rust-timings", help="Optional Rust prover timing JSON")
     parser.add_argument(
         "--prover-calibration-schedule",
@@ -92,9 +95,13 @@ def main() -> None:
         default=[],
         help="Additional Rust schedule dump JSON used only to fit the prover-time estimator",
     )
-    parser.add_argument("--pow-calibration", required=True, help="Rust PoW calibration JSON")
+    parser.add_argument(
+        "--pow-calibration", required=True, help="Rust PoW calibration JSON"
+    )
     parser.add_argument("--calibration", help="Optional calibration gate JSON")
-    parser.add_argument("--out-dir", default=".", help="Directory for schedule_scores outputs")
+    parser.add_argument(
+        "--out-dir", default=".", help="Directory for schedule_scores outputs"
+    )
     parser.add_argument(
         "--target-security-bits",
         type=float,
@@ -118,6 +125,52 @@ def main() -> None:
         action="store_true",
         help="Fail unless the calibration JSON passes all gates",
     )
+    parser.add_argument(
+        "--plot-x-max-fraction",
+        type=float,
+        help="For Pareto SVGs, crop the x-axis to this fraction of the full data range",
+    )
+    parser.add_argument(
+        "--plot-y-max-fraction",
+        type=float,
+        help="For Pareto SVGs, crop the y-axis to this fraction of the full data range",
+    )
+    parser.add_argument(
+        "--plot-row-work-x-max-fraction",
+        type=float,
+        help="Override x-axis crop fraction for row-work Pareto SVGs",
+    )
+    parser.add_argument(
+        "--plot-row-work-y-max-fraction",
+        type=float,
+        help="Override y-axis crop fraction for row-work Pareto SVGs",
+    )
+    parser.add_argument(
+        "--plot-verifier-x-max-fraction",
+        type=float,
+        help="Override x-axis crop fraction for verifier-score Pareto SVGs",
+    )
+    parser.add_argument(
+        "--plot-verifier-y-max-fraction",
+        type=float,
+        help="Override y-axis crop fraction for verifier-score Pareto SVGs",
+    )
+    parser.add_argument(
+        "--plot-mixed-measured-axis-multiple",
+        type=float,
+        help="For mixed measured/modeled plots, crop both axes at this multiple of the measured-point maxima",
+    )
+    parser.add_argument(
+        "--plot-max-derived-pow-bits",
+        type=int,
+        help="Only include candidates whose max_derived_pow_bits is at or below this value in Pareto SVGs",
+    )
+    parser.add_argument(
+        "--implemented-label",
+        action="append",
+        default=[],
+        help="Candidate label to mark as already implemented in JSON, CSV, and Pareto SVGs",
+    )
     args = parser.parse_args()
 
     schedule = read_json(Path(args.schedule))
@@ -126,7 +179,9 @@ def main() -> None:
     prover_calibration_schedules = [
         read_json(Path(path)) for path in args.prover_calibration_schedule
     ]
-    pow_calibration = read_json(Path(args.pow_calibration)) if args.pow_calibration else None
+    pow_calibration = (
+        read_json(Path(args.pow_calibration)) if args.pow_calibration else None
+    )
     calibration = read_json(Path(args.calibration)) if args.calibration else None
 
     check_compiler_settings(benches)
@@ -174,37 +229,50 @@ def main() -> None:
         {score["label"] for score in scores},
     )
     prover_estimate = apply_prover_estimates(scores, extra_prover_scores)
+    mark_implemented_scores(scores, args.implemented_label)
 
     if args.require_calibration and not calibration_result["accepted"]:
         raise SystemExit(f"calibration gate failed: {calibration_result['reason']}")
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    write_json(out_dir / "schedule_scores.json", {
-        "schema_version": 1,
-        "schedule_source": display_path(Path(args.schedule)),
-        "prover_calibration_schedule_sources": [
-            display_path(Path(path)) for path in args.prover_calibration_schedule
-        ],
-        "gas_source": display_path(Path(args.gas)),
-        "pow_calibration_source": display_path(Path(args.pow_calibration))
-            if args.pow_calibration else None,
-        "pow_seconds_per_work_unit": pow_seconds_per_unit,
-        "derivation_security_bits_requested": schedule.get("security_level_bits_requested"),
-        "target_security_bits": target.security_bits,
-        "target_merkle_security_bits": target.merkle_security_bits,
-        "max_derived_pow_bits": target.max_derived_pow_bits,
-        "calibration": calibration_result,
-        "quintic_verifier_score_calibration": quintic_scale,
-        "prover_estimate": prover_estimate,
-        "selection_policy": selection_policy(scores),
-        "warnings": kernel_warnings,
-        "scores": scores,
-    })
-    write_plots(out_dir, scores)
+    write_json(
+        out_dir / "schedule_scores.json",
+        {
+            "schema_version": 1,
+            "schedule_source": display_path(Path(args.schedule)),
+            "prover_calibration_schedule_sources": [
+                display_path(Path(path)) for path in args.prover_calibration_schedule
+            ],
+            "gas_source": display_path(Path(args.gas)),
+            "pow_calibration_source": (
+                display_path(Path(args.pow_calibration))
+                if args.pow_calibration
+                else None
+            ),
+            "pow_seconds_per_work_unit": pow_seconds_per_unit,
+            "derivation_security_bits_requested": schedule.get(
+                "security_level_bits_requested"
+            ),
+            "target_security_bits": target.security_bits,
+            "target_merkle_security_bits": target.merkle_security_bits,
+            "max_derived_pow_bits": target.max_derived_pow_bits,
+            "calibration": calibration_result,
+            "quintic_verifier_score_calibration": quintic_scale,
+            "prover_estimate": prover_estimate,
+            "implemented_labels": args.implemented_label,
+            "plot_axis_limits": plot_axis_limits(args),
+            "selection_policy": selection_policy(scores),
+            "warnings": kernel_warnings,
+            "scores": scores,
+        },
+    )
+    write_plots(out_dir, scores, plot_axis_limits(args))
 
 
-def calibrated_candidate_overrides(calibration: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+def calibrated_candidate_overrides(
+    calibration: dict[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
     if calibration is None:
         return {}
     overrides = {}
@@ -226,13 +294,15 @@ def quintic_verifier_score_scale(calibration: dict[str, Any] | None) -> dict[str
             measured = float(ref.get("measured_total_tx_gas") or 0.0)
             scored = float(ref.get("verifier_score") or 0.0)
             if measured > 0.0 and scored > 0.0:
-                references.append({
-                    "reference": ref.get("reference"),
-                    "label": ref.get("label"),
-                    "measured_total_tx_gas": int(measured),
-                    "raw_verifier_score": int(scored),
-                    "scale": measured / scored,
-                })
+                references.append(
+                    {
+                        "reference": ref.get("reference"),
+                        "label": ref.get("label"),
+                        "measured_total_tx_gas": int(measured),
+                        "raw_verifier_score": int(scored),
+                        "scale": measured / scored,
+                    }
+                )
     if not references:
         return {
             "mode": "raw_microbench_score",
@@ -240,6 +310,7 @@ def quintic_verifier_score_scale(calibration: dict[str, Any] | None) -> dict[str
             "references": [],
         }
     scale = sum(float(ref["scale"]) for ref in references) / len(references)
+
     return {
         "mode": "quintic_native_tx_gas_scaled_score",
         "scale": scale,
@@ -315,7 +386,9 @@ def check_compiler_settings(rows: list[dict[str, Any]]) -> None:
     )
     expected = (REQUIRED_SOLC_VERSION, REQUIRED_VIA_IR, REQUIRED_OPTIMIZER_RUNS)
     if actual != expected:
-        raise SystemExit(f"compiler settings mismatch: got {actual}, expected {expected}")
+        raise SystemExit(
+            f"compiler settings mismatch: got {actual}, expected {expected}"
+        )
 
 
 def check_schedule_revision(schedule: dict[str, Any]) -> None:
@@ -325,12 +398,16 @@ def check_schedule_revision(schedule: dict[str, Any]) -> None:
         if candidate.get("whir_p3_revision")
     }
     if len(revisions) > 1:
-        raise SystemExit(f"mixed whir-p3 revisions in schedule rows: {sorted(revisions)}")
+        raise SystemExit(
+            f"mixed whir-p3 revisions in schedule rows: {sorted(revisions)}"
+        )
     if schedule.get("whir_p3_revision") in ("", None, "unknown"):
         raise SystemExit("schedule dump is missing whir_p3_revision")
 
 
-def check_calibration_revision(schedule: dict[str, Any], calibration: dict[str, Any] | None) -> None:
+def check_calibration_revision(
+    schedule: dict[str, Any], calibration: dict[str, Any] | None
+) -> None:
     if calibration is None:
         return
     schedule_revision = schedule.get("whir_p3_revision")
@@ -347,12 +424,27 @@ def check_rust_timings(rust_timings: dict[str, Any] | None) -> None:
     if rust_timings is None:
         return
     if rust_timings.get("measurement_kind") != "actual_whir_commit_prove":
-        raise SystemExit("rust timings must use measurement_kind=actual_whir_commit_prove")
+        raise SystemExit(
+            "rust timings must use measurement_kind=actual_whir_commit_prove"
+        )
     rows = rust_timings.get("by_label") or []
     if rows and rust_timings.get("build_profile") != "release":
-        raise SystemExit("rust timings with measured candidates must come from a release build")
+        raise SystemExit(
+            "rust timings with measured candidates must come from a release build"
+        )
     if rows and rust_timings.get("target_cpu_native") is not True:
-        raise SystemExit("rust timings with measured candidates must use target-cpu=native")
+        raise SystemExit(
+            "rust timings with measured candidates must use target-cpu=native"
+        )
+    for row in rows:
+        if row.get("build_profile") != "release":
+            raise SystemExit(
+                f"rust timing row {row.get('label')} must come from a release build"
+            )
+        if row.get("target_cpu_native") is not True:
+            raise SystemExit(
+                f"rust timing row {row.get('label')} must use target-cpu=native"
+            )
 
 
 def gas_map(rows: list[dict[str, Any]]) -> dict[str, int]:
@@ -369,14 +461,17 @@ def target_eligible(candidate: dict[str, Any], target: TargetConfig) -> bool:
     if (
         isinstance(target_eval, dict)
         and float(target_eval.get("target_security_bits", -1.0)) == target.security_bits
-        and int(target_eval.get("target_merkle_security_bits", -1)) == target.merkle_security_bits
-        and int(target_eval.get("target_max_derived_pow_bits", -1)) == target.max_derived_pow_bits
+        and int(target_eval.get("target_merkle_security_bits", -1))
+        == target.merkle_security_bits
+        and int(target_eval.get("target_max_derived_pow_bits", -1))
+        == target.max_derived_pow_bits
     ):
         return bool(target_eval.get("target_eligible"))
     return (
         bool(candidate.get("selectable"))
         and (candidate.get("security_bits_achieved") or 0) >= target.security_bits
-        and (candidate.get("merkle_security_bits_achieved") or 0) >= target.merkle_security_bits
+        and (candidate.get("merkle_security_bits_achieved") or 0)
+        >= target.merkle_security_bits
         and candidate.get("max_derived_pow_bits") is not None
         and int(candidate["max_derived_pow_bits"]) <= target.max_derived_pow_bits
     )
@@ -386,7 +481,9 @@ def calibrated_pow_seconds_per_unit(pow_calibration: dict[str, Any] | None) -> f
     if pow_calibration is None:
         return 1.0
     if pow_calibration.get("measurement_kind") != "quintic_pow_grind_calibration":
-        raise SystemExit("pow calibration must use measurement_kind=quintic_pow_grind_calibration")
+        raise SystemExit(
+            "pow calibration must use measurement_kind=quintic_pow_grind_calibration"
+        )
     if pow_calibration.get("build_profile") != "release":
         raise SystemExit("pow calibration must come from a release build")
     if pow_calibration.get("target_cpu_native") is not True:
@@ -403,7 +500,8 @@ def structural_prefilter(
     pow_seconds_per_unit: float,
 ) -> set[str]:
     selectable = [
-        c for c in candidates
+        c
+        for c in candidates
         if target_eligible(c, target) and c.get("structural_score") is not None
     ]
     if not selectable:
@@ -411,7 +509,8 @@ def structural_prefilter(
     best_structural = min(int(c["structural_score"]) for c in selectable)
     best_pow = min(pow_work_score(c, pow_seconds_per_unit) for c in selectable)
     kept = [
-        c for c in selectable
+        c
+        for c in selectable
         if int(c["structural_score"]) <= math.ceil(best_structural * 2.0)
         or pow_work_score(c, pow_seconds_per_unit) <= best_pow * 2.0
     ]
@@ -455,7 +554,9 @@ def score_candidate(
                 bucket: int(round(value * quintic_verifier_score_scale))
                 for bucket, value in bucket_scores.items()
             }
-            verifier_score = int(round(raw_verifier_score * quintic_verifier_score_scale))
+            verifier_score = int(
+                round(raw_verifier_score * quintic_verifier_score_scale)
+            )
         else:
             verifier_score = raw_verifier_score
     except MissingGasMetric as err:
@@ -475,30 +576,49 @@ def score_candidate(
     prover_timed_out = prover_timeout(candidate, rust_timings)
     max_pow = candidate.get("max_derived_pow_bits")
     selectable = bool(candidate.get("selectable"))
-    has_derived_config = candidate.get("security_bits_achieved") is not None and max_pow is not None
+    has_derived_config = (
+        candidate.get("security_bits_achieved") is not None and max_pow is not None
+    )
     target_ok = target_eligible(candidate, target)
+    total_query_rows = candidate.get("total_query_rows")
+    total_row_values = candidate.get("total_row_values")
+    row_work_score = None
+    if total_query_rows is not None and total_row_values is not None:
+        row_work_score = int(total_query_rows) * int(total_row_values)
 
     rejection_reasons = []
     if not has_derived_config:
-        rejection_reasons.append(candidate.get("rejection_reason") or "invalid schedule")
+        rejection_reasons.append(
+            candidate.get("rejection_reason") or "invalid schedule"
+        )
     if not selectable:
         rejection_reasons.append(
-            candidate.get("not_selectable_reason")
-            or "not selectable"
+            candidate.get("not_selectable_reason") or "not selectable"
         )
     if not passes_prefilter and selectable and target_ok:
         rejection_reasons.append("outside structural prefilter")
     if (candidate.get("security_bits_achieved") or 0) < target.security_bits:
         rejection_reasons.append(f"security_bits_achieved < {target.security_bits:g}")
-    if (candidate.get("merkle_security_bits_achieved") or 0) < target.merkle_security_bits:
-        rejection_reasons.append(f"merkle_security_bits_achieved < {target.merkle_security_bits}")
+    if (
+        candidate.get("merkle_security_bits_achieved") or 0
+    ) < target.merkle_security_bits:
+        rejection_reasons.append(
+            f"merkle_security_bits_achieved < {target.merkle_security_bits}"
+        )
     if max_pow is None or int(max_pow) > target.max_derived_pow_bits:
-        rejection_reasons.append(f"max_derived_pow_bits > {target.max_derived_pow_bits}")
+        rejection_reasons.append(
+            f"max_derived_pow_bits > {target.max_derived_pow_bits}"
+        )
     if int(candidate.get("starting_log_inv_rate") or 0) > 6:
         rejection_reasons.append("starting_log_inv_rate > 6")
     if prover_timed_out:
         rejection_reasons.append("prover timing timed out")
-    if rust_timings is not None and prover_time_score is None and selectable and target_ok:
+    if (
+        rust_timings is not None
+        and prover_time_score is None
+        and selectable
+        and target_ok
+    ):
         rejection_reasons.append("missing actual prover timing")
     if missing_metric is not None:
         rejection_reasons.append(f"missing gas metric {missing_metric}")
@@ -517,12 +637,15 @@ def score_candidate(
         "folding_factor": candidate["folding_schedule"]["first_round"],
         "folding_factor_rest": candidate["folding_schedule"]["rest"],
         "starting_log_inv_rate": candidate["starting_log_inv_rate"],
-        "rs_domain_initial_reduction_factor": candidate["rs_domain_initial_reduction_factor"],
+        "rs_domain_initial_reduction_factor": candidate[
+            "rs_domain_initial_reduction_factor"
+        ],
         "security_bits_achieved": candidate.get("security_bits_achieved"),
         "merkle_security_bits_achieved": candidate.get("merkle_security_bits_achieved"),
         "max_derived_pow_bits": max_pow,
-        "total_query_rows": candidate.get("total_query_rows"),
-        "total_row_values": candidate.get("total_row_values"),
+        "total_query_rows": total_query_rows,
+        "total_row_values": total_row_values,
+        "row_work_score": row_work_score,
         "structural_score": candidate.get("structural_score"),
         "pow_bits_schedule": pow_bits_schedule(candidate),
         "pow_work_units": pow_units,
@@ -536,7 +659,9 @@ def score_candidate(
     }
 
 
-def score_bucket_details(candidate: dict[str, Any], gas: dict[str, int]) -> tuple[dict[str, int], dict[str, int]]:
+def score_bucket_details(
+    candidate: dict[str, Any], gas: dict[str, int]
+) -> tuple[dict[str, int], dict[str, int]]:
     terms = {
         "merkle": score_merkle_terms(candidate, gas),
         "folding": score_folding_terms(candidate, gas),
@@ -618,7 +743,9 @@ def score_sumcheck_terms(candidate: dict[str, Any], gas: dict[str, int]) -> list
     ]
 
 
-def row_fold_gas(candidate: dict[str, Any], row: dict[str, Any], gas: dict[str, int]) -> int:
+def row_fold_gas(
+    candidate: dict[str, Any], row: dict[str, Any], gas: dict[str, int]
+) -> int:
     degree = extension_degree(candidate)
     metric = (
         f"base_to_ext{degree}_hypercube_dim{row['folding_factor']}"
@@ -659,7 +786,11 @@ def pow_bits_schedule(candidate: dict[str, Any]) -> list[int]:
     if existing:
         return [int(bits) for bits in existing]
     bits = []
-    for key in ("starting_folding_pow_bits", "final_pow_bits", "final_folding_pow_bits"):
+    for key in (
+        "starting_folding_pow_bits",
+        "final_pow_bits",
+        "final_folding_pow_bits",
+    ):
         value = candidate.get(key)
         if value:
             bits.append(int(value))
@@ -682,19 +813,29 @@ def pow_work_score(candidate: dict[str, Any], pow_seconds_per_unit: float) -> fl
     return pow_work_units(candidate) * pow_seconds_per_unit
 
 
-def score_prover(candidate: dict[str, Any], rust_timings: dict[str, Any] | None) -> float | None:
+def score_prover(
+    candidate: dict[str, Any], rust_timings: dict[str, Any] | None
+) -> float | None:
     row = prover_timing_row(candidate, rust_timings)
-    if row is not None and row.get("status") in ("ok", "partial_ok", "timeout") and row.get("seconds") is not None:
+    if (
+        row is not None
+        and row.get("status") in ("ok", "partial_ok", "timeout")
+        and row.get("seconds") is not None
+    ):
         return float(row["seconds"])
     return None
 
 
-def prover_timeout(candidate: dict[str, Any], rust_timings: dict[str, Any] | None) -> bool:
+def prover_timeout(
+    candidate: dict[str, Any], rust_timings: dict[str, Any] | None
+) -> bool:
     row = prover_timing_row(candidate, rust_timings)
     return bool(row and row.get("timed_out"))
 
 
-def prover_timing_row(candidate: dict[str, Any], rust_timings: dict[str, Any] | None) -> dict[str, Any] | None:
+def prover_timing_row(
+    candidate: dict[str, Any], rust_timings: dict[str, Any] | None
+) -> dict[str, Any] | None:
     if rust_timings is None:
         return None
     by_label_raw = rust_timings.get("by_label", {})
@@ -749,7 +890,9 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
     if not available_metrics:
         failures.append("calibration JSON missing gas_metrics_available")
     if len(references) < 2:
-        failures.append("at least two calibration references are required for ordinal checking")
+        failures.append(
+            "at least two calibration references are required for ordinal checking"
+        )
     for ref in references:
         enriched_ref = dict(ref)
         label = ref.get("label", "<unknown>")
@@ -758,7 +901,9 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
             failures.append(f"{label}: missing metrics_used")
         missing_metrics = sorted(metrics_used - available_metrics)
         if missing_metrics:
-            failures.append(f"{label}: scorer metrics missing from BENCH log: {missing_metrics}")
+            failures.append(
+                f"{label}: scorer metrics missing from BENCH log: {missing_metrics}"
+            )
         if "measured_total_tx_gas" not in ref:
             failures.append(f"{label}: missing measured_total_tx_gas")
         if "verifier_score" not in ref:
@@ -776,7 +921,9 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
                 and int(measured_buckets[bucket]) > 0
                 and int(bucket_scores[bucket]) <= 0
             ):
-                failures.append(f"{label}: {bucket} has measured gas but zero verifier score")
+                failures.append(
+                    f"{label}: {bucket} has measured gas but zero verifier score"
+                )
         bucket_ratios = {}
         if phase_breakdown_available:
             for bucket in CALIBRATION_BUCKETS:
@@ -814,12 +961,14 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
         enriched_references.append(enriched_ref)
 
     order_refs = [
-        ref for ref in references
-        if "measured_total_tx_gas" in ref and "verifier_score" in ref
+        ref
+        for ref in references
+        if "measured_total_tx_gas" in ref
+        and "verifier_score" in ref
         and bool(ref.get("ordinal_gate_participant", True))
     ]
     for i, lhs in enumerate(order_refs):
-        for rhs in order_refs[i + 1:]:
+        for rhs in order_refs[i + 1 :]:
             lhs_measured = float(lhs["measured_total_tx_gas"])
             rhs_measured = float(rhs["measured_total_tx_gas"])
             lhs_score = float(lhs["verifier_score"])
@@ -839,7 +988,9 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
         "ordinal_accepted": ordinal_accepted,
         "bucket_validation_accepted": bucket_validation_accepted,
         "reason": "; ".join(failures) if failures else "passed",
-        "bucket_validation_reason": "; ".join(bucket_failures) if bucket_failures else "passed",
+        "bucket_validation_reason": (
+            "; ".join(bucket_failures) if bucket_failures else "passed"
+        ),
         "mode": "ordinal_with_bucket_diagnostics",
         "bucket_ratio_bounds": CALIBRATION_RATIO_BOUNDS,
         "bucket_validation_failures": bucket_failures,
@@ -855,7 +1006,9 @@ def compare(lhs: float, rhs: float) -> int:
     return 0
 
 
-def apply_selection(scores: list[dict[str, Any]], calibration_result: dict[str, Any]) -> None:
+def apply_selection(
+    scores: list[dict[str, Any]], calibration_result: dict[str, Any]
+) -> None:
     """Fail closed when the ordinal verifier-score calibration is missing or fails."""
 
     if not calibration_result.get("accepted"):
@@ -870,12 +1023,15 @@ def apply_selection(scores: list[dict[str, Any]], calibration_result: dict[str, 
 
 def selection_policy(scores: list[dict[str, Any]]) -> dict[str, Any]:
     shortlist = [
-        score for score in scores
+        score
+        for score in scores
         if score.get("accepted_for_ranking")
         and score.get("verifier_score") is not None
         and score.get("prover_time_score") is not None
     ]
-    shortlist.sort(key=lambda row: (int(row["verifier_score"]), float(row["prover_time_score"])))
+    shortlist.sort(
+        key=lambda row: (int(row["verifier_score"]), float(row["prover_time_score"]))
+    )
     return {
         "verifier_score_role": "filter_not_final_gas_comparator",
         "final_schedule_requires_native_tx_gas_measurement": True,
@@ -920,20 +1076,24 @@ def extra_prover_training_scores(
             if measured is None:
                 continue
             seen.add(label)
-            extra_scores.append({
-                "_prover_training_source": "prover_calibration_schedule",
-                "label": label,
-                "folding_variant": candidate["folding_schedule"]["variant"],
-                "requested_pow_bits": candidate.get("requested_pow_bits"),
-                "folding_factor": candidate["folding_schedule"]["first_round"],
-                "folding_factor_rest": candidate["folding_schedule"]["rest"],
-                "starting_log_inv_rate": candidate["starting_log_inv_rate"],
-                "rs_domain_initial_reduction_factor": candidate["rs_domain_initial_reduction_factor"],
-                "pow_work_units": pow_work_units(candidate),
-                "pow_work_score": pow_work_score(candidate, pow_seconds_per_unit),
-                "prover_time_score": measured,
-                "prover_timed_out": prover_timeout(candidate, rust_timings),
-            })
+            extra_scores.append(
+                {
+                    "_prover_training_source": "prover_calibration_schedule",
+                    "label": label,
+                    "folding_variant": candidate["folding_schedule"]["variant"],
+                    "requested_pow_bits": candidate.get("requested_pow_bits"),
+                    "folding_factor": candidate["folding_schedule"]["first_round"],
+                    "folding_factor_rest": candidate["folding_schedule"]["rest"],
+                    "starting_log_inv_rate": candidate["starting_log_inv_rate"],
+                    "rs_domain_initial_reduction_factor": candidate[
+                        "rs_domain_initial_reduction_factor"
+                    ],
+                    "pow_work_units": pow_work_units(candidate),
+                    "pow_work_score": pow_work_score(candidate, pow_seconds_per_unit),
+                    "prover_time_score": measured,
+                    "prover_timed_out": prover_timeout(candidate, rust_timings),
+                }
+            )
     return extra_scores
 
 
@@ -955,8 +1115,12 @@ def apply_prover_estimates(
         model_prediction = prediction.get("seconds") if prediction else None
         score["calibrated_prover_time_score"] = model_prediction
         if prediction:
-            score["prover_nearest_training_distance"] = prediction.get("nearest_training_distance")
-            score["prover_nearest_training_label"] = prediction.get("nearest_training_label")
+            score["prover_nearest_training_distance"] = prediction.get(
+                "nearest_training_distance"
+            )
+            score["prover_nearest_training_label"] = prediction.get(
+                "nearest_training_label"
+            )
             score["prover_estimator_extrapolation"] = prediction.get("extrapolation")
 
         if measured is not None and not score.get("prover_timed_out"):
@@ -994,20 +1158,24 @@ def fit_log_ratio_prover_model(scores: list[dict[str, Any]]) -> dict[str, Any] |
         if measured <= 0.0 or pow_score <= 0.0:
             continue
         features = prover_estimator_features(score)
-        training_rows.append({
-            "label": score["label"],
-            "source": score.get("_prover_training_source", "ranked_schedule"),
-            "features": features,
-            "target": math.log(measured / pow_score),
-            "measured": measured,
-            "pow_work_score": pow_score,
-        })
+        training_rows.append(
+            {
+                "label": score["label"],
+                "source": score.get("_prover_training_source", "ranked_schedule"),
+                "features": features,
+                "target": math.log(measured / pow_score),
+                "measured": measured,
+                "pow_work_score": pow_score,
+            }
+        )
 
     if not training_rows:
         return None
 
     feature_scales = prover_feature_scales(training_rows)
-    nearest_neighbor_distances = training_nearest_neighbor_distances(training_rows, feature_scales)
+    nearest_neighbor_distances = training_nearest_neighbor_distances(
+        training_rows, feature_scales
+    )
     extrapolation_threshold = percentile(
         nearest_neighbor_distances,
         PROVER_ESTIMATE_EXTRAPOLATION_PERCENTILE,
@@ -1023,7 +1191,8 @@ def fit_log_ratio_prover_model(scores: list[dict[str, Any]]) -> dict[str, Any] |
     }
     calibration_rows = leave_one_out_calibration_rows(model)
     errors = [
-        abs(float(row["relative_error"])) for row in calibration_rows
+        abs(float(row["relative_error"]))
+        for row in calibration_rows
         if row.get("relative_error") is not None
     ]
     holdout_rows = deterministic_holdout_rows(model, PROVER_ESTIMATE_HOLDOUT_COUNT)
@@ -1031,21 +1200,26 @@ def fit_log_ratio_prover_model(scores: list[dict[str, Any]]) -> dict[str, Any] |
     model["max_relative_error"] = max(errors) if errors else None
     model["mean_relative_error"] = sum(errors) / len(errors) if errors else None
     model["rows_outside_10pct"] = [
-        row for row in calibration_rows
+        row
+        for row in calibration_rows
         if row.get("relative_error") is not None
         and abs(float(row["relative_error"])) > PROVER_ESTIMATE_MAX_MEASURED_ERROR
     ]
     model["holdout_rows"] = holdout_rows
     holdout_errors = [
-        abs(float(row["relative_error"])) for row in holdout_rows
+        abs(float(row["relative_error"]))
+        for row in holdout_rows
         if row.get("relative_error") is not None
     ]
-    model["holdout_max_relative_error"] = max(holdout_errors) if holdout_errors else None
+    model["holdout_max_relative_error"] = (
+        max(holdout_errors) if holdout_errors else None
+    )
     model["holdout_mean_relative_error"] = (
         sum(holdout_errors) / len(holdout_errors) if holdout_errors else None
     )
     model["holdout_rows_outside_10pct"] = [
-        row for row in holdout_rows
+        row
+        for row in holdout_rows
         if row.get("relative_error") is not None
         and abs(float(row["relative_error"])) > PROVER_ESTIMATE_MAX_MEASURED_ERROR
     ]
@@ -1098,7 +1272,9 @@ def training_nearest_neighbor_distances(
         for j, rhs in enumerate(training_rows):
             if i == j:
                 continue
-            distance = normalized_feature_distance(lhs["features"], rhs["features"], scales)
+            distance = normalized_feature_distance(
+                lhs["features"], rhs["features"], scales
+            )
             nearest = distance if nearest is None else min(nearest, distance)
         if nearest is not None:
             distances.append(nearest)
@@ -1149,7 +1325,9 @@ def normalized_feature_distance(
     return math.sqrt(total)
 
 
-def prover_estimator_prediction(score: dict[str, Any], model: dict[str, Any] | None) -> dict[str, Any] | None:
+def prover_estimator_prediction(
+    score: dict[str, Any], model: dict[str, Any] | None
+) -> dict[str, Any] | None:
     pow_score = score.get("pow_work_score")
     if pow_score is None:
         return None
@@ -1194,7 +1372,8 @@ def predict_calibrated_prover_time_from_features(
     distances.sort(key=lambda row: row[0])
     nearest_distance, nearest_row = distances[0]
     exact_targets = [
-        float(row["target"]) for distance, row in distances
+        float(row["target"])
+        for distance, row in distances
         if distance <= PROVER_ESTIMATE_DISTANCE_EPSILON
     ]
     if exact_targets:
@@ -1211,9 +1390,7 @@ def predict_calibrated_prover_time_from_features(
     predicted = pow_score * math.exp(log_ratio)
     threshold = model.get("extrapolation_threshold_z")
     extrapolation = (
-        nearest_distance > float(threshold)
-        if threshold is not None
-        else False
+        nearest_distance > float(threshold) if threshold is not None else False
     )
     return {
         "seconds": max(predicted, PROVER_ESTIMATE_MIN_POW_FACTOR * pow_score),
@@ -1223,11 +1400,15 @@ def predict_calibrated_prover_time_from_features(
     }
 
 
-def model_with_training_rows(training_rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+def model_with_training_rows(
+    training_rows: list[dict[str, Any]],
+) -> dict[str, Any] | None:
     if not training_rows:
         return None
     feature_scales = prover_feature_scales(training_rows)
-    nearest_neighbor_distances = training_nearest_neighbor_distances(training_rows, feature_scales)
+    nearest_neighbor_distances = training_nearest_neighbor_distances(
+        training_rows, feature_scales
+    )
     return {
         "training_rows": training_rows,
         "feature_scales": feature_scales,
@@ -1248,7 +1429,9 @@ def predict_training_row_from_subset(
     model = model_with_training_rows(training_rows)
     if model is None:
         return None
-    return predict_calibrated_prover_time_from_features(row["features"], row["pow_work_score"], model)
+    return predict_calibrated_prover_time_from_features(
+        row["features"], row["pow_work_score"], model
+    )
 
 
 def prediction_error_row(
@@ -1267,8 +1450,12 @@ def prediction_error_row(
         "measured": row["measured"],
         "predicted": seconds,
         "relative_error": relative_error,
-        "nearest_training_distance": predicted.get("nearest_training_distance") if predicted else None,
-        "nearest_training_label": predicted.get("nearest_training_label") if predicted else None,
+        "nearest_training_distance": (
+            predicted.get("nearest_training_distance") if predicted else None
+        ),
+        "nearest_training_label": (
+            predicted.get("nearest_training_label") if predicted else None
+        ),
         "extrapolation": predicted.get("extrapolation") if predicted else None,
     }
 
@@ -1277,7 +1464,8 @@ def leave_one_out_calibration_rows(model: dict[str, Any]) -> list[dict[str, Any]
     rows = []
     for row in model["training_rows"]:
         training_subset = [
-            candidate for candidate in model["training_rows"]
+            candidate
+            for candidate in model["training_rows"]
             if candidate["label"] != row["label"]
         ]
         predicted = predict_training_row_from_subset(row, training_subset)
@@ -1285,7 +1473,9 @@ def leave_one_out_calibration_rows(model: dict[str, Any]) -> list[dict[str, Any]
     return rows
 
 
-def deterministic_holdout_rows(model: dict[str, Any], count: int) -> list[dict[str, Any]]:
+def deterministic_holdout_rows(
+    model: dict[str, Any], count: int
+) -> list[dict[str, Any]]:
     training_rows = sorted(model["training_rows"], key=lambda row: row["label"])
     if count <= 0 or len(training_rows) <= 1:
         return []
@@ -1299,11 +1489,12 @@ def deterministic_holdout_rows(model: dict[str, Any], count: int) -> list[dict[s
         ]
     holdout_labels = {row["label"] for row in holdout}
     training_subset = [
-        row for row in model["training_rows"]
-        if row["label"] not in holdout_labels
+        row for row in model["training_rows"] if row["label"] not in holdout_labels
     ]
     return [
-        prediction_error_row(row, predict_training_row_from_subset(row, training_subset))
+        prediction_error_row(
+            row, predict_training_row_from_subset(row, training_subset)
+        )
         for row in holdout
     ]
 
@@ -1326,8 +1517,12 @@ def prover_estimator_report(model: dict[str, Any] | None) -> dict[str, Any]:
         "distance_epsilon": PROVER_ESTIMATE_DISTANCE_EPSILON,
         "min_pow_factor": PROVER_ESTIMATE_MIN_POW_FACTOR,
         "extrapolation_threshold_z": model["extrapolation_threshold_z"],
-        "extrapolation_threshold_definition": model["extrapolation_threshold_definition"],
-        "extrapolation_threshold_percentile": model["extrapolation_threshold_percentile"],
+        "extrapolation_threshold_definition": model[
+            "extrapolation_threshold_definition"
+        ],
+        "extrapolation_threshold_percentile": model[
+            "extrapolation_threshold_percentile"
+        ],
         "training_nearest_neighbor_distance_summary": distance_summary(
             model["training_nearest_neighbor_distances"]
         ),
@@ -1362,30 +1557,116 @@ def prover_estimator_report(model: dict[str, Any] | None) -> dict[str, Any]:
 
 def validate_quintic_kernel_bounds(gas: dict[str, int]) -> list[str]:
     warnings = []
-    for quintic, octic in (("ext5_mul", "ext8_mul"), ("ext5_square", "ext8_square"), ("ext5_inv", "ext8_inv")):
+    for quintic, octic in (
+        ("ext5_mul", "ext8_mul"),
+        ("ext5_square", "ext8_square"),
+        ("ext5_inv", "ext8_inv"),
+    ):
         if gas.get(quintic, 0) > gas.get(octic, math.inf):
             warnings.append(f"{quintic} exceeds {octic}")
     return warnings
 
 
-def write_plots(out_dir: Path, scores: list[dict[str, Any]]) -> None:
+def mark_implemented_scores(
+    scores: list[dict[str, Any]], implemented_labels: list[str]
+) -> None:
+    implemented = set(implemented_labels)
+    for score in scores:
+        score["implemented"] = score.get("label") in implemented
+
+
+def plot_axis_limits(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "x_max_fraction": args.plot_x_max_fraction,
+        "y_max_fraction": args.plot_y_max_fraction,
+        "row_work_x_max_fraction": args.plot_row_work_x_max_fraction,
+        "row_work_y_max_fraction": args.plot_row_work_y_max_fraction,
+        "verifier_x_max_fraction": args.plot_verifier_x_max_fraction,
+        "verifier_y_max_fraction": args.plot_verifier_y_max_fraction,
+        "mixed_measured_axis_multiple": args.plot_mixed_measured_axis_multiple,
+        "max_derived_pow_bits": args.plot_max_derived_pow_bits,
+    }
+
+
+def write_plots(
+    out_dir: Path,
+    scores: list[dict[str, Any]],
+    axis_limits: dict[str, Any] | None = None,
+) -> None:
     for stale_plot in out_dir.glob("pareto_*.svg"):
         stale_plot.unlink()
     plot_specs = [
-        ("pareto_verifier_vs_prover.svg", "verifier_score", "estimated_prover_time_score", True),
-        ("pareto_verifier_vs_measured_prover.svg", "verifier_score", "prover_time_score", True),
+        (
+            "pareto_verifier_vs_prover.svg",
+            "verifier_score",
+            "estimated_prover_time_score",
+            True,
+        ),
+        (
+            "pareto_verifier_vs_measured_prover.svg",
+            "verifier_score",
+            "prover_time_score",
+            True,
+        ),
+        (
+            "pareto_row_work_vs_prover.svg",
+            "row_work_score",
+            "estimated_prover_time_score",
+            True,
+        ),
+        (
+            "pareto_row_work_vs_measured_prover.svg",
+            "row_work_score",
+            "prover_time_score",
+            True,
+        ),
     ]
     for spec in plot_specs:
         filename, x_key, y_key = spec[:3]
         y_lower_is_better = bool(spec[3]) if len(spec) > 3 else True
-        write_svg_plot(out_dir / filename, scores, x_key, y_key, y_lower_is_better)
+        write_svg_plot(
+            out_dir / filename,
+            scores,
+            x_key,
+            y_key,
+            y_lower_is_better,
+            axis_limits_for_plot(x_key, y_key, axis_limits or {}),
+        )
 
 
 AXIS_LABELS = {
     "verifier_score": "quintic-calibrated verifier score (lower is better)",
+    "row_work_score": "query rows * row values (lower is better)",
     "prover_time_score": "measured prover seconds",
     "estimated_prover_time_score": "prover seconds (measured where available; modeled otherwise)",
 }
+
+
+def axis_limits_for_plot(
+    x_key: str,
+    y_key: str,
+    axis_limits: dict[str, Any],
+) -> dict[str, Any]:
+    if y_key != "estimated_prover_time_score":
+        return {
+            "x_max_fraction": None,
+            "y_max_fraction": None,
+            "measured_axis_multiple": None,
+        }
+    x_fraction = axis_limits.get("x_max_fraction")
+    y_fraction = axis_limits.get("y_max_fraction")
+    if x_key == "row_work_score":
+        x_fraction = axis_limits.get("row_work_x_max_fraction") or x_fraction
+        y_fraction = axis_limits.get("row_work_y_max_fraction") or y_fraction
+    if x_key == "verifier_score":
+        x_fraction = axis_limits.get("verifier_x_max_fraction") or x_fraction
+        y_fraction = axis_limits.get("verifier_y_max_fraction") or y_fraction
+    return {
+        "x_max_fraction": x_fraction,
+        "y_max_fraction": y_fraction,
+        "measured_axis_multiple": axis_limits.get("mixed_measured_axis_multiple"),
+    }
+
 
 def write_svg_plot(
     path: Path,
@@ -1393,12 +1674,15 @@ def write_svg_plot(
     x_key: str,
     y_key: str,
     y_lower_is_better: bool,
+    axis_limits: dict[str, Any],
 ) -> None:
     points = [
-        score for score in scores
+        score
+        for score in scores
         if score.get(x_key) is not None
         and score.get(y_key) is not None
         and score.get("valid", True)
+        and passes_plot_pow_filter(score, axis_limits)
     ]
     plot_width, plot_height = 900, 620
     detail_top = plot_height + 20
@@ -1406,9 +1690,35 @@ def write_svg_plot(
     height = detail_top + 112
     margin = 70
     if not points:
-        path.write_text("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"900\" height=\"620\" />\n")
+        path.write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" />\n'
+        )
         return
 
+    xs = [float(p[x_key]) for p in points]
+    ys = [float(p[y_key]) for p in points]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    max_x = apply_axis_fraction(min_x, max_x, axis_limits.get("x_max_fraction"))
+    max_y = apply_axis_fraction(min_y, max_y, axis_limits.get("y_max_fraction"))
+    max_x, max_y = apply_measured_axis_multiple(
+        points,
+        x_key,
+        y_key,
+        max_x,
+        max_y,
+        axis_limits.get("measured_axis_multiple"),
+    )
+    points = [
+        point
+        for point in points
+        if float(point[x_key]) <= max_x and float(point[y_key]) <= max_y
+    ]
+    if not points:
+        path.write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" />\n'
+        )
+        return
     xs = [float(p[x_key]) for p in points]
     ys = [float(p[y_key]) for p in points]
     min_x, max_x = min(xs), max(xs)
@@ -1422,32 +1732,41 @@ def write_svg_plot(
         return margin + (value - min_x) / (max_x - min_x) * (plot_width - 2 * margin)
 
     def sy(value: float) -> float:
-        return plot_height - margin - (value - min_y) / (max_y - min_y) * (plot_height - 2 * margin)
+        return (
+            plot_height
+            - margin
+            - (value - min_y) / (max_y - min_y) * (plot_height - 2 * margin)
+        )
 
     parts = [
-        f"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\">",
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
         plot_click_script(),
-        "<rect width=\"100%\" height=\"100%\" fill=\"white\"/>",
-        f"<line x1=\"{margin}\" y1=\"{plot_height-margin}\" x2=\"{plot_width-margin}\" y2=\"{plot_height-margin}\" stroke=\"#333\"/>",
-        f"<line x1=\"{margin}\" y1=\"{margin}\" x2=\"{margin}\" y2=\"{plot_height-margin}\" stroke=\"#333\"/>",
-        f"<text x=\"{plot_width/2}\" y=\"{plot_height-20}\" text-anchor=\"middle\" font-size=\"14\">{axis_label(x_key)}</text>",
-        f"<text x=\"18\" y=\"{plot_height/2}\" transform=\"rotate(-90 18 {plot_height/2})\" text-anchor=\"middle\" font-size=\"14\">{axis_label(y_key)}</text>",
+        '<rect width="100%" height="100%" fill="white"/>',
+        f'<line x1="{margin}" y1="{plot_height-margin}" x2="{plot_width-margin}" y2="{plot_height-margin}" stroke="#333"/>',
+        f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{plot_height-margin}" stroke="#333"/>',
+        f'<text x="{plot_width/2}" y="{plot_height-20}" text-anchor="middle" font-size="14">{axis_label(x_key)}</text>',
+        f'<text x="18" y="{plot_height/2}" transform="rotate(-90 18 {plot_height/2})" text-anchor="middle" font-size="14">{axis_label(y_key)}</text>',
     ]
     estimated_frontier = pareto_frontier(
         [
-            point for point in points
+            point
+            for point in points
             if point.get("prover_time_estimate_kind") != "timeout_cap"
-            and not point.get("prover_estimator_extrapolation")
         ],
         x_key,
         y_key,
         y_lower_is_better,
     )
     if len(estimated_frontier) > 1:
-        parts.append(frontier_polyline(estimated_frontier, x_key, y_key, sx, sy, "#777", "3 3", 0.5))
+        parts.append(
+            frontier_polyline(
+                estimated_frontier, x_key, y_key, sx, sy, "#777", "3 3", 0.5
+            )
+        )
     measured_frontier = pareto_frontier(
         [
-            point for point in points
+            point
+            for point in points
             if point.get("prover_time_estimate_kind") == "measured"
         ],
         x_key,
@@ -1455,13 +1774,25 @@ def write_svg_plot(
         y_lower_is_better,
     )
     if len(measured_frontier) > 1:
-        parts.append(frontier_polyline(measured_frontier, x_key, y_key, sx, sy, "#1769aa", "", 0.8))
+        parts.append(
+            frontier_polyline(
+                measured_frontier, x_key, y_key, sx, sy, "#1769aa", "", 0.8
+            )
+        )
     for index, point in enumerate(points):
         x = sx(float(point[x_key]))
         y = sy(float(point[y_key]))
-        constant_from_second_round = point.get("folding_variant") == "ConstantFromSecondRound"
+        constant_from_second_round = (
+            point.get("folding_variant") == "ConstantFromSecondRound"
+        )
+        implemented = bool(point.get("implemented"))
         color = marker_color(point)
-        stroke = "#d17b00" if constant_from_second_round else "#333"
+        stroke = (
+            "#7b2cbf"
+            if implemented
+            else ("#d17b00" if constant_from_second_round else "#333")
+        )
+        stroke_width = "2.6" if implemented else "1"
         title = (
             f"{point['label']}; {x_key}={point[x_key]}; {y_key}={point[y_key]}; "
             f"prover={point.get('prover_time_estimate_kind')}"
@@ -1473,18 +1804,63 @@ def write_svg_plot(
         )
         if constant_from_second_round:
             parts.append(
-                f"<g onclick=\"{onclick}\" style=\"cursor:pointer\"><path id=\"point-marker-{index}\" data-stroke-width=\"1\" d=\"M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z\" fill=\"{color}\" stroke=\"{stroke}\"/>"
+                f'<g onclick="{onclick}" style="cursor:pointer"><path id="point-marker-{index}" data-stroke-width="{stroke_width}" d="M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
             )
         else:
             parts.append(
-                f"<g onclick=\"{onclick}\" style=\"cursor:pointer\"><circle id=\"point-marker-{index}\" data-stroke-width=\"1\" cx=\"{x:.1f}\" cy=\"{y:.1f}\" r=\"4\" fill=\"{color}\" stroke=\"{stroke}\"/>"
+                f'<g onclick="{onclick}" style="cursor:pointer"><circle id="point-marker-{index}" data-stroke-width="{stroke_width}" cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
             )
     parts.extend(plot_legend(width))
     parts.extend(plot_selected_detail_box(detail_top))
     parts.append("</svg>")
     path.write_text("\n".join(parts) + "\n")
+
+
+def apply_axis_fraction(
+    min_value: float, max_value: float, fraction: float | None
+) -> float:
+    if fraction is None:
+        return max_value
+    fraction = max(0.0, min(float(fraction), 1.0))
+    return min_value + (max_value - min_value) * fraction
+
+
+def apply_measured_axis_multiple(
+    points: list[dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    max_x: float,
+    max_y: float,
+    multiple: float | None,
+) -> tuple[float, float]:
+    if multiple is None:
+        return max_x, max_y
+    measured = [
+        point
+        for point in points
+        if point.get("prover_time_estimate_kind") == "measured"
+        and point.get(x_key) is not None
+        and point.get(y_key) is not None
+    ]
+    if not measured:
+        return max_x, max_y
+    multiple = max(0.0, float(multiple))
+    measured_max_x = max(float(point[x_key]) for point in measured)
+    measured_max_y = max(float(point[y_key]) for point in measured)
+    return min(max_x, measured_max_x * multiple), min(max_y, measured_max_y * multiple)
+
+
+def passes_plot_pow_filter(
+    point: dict[str, Any],
+    axis_limits: dict[str, Any],
+) -> bool:
+    max_pow = axis_limits.get("max_derived_pow_bits")
+    if max_pow is None:
+        return True
+    derived = point.get("max_derived_pow_bits")
+    return derived is not None and int(derived) <= int(max_pow)
 
 
 def axis_label(key: str) -> str:
@@ -1505,10 +1881,10 @@ def frontier_polyline(
         f"{sx(float(point[x_key])):.1f},{sy(float(point[y_key])):.1f}"
         for point in frontier
     )
-    dash = f" stroke-dasharray=\"{dasharray}\"" if dasharray else ""
+    dash = f' stroke-dasharray="{dasharray}"' if dasharray else ""
     return (
-        f"<polyline points=\"{coords}\" fill=\"none\" stroke=\"{stroke}\" "
-        f"stroke-width=\"1.5\" opacity=\"{opacity}\"{dash}/>"
+        f'<polyline points="{coords}" fill="none" stroke="{stroke}" '
+        f'stroke-width="1.5" opacity="{opacity}"{dash}/>'
     )
 
 
@@ -1533,7 +1909,9 @@ def pareto_frontier(
 ) -> list[dict[str, Any]]:
     frontier = []
     best_y: float | None = None
-    for point in sorted(points, key=lambda item: (float(item[x_key]), float(item[y_key]))):
+    for point in sorted(
+        points, key=lambda item: (float(item[x_key]), float(item[y_key]))
+    ):
         y = float(point[y_key])
         if best_y is None:
             frontier.append(point)
@@ -1549,21 +1927,25 @@ def pareto_frontier(
 def plot_legend(width: int) -> list[str]:
     x = width - 330
     return [
-        f"<g font-size=\"12\">",
-        f"<circle cx=\"{x}\" cy=\"28\" r=\"4\" fill=\"#1769aa\" stroke=\"#333\"/>",
-        f"<text x=\"{x + 12}\" y=\"32\">measured full prover timing</text>",
-        f"<circle cx=\"{x}\" cy=\"48\" r=\"4\" fill=\"#8a8a8a\" stroke=\"#333\"/>",
-        f"<text x=\"{x + 12}\" y=\"52\">estimated by calibrated prover model</text>",
-        f"<circle cx=\"{x}\" cy=\"68\" r=\"4\" fill=\"#d17b00\" stroke=\"#333\"/>",
-        f"<text x=\"{x + 12}\" y=\"72\">estimated outside measured neighborhood</text>",
-        f"<path d=\"M {x:.1f} 88 L {x+5:.1f} 93 L {x:.1f} 98 L {x-5:.1f} 93 Z\" fill=\"#8a8a8a\" stroke=\"#d17b00\"/>",
-        f"<text x=\"{x + 12}\" y=\"97\">ConstantFromSecondRound schedule</text>",
-        f"<line x1=\"{x - 4}\" y1=\"114\" x2=\"{x + 8}\" y2=\"114\" stroke=\"#1769aa\" stroke-width=\"1.5\"/>",
-        f"<text x=\"{x + 12}\" y=\"118\">measured frontier</text>",
-        f"<line x1=\"{x - 4}\" y1=\"134\" x2=\"{x + 8}\" y2=\"134\" stroke=\"#777\" stroke-width=\"1.5\" stroke-dasharray=\"3 3\"/>",
-        f"<text x=\"{x + 12}\" y=\"138\">modeled frontier, excluding extrapolated points</text>",
-        f"<text x=\"{x - 8}\" y=\"158\" fill=\"#555\">model is ordinal; see JSON for leave-one-out error</text>",
-        f"<text x=\"{x - 8}\" y=\"176\" fill=\"#555\">final gas choice needs native tx measurement</text>",
+        f'<g font-size="12">',
+        f'<circle cx="{x}" cy="28" r="4" fill="#1769aa" stroke="#333"/>',
+        f'<text x="{x + 12}" y="32">measured full prover timing</text>',
+        f'<circle cx="{x}" cy="48" r="4" fill="#8a8a8a" stroke="#333"/>',
+        f'<text x="{x + 12}" y="52">estimated by calibrated prover model</text>',
+        f'<circle cx="{x}" cy="68" r="4" fill="#d17b00" stroke="#333"/>',
+        f'<text x="{x + 12}" y="72">estimated outside measured neighborhood</text>',
+        f'<circle cx="{x}" cy="88" r="4" fill="#b3261e" stroke="#333"/>',
+        f'<text x="{x + 12}" y="92">timed out at cap</text>',
+        f'<path d="M {x:.1f} 108 L {x+5:.1f} 113 L {x:.1f} 118 L {x-5:.1f} 113 Z" fill="#8a8a8a" stroke="#d17b00"/>',
+        f'<text x="{x + 12}" y="117">ConstantFromSecondRound schedule</text>',
+        f'<line x1="{x - 4}" y1="134" x2="{x + 8}" y2="134" stroke="#1769aa" stroke-width="1.5"/>',
+        f'<text x="{x + 12}" y="138">measured frontier</text>',
+        f'<line x1="{x - 4}" y1="154" x2="{x + 8}" y2="154" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
+        f'<text x="{x + 12}" y="158">modeled frontier</text>',
+        f'<circle cx="{x}" cy="178" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+        f'<text x="{x + 12}" y="182">implemented verifier target</text>',
+        f'<text x="{x - 8}" y="204" fill="#555">model is ordinal; see JSON for leave-one-out error</text>',
+        f'<text x="{x - 8}" y="222" fill="#555">final gas choice needs native tx measurement</text>',
         "</g>",
     ]
 
@@ -1595,10 +1977,10 @@ function selectPoint(index, detail) {
 
 def plot_selected_detail_box(top: int) -> list[str]:
     return [
-        f"<foreignObject x=\"60\" y=\"{top}\" width=\"790\" height=\"92\">",
-        "<div xmlns=\"http://www.w3.org/1999/xhtml\" style=\"font-family: system-ui, -apple-system, sans-serif; font-size: 12px;\">",
-        "<div style=\"font-weight: 600; margin-bottom: 4px;\">Selected point</div>",
-        "<textarea id=\"selected-point-detail\" readonly=\"readonly\" style=\"box-sizing: border-box; width: 100%; height: 62px; font: 11px monospace; border: 1px solid #aaa; border-radius: 4px; padding: 6px; resize: none;\">Click a point to put copyable details here.</textarea>",
+        f'<foreignObject x="60" y="{top}" width="790" height="92">',
+        '<div xmlns="http://www.w3.org/1999/xhtml" style="font-family: system-ui, -apple-system, sans-serif; font-size: 12px;">',
+        '<div style="font-weight: 600; margin-bottom: 4px;">Selected point</div>',
+        '<textarea id="selected-point-detail" readonly="readonly" style="box-sizing: border-box; width: 100%; height: 62px; font: 11px monospace; border: 1px solid #aaa; border-radius: 4px; padding: 6px; resize: none;">Click a point to put copyable details here.</textarea>',
         "</div>",
         "</foreignObject>",
     ]
@@ -1614,11 +1996,19 @@ def point_detail_text(point: dict[str, Any], x_key: str, y_key: str) -> str:
     if point.get("prover_time_score") is not None:
         lines.append(f"measured_prover_time_score={point.get('prover_time_score')}")
     if point.get("prover_nearest_training_distance") is not None:
-        lines.append(f"prover_nearest_training_distance={point.get('prover_nearest_training_distance')}")
+        lines.append(
+            f"prover_nearest_training_distance={point.get('prover_nearest_training_distance')}"
+        )
     if point.get("prover_nearest_training_label") is not None:
-        lines.append(f"prover_nearest_training_label={point.get('prover_nearest_training_label')}")
+        lines.append(
+            f"prover_nearest_training_label={point.get('prover_nearest_training_label')}"
+        )
     if point.get("prover_estimator_extrapolation") is not None:
-        lines.append(f"prover_estimator_extrapolation={point.get('prover_estimator_extrapolation')}")
+        lines.append(
+            f"prover_estimator_extrapolation={point.get('prover_estimator_extrapolation')}"
+        )
+    if point.get("implemented"):
+        lines.append("implemented=True")
     lines.extend(
         [
             f"folding_variant={point.get('folding_variant')}",

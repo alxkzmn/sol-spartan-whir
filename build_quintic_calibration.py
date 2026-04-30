@@ -11,7 +11,6 @@ from typing import Any
 
 import quintic_schedule_scorer as scorer
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_TX_ARTIFACTS = {
     "quartic_lir6_ff5_rsv1": PROJECT_ROOT
@@ -29,9 +28,9 @@ DEFAULT_TX_ARTIFACTS = {
     / "WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol"
     / "31337"
     / "run-latest.json",
-    "quintic_k22_jb100_ext5_lir4_ff4_rsv4": PROJECT_ROOT
+    "quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28": PROJECT_ROOT
     / "broadcast"
-    / "WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv4.s.sol"
+    / "WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol"
     / "31337"
     / "run-latest.json",
 }
@@ -80,14 +79,24 @@ def main() -> None:
     )
     parser.add_argument(
         "--quintic-label",
-        default="constant_pow27_ff4_lir4_rsv4",
+        default="constant_pow28_ff4_lir4_rsv3",
         help="Candidate label in --quintic-schedule to add as a score-only calibration reference",
     )
     parser.add_argument(
         "--quintic-tx-artifact",
         type=Path,
-        default=DEFAULT_TX_ARTIFACTS["quintic_k22_jb100_ext5_lir4_ff4_rsv4"],
+        default=DEFAULT_TX_ARTIFACTS["quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28"],
         help="Tx benchmark artifact for --quintic-label",
+    )
+    parser.add_argument(
+        "--quintic-reference-name",
+        default="WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+        help="Human-readable verifier label for the score-only quintic reference",
+    )
+    parser.add_argument(
+        "--quintic-fixture",
+        default="quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+        help="Fixture prefix for the score-only quintic reference",
     )
     args = parser.parse_args()
 
@@ -119,6 +128,8 @@ def main() -> None:
                 tx_artifact=args.quintic_tx_artifact,
                 gas=gas,
                 reference_schedule=reference_schedule,
+                reference_name=args.quintic_reference_name,
+                fixture=args.quintic_fixture,
             )
         )
 
@@ -254,6 +265,8 @@ def build_score_only_reference(
     tx_artifact: Path,
     gas: dict[str, int],
     reference_schedule: dict[str, Any],
+    reference_name: str,
+    fixture: str,
 ) -> dict[str, Any]:
     schedule = json.loads(schedule_path.read_text())
     if schedule.get("whir_p3_revision") != reference_schedule["whir_p3_revision"]:
@@ -291,9 +304,9 @@ def build_score_only_reference(
     }
 
     return {
-        "label": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv4",
+        "label": reference_name,
         "reference": f"quintic_{label}",
-        "fixture": "quintic_whir_k22_jb100_ext5_lir4_ff4_rsv4",
+        "fixture": fixture,
         "tx_artifact": display_path(tx_artifact),
         "measured_total_tx_gas": tx["total_tx_gas"],
         "verifier_score": verifier_score,
