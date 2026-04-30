@@ -156,6 +156,8 @@ library WhirVerifierCore5 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 prevIdx;
             for (uint256 i = 0; i < count; ++i) {
@@ -167,7 +169,7 @@ library WhirVerifierCore5 {
 
                 uint256 rowOffset = valuesOffset + i * 64;
                 (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                    blob, rowOffset, p0, p1, p2, p3
+                    blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
 
@@ -208,6 +210,8 @@ library WhirVerifierCore5 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 prevIdx;
             for (uint256 i = 0; i < count; ++i) {
@@ -219,7 +223,7 @@ library WhirVerifierCore5 {
 
                 uint256 rowOffset = valuesOffset + i * 320;
                 (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateExtension5RowDim4BlobPackedPoints(
-                    blob, rowOffset, p0, p1, p2, p3
+                    blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
 
@@ -545,6 +549,8 @@ library WhirVerifierCore5 {
                 frontierPtr := add(add(frontierEntries, 0x20), shl(5, numQueries))
             }
 
+            uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+
             if (expectedKind == 0) {
                 rowOffset = valuesOffset + numQueries * 64;
                 uint256 nextHigher;
@@ -558,7 +564,7 @@ library WhirVerifierCore5 {
                     rowOffset -= 64;
 
                     (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                        blob, rowOffset, p0, p1, p2, p3
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
@@ -581,7 +587,7 @@ library WhirVerifierCore5 {
                     rowOffset -= 320;
 
                     (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateExtension5RowDim4BlobPackedPoints(
-                        blob, rowOffset, p0, p1, p2, p3
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);

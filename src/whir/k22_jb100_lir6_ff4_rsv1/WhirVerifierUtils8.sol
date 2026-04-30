@@ -30,6 +30,76 @@ library WhirVerifierUtils8 {
         }
     }
 
+    /// @notice Precompute the 16 dim-4 eq-monomial weights for points (p0,p1,p2,p3).
+    /// @dev Returns a memory pointer to 16 ext8 weights laid out at offsets 0x000..0x1e0 (32 bytes each).
+    function _computeDim4EqWeights(uint256 p0, uint256 p1, uint256 p2, uint256 p3)
+        internal
+        pure
+        returns (uint256 weightsPtr)
+    {
+        assembly ("memory-safe") {
+            weightsPtr := mload(0x40)
+            mstore(0x40, add(weightsPtr, 0x200))
+        }
+
+        uint256 q0 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p0);
+        uint256 q1 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p1);
+        uint256 q2 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p2);
+        uint256 q3 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p3);
+
+        uint256 q0q1 = KoalaBearExt8.mul(q0, q1);
+        uint256 q0p1 = KoalaBearExt8.mul(q0, p1);
+        uint256 p0q1 = KoalaBearExt8.mul(p0, q1);
+        uint256 p0p1 = KoalaBearExt8.mul(p0, p1);
+
+        uint256 c000 = KoalaBearExt8.mul(q0q1, q2);
+        uint256 c001 = KoalaBearExt8.mul(q0q1, p2);
+        uint256 c010 = KoalaBearExt8.mul(q0p1, q2);
+        uint256 c011 = KoalaBearExt8.mul(q0p1, p2);
+        uint256 c100 = KoalaBearExt8.mul(p0q1, q2);
+        uint256 c101 = KoalaBearExt8.mul(p0q1, p2);
+        uint256 c110 = KoalaBearExt8.mul(p0p1, q2);
+        uint256 c111 = KoalaBearExt8.mul(p0p1, p2);
+
+        _storeDim4EqWeightPair(weightsPtr, 0x000, c000, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x040, c001, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x080, c010, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x0c0, c011, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x100, c100, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x140, c101, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x180, c110, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x1c0, c111, q3, p3);
+    }
+
+    function _storeDim4EqWeightPair(
+        uint256 weightsPtr,
+        uint256 offset,
+        uint256 prefix,
+        uint256 q3,
+        uint256 p3
+    ) private pure {
+        uint256 w0 = KoalaBearExt8.mul(prefix, q3);
+        uint256 w1 = KoalaBearExt8.mul(prefix, p3);
+        assembly ("memory-safe") {
+            mstore(add(weightsPtr, offset), w0)
+            mstore(add(weightsPtr, add(offset, 0x20)), w1)
+        }
+    }
+
+    function _loadWeight(uint256 weightsPtr, uint256 offset) private pure returns (uint256 w) {
+        assembly ("memory-safe") {
+            w := mload(add(weightsPtr, offset))
+        }
+    }
+
+    function _mulWeightBase(uint256 weightsPtr, uint256 offset, uint256 scalar)
+        private
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt8.mulBase(_loadWeight(weightsPtr, offset), scalar);
+    }
+
     function validateBase(uint256 value) internal pure {
         if (value >= KoalaBear.MODULUS) {
             revert BaseFieldElementOutOfRange(value);
@@ -1487,10 +1557,7 @@ library WhirVerifierUtils8 {
     function _hashAndEvaluateBaseRowDim4BlobPackedPoints(
         bytes calldata blob,
         uint256 offset,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
+        uint256 weightsPtr
     ) internal pure returns (bytes32 digest, uint256 evalValue) {
         uint256 src;
         assembly ("memory-safe") {
@@ -1562,7 +1629,35 @@ library WhirVerifierUtils8 {
             digest := and(keccak256(ptr, 65), not(sub(shl(96, 1), 1)))
         }
 
-        evalValue = _evaluateBaseRowDim4FromBlobWords(w0, w1, p0, p1, p2, p3);
+        uint256 mask = 0xffffffff;
+        evalValue = _mulWeightBase(weightsPtr, 0x000, w0 >> 224);
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x020, (w0 >> 192) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x040, (w0 >> 160) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x060, (w0 >> 128) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x080, (w0 >> 96) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x0a0, (w0 >> 64) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x0c0, (w0 >> 32) & mask));
+        evalValue = KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x0e0, w0 & mask));
+        evalValue = KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x100, w1 >> 224));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x120, (w1 >> 192) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x140, (w1 >> 160) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x160, (w1 >> 128) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x180, (w1 >> 96) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x1a0, (w1 >> 64) & mask));
+        evalValue =
+            KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x1c0, (w1 >> 32) & mask));
+        evalValue = KoalaBearExt8.add(evalValue, _mulWeightBase(weightsPtr, 0x1e0, w1 & mask));
     }
 
     function _evaluateExtensionRowDim4BlobWindow(
@@ -1743,10 +1838,7 @@ library WhirVerifierUtils8 {
     function _hashAndEvaluateExtensionRowDim4BlobPackedPoints(
         bytes calldata blob,
         uint256 offset,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
+        uint256 weightsPtr
     ) internal pure returns (bytes32 digest, uint256 evalValue) {
         uint256 src;
         assembly ("memory-safe") {
@@ -1841,455 +1933,172 @@ library WhirVerifierUtils8 {
             digest := and(keccak256(ptr, 513), not(sub(shl(96, 1), 1)))
         }
 
-        (
-            uint256 r00,
-            uint256 r01,
-            uint256 r02,
-            uint256 r03,
-            uint256 r04,
-            uint256 r05,
-            uint256 r06,
-            uint256 r07
-        ) = _unpackCoeffs(p0);
-        (
-            uint256 r10,
-            uint256 r11,
-            uint256 r12,
-            uint256 r13,
-            uint256 r14,
-            uint256 r15,
-            uint256 r16,
-            uint256 r17
-        ) = _unpackCoeffs(p1);
-        (
-            uint256 r20,
-            uint256 r21,
-            uint256 r22,
-            uint256 r23,
-            uint256 r24,
-            uint256 r25,
-            uint256 r26,
-            uint256 r27
-        ) = _unpackCoeffs(p2);
-        (
-            uint256 r30,
-            uint256 r31,
-            uint256 r32,
-            uint256 r33,
-            uint256 r34,
-            uint256 r35,
-            uint256 r36,
-            uint256 r37
-        ) = _unpackCoeffs(p3);
-
-        uint256 l0 = _foldOnceWithCoeffs(v0, v8, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l1 = _foldOnceWithCoeffs(v1, v9, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l2 = _foldOnceWithCoeffs(v2, v10, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l3 = _foldOnceWithCoeffs(v3, v11, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l4 = _foldOnceWithCoeffs(v4, v12, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l5 = _foldOnceWithCoeffs(v5, v13, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l6 = _foldOnceWithCoeffs(v6, v14, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l7 = _foldOnceWithCoeffs(v7, v15, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23, r24, r25, r26, r27);
-        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23, r24, r25, r26, r27);
-        evalValue = _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33, r34, r35, r36, r37);
+        evalValue = KoalaBearExt8.mul(v0, _loadWeight(weightsPtr, 0x000));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v1, _loadWeight(weightsPtr, 0x020)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v2, _loadWeight(weightsPtr, 0x040)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v3, _loadWeight(weightsPtr, 0x060)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v4, _loadWeight(weightsPtr, 0x080)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v5, _loadWeight(weightsPtr, 0x0a0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v6, _loadWeight(weightsPtr, 0x0c0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v7, _loadWeight(weightsPtr, 0x0e0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v8, _loadWeight(weightsPtr, 0x100)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v9, _loadWeight(weightsPtr, 0x120)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v10, _loadWeight(weightsPtr, 0x140)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v11, _loadWeight(weightsPtr, 0x160)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v12, _loadWeight(weightsPtr, 0x180)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v13, _loadWeight(weightsPtr, 0x1a0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v14, _loadWeight(weightsPtr, 0x1c0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v15, _loadWeight(weightsPtr, 0x1e0)));
     }
 
-    /// @notice Like _hashAndEvaluateExtensionRowDim4BlobPackedPoints but takes folding
-    /// coefficients already unpacked (32 scalars instead of 4 packed ext8 points).
-    /// Callers should unpack p0..p3 once before a query loop and call this variant
-    /// per row to avoid repeating the unpack on every row.
+    /// @notice Same as _hashAndEvaluateExtensionRowDim4BlobPackedPoints but the caller
+    /// has already precomputed the dim-4 eq-monomial weights via _computeDim4EqWeights
+    /// and passes a pointer to the 16-weight scratch region. Avoids re-deriving the
+    /// weights for every row in a query loop.
     function _hashAndEvaluateExtensionRowDim4BlobUnpacked(
         bytes calldata blob,
         uint256 offset,
-        uint256 r00,
-        uint256 r01,
-        uint256 r02,
-        uint256 r03,
-        uint256 r04,
-        uint256 r05,
-        uint256 r06,
-        uint256 r07,
-        uint256 r10,
-        uint256 r11,
-        uint256 r12,
-        uint256 r13,
-        uint256 r14,
-        uint256 r15,
-        uint256 r16,
-        uint256 r17,
-        uint256 r20,
-        uint256 r21,
-        uint256 r22,
-        uint256 r23,
-        uint256 r24,
-        uint256 r25,
-        uint256 r26,
-        uint256 r27,
-        uint256 r30,
-        uint256 r31,
-        uint256 r32,
-        uint256 r33,
-        uint256 r34,
-        uint256 r35,
-        uint256 r36,
-        uint256 r37
+        uint256 weightsPtr
     ) internal pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
         assembly ("memory-safe") {
-            let src := add(blob.offset, offset)
-            let ptr := mload(0x40)
-            let rowPtr := add(ptr, 0x20)
-            calldatacopy(rowPtr, src, 0x200)
-            mstore8(sub(rowPtr, 1), 0x00)
-
-            function revertPacked(packed) {
-                mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
-                mstore(0x04, packed)
-                revert(0x00, 0x24)
-            }
-
-            function fold(a0, a1, rr0, rr1, rr2, rr3, rr4, rr5, rr6, rr7, validateInputs) -> out {
-                let M := 0x7f000001
-                let m := 0xffffffff
-
-                function mul2(a0_, a1_, b0_, b1_) -> p0_, p1_, p2_ {
-                    p0_ := mul(a0_, b0_)
-                    p1_ := add(mul(a0_, b1_), mul(a1_, b0_))
-                    p2_ := mul(a1_, b1_)
-                }
-
-                function mul4(a0_, a1_, a2_, a3_, b0_, b1_, b2_, b3_) ->
-                    p0_,
-                    p1_,
-                    p2_,
-                    p3_,
-                    p4_,
-                    p5_,
-                    p6_
-                {
-                    let l0_, l1_, l2_ := mul2(a0_, a1_, b0_, b1_)
-                    let h0_, h1_, h2_ := mul2(a2_, a3_, b2_, b3_)
-                    let m0_, m1_, m2_ :=
-                        mul2(add(a0_, a2_), add(a1_, a3_), add(b0_, b2_), add(b1_, b3_))
-
-                    let x0_ := sub(sub(m0_, l0_), h0_)
-                    let x1_ := sub(sub(m1_, l1_), h1_)
-                    let x2_ := sub(sub(m2_, l2_), h2_)
-
-                    p0_ := l0_
-                    p1_ := l1_
-                    p2_ := add(l2_, x0_)
-                    p3_ := x1_
-                    p4_ := add(x2_, h0_)
-                    p5_ := h1_
-                    p6_ := h2_
-                }
-
-                let a00 := shr(224, a0)
-                let a01 := and(shr(192, a0), m)
-                let a02 := and(shr(160, a0), m)
-                let a03 := and(shr(128, a0), m)
-                let a04 := and(shr(96, a0), m)
-                let a05 := and(shr(64, a0), m)
-                let a06 := and(shr(32, a0), m)
-                let a07 := and(a0, m)
-
-                let b00 := shr(224, a1)
-                let b01 := and(shr(192, a1), m)
-                let b02 := and(shr(160, a1), m)
-                let b03 := and(shr(128, a1), m)
-                let b04 := and(shr(96, a1), m)
-                let b05 := and(shr(64, a1), m)
-                let b06 := and(shr(32, a1), m)
-                let b07 := and(a1, m)
-
-                if validateInputs {
-                    if or(
-                        or(
-                            or(iszero(lt(a00, M)), iszero(lt(a01, M))),
-                            or(iszero(lt(a02, M)), iszero(lt(a03, M)))
-                        ),
-                        or(
-                            or(iszero(lt(a04, M)), iszero(lt(a05, M))),
-                            or(iszero(lt(a06, M)), iszero(lt(a07, M)))
-                        )
-                    ) {
-                        revertPacked(a0)
-                    }
-                    if or(
-                        or(
-                            or(iszero(lt(b00, M)), iszero(lt(b01, M))),
-                            or(iszero(lt(b02, M)), iszero(lt(b03, M)))
-                        ),
-                        or(
-                            or(iszero(lt(b04, M)), iszero(lt(b05, M))),
-                            or(iszero(lt(b06, M)), iszero(lt(b07, M)))
-                        )
-                    ) {
-                        revertPacked(a1)
-                    }
-                }
-
-                let d0 := sub(add(b00, M), a00)
-                let d1 := sub(add(b01, M), a01)
-                let d2 := sub(add(b02, M), a02)
-                let d3 := sub(add(b03, M), a03)
-                let d4 := sub(add(b04, M), a04)
-                let d5 := sub(add(b05, M), a05)
-                let d6 := sub(add(b06, M), a06)
-                let d7 := sub(add(b07, M), a07)
-
-                let scratch := add(mload(0x40), 0x220)
-
-                {
-                    let p00, p01, p02, p03, p04, p05, p06 :=
-                        mul4(d0, d1, d2, d3, rr0, rr1, rr2, rr3)
-                    mstore(scratch, p00)
-                    mstore(add(scratch, 0x20), p01)
-                    mstore(add(scratch, 0x40), p02)
-                    mstore(add(scratch, 0x60), p03)
-                    mstore(add(scratch, 0x80), p04)
-                    mstore(add(scratch, 0xa0), p05)
-                    mstore(add(scratch, 0xc0), p06)
-                }
-
-                {
-                    let p20, p21, p22, p23, p24, p25, p26 :=
-                        mul4(d4, d5, d6, d7, rr4, rr5, rr6, rr7)
-                    let hiBase := add(scratch, 0xe0)
-                    mstore(hiBase, p20)
-                    mstore(add(hiBase, 0x20), p21)
-                    mstore(add(hiBase, 0x40), p22)
-                    mstore(add(hiBase, 0x60), p23)
-                    mstore(add(hiBase, 0x80), p24)
-                    mstore(add(hiBase, 0xa0), p25)
-                    mstore(add(hiBase, 0xc0), p26)
-                }
-
-                let q0, q1, q2, q3, q4, q5, q6 :=
-                    mul4(
-                        add(d0, d4),
-                        add(d1, d5),
-                        add(d2, d6),
-                        add(d3, d7),
-                        add(rr0, rr4),
-                        add(rr1, rr5),
-                        add(rr2, rr6),
-                        add(rr3, rr7)
-                    )
-
-                let hiBase := add(scratch, 0xe0)
-
-                let l0 := mload(scratch)
-                let h0 := mload(hiBase)
-                let l4 := mload(add(scratch, 0x80))
-                let h4 := mload(add(hiBase, 0x80))
-                let x0 := sub(sub(q0, l0), h0)
-                let x4 := sub(sub(q4, l4), h4)
-                let c0 := mod(add(a00, add(l0, mul(3, add(h0, x4)))), M)
-                let c4 := mod(add(a04, add(add(l4, mul(3, h4)), x0)), M)
-
-                let l1 := mload(add(scratch, 0x20))
-                let h1 := mload(add(hiBase, 0x20))
-                let l5 := mload(add(scratch, 0xa0))
-                let h5 := mload(add(hiBase, 0xa0))
-                let x1 := sub(sub(q1, l1), h1)
-                let x5 := sub(sub(q5, l5), h5)
-                let c1 := mod(add(a01, add(l1, mul(3, add(h1, x5)))), M)
-                let c5 := mod(add(a05, add(add(l5, mul(3, h5)), x1)), M)
-
-                let l2 := mload(add(scratch, 0x40))
-                let h2 := mload(add(hiBase, 0x40))
-                let l6 := mload(add(scratch, 0xc0))
-                let h6 := mload(add(hiBase, 0xc0))
-                let x2 := sub(sub(q2, l2), h2)
-                let x6 := sub(sub(q6, l6), h6)
-                let c2 := mod(add(a02, add(l2, mul(3, add(h2, x6)))), M)
-                let c6 := mod(add(a06, add(add(l6, mul(3, h6)), x2)), M)
-
-                let l3 := mload(add(scratch, 0x60))
-                let h3 := mload(add(hiBase, 0x60))
-                let c3 := mod(add(a03, add(l3, mul(3, h3))), M)
-                let c7 := mod(add(a07, sub(sub(q3, l3), h3)), M)
-
-                out := or(
-                    or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
-                    or(or(shl(96, c4), shl(64, c5)), or(shl(32, c6), c7))
-                )
-            }
-
-            digest := and(keccak256(sub(rowPtr, 1), 513), not(sub(shl(96, 1), 1)))
-
-            let m0 :=
-                fold(
-                    fold(
-                        mload(rowPtr),
-                        mload(add(rowPtr, 0x100)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    fold(
-                        mload(add(rowPtr, 0x80)),
-                        mload(add(rowPtr, 0x180)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r15,
-                    r16,
-                    r17,
-                    0
-                )
-            let m1 :=
-                fold(
-                    fold(
-                        mload(add(rowPtr, 0x20)),
-                        mload(add(rowPtr, 0x120)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    fold(
-                        mload(add(rowPtr, 0xa0)),
-                        mload(add(rowPtr, 0x1a0)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r15,
-                    r16,
-                    r17,
-                    0
-                )
-            let m2 :=
-                fold(
-                    fold(
-                        mload(add(rowPtr, 0x40)),
-                        mload(add(rowPtr, 0x140)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    fold(
-                        mload(add(rowPtr, 0xc0)),
-                        mload(add(rowPtr, 0x1c0)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r15,
-                    r16,
-                    r17,
-                    0
-                )
-            let m3 :=
-                fold(
-                    fold(
-                        mload(add(rowPtr, 0x60)),
-                        mload(add(rowPtr, 0x160)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    fold(
-                        mload(add(rowPtr, 0xe0)),
-                        mload(add(rowPtr, 0x1e0)),
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        1
-                    ),
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r15,
-                    r16,
-                    r17,
-                    0
-                )
-            evalValue := fold(
-                fold(m0, m2, r20, r21, r22, r23, r24, r25, r26, r27, 0),
-                fold(m1, m3, r20, r21, r22, r23, r24, r25, r26, r27, 0),
-                r30,
-                r31,
-                r32,
-                r33,
-                r34,
-                r35,
-                r36,
-                r37,
-                0
-            )
+            src := add(blob.offset, offset)
         }
+
+        uint256 v0;
+        uint256 v1;
+        uint256 v2;
+        uint256 v3;
+        uint256 v4;
+        uint256 v5;
+        uint256 v6;
+        uint256 v7;
+        uint256 v8;
+        uint256 v9;
+        uint256 v10;
+        uint256 v11;
+        uint256 v12;
+        uint256 v13;
+        uint256 v14;
+        uint256 v15;
+        assembly ("memory-safe") {
+            let ptr := mload(0x40)
+            v0 := calldataload(src)
+            v1 := calldataload(add(src, 0x20))
+            v2 := calldataload(add(src, 0x40))
+            v3 := calldataload(add(src, 0x60))
+            v4 := calldataload(add(src, 0x80))
+            v5 := calldataload(add(src, 0xa0))
+            v6 := calldataload(add(src, 0xc0))
+            v7 := calldataload(add(src, 0xe0))
+            v8 := calldataload(add(src, 0x100))
+            v9 := calldataload(add(src, 0x120))
+            v10 := calldataload(add(src, 0x140))
+            v11 := calldataload(add(src, 0x160))
+            v12 := calldataload(add(src, 0x180))
+            v13 := calldataload(add(src, 0x1a0))
+            v14 := calldataload(add(src, 0x1c0))
+            v15 := calldataload(add(src, 0x1e0))
+
+            function validateExt8(packed) {
+                let modulus := 0x7f000001
+                let mask := 0xffffffff
+                if or(
+                    or(
+                        or(
+                            iszero(lt(shr(224, packed), modulus)),
+                            iszero(lt(and(shr(192, packed), mask), modulus))
+                        ),
+                        or(
+                            iszero(lt(and(shr(160, packed), mask), modulus)),
+                            iszero(lt(and(shr(128, packed), mask), modulus))
+                        )
+                    ),
+                    or(
+                        or(
+                            iszero(lt(and(shr(96, packed), mask), modulus)),
+                            iszero(lt(and(shr(64, packed), mask), modulus))
+                        ),
+                        or(
+                            iszero(lt(and(shr(32, packed), mask), modulus)),
+                            iszero(lt(and(packed, mask), modulus))
+                        )
+                    )
+                ) {
+                    mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            validateExt8(v0)
+            validateExt8(v1)
+            validateExt8(v2)
+            validateExt8(v3)
+            validateExt8(v4)
+            validateExt8(v5)
+            validateExt8(v6)
+            validateExt8(v7)
+            validateExt8(v8)
+            validateExt8(v9)
+            validateExt8(v10)
+            validateExt8(v11)
+            validateExt8(v12)
+            validateExt8(v13)
+            validateExt8(v14)
+            validateExt8(v15)
+
+            mstore8(ptr, 0x00)
+            calldatacopy(add(ptr, 0x01), src, 0x200)
+            digest := and(keccak256(ptr, 513), not(sub(shl(96, 1), 1)))
+        }
+
+        evalValue = KoalaBearExt8.mul(v0, _loadWeight(weightsPtr, 0x000));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v1, _loadWeight(weightsPtr, 0x020)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v2, _loadWeight(weightsPtr, 0x040)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v3, _loadWeight(weightsPtr, 0x060)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v4, _loadWeight(weightsPtr, 0x080)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v5, _loadWeight(weightsPtr, 0x0a0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v6, _loadWeight(weightsPtr, 0x0c0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v7, _loadWeight(weightsPtr, 0x0e0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v8, _loadWeight(weightsPtr, 0x100)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v9, _loadWeight(weightsPtr, 0x120)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v10, _loadWeight(weightsPtr, 0x140)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v11, _loadWeight(weightsPtr, 0x160)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v12, _loadWeight(weightsPtr, 0x180)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v13, _loadWeight(weightsPtr, 0x1a0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v14, _loadWeight(weightsPtr, 0x1c0)));
+        evalValue =
+            KoalaBearExt8.add(evalValue, KoalaBearExt8.mul(v15, _loadWeight(weightsPtr, 0x1e0)));
     }
 
     function _evaluateBaseRowDim4FromBlobWords(

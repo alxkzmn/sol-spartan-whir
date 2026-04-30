@@ -29,6 +29,80 @@ library WhirVerifierUtils5 {
         }
     }
 
+    /// @notice Precompute the 16 dim-4 multilinear eq-weights for fold challenges
+    ///         (p0, p1, p2, p3). Each weight is the ext5 product of either pi or
+    ///         (1 - pi) per bit of the 4-bit row index. Returns a memory pointer to
+    ///         16 packed ext5 words laid out at offsets 0x000..0x1e0 in row order
+    ///         (lex over (b0,b1,b2,b3) with b3 as the lowest bit). Caller computes
+    ///         once per round and reuses across all rows in that round.
+    function _computeDim4EqWeights(uint256 p0, uint256 p1, uint256 p2, uint256 p3)
+        internal
+        pure
+        returns (uint256 weightsPtr)
+    {
+        uint256 q0 = KoalaBearExt5.sub(KoalaBearExt5.ONE, p0);
+        uint256 q1 = KoalaBearExt5.sub(KoalaBearExt5.ONE, p1);
+        uint256 q2 = KoalaBearExt5.sub(KoalaBearExt5.ONE, p2);
+        uint256 q3 = KoalaBearExt5.sub(KoalaBearExt5.ONE, p3);
+
+        uint256 a00 = KoalaBearExt5.mul(q0, q1);
+        uint256 a01 = KoalaBearExt5.mul(q0, p1);
+        uint256 a10 = KoalaBearExt5.mul(p0, q1);
+        uint256 a11 = KoalaBearExt5.mul(p0, p1);
+
+        uint256 b000 = KoalaBearExt5.mul(a00, q2);
+        uint256 b001 = KoalaBearExt5.mul(a00, p2);
+        uint256 b010 = KoalaBearExt5.mul(a01, q2);
+        uint256 b011 = KoalaBearExt5.mul(a01, p2);
+        uint256 b100 = KoalaBearExt5.mul(a10, q2);
+        uint256 b101 = KoalaBearExt5.mul(a10, p2);
+        uint256 b110 = KoalaBearExt5.mul(a11, q2);
+        uint256 b111 = KoalaBearExt5.mul(a11, p2);
+
+        assembly ("memory-safe") {
+            weightsPtr := mload(0x40)
+            mstore(0x40, add(weightsPtr, 0x200))
+        }
+
+        _storeDim4EqWeightPair(weightsPtr, 0x000, b000, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x040, b001, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x080, b010, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x0c0, b011, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x100, b100, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x140, b101, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x180, b110, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x1c0, b111, q3, p3);
+    }
+
+    function _storeDim4EqWeightPair(
+        uint256 weightsPtr,
+        uint256 offset,
+        uint256 prefix,
+        uint256 q3,
+        uint256 p3
+    ) private pure {
+        uint256 w0 = KoalaBearExt5.mul(prefix, q3);
+        uint256 w1 = KoalaBearExt5.mul(prefix, p3);
+        assembly ("memory-safe") {
+            mstore(add(weightsPtr, offset), w0)
+            mstore(add(add(weightsPtr, offset), 0x20), w1)
+        }
+    }
+
+    function _loadWeight(uint256 weightsPtr, uint256 offset) private pure returns (uint256 weight) {
+        assembly ("memory-safe") {
+            weight := mload(add(weightsPtr, offset))
+        }
+    }
+
+    function _mulWeightBase(uint256 weightsPtr, uint256 offset, uint256 scalar)
+        private
+        pure
+        returns (uint256)
+    {
+        return KoalaBearExt5.mulBase(_loadWeight(weightsPtr, offset), scalar);
+    }
+
     function validateBase(uint256 value) internal pure {
         if (value >= KoalaBear.MODULUS) {
             revert BaseFieldElementOutOfRange(value);
@@ -1329,10 +1403,7 @@ library WhirVerifierUtils5 {
     function _hashAndEvaluateBaseRowDim4BlobPackedPoints(
         bytes calldata blob,
         uint256 offset,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
+        uint256 weightsPtr
     ) internal pure returns (bytes32 digest, uint256 evalValue) {
         uint256 src;
         assembly ("memory-safe") {
@@ -1404,7 +1475,35 @@ library WhirVerifierUtils5 {
             digest := and(keccak256(ptr, 65), not(sub(shl(96, 1), 1)))
         }
 
-        evalValue = _evaluateBaseRowDim4FromBlobWords(w0, w1, p0, p1, p2, p3);
+        uint256 mask = 0xffffffff;
+        evalValue = _mulWeightBase(weightsPtr, 0x000, w0 >> 224);
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x020, (w0 >> 192) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x040, (w0 >> 160) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x060, (w0 >> 128) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x080, (w0 >> 96) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0a0, (w0 >> 64) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0c0, (w0 >> 32) & mask));
+        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x0e0, w0 & mask));
+        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x100, w1 >> 224));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x120, (w1 >> 192) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x140, (w1 >> 160) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x160, (w1 >> 128) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x180, (w1 >> 96) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1a0, (w1 >> 64) & mask));
+        evalValue =
+            KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1c0, (w1 >> 32) & mask));
+        evalValue = KoalaBearExt5.add(evalValue, _mulWeightBase(weightsPtr, 0x1e0, w1 & mask));
     }
 
     function _evaluateExtensionRowDim4BlobWindow(
@@ -1744,10 +1843,7 @@ library WhirVerifierUtils5 {
     function _hashAndEvaluateExtension5RowDim4BlobPackedPoints(
         bytes calldata blob,
         uint256 offset,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
+        uint256 weightsPtr
     ) internal pure returns (bytes32 digest, uint256 evalValue) {
         uint256 src;
         uint256 v0;
@@ -1831,62 +1927,37 @@ library WhirVerifierUtils5 {
             digest := and(keccak256(ptr, 321), lowMask)
         }
 
-        (
-            uint256 r00,
-            uint256 r01,
-            uint256 r02,
-            uint256 r03,
-            uint256 r04,
-            uint256 r05,
-            uint256 r06,
-            uint256 r07
-        ) = _unpackCoeffs(p0);
-        (
-            uint256 r10,
-            uint256 r11,
-            uint256 r12,
-            uint256 r13,
-            uint256 r14,
-            uint256 r15,
-            uint256 r16,
-            uint256 r17
-        ) = _unpackCoeffs(p1);
-        (
-            uint256 r20,
-            uint256 r21,
-            uint256 r22,
-            uint256 r23,
-            uint256 r24,
-            uint256 r25,
-            uint256 r26,
-            uint256 r27
-        ) = _unpackCoeffs(p2);
-        (
-            uint256 r30,
-            uint256 r31,
-            uint256 r32,
-            uint256 r33,
-            uint256 r34,
-            uint256 r35,
-            uint256 r36,
-            uint256 r37
-        ) = _unpackCoeffs(p3);
-
-        uint256 l0 = _foldOnceWithCoeffs(v0, v8, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l1 = _foldOnceWithCoeffs(v1, v9, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l2 = _foldOnceWithCoeffs(v2, v10, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l3 = _foldOnceWithCoeffs(v3, v11, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l4 = _foldOnceWithCoeffs(v4, v12, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l5 = _foldOnceWithCoeffs(v5, v13, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l6 = _foldOnceWithCoeffs(v6, v14, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 l7 = _foldOnceWithCoeffs(v7, v15, r00, r01, r02, r03, r04, r05, r06, r07);
-        uint256 m0 = _foldOnceWithCoeffs(l0, l4, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m1 = _foldOnceWithCoeffs(l1, l5, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m2 = _foldOnceWithCoeffs(l2, l6, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 m3 = _foldOnceWithCoeffs(l3, l7, r10, r11, r12, r13, r14, r15, r16, r17);
-        uint256 n0 = _foldOnceWithCoeffs(m0, m2, r20, r21, r22, r23, r24, r25, r26, r27);
-        uint256 n1 = _foldOnceWithCoeffs(m1, m3, r20, r21, r22, r23, r24, r25, r26, r27);
-        evalValue = _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33, r34, r35, r36, r37);
+        evalValue = KoalaBearExt5.mul(v0, _loadWeight(weightsPtr, 0x000));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v1, _loadWeight(weightsPtr, 0x020)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v2, _loadWeight(weightsPtr, 0x040)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v3, _loadWeight(weightsPtr, 0x060)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v4, _loadWeight(weightsPtr, 0x080)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v5, _loadWeight(weightsPtr, 0x0a0)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v6, _loadWeight(weightsPtr, 0x0c0)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v7, _loadWeight(weightsPtr, 0x0e0)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v8, _loadWeight(weightsPtr, 0x100)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v9, _loadWeight(weightsPtr, 0x120)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v10, _loadWeight(weightsPtr, 0x140)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v11, _loadWeight(weightsPtr, 0x160)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v12, _loadWeight(weightsPtr, 0x180)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v13, _loadWeight(weightsPtr, 0x1a0)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v14, _loadWeight(weightsPtr, 0x1c0)));
+        evalValue =
+            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v15, _loadWeight(weightsPtr, 0x1e0)));
     }
 
     /// @notice Like _hashAndEvaluateExtensionRowDim4BlobPackedPoints but takes folding

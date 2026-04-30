@@ -159,6 +159,8 @@ library WhirVerifierCore8PrecompilePhase1 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 prevIdx;
             for (uint256 i = 0; i < count; ++i) {
@@ -170,7 +172,7 @@ library WhirVerifierCore8PrecompilePhase1 {
 
                 uint256 rowOffset = valuesOffset + i * 64;
                 (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                    blob, rowOffset, p0, p1, p2, p3
+                    blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
 
@@ -638,6 +640,8 @@ library WhirVerifierCore8PrecompilePhase1 {
             mstore(0x40, add(add(frontierEntries, 0x20), shl(5, numQueries)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 rowOffset;
             uint256 frontierPtr;
@@ -658,7 +662,7 @@ library WhirVerifierCore8PrecompilePhase1 {
                     rowOffset -= 64;
 
                     (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                        blob, rowOffset, p0, p1, p2, p3
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);

@@ -156,6 +156,8 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 prevIdx;
             for (uint256 i = 0; i < count; ++i) {
@@ -167,7 +169,7 @@ library WhirVerifierCore8 {
 
                 uint256 rowOffset = valuesOffset + i * 64;
                 (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                    blob, rowOffset, p0, p1, p2, p3
+                    blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
 
@@ -208,47 +210,7 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        // Unpack folding coefficients once before the row loop.
-        (
-            uint256 r00,
-            uint256 r01,
-            uint256 r02,
-            uint256 r03,
-            uint256 r04,
-            uint256 r05,
-            uint256 r06,
-            uint256 r07
-        ) = WhirVerifierUtils8._unpackCoeffs(p0);
-        (
-            uint256 r10,
-            uint256 r11,
-            uint256 r12,
-            uint256 r13,
-            uint256 r14,
-            uint256 r15,
-            uint256 r16,
-            uint256 r17
-        ) = WhirVerifierUtils8._unpackCoeffs(p1);
-        (
-            uint256 r20,
-            uint256 r21,
-            uint256 r22,
-            uint256 r23,
-            uint256 r24,
-            uint256 r25,
-            uint256 r26,
-            uint256 r27
-        ) = WhirVerifierUtils8._unpackCoeffs(p2);
-        (
-            uint256 r30,
-            uint256 r31,
-            uint256 r32,
-            uint256 r33,
-            uint256 r34,
-            uint256 r35,
-            uint256 r36,
-            uint256 r37
-        ) = WhirVerifierUtils8._unpackCoeffs(p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -261,40 +223,7 @@ library WhirVerifierCore8 {
 
                 uint256 rowOffset = valuesOffset + i * 512;
                 (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
-                    blob,
-                    rowOffset,
-                    r00,
-                    r01,
-                    r02,
-                    r03,
-                    r04,
-                    r05,
-                    r06,
-                    r07,
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r15,
-                    r16,
-                    r17,
-                    r20,
-                    r21,
-                    r22,
-                    r23,
-                    r24,
-                    r25,
-                    r26,
-                    r27,
-                    r30,
-                    r31,
-                    r32,
-                    r33,
-                    r34,
-                    r35,
-                    r36,
-                    r37
+                    blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
 
@@ -633,6 +562,8 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(frontierEntries, 0x20), shl(5, numQueries)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 rowOffset;
             uint256 frontierPtr;
@@ -653,7 +584,7 @@ library WhirVerifierCore8 {
                     rowOffset -= 64;
 
                     (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(
-                        blob, rowOffset, p0, p1, p2, p3
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
@@ -665,46 +596,6 @@ library WhirVerifierCore8 {
                 }
             } else {
                 rowOffset = valuesOffset + numQueries * 512;
-                (
-                    uint256 r00,
-                    uint256 r01,
-                    uint256 r02,
-                    uint256 r03,
-                    uint256 r04,
-                    uint256 r05,
-                    uint256 r06,
-                    uint256 r07
-                ) = WhirVerifierUtils8._unpackCoeffs(p0);
-                (
-                    uint256 r10,
-                    uint256 r11,
-                    uint256 r12,
-                    uint256 r13,
-                    uint256 r14,
-                    uint256 r15,
-                    uint256 r16,
-                    uint256 r17
-                ) = WhirVerifierUtils8._unpackCoeffs(p1);
-                (
-                    uint256 r20,
-                    uint256 r21,
-                    uint256 r22,
-                    uint256 r23,
-                    uint256 r24,
-                    uint256 r25,
-                    uint256 r26,
-                    uint256 r27
-                ) = WhirVerifierUtils8._unpackCoeffs(p2);
-                (
-                    uint256 r30,
-                    uint256 r31,
-                    uint256 r32,
-                    uint256 r33,
-                    uint256 r34,
-                    uint256 r35,
-                    uint256 r36,
-                    uint256 r37
-                ) = WhirVerifierUtils8._unpackCoeffs(p3);
 
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
@@ -717,40 +608,7 @@ library WhirVerifierCore8 {
                     rowOffset -= 512;
 
                     (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
-                        blob,
-                        rowOffset,
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r05,
-                        r06,
-                        r07,
-                        r10,
-                        r11,
-                        r12,
-                        r13,
-                        r14,
-                        r15,
-                        r16,
-                        r17,
-                        r20,
-                        r21,
-                        r22,
-                        r23,
-                        r24,
-                        r25,
-                        r26,
-                        r27,
-                        r30,
-                        r31,
-                        r32,
-                        r33,
-                        r34,
-                        r35,
-                        r36,
-                        r37
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);

@@ -70,7 +70,8 @@ runs inside the verifier contract.
 The previous quintic build target, `k22_jb100_ext5_lir4_ff4_rsv4`, is still
 checked in for comparison. It uses `pow_bits = 27`,
 `rs_domain_initial_reduction_factor = 4`, measured `133.516761291s` prover
-time, and measured `8,551,179` native blob transaction gas.
+time, measured `6,822,886` native blob transaction gas, and measures
+`6,733,159` in the Foundry native blob gas test.
 
 Generated fixture prefix:
 
@@ -224,7 +225,7 @@ This repository also includes one quartic schedule variant used for schedule-tun
 
 Measured execution gas:
 
-- `WhirBlobVerifierNativeLir11Test.testGasWhirVerifyBlobNativeFixed()`: `914,723`
+- `WhirBlobVerifierNativeLir11Test.testGasWhirVerifyBlobNativeFixed()`: `911,902`
 
 This quartic schedule variant is included for benchmarking and calibration. The quartic contract in the comparison table above is `WhirBlobVerifierNative4`.
 
@@ -240,11 +241,11 @@ Metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
 
 | Metric                                                                       |          Value |
 | ---------------------------------------------------------------------------- | -------------: |
-| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `7,861,397` |
-| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `7,861,485` |
-| `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,888,020` |
-| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `8,143,089` |
-| execution remainder                                                          |    `7,368,289` |
+| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `7,383,992` |
+| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `7,384,080` |
+| `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,847,475` |
+| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `7,665,684` |
+| execution remainder                                                          |    `6,890,884` |
 | `verify(bytes32,bytes)` calldata bytes                                       |       `47,780` |
 | `verify(bytes32,bytes)` calldata gas                                         |      `753,800` |
 | success blob size                                                            | `47,666` bytes |
@@ -283,7 +284,7 @@ The quartic contract and the octic JohnsonBound configuration use different proo
 - Round-constraint accumulation uses fixed `18/14/10` select kernels and a fused ext8 equality-term path instead of the generic ext8 multiplication helpers in the shared verifier code.
 - Final STIR uses two fixed five-query checks for the `64`-coefficient final polynomial.
 - Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
-- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The measured native verifier execution gas is `7,861,397`.
+- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The measured native verifier execution gas is `7,383,992`.
 
 #### Precompile-backed octic experiment
 
