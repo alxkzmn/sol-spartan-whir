@@ -57,9 +57,9 @@ The current build target is `k22_jb100_ext5_lir4_ff4_rsv3_pow28`:
 | achieved security bits             |       `100.0145` |
 | achieved Merkle security bits      |            `160` |
 | measured prover time               | `274.163664792s` |
-| native blob Foundry gas            |      `5,903,484` |
-| native blob transaction gas        |      `6,022,631` |
-| native blob execution gas          |      `5,145,295` |
+| native blob Foundry gas            |      `5,750,877` |
+| native blob transaction gas        |      `5,870,024` |
+| native blob execution gas          |      `4,992,688` |
 | native blob calldata bytes         |         `54,436` |
 
 The transaction gas rows are from the latest Anvil transaction benchmark for
@@ -70,8 +70,8 @@ runs inside the verifier contract.
 The previous quintic build target, `k22_jb100_ext5_lir4_ff4_rsv4`, is still
 checked in for comparison. It uses `pow_bits = 27`,
 `rs_domain_initial_reduction_factor = 4`, measured `133.516761291s` prover
-time, measured `6,822,886` native blob transaction gas, and measures
-`6,733,159` in the Foundry native blob gas test.
+time, measured `6,673,297` native blob transaction gas, and measures
+`6,583,570` in the Foundry native blob gas test.
 
 Generated fixture prefix:
 
@@ -107,7 +107,7 @@ The scorer reads three inputs:
 - Solidity `BENCH:{...}` gas microbenchmark lines under solc `0.8.28`, `via_ir = true`, optimizer runs `833`.
 - Rust prover measurements: PoW calibrated through `TraceChallenger::grind` and full 22-variable commit+prove timings for selected candidates.
 
-`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow28_ff4_lir4_rsv3`, with raw score `8,408,842`, measured native transaction gas `6,022,631`, and scale factor `0.7162259678562161`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
+`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow28_ff4_lir4_rsv3`, with raw score `8,408,842`, measured native transaction gas `5,870,024`, and scale factor `0.6980775712042158`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
 
 - `WhirBlobVerifierNative4_lir6_ff5_rsv1` on the checked-in `lir6_ff5_rsv1` fixture.
 - `WhirBlobVerifierNative4_lir11_ff5_rsv3` on the checked-in `lir11_ff5_rsv3` fixture.

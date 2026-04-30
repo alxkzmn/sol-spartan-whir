@@ -210,7 +210,7 @@ library WhirVerifierCore5 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -549,9 +549,8 @@ library WhirVerifierCore5 {
                 frontierPtr := add(add(frontierEntries, 0x20), shl(5, numQueries))
             }
 
-            uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
-
             if (expectedKind == 0) {
+                uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
                 rowOffset = valuesOffset + numQueries * 64;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
@@ -575,6 +574,8 @@ library WhirVerifierCore5 {
                     }
                 }
             } else {
+                uint256 eqWeightsPtr =
+                    WhirVerifierUtils5._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
                 rowOffset = valuesOffset + numQueries * 320;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {

@@ -83,6 +83,33 @@ library WhirVerifierUtils5 {
         }
     }
 
+    function _computeDim4EqWeightsUnpacked(uint256 p0, uint256 p1, uint256 p2, uint256 p3)
+        internal
+        pure
+        returns (uint256 unpackedPtr)
+    {
+        uint256 packedPtr = _computeDim4EqWeights(p0, p1, p2, p3);
+        assembly ("memory-safe") {
+            unpackedPtr := mload(0x40)
+            mstore(0x40, add(unpackedPtr, 0xa00))
+
+            for {
+                let src := packedPtr
+                let dst := unpackedPtr
+            } lt(src, add(packedPtr, 0x200)) {
+                src := add(src, 0x20)
+                dst := add(dst, 0xa0)
+            } {
+                let packed := mload(src)
+                mstore(dst, shr(224, packed))
+                mstore(add(dst, 0x20), and(shr(192, packed), 0xffffffff))
+                mstore(add(dst, 0x40), and(shr(160, packed), 0xffffffff))
+                mstore(add(dst, 0x60), and(shr(128, packed), 0xffffffff))
+                mstore(add(dst, 0x80), and(shr(96, packed), 0xffffffff))
+            }
+        }
+    }
+
     function validateBase(uint256 value) internal pure {
         if (value >= KoalaBear.MODULUS) {
             revert BaseFieldElementOutOfRange(value);
@@ -213,7 +240,6 @@ library WhirVerifierUtils5 {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
-
             let src := add(coeffs.offset, shl(5, coeffs.length))
             let end := coeffs.offset
 
@@ -1331,37 +1357,132 @@ library WhirVerifierUtils5 {
         r33;
         r34;
 
-        evalValue = KoalaBearExt5.mul(v0, _loadWeight(weightsPtr, 0x000));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v1, _loadWeight(weightsPtr, 0x020)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v2, _loadWeight(weightsPtr, 0x040)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v3, _loadWeight(weightsPtr, 0x060)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v4, _loadWeight(weightsPtr, 0x080)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v5, _loadWeight(weightsPtr, 0x0a0)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v6, _loadWeight(weightsPtr, 0x0c0)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v7, _loadWeight(weightsPtr, 0x0e0)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v8, _loadWeight(weightsPtr, 0x100)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v9, _loadWeight(weightsPtr, 0x120)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v10, _loadWeight(weightsPtr, 0x140)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v11, _loadWeight(weightsPtr, 0x160)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v12, _loadWeight(weightsPtr, 0x180)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v13, _loadWeight(weightsPtr, 0x1a0)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v14, _loadWeight(weightsPtr, 0x1c0)));
-        evalValue =
-            KoalaBearExt5.add(evalValue, KoalaBearExt5.mul(v15, _loadWeight(weightsPtr, 0x1e0)));
+        evalValue = _dotExt5Weights16Unpacked(
+            weightsPtr, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15
+        );
+    }
+
+    function _dotExt5Weights16Unpacked(
+        uint256 weightsPtr,
+        uint256 v0,
+        uint256 v1,
+        uint256 v2,
+        uint256 v3,
+        uint256 v4,
+        uint256 v5,
+        uint256 v6,
+        uint256 v7,
+        uint256 v8,
+        uint256 v9,
+        uint256 v10,
+        uint256 v11,
+        uint256 v12,
+        uint256 v13,
+        uint256 v14,
+        uint256 v15
+    ) private pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
+
+            let c0 := 0
+            let c1 := 0
+            let c2 := 0
+            let c3 := 0
+            let c4 := 0
+            let c5 := 0
+            let c6 := 0
+            let c7 := 0
+            let c8 := 0
+
+            function accumulate(a, w, d0, d1, d2, d3, d4, d5, d6, d7, d8) ->
+                e0,
+                e1,
+                e2,
+                e3,
+                e4,
+                e5,
+                e6,
+                e7,
+                e8
+            {
+                let a0 := shr(224, a)
+                let a1 := and(shr(192, a), 0xffffffff)
+                let a2 := and(shr(160, a), 0xffffffff)
+                let a3 := and(shr(128, a), 0xffffffff)
+                let a4 := and(shr(96, a), 0xffffffff)
+
+                let b0 := mload(w)
+                let b1 := mload(add(w, 0x20))
+                let b2 := mload(add(w, 0x40))
+                let b3 := mload(add(w, 0x60))
+                let b4 := mload(add(w, 0x80))
+
+                e0 := add(d0, mul(a0, b0))
+                e1 := add(d1, add(mul(a0, b1), mul(a1, b0)))
+                e2 := add(d2, add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)))
+                e3 := add(d3, add(add(add(mul(a0, b3), mul(a1, b2)), mul(a2, b1)), mul(a3, b0)))
+                e4 := add(
+                    d4,
+                    add(
+                        add(add(add(mul(a0, b4), mul(a1, b3)), mul(a2, b2)), mul(a3, b1)),
+                        mul(a4, b0)
+                    )
+                )
+                e5 := add(d5, add(add(add(mul(a1, b4), mul(a2, b3)), mul(a3, b2)), mul(a4, b1)))
+                e6 := add(d6, add(add(mul(a2, b4), mul(a3, b3)), mul(a4, b2)))
+                e7 := add(d7, add(mul(a3, b4), mul(a4, b3)))
+                e8 := add(d8, mul(a4, b4))
+            }
+
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v0, weightsPtr, c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v1, add(weightsPtr, 0x0a0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v2, add(weightsPtr, 0x140), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v3, add(weightsPtr, 0x1e0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v4, add(weightsPtr, 0x280), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v5, add(weightsPtr, 0x320), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v6, add(weightsPtr, 0x3c0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v7, add(weightsPtr, 0x460), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v8, add(weightsPtr, 0x500), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v9, add(weightsPtr, 0x5a0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v10, add(weightsPtr, 0x640), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v11, add(weightsPtr, 0x6e0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v12, add(weightsPtr, 0x780), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v13, add(weightsPtr, 0x820), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v14, add(weightsPtr, 0x8c0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+                accumulate(v15, add(weightsPtr, 0x960), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+
+            let bias := shl(80, M)
+            out := or(
+                or(
+                    or(
+                        shl(224, mod(add(add(c0, c5), sub(bias, c8)), M)),
+                        shl(192, mod(add(c1, c6), M))
+                    ),
+                    or(
+                        shl(160, mod(add(add(add(c2, sub(bias, c5)), c7), c8), M)),
+                        shl(128, mod(add(add(c3, sub(bias, c6)), c8), M))
+                    )
+                ),
+                shl(96, mod(add(c4, sub(bias, c7)), M))
+            )
+        }
     }
 
     function _loadWeight(uint256 weightsPtr, uint256 offset) private pure returns (uint256 weight) {

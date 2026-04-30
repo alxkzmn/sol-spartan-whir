@@ -223,7 +223,7 @@ library WhirVerifierCore5 {
             WhirVerifierUtils5._unpackCoeffs(p2);
         (uint256 r30, uint256 r31, uint256 r32, uint256 r33, uint256 r34) =
             WhirVerifierUtils5._unpackCoeffs(p3);
-        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -604,7 +604,8 @@ library WhirVerifierCore5 {
                     }
                 }
             } else {
-                uint256 eqWeightsPtr = WhirVerifierUtils5._computeDim4EqWeights(p0, p1, p2, p3);
+                uint256 eqWeightsPtr =
+                    WhirVerifierUtils5._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
                 rowOffset = valuesOffset + numQueries * 320;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
