@@ -432,6 +432,67 @@ The fixed equality evaluator in the precompile-backed verifier uses `EXT8_MUL_BA
 
 This keeps the serial dependencies unchanged while reducing this loop from `236` scalar precompile calls to `44` batch precompile calls. The measured full-verifier saving from this local rewrite is `16,663` execution gas relative to the previously documented scalar precompile wiring.
 
+##### Quintic precompile experiment
+
+The quintic precompile experiment follows the same local-precompile model as octic. Fewer call sites are routed through the precompile because optimized quintic software multiplication is already much cheaper than octic multiplication, so only loops where the per-pair savings exceed STATICCALL transport overhead are converted. It is a parallel `view` verifier and does not change the software verifier, blob format, transcript, Merkle hashing, or schedule constants.
+
+Relevant files:
+
+| Path                                                                                          | Role                                                          |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/`                                           | Rust implementations of the local ext5 precompiles            |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/precompiles.rs`                         | precompile dispatch, input validation, and Rust arithmetic    |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/gas_model.rs`                           | native runtime calibration and locked gas schedule generation |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/vectors.rs`                             | deterministic arithmetic differential vector generation       |
+| `src/field/KoalaBearExt5Precompile.sol`                                                       | Solidity wrapper for scalar and batch ext5 precompile calls   |
+| `src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1/`                              | precompile-backed quintic verifier variant                    |
+| `test/helpers/Ext5PrecompileHarness.sol`                                                      | arithmetic and transport benchmark harness                    |
+| `script/run_ext5_precompile_phase1_rpc.py`                                                    | arithmetic differential and transport benchmark driver        |
+| `script/run_ext5_precompile_full_verifier_rpc.py`                                             | full baseline-vs-precompile verifier A/B script               |
+| `script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1.s.sol` | broadcast benchmark script for the precompile-backed verifier |
+| `testdata/ext5_precompile_gas_schedule.json`                                                  | locked ext5 precompile gas schedule                           |
+| `testdata/ext5_precompile_vectors.json`                                                       | JSON arithmetic differential vectors                          |
+| `testdata/ext5_precompile_vectors.abi`                                                        | ABI-encoded arithmetic differential vectors                   |
+
+All ext5 precompile calls use the same 32-byte packed `uint256` representation as the Solidity verifier: five 32-bit KoalaBear limbs in the high 160 bits and zero low 96 bits. The runner implements KoalaBear quintic trinomial arithmetic over `X^5 + X^2 - 1`, matching the Solidity `KoalaBearExt5` layout and reduction. It must reject non-canonical limbs and non-zero low 96 bits. Batch inputs have no length prefix.
+
+| Address  | Name                  | Input bytes     | Output bytes | Status in verifier                |
+| -------- | --------------------- | --------------- | ------------ | --------------------------------- |
+| `0x0501` | `EXT5_MUL`            | `64 = a \|\| b` | `32 = a*b`   | integrated for selected hot paths |
+| `0x0502` | `EXT5_SQUARE`         | `32 = a`        | `32 = a^2`   | available for selected hot paths  |
+| `0x0503` | `EXT5_ADD`            | `64 = a \|\| b` | `32 = a+b`   | measurement control               |
+| `0x0504` | `EXT5_SUB`            | `64 = a \|\| b` | `32 = a-b`   | measurement control               |
+| `0x0505` | `EXT5_MUL_BASE`       | `64 = a \|\| s` | `32 = a*s`   | measurement control               |
+| `0x0511` | `EXT5_MUL_BATCH`      | `N * 64`        | `N * 32`     | integrated for fixed equality     |
+| `0x0512` | `EXT5_SQUARE_BATCH`   | `N * 32`        | `N * 32`     | measurement control               |
+| `0x0513` | `EXT5_MUL_BASE_BATCH` | `N * 64`        | `N * 32`     | measurement control               |
+| `0x05f1` | no-op 64-to-32        | `64`            | `32`         | transport calibration             |
+| `0x05f2` | no-op 32-to-32        | `32`            | `32`         | transport calibration             |
+| `0x05f3` | no-op batch 64-to-32  | `N * 64`        | `N * 32`     | transport calibration             |
+| `0x05f4` | no-op batch 32-to-32  | `N * 32`        | `N * 32`     | transport calibration             |
+
+The precompile-backed quintic verifier currently routes fixed-equality products, the dimension-4 equality-weight precomputation used by the STIR row evaluator, generic Horner-step multiplications, equality-accumulator products, and the final closing multiplication through ext5 precompile calls. It keeps the fused row-evaluation kernels in software because they already avoid per-product packing and reduction.
+
+The arithmetic and no-op transport benchmarks show that scalar ext5 calls are mostly transport overhead, while batched multiplication is cheap enough to use in loops with many independent products. The full-verifier A/B therefore routes only the fixed-equality and equality-weight batches through `EXT5_MUL_BATCH`, and leaves the fused row-evaluation kernels in software.
+
+Measured on April 30, 2026 with the local ext5 runner:
+
+| Check                            | Result      |
+| -------------------------------- | ----------- |
+| deterministic arithmetic vectors | 10,000 pass |
+| non-canonical ext5 inputs        | rejected    |
+| `EXT5_MUL` clean call            | 27,186 gas  |
+| no-op 64-to-32 clean call        | 24,358 gas  |
+| `EXT5_SQUARE` clean call         | 26,718 gas  |
+| no-op 32-to-32 clean call        | 26,646 gas  |
+| `EXT5_MUL_BATCH`, 64 pairs       | 94,330 gas  |
+| no-op batch 64-to-32, 64 pairs   | 94,330 gas  |
+| software verifier tx gas         | 5,732,991   |
+| precompile verifier tx gas       | 5,486,961   |
+| tx gas saved                     | 246,030     |
+
+The local precompile path is useful for `rsv3_pow28`, but the saving is below the threshold for immediately producing a precompile-backed variant of the older `rsv4` verifier.
+
 ##### Measurement commands
 
 Initialize the Foundry fork submodule from the workspace root:
@@ -472,6 +533,19 @@ python3 script/run_ext8_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:1854
 python3 script/run_ext8_precompile_stir_transport_rpc.py --rpc-url http://127.0.0.1:18547
 python3 script/run_ext8_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547
 python3 script/run_ext8_precompile_eip_candidate_rpc.py --rpc-url http://127.0.0.1:18547
+```
+
+For the quintic experiment, use the ext5 runner binaries and scripts:
+
+```sh
+cd ..
+cargo check --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin calibrate-ext5-precompile-gas -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin export-ext5-precompile-vectors -- sol-spartan-whir/testdata
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin ext5-precompile-node -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json 18547
+cd sol-spartan-whir
+python3 script/run_ext5_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547
+python3 script/run_ext5_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547
 ```
 
 All RPC measurement scripts use state-changing transactions and write a derived value into `lastResult` so the compiler and EVM cannot remove output copying or arithmetic consumption.
