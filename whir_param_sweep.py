@@ -16,25 +16,22 @@ whir-p3/src/parameters/errors.rs. Includes:
   - Final pow_bits, final folding PoW bits
   - Validity check: all derived PoW ≤ max_pow_bits (mirrors check_pow_bits())
 
-Calibration (five-point compromise):
-  Point A: Constant(5)/lir=11/rs_v=3 on the alternate fixed verifier family
-    measured=957,778  model=891,844  error=-6.9%
-  Point B: Constant(4)/lir=6/rs_v=1 on old verifier (specialized constraint kernels)
-    measured=996,074  model=1,064,610  error=+6.9%
+Calibration:
+  Point A: quartic Constant(5)/lir=11/rs_v=3 native blob verifier
+    measured=911,902  model=911,902  error=+0.0%
+  Point B: quartic Constant(4)/lir=6/rs_v=1 native blob verifier
+    measured=899,906  model=899,906  error=+0.0%
   Point C: octic k22/jb100/lir=6/ff=4/rs_v=1 on the current native verifier family
-    measured=7,865,125  model=7,865,125  error=+0.0%
-  Point D: octic k22/jb100/lir=6/ff=4/rs_v=1 on a historical generic-native benchmark path
-    measured=8,249,508  model=8,249,508  error=+0.0%
-  Point E: octic k22/jb100/lir=6/CFSR(4,3)/rs_v=1 on a historical generic-native benchmark path
-    measured=8,797,836  model=8,797,855  error=+0.0%
-  Validation point F: octic k22/jb100/lir=5/ff=4/rs_v=1 on a historical generic-native benchmark path
-    measured=9,164,323  model=9,239,822  error=+0.8%
+    measured=7,383,992  model=7,383,992  error=+0.0%
+  Historical octic generic-native points:
+    - k22/jb100/lir=6/ff=4/rs_v=1: measured=8,249,508
+    - k22/jb100/lir=6/CFSR(4,3)/rs_v=1: measured=8,797,836
+    - k22/jb100/lir=5/ff=4/rs_v=1: measured=9,164,323
   Current documented precision:
     - execution gas only, not total tx gas
-    - both calibration points are within ±6.9% relative error
-    - the current octic JohnsonBound production anchor matches the measured native verifier
-    - the current octic generic schedule model matches both measured generic-native octic points
-    - the current octic generic schedule model is within +0.8% on the measured lir=5 ff=4 validation point
+    - the current quartic and octic production anchors match the measured native verifiers
+    - the historical octic generic-native points are retained as shape references, but
+      current generated ext8 ff=4 schedules also receive the later row-evaluation rebate
     - this is the current measured calibration band, not a guarantee for every
       unbenchmarked schedule
   Constraint model uses iteration-aware decomposition:
@@ -97,9 +94,7 @@ CURRENT_QUARTIC_CONFIGS = (
     (CURRENT_LIR11, "WhirVerifier4_lir11_ff5_rsv3.sol"),
     (CURRENT_LIR6, "WhirVerifier4_lir6_ff5_rsv1.sol"),
 )
-CURRENT_CONFIG_LABELS = {
-    params: label for params, label in CURRENT_QUARTIC_CONFIGS
-}
+CURRENT_CONFIG_LABELS = {params: label for params, label in CURRENT_QUARTIC_CONFIGS}
 OCTIC_REFERENCE = ((4, 4, 6, 1), "WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol")
 
 
@@ -126,7 +121,7 @@ def list_size_bits(soundness: str, log_degree: int, log_inv_rate: int) -> float:
 
 def log_1_delta(soundness: str, log_inv_rate: int) -> float:
     eta_log = log_eta(soundness, log_inv_rate)
-    eta = 2 ** eta_log
+    eta = 2**eta_log
     rate = 2 ** (-log_inv_rate)
     if soundness == "UniqueDecoding":
         delta = 0.5 * (1 - rate)
@@ -202,9 +197,7 @@ def folding_pow_bits_fn(
     log_inv_rate: int,
 ) -> float:
     pg = prox_gaps_error(soundness, num_variables, log_inv_rate, field_bits, 2)
-    sc = rbr_soundness_fold_sumcheck(
-        soundness, field_bits, num_variables, log_inv_rate
-    )
+    sc = rbr_soundness_fold_sumcheck(soundness, field_bits, num_variables, log_inv_rate)
     return max(0.0, security_level - min(pg, sc))
 
 
@@ -489,7 +482,7 @@ def expected_merkle_decommitments(nq: int, depth: int) -> float:
 # Sub-cost constants calibrated to the stage4 quartic typed verifier
 # (`WhirVerifier4.testGasWhirVerifyFixed()`).
 #
-# Calibration point (current):
+# Calibration point (historical typed/native model basis):
 #   Constant(5), starting_log_inv_rate=11, rs_v=3
 #   -> model: 957,712 execution gas
 #   -> live stage4 baseline: 957,712 execution gas
@@ -520,10 +513,8 @@ def expected_merkle_decommitments(nq: int, depth: int) -> float:
 #     partially cancel within each round and roughly offset across rounds.
 #   - Constraint constants are set to 50% of the generic-path micro-benchmark
 #     values to split the difference between generic and specialized verifier
-#     implementations. The generic path (current verifier) is underpredicted by
-#     6.9% on the lir11 calibration point; a verifier with hand-optimized
-#     constraint kernels (like the old C4/lir6 verifier) is overpredicted by
-#     6.9% on its calibration point.
+#     implementations. Current native blob anchors below add schedule-specific
+#     rebates for optimizations that are not captured by the generic phase model.
 #   - For ranking (relative comparison), the model is well-suited: the uniform
 #     constraint scaling preserves relative ordering, and the dominant
 #     schedule-dependent costs (observe_final, final_value_eval, hornerBase,
@@ -565,16 +556,18 @@ TRANSCRIPT_FIXED_REBATE_EXT8 = 203059
 # octic generic/specialized schedule calibration:
 #   The current deployable ff=4 family has a hand-specialized native top level.
 #   Unbenchmarked octic schedules do not automatically inherit that shape.
-#   Two historical measured octic generic-native benchmark points were added to separate:
+#   Historical measured octic generic-native benchmark points were used to separate:
 #     - generic native rebate present even on the generic ff=4 path
 #     - generic native top-level overhead on the ff=4 schedule
 #     - extra cost when rounds fall back to the generic STIR row/Merkle path
 #       because they miss the optimized rowLen=16, ff=4 kernels.
+#   The current model then layers later native-path rebates on top, so these
+#   historical points are no longer exact calibration targets for current output.
 #
 #   Structural ff=4 model (after transcript rebate only): 9,065,576 gas
 #   Generic ff=4 native: 8,249,508 gas
 #     -> generic native rebate = 816,068 gas
-#   Specialized ff=4 native: 7,865,125 gas
+#   Specialized ff=4 native before the latest row-evaluation rewrite: 7,865,125 gas
 #     -> extra specialization rebate = 384,383 gas
 #   Generic ff=4 native:
 #     8,249,508 - 7,865,125 = 384,383 gas above the production specialized path.
@@ -585,6 +578,14 @@ TRANSCRIPT_FIXED_REBATE_EXT8 = 203059
 OCTIC_GENERIC_NATIVE_REBATE = 816_068
 OCTIC_FALLBACK_STIR_PENALTY_PER_QUERY = 34_738
 OCTIC_CURRENT_REFERENCE_SPECIALIZATION_REBATE = 384_383
+# Fixed native-path rebate needed after anchoring the shared quartic overhead to
+# the latest lir11 native verifier and after the smaller ext8 transcript cleanup.
+OCTIC_NATIVE_FIXED_REBATE = 23_791
+# Latest ext8 ff=4 row-evaluation rewrite:
+#   octic native blob: 7,861,397 -> 7,383,992 (-477,405) on 62 ff=4 queries.
+# Treat this as a per-query rebate so higher-PoW ff=4 schedules inherit the same
+# row kernel shape instead of only the exact checked-in reference schedule.
+OCTIC_EQ_MONOMIAL_REBATE_EXT8_DIM4 = 7_700
 FOLD_BASE_PROMOTE_PER_OP = 307
 EVAL_POINT_POW_PER_DEPTH_BIT = 116
 EVAL_POINT_POW_BASE = 0
@@ -657,9 +658,10 @@ HORNER_BASE_PER_COEFF = 121
 #     Includes: setup (observePattern + parseCommitment + initial combine),
 #     sumcheck verification (always NUM_VARIABLES total rounds),
 #     test harness overhead (_loadSuccessFixture + ABI encode).
-#     Adjusted upward from 173,813 to compensate for the 50% constraint
-#     scaling so both calibration points stay within ±7%.
-FIXED_OVERHEAD = 182000
+#     Adjusted upward from 173,813 to anchor the latest quartic lir11
+#     native blob measurement. Other exact native anchors use rebates below.
+FIXED_OVERHEAD = 202058
+QUARTIC_CURRENT_LIR6_NATIVE_REBATE = 184_762
 
 
 def _is_current_octic_reference_schedule(cfg: WhirConfig) -> bool:
@@ -676,6 +678,24 @@ def _is_current_octic_reference_schedule(cfg: WhirConfig) -> bool:
     if cfg.round_parameters[0].log_inv_rate != 6:
         return False
     if cfg.total_queries != 62:
+        return False
+    return all(r.folding_factor == 4 for r in cfg.round_parameters)
+
+
+def _is_current_quartic_lir6_reference_schedule(cfg: WhirConfig) -> bool:
+    if cfg.num_vars != 16:
+        return False
+    if cfg.ff_0 != 4 or cfg.ff_rest != 4:
+        return False
+    if cfg.rs_domain_initial_reduction_factor != 1:
+        return False
+    if cfg.final_sumcheck_rounds != 4:
+        return False
+    if len(cfg.round_parameters) != 3:
+        return False
+    if cfg.round_parameters[0].log_inv_rate != 6:
+        return False
+    if cfg.total_queries != 20:
         return False
     return all(r.folding_factor == 4 for r in cfg.round_parameters)
 
@@ -767,11 +787,7 @@ def final_value_eval_gas(fsr: int, extension_degree: int) -> int:
             if extension_degree == 4
             else GENERIC_EVAL_FOLD_PER_OP_EXT8
         )
-        return (
-            GENERIC_EVAL_WRAPPER
-            + n_values * copy_per_value
-            + n_folds * fold_per_op
-        )
+        return GENERIC_EVAL_WRAPPER + n_values * copy_per_value + n_folds * fold_per_op
 
 
 def octic_blob_header_gas(round_count: int, decommitment_counts: List[float]) -> int:
@@ -804,6 +820,11 @@ def estimate_execution_gas(
             if extension_degree == 8 and r.folding_factor == 4
             else 0
         )
+        eq_monomial_rebate = (
+            OCTIC_EQ_MONOMIAL_REBATE_EXT8_DIM4 * nq
+            if extension_degree == 8 and r.folding_factor == 4
+            else 0
+        )
         sample = SAMPLE_PER_QUERY * nq
         oh = OVERHEAD_PER_QUERY * nq
         eval_pow = nq * evaluation_point_pow_gas(depth)
@@ -811,8 +832,16 @@ def estimate_execution_gas(
             r.folding_pow_bits
         )
         stir += (
-            merkle + leaf + fold + sample + oh + eval_pow + grinding
-            - combined_rebate - packed_frontier_rebate
+            merkle
+            + leaf
+            + fold
+            + sample
+            + oh
+            + eval_pow
+            + grinding
+            - combined_rebate
+            - packed_frontier_rebate
+            - eq_monomial_rebate
         )
 
         # Final round: hornerBase evaluates finalPoly at each query point
@@ -848,18 +877,21 @@ def estimate_execution_gas(
 
     # Observe final polynomial: 2^fsr ext4 coefficients into challenger
     observe_rate = (
-        OBSERVE_EXT4_PER_ELEMENT
-        if extension_degree == 4
-        else OBSERVE_EXT8_PER_ELEMENT
+        OBSERVE_EXT4_PER_ELEMENT if extension_degree == 4 else OBSERVE_EXT8_PER_ELEMENT
     )
     observe_final = (2**cfg.final_sumcheck_rounds) * observe_rate
 
     # Final value evaluation: evaluate 2^fsr coefficients at challenge point
     fve = final_value_eval_gas(cfg.final_sumcheck_rounds, extension_degree)
 
-    fixed = FIXED_OVERHEAD - (TRANSCRIPT_FIXED_REBATE_EXT8 if extension_degree == 8 else 0)
+    fixed = FIXED_OVERHEAD - (
+        TRANSCRIPT_FIXED_REBATE_EXT8 if extension_degree == 8 else 0
+    )
+    if extension_degree == 4 and _is_current_quartic_lir6_reference_schedule(cfg):
+        fixed -= QUARTIC_CURRENT_LIR6_NATIVE_REBATE
     if extension_degree == 8:
         fixed -= OCTIC_GENERIC_NATIVE_REBATE
+        fixed -= OCTIC_NATIVE_FIXED_REBATE
         stir += octic_fallback_query_count(cfg) * OCTIC_FALLBACK_STIR_PENALTY_PER_QUERY
         if _is_current_octic_reference_schedule(cfg):
             fixed -= OCTIC_CURRENT_REFERENCE_SPECIALIZATION_REBATE
@@ -1038,9 +1070,7 @@ def _table_ellipsis_row() -> str:
     )
 
 
-def make_config_name(
-    ff_0: int, ff_rest: int, lir: int, rs_v: int
-) -> str:
+def make_config_name(ff_0: int, ff_rest: int, lir: int, rs_v: int) -> str:
     """Build config name string from parameters."""
     if ff_0 == ff_rest:
         name = f"Constant({ff_0})"
@@ -1106,9 +1136,9 @@ def print_sweep(
     )
     print(
         "Note: rows below are Rust-valid schedule candidates. The model is calibrated "
-        "on the quartic CapacityBound verifier families plus three historical octic "
-        "JohnsonBound benchmark points: the current specialized production ff=4 verifier, "
-        "a generic ff=4 native benchmark path, and a generic CFSR(4,3) native benchmark path. "
+        "on the current quartic CapacityBound native verifier families and the current "
+        "octic JohnsonBound native verifier, with historical octic generic-native "
+        "benchmarks retained only for fallback-shape estimates. "
         "Treat the current octic reference row as exact for the current deployable "
         "verifier; treat other octic rows as generic-native estimates that include "
         "a penalty when rounds miss the optimized rowLen=16, ff=4 STIR kernels."

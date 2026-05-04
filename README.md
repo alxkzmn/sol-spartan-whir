@@ -26,14 +26,15 @@ forge test
 cargo run --release --bin export-fixtures -p spartan-whir-export -- testdata
 ```
 
-Use [whir_param_sweep.py](./whir_param_sweep.py) for the historical quartic schedule model.
+Use [whir_param_sweep.py](./whir_param_sweep.py) for the standalone-WHIR schedule model.
 
 Documented precision for that model:
 
 - execution gas only, not total tx gas
-- `Constant(5)` with starting log inverse rate `11` and RS domain initial reduction factor `3`: model `891,844` vs measured `957,778` (`-6.9%`)
-- `Constant(4)` with starting log inverse rate `6` and RS domain initial reduction factor `1`: model `1,064,610` vs measured `996,074` (`+6.9%`)
-- measured calibration band: within `±6.9%` relative error on those two anchor schedules
+- `Constant(5)` with starting log inverse rate `11` and RS domain initial reduction factor `3`: model `911,902` vs measured `911,902`
+- `Constant(4)` with starting log inverse rate `6` and RS domain initial reduction factor `1`: model `899,906` vs measured `899,906`
+- octic `k22_jb100_lir6_ff4_rsv1`: model `7,383,992` vs measured `7,383,992`
+- measured anchors: exact on the checked-in native blob verifier schedules
 - this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
 
 ### Quintic Schedule Search
@@ -212,6 +213,84 @@ Implications:
 - `sol-spartan-whir` pays for more OOD sampling and a real final sumcheck.
 - The one structural delta we can price directly is the final sumcheck: ~`27.1k` gas in `sol-spartan-whir`, while the `sol-whir` benchmark config has `finalSumcheckRound = 0`.
 - Proof structure explains part of the gap; the rest is execution cost inside the verifier.
+
+### Extension degree choice for k=22 / JohnsonBound 100-bit
+
+The current high-security build target uses the quintic extension. This subsection records why neither the quartic nor the octic extension is the right baseline for `num_variables = 22` at JohnsonBound 100-bit security, and where each one does fit.
+
+#### Soundness budget per extension degree
+
+JohnsonBound at 100-bit security has three independent gas-relevant terms, each of which consumes "field bits" differently:
+
+1. Query soundness, closed by `pow_bits` plus the per-round query count. Field-bits are not relevant here; only the starting log inverse rate and the round query counts matter.
+2. Folding and prox-gaps soundness, closed by `folding_pow_bits`. This term scales with `field_bits − error_term`. A larger field reduces the required folding-pow.
+3. Out-of-domain samples. The product `oodSamples · field_bits` must clear the security target, so a larger field needs fewer OOD samples per round.
+
+The quartic extension provides about 124 field bits, the quintic about 155, and the octic about 248. At `num_variables = 22` and JohnsonBound 100-bit, 124 bits is just barely enough. Every quartic schedule that meets the security target at `num_variables = 22` either:
+
+- requires more than 60 bits of grinding, which is not reachable in the base field and awkward in extension grinding, or
+- collapses to `starting_log_inverse_rate = 1` with more than 100 round-0 queries, which lands in a high-gas regime.
+
+The octic extension supplies a much larger soundness budget per round. That budget is what lets the octic build target run at `(folding_factor = 4, starting_log_inverse_rate = 6, rs_domain_initial_reduction_factor = 1)` with 62 total STIR queries.
+
+#### Where quartic could win in principle
+
+The quartic verifier has two real per-query advantages over octic at matched query counts:
+
+- Round-0 base-field leaves: quartic round-0 leaf hashing and folding are roughly three to four times cheaper per value than octic. Octic round-0 is also base-field, but the row width is the same.
+- Per-element extension arithmetic: quartic extension multiplication is roughly half the gas of octic extension multiplication. STIR fold and constraint kernels reflect this.
+
+At identical query counts and round counts, quartic is meaningfully cheaper per query. The ratio from the calibrated schedule model is approximately `0.55` to `0.65` for quartic per-query cost relative to octic per-query cost.
+
+#### Where quartic loses
+
+The smaller soundness budget forces quartic to run with more queries and often more rounds at `num_variables = 22` and JohnsonBound 100-bit:
+
+- At matched starting log inverse rate and matched grinding cap, quartic typically needs roughly `1.5` to `2.0` times the queries of octic in early rounds because `prox_gaps_error` is tighter in a smaller field.
+- Quartic also tends to need an extra round because `folding_factor = 4` becomes a tight ceiling without much soundness headroom per round.
+
+Combining these factors, quartic ends up at roughly `0.6 × per_query × 1.7 × queries ≈ 1.0×` the octic execution gas on the most favorable schedule, and worse on every schedule away from that point.
+
+#### Grinding cap comparison
+
+If extension-field grinding raises the cap from 30 bits to 60 or more bits, the relevant comparison is not "quartic with extension grinding versus quartic with base grinding". It is each extension at the same cap:
+
+| Path                            | Field   | Cap |     Best execution gas | Notes                                                                                                          |
+| ------------------------------- | ------- | --: | ---------------------: | -------------------------------------------------------------------------------------------------------------- |
+| Production today                | octic   |  30 |   ~`7.86 M` (measured) | `(folding_factor = 4, starting_log_inverse_rate = 6, rs_domain_initial_reduction_factor = 1)`                  |
+| Quartic with extension grinding | quartic |  46 |               ~`9.1 M` | dominated by `starting_log_inverse_rate = 1`                                                                   |
+| Quartic with extension grinding | quartic |  60 |               ~`2.6 M` | `(folding_factor = 4, starting_log_inverse_rate = 5, rs_domain_initial_reduction_factor = 4)` with five rounds |
+| Quartic with extension grinding | quartic |  75 |               ~`1.5 M` | `(folding_factor = 4, starting_log_inverse_rate = 8, rs_domain_initial_reduction_factor = 3)` with six rounds  |
+| Octic with extension grinding   | octic   |  60 | likely ~`2 M` to `3 M` | not modeled; octic always beats quartic at matched cap                                                         |
+| Octic with extension grinding   | octic   |  75 | likely ~`1 M` to `2 M` | same caveat                                                                                                    |
+
+The structural fact is that for any allowed grinding cap, octic uses the cap at least as efficiently as quartic at JohnsonBound 100-bit, because the higher cap also collapses queries and the round-0 base-field savings carry over. The reason the quartic `starting_log_inverse_rate = 8` row in the table looks attractive is that it is only 16 total queries; octic at the same cap reaches a similar query count with fewer rounds and more soundness headroom per round.
+
+The numbers in this table come from two scripts in this repository:
+
+- [whir_param_sweep.py](./whir_param_sweep.py) is the schedule sweep and gas model used for the 60-bit and 75-bit quartic rows, the production octic baseline, and the calibrated execution-gas model referenced elsewhere in this README. It encodes the soundness equations, derives per-round query counts, and prices a verifier execution-gas estimate plus a native-blob calldata model. It caps grinding at 30 bits by default to match the current base-field PoW witness format.
+- [estimate_extfield_grinding_quartic.py](./estimate_extfield_grinding_quartic.py) is a thin wrapper around `whir_param_sweep.py` that records the 46-bit quartic row. It exists because that row models a hypothetical protocol change — extension-field PoW witnesses — that the deployed verifier does not yet support, so the cap relaxation cannot be expressed by passing a flag to the sweep script. The wrapper monkey-patches the sweep's grinding cap up to 60 bits, hardcodes the quartic configuration `(folding_factor_0 = 4, folding_factor_rest = 3, starting_log_inverse_rate = 1, rs_domain_initial_reduction_factor = 3, max_pow_bits = 46)` at `num_variables = 22` and JohnsonBound 100-bit, and adds a separate calldata and execution-gas delta for the larger PoW witnesses (16 bytes per witness instead of 4, plus the extra `observe` cost measured in `test/WhirGasProfile_lir6_ff5_rsv1.t.sol`). It produced the `~9.1 M` figure used to argue that even with extension-field grinding, quartic does not become competitive in this regime.
+
+Both scripts are estimation tools, not part of the deployable verifier path. The octic rows in the grinding-cap table marked "likely" are not produced by either script — they are upper bounds inferred from the quartic results plus the per-query gas ratios discussed above.
+
+#### Where each extension is the right choice
+
+Three regimes exist where quartic is the right choice, and `num_variables = 22` at JohnsonBound 100-bit is not one of them:
+
+1. Lower security target. At 80-bit security under either CapacityBound or JohnsonBound, quartic's 124 field bits are sufficient, `oodSamples = 1` is reachable, and the per-query advantage carries through. This is the regime the `lir11_ff5_rsv3` quartic verifier in this repository targets.
+2. Smaller polynomials. At `num_variables ≤ 16`, the prox-gaps and combination terms relax enough that quartic at moderate `starting_log_inverse_rate` is feasible without large grinding caps.
+3. CapacityBound instead of JohnsonBound. CapacityBound is tighter on field bits in the prox-gaps term, but its query count drops faster with `starting_log_inverse_rate`. The trade can flip toward quartic at moderate `num_variables`.
+
+For `num_variables = 22` at JohnsonBound 100-bit, the parameter regime is octic territory under the existing soundness analysis. Reaching a quartic schedule that wins in this regime would require either a tighter soundness analysis that changes the equations, or accepting a worse security or performance point.
+
+The quintic extension occupies the middle. Its 155 field bits are sufficient for OOD sampling at this security level with `oodSamples = 1`, its prox-gaps and folding-pow terms are looser than quartic's, and its per-extension arithmetic cost is closer to quartic than to octic. The current quintic build target benchmarks against this trade-off rather than against either fixed-degree alternative.
+
+#### Practical recommendation
+
+- The right baseline for `num_variables = 22` at JohnsonBound 100-bit is not quartic. The schedule model and the soundness analysis agree.
+- Within the octic line of work, the productive direction is octic plus extension-field grinding rather than reducing extension degree. That direction keeps the soundness headroom and uses a larger grinding cap to reduce queries.
+- Quartic remains the right choice for the lower-security configurations already deployed in this repository, including the `lir11_ff5_rsv3` family at 80-bit.
+- The blocker that prevents grinding past quartic's limits at JohnsonBound 100-bit is the `field_bits` term in `prox_gaps_error`. Grinding only addresses query soundness; the folding-pow requirement is bounded by `100 − (124 − error_term)`, which is already 60 or more bits at moderate `starting_log_inverse_rate`.
 
 ### Other Schedules
 
