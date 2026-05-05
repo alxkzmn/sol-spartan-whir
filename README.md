@@ -100,6 +100,8 @@ bash .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh \
   script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol
 ```
 
+A gas-bucket flamegraph attribution for the chosen quintic target lives under [`## Gas`](#gas).
+
 #### How
 
 The scorer reads three inputs:
@@ -164,11 +166,81 @@ python3 quintic_schedule_scorer.py \
 
 ## Gas
 
-For the quartic configuration used in this repository, the contract with the lowest measured gas is:
+Gas measurements for this verifier are organized as follows:
 
-- `WhirBlobVerifierNative4`
+- The cross-schedule phase breakdown below is the single comparative view across the three checked-in software native blob verifiers (quartic, quintic, octic).
+- The quintic flamegraph attribution drills into where the current quintic build target spends its execution gas.
+- Per-schedule headline numbers (transaction gas, calldata bytes, deployed bytecode) live in the schedule-specific subsections further down: the [sol-whir comparison](#comparison-sol-spartan-whir-vs-sol-whir) for the quartic baseline, [Other Schedules](#other-schedules) for the quartic tuning variant and the octic JohnsonBound configuration, and [Quintic Schedule Search](#quintic-schedule-search) for the current quintic build target.
+- Measurement methodology and Foundry build settings are in [Measurement methodology](#measurement-methodology).
 
-It verifies directly from the standalone blob format used by the quartic fixtures and benchmark scripts in this repository.
+For the quartic configuration used in this repository, the contract with the lowest measured gas is `WhirBlobVerifierNative4`. It verifies directly from the standalone blob format used by the quartic fixtures and benchmark scripts in this repository.
+
+### Cross-schedule phase breakdown
+
+Phase-level verifier cost across the three checked-in software native blob verifiers, measured with `gasleft()` harnesses. Headline transaction-gas and calldata numbers for these schedules are listed in the schedule-specific subsections; this view is complementary and tracks where execution gas is spent inside the verifier call.
+
+Phase column meanings:
+
+| Column                  | Meaning                                                                                                                                                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setup`                 | Fiat-Shamir pattern, statement checks, initial commitment parse, and initial claim setup.                                                                                                                                           |
+| `initial_sumcheck`      | Initial WHIR folding sumcheck.                                                                                                                                                                                                      |
+| `roundN_parse`          | Per-round commitment parse.                                                                                                                                                                                                         |
+| `roundN_stir`           | Per-round STIR verification. Native blob verifiers fuse STIR with round-constraint accumulation.                                                                                                                                    |
+| `roundN_sumcheck`       | Per-round folding sumcheck.                                                                                                                                                                                                         |
+| `observe_final_poly`    | Final polynomial transcript observation.                                                                                                                                                                                            |
+| `final_stir`            | Final STIR query verification.                                                                                                                                                                                                      |
+| `final_sumcheck`        | Final sumcheck, or `0` if the schedule has no final sumcheck.                                                                                                                                                                       |
+| `constraint_evaluation` | Initial and round constraint evaluation. Includes fixed equality terms when the native verifier computes them as a separate phase. For the octic native row this is `constraint_eq_terms + constraint_rounds + constraint_initial`. |
+| `final_value_check`     | Final polynomial value evaluation and closing multiplication/check.                                                                                                                                                                 |
+| `phase_sum`             | Sum of all reported phases.                                                                                                                                                                                                         |
+
+| Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |     R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
+| ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | ----------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
+| quartic | `lir6_ff5_rsv1`                      | `33,593` |         `17,967` | `17,228` | `171,798` |    `17,923` | `13,076` |   `143,981` |    `20,527` |          |           |             |           `18,622` |  `132,455` |       `17,944` |             `178,866` |          `10,220` |   `794,200` |
+| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,865` |         `27,353` |  `2,799` | `703,347` |    `27,243` |  `2,784` |   `925,760` |    `27,301` |  `2,793` | `582,566` |    `27,209` |           `63,760` |  `669,010` |       `37,047` |           `1,599,553` |         `135,805` | `4,855,195` |
+| octic   | `k22_jb100_lir6_ff4_rsv1`            | `27,749` |         `44,397` |  `3,797` | `743,816` |    `44,309` |  `3,803` | `1,120,247` |    `44,309` |  `3,803` | `856,151` |    `44,324` |           `90,172` |  `999,536` |       `67,096` |           `2,584,127` |         `222,114` | `6,899,750` |
+
+Phase rows are produced by:
+
+```bash
+forge test --match-path test/GasCalibration_native_compare.t.sol \
+  --match-test testCompareNativePhaseBreakdown -vv
+
+forge test --match-path test/WhirGasProfile5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol \
+  --match-test testProfileNativeBlobBreakdown5Pow28Rsv3 -vv
+```
+
+#### Phase coverage status
+
+Schedules with native phase breakdowns: `lir6_ff5_rsv1`, `k22_jb100_ext5_lir4_ff4_rsv3_pow28`, `k22_jb100_lir6_ff4_rsv1`. Schedules with transaction-gas measurements but no phase breakdown yet: `lir11_ff5_rsv3` (quartic), `k22_jb100_ext5_lir4_ff4_rsv4` (quintic), and the precompile-backed variants of the quintic `rsv3_pow28` and octic `lir6_ff4_rsv1` configurations. Precompile-backed phase rows require custom-runner harnesses because stock `forge test` cannot execute those paths.
+
+### Quintic software profile
+
+The current quintic build target was profiled with:
+
+```sh
+forge test \
+  --match-test testGasWhirVerifyBlobNativeFixed \
+  --match-path test/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol \
+  --flamegraph
+```
+
+The canonical Foundry gas for this path is `5,613,844`. The verifier call itself, excluding fixture-loading harness noise, accounts for `4,855,655` gas.
+
+| Profile bucket                                                             |         Gas | Share of verifier call |
+| -------------------------------------------------------------------------- | ----------: | ---------------------: |
+| Inlined verifier body, mostly fused STIR row evaluation and blob traversal | `3,290,290` |                `67.8%` |
+| Final STIR and final-polynomial checks                                     |   `655,138` |                `13.5%` |
+| Explicit ext5 `mul` / `square` / `sub` functions                           |   `283,884` |                 `5.8%` |
+| Final value evaluation                                                     |   `134,938` |                 `2.8%` |
+| Base-field powers and query-point generation                               |   `141,586` |                 `2.9%` |
+| Equality terms and dim-4 equality-weight precomputation                    |   `160,962` |                 `3.3%` |
+| Merkle frontier computation                                                |   `104,935` |                 `2.2%` |
+| STIR query sampling and transcript sampling                                |   `112,117` |                 `2.3%` |
+| Extension inversion or division                                            |         `0` |                 `0.0%` |
+
+The profile does not show the fused row dot-product kernels as separate function calls because `via_ir` inlines them into the verifier body. The dominant arithmetic work is therefore repeated WHIR row and final evaluation, with extension multiplication embedded inside fused multiply-accumulate kernels. It is not extension inversion or division, and it is no longer mostly standalone calls to `KoalaBearExt5.mul`.
 
 ### Comparison: `sol-spartan-whir` vs `sol-whir`
 
