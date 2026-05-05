@@ -585,7 +585,22 @@ This keeps the serial dependencies unchanged while reducing this loop from `236`
 
 ##### Quintic precompile experiment
 
-The quintic precompile experiment follows the same local-precompile model as octic. Fewer call sites are routed through the precompile because optimized quintic software multiplication is already much cheaper than octic multiplication, so only loops where the per-pair savings exceed STATICCALL transport overhead are converted. It is a parallel `view` verifier and does not change the software verifier, blob format, transcript, Merkle hashing, or schedule constants.
+The quintic precompile experiment follows the same local-precompile model as octic. It is a parallel `view` verifier and does not change the software verifier, blob format, transcript, Merkle hashing, or schedule constants.
+
+The local runner exposes the original ext5 scalar/batch operations plus a generic extension-field vector multiply-accumulate operation:
+
+```text
+EXTFIELD_MAC input, raw precompile bytes:
+  header: 8 bytes, big-endian
+    field_id: u16
+    n:        u16
+    flags:    u32  // bit 0 = accumulator present
+  body:
+    optional c if flags & 1
+    a_0, b_0, ..., a_{n-1}, b_{n-1}
+```
+
+The only implemented `field_id` is `0x0005`, KoalaBear ext5 over `X^5 + X^2 - 1`, using the same 32-byte packed `uint256` representation as the Solidity verifier: five 32-bit KoalaBear limbs in the high 160 bits and zero low 96 bits. `n` is capped at `1024`; `n = 0` returns the optional accumulator or packed zero. The real precompile rejects unknown fields, oversized `n`, reserved flag bits, malformed input length, non-canonical limbs, and non-zero low 96 bits. The no-op control parses the same header and length before returning one zero word.
 
 Relevant files:
 
@@ -595,54 +610,64 @@ Relevant files:
 | `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/precompiles.rs`                         | precompile dispatch, input validation, and Rust arithmetic    |
 | `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/gas_model.rs`                           | native runtime calibration and locked gas schedule generation |
 | `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/vectors.rs`                             | deterministic arithmetic differential vector generation       |
-| `src/field/KoalaBearExt5Precompile.sol`                                                       | Solidity wrapper for scalar and batch ext5 precompile calls   |
+| `src/field/KoalaBearExt5Precompile.sol`                                                       | Solidity wrapper for scalar, batch, and MAC precompile calls  |
 | `src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1/`                              | precompile-backed quintic verifier variant                    |
 | `test/helpers/Ext5PrecompileHarness.sol`                                                      | arithmetic and transport benchmark harness                    |
 | `script/run_ext5_precompile_phase1_rpc.py`                                                    | arithmetic differential and transport benchmark driver        |
 | `script/run_ext5_precompile_full_verifier_rpc.py`                                             | full baseline-vs-precompile verifier A/B script               |
 | `script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1.s.sol` | broadcast benchmark script for the precompile-backed verifier |
 | `testdata/ext5_precompile_gas_schedule.json`                                                  | locked ext5 precompile gas schedule                           |
+| `testdata/extfield_mac_gas_schedule.json`                                                     | locked extension-field MAC gas schedule                       |
 | `testdata/ext5_precompile_vectors.json`                                                       | JSON arithmetic differential vectors                          |
+| `testdata/extfield_mac_vectors.json`                                                          | JSON MAC differential vectors                                 |
 | `testdata/ext5_precompile_vectors.abi`                                                        | ABI-encoded arithmetic differential vectors                   |
 
-All ext5 precompile calls use the same 32-byte packed `uint256` representation as the Solidity verifier: five 32-bit KoalaBear limbs in the high 160 bits and zero low 96 bits. The runner implements KoalaBear quintic trinomial arithmetic over `X^5 + X^2 - 1`, matching the Solidity `KoalaBearExt5` layout and reduction. It must reject non-canonical limbs and non-zero low 96 bits. Batch inputs have no length prefix.
+The runner implements KoalaBear quintic trinomial arithmetic with Plonky3 field types, matching the Solidity `KoalaBearExt5` layout and reduction. Scalar and batch ext5 inputs have no length prefix; the generic MAC input uses the 8-byte header above.
 
-| Address  | Name                  | Input bytes     | Output bytes | Status in verifier                |
-| -------- | --------------------- | --------------- | ------------ | --------------------------------- |
-| `0x0501` | `EXT5_MUL`            | `64 = a \|\| b` | `32 = a*b`   | integrated for selected hot paths |
-| `0x0502` | `EXT5_SQUARE`         | `32 = a`        | `32 = a^2`   | available for selected hot paths  |
-| `0x0503` | `EXT5_ADD`            | `64 = a \|\| b` | `32 = a+b`   | measurement control               |
-| `0x0504` | `EXT5_SUB`            | `64 = a \|\| b` | `32 = a-b`   | measurement control               |
-| `0x0505` | `EXT5_MUL_BASE`       | `64 = a \|\| s` | `32 = a*s`   | measurement control               |
-| `0x0511` | `EXT5_MUL_BATCH`      | `N * 64`        | `N * 32`     | integrated for fixed equality     |
-| `0x0512` | `EXT5_SQUARE_BATCH`   | `N * 32`        | `N * 32`     | measurement control               |
-| `0x0513` | `EXT5_MUL_BASE_BATCH` | `N * 64`        | `N * 32`     | measurement control               |
-| `0x05f1` | no-op 64-to-32        | `64`            | `32`         | transport calibration             |
-| `0x05f2` | no-op 32-to-32        | `32`            | `32`         | transport calibration             |
-| `0x05f3` | no-op batch 64-to-32  | `N * 64`        | `N * 32`     | transport calibration             |
-| `0x05f4` | no-op batch 32-to-32  | `N * 32`        | `N * 32`     | transport calibration             |
+| Address  | Name                  | Input bytes           | Output bytes | Status in verifier                |
+| -------- | --------------------- | --------------------- | ------------ | --------------------------------- |
+| `0x0501` | `EXT5_MUL`            | `64 = a \|\| b`       | `32 = a*b`   | integrated for selected hot paths |
+| `0x0502` | `EXT5_SQUARE`         | `32 = a`              | `32 = a^2`   | available for selected hot paths  |
+| `0x0503` | `EXT5_ADD`            | `64 = a \|\| b`       | `32 = a+b`   | measurement control               |
+| `0x0504` | `EXT5_SUB`            | `64 = a \|\| b`       | `32 = a-b`   | measurement control               |
+| `0x0505` | `EXT5_MUL_BASE`       | `64 = a \|\| s`       | `32 = a*s`   | measurement control               |
+| `0x0511` | `EXT5_MUL_BATCH`      | `N * 64`              | `N * 32`     | integrated for fixed equality     |
+| `0x0512` | `EXT5_SQUARE_BATCH`   | `N * 32`              | `N * 32`     | measurement control               |
+| `0x0513` | `EXT5_MUL_BASE_BATCH` | `N * 64`              | `N * 32`     | measurement control               |
+| `0x0f01` | `EXTFIELD_MAC`        | `8 + opt 32 + N * 64` | `32`         | integrated for extension-row dots |
+| `0x05f1` | no-op 64-to-32        | `64`                  | `32`         | transport calibration             |
+| `0x05f2` | no-op 32-to-32        | `32`                  | `32`         | transport calibration             |
+| `0x05f3` | no-op batch 64-to-32  | `N * 64`              | `N * 32`     | transport calibration             |
+| `0x05f4` | no-op batch 32-to-32  | `N * 32`              | `N * 32`     | transport calibration             |
+| `0x0ff1` | no-op `EXTFIELD_MAC`  | `8 + opt 32 + N * 64` | `32`         | transport calibration             |
 
-The precompile-backed quintic verifier currently routes fixed-equality products, the dimension-4 equality-weight precomputation used by the STIR row evaluator, generic Horner-step multiplications, equality-accumulator products, and the final closing multiplication through ext5 precompile calls. It keeps the fused row-evaluation kernels in software because they already avoid per-product packing and reduction.
+The precompile-backed quintic verifier routes fixed-equality products and equality-weight batches through `EXT5_MUL_BATCH`, and routes extension-row dimension-4 STIR dot products through `EXTFIELD_MAC(n = 16)`. Base-row dot products remain in software because they are scalar-times-ext5 products and the fused software kernel is cheaper than widening every scalar row value to an ext5 word. Existing batch call sites that need individual product outputs stay on `EXT5_MUL_BATCH`.
 
-The arithmetic and no-op transport benchmarks show that scalar ext5 calls are mostly transport overhead, while batched multiplication is cheap enough to use in loops with many independent products. The full-verifier A/B therefore routes only the fixed-equality and equality-weight batches through `EXT5_MUL_BATCH`, and leaves the fused row-evaluation kernels in software.
+The arithmetic and no-op transport benchmarks show that scalar ext5 calls are mostly transport overhead, while batched multiplication is cheap enough to use in loops with many independent products. The MAC precompile fits the row-dot shape that `EXT5_MUL_BATCH` does not: it accumulates inside the precompile and returns one canonical ext5 output instead of returning 16 individual products for Solidity to add.
 
-Measured on April 30, 2026 with the local ext5 runner:
+`EXTFIELD_MAC(n = 1)` was considered for Horner-step multiplication only as a transport-floor control. It is not wired into the verifier because the singleton call shape is dominated by `STATICCALL` transport and does not beat the existing scalar precompile path.
 
-| Check                            | Result      |
-| -------------------------------- | ----------- |
-| deterministic arithmetic vectors | 10,000 pass |
-| non-canonical ext5 inputs        | rejected    |
-| `EXT5_MUL` clean call            | 27,186 gas  |
-| no-op 64-to-32 clean call        | 24,358 gas  |
-| `EXT5_SQUARE` clean call         | 26,718 gas  |
-| no-op 32-to-32 clean call        | 26,646 gas  |
-| `EXT5_MUL_BATCH`, 64 pairs       | 94,330 gas  |
-| no-op batch 64-to-32, 64 pairs   | 94,330 gas  |
-| software verifier tx gas         | 5,732,991   |
-| precompile verifier tx gas       | 5,486,961   |
-| tx gas saved                     | 246,030     |
+Measured on May 5, 2026 with the local ext5 runner:
 
-The local precompile path is useful for `rsv3_pow28`, but the saving is below the threshold for immediately producing a precompile-backed variant of the older `rsv4` verifier.
+| Check                                  | Result      |
+| -------------------------------------- | ----------- |
+| deterministic ext5 arithmetic vectors  | 10,000 pass |
+| deterministic `EXTFIELD_MAC` vectors   | 128 pass    |
+| non-canonical ext5 and MAC inputs      | rejected    |
+| `EXT5_MUL` clean call                  | 27,296 gas  |
+| no-op 64-to-32 clean call              | 24,468 gas  |
+| `EXT5_SQUARE` clean call               | 26,784 gas  |
+| no-op 32-to-32 clean call              | 26,712 gas  |
+| `EXT5_MUL_BATCH`, 64 pairs             | 94,330 gas  |
+| no-op batch 64-to-32, 64 pairs         | 94,330 gas  |
+| `EXTFIELD_MAC`, 16 pairs               | 54,079 gas  |
+| no-op `EXTFIELD_MAC`, 16 pairs         | 39,140 gas  |
+| software verifier tx gas               | 5,732,991   |
+| precompile verifier tx gas             | 4,725,482   |
+| tx gas saved                           | 1,007,509   |
+| additional saving vs pre-MAC ext5 path | 761,479     |
+
+The local MAC path clears the full-verifier gate for `rsv3_pow28`. A precompile-backed `rsv4` variant remains a separate port and must be measured independently before keeping it.
 
 ##### Measurement commands
 
@@ -692,11 +717,13 @@ For the quintic experiment, use the ext5 runner binaries and scripts:
 cd ..
 cargo check --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin calibrate-ext5-precompile-gas -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin calibrate-extfield-mac-gas -- sol-spartan-whir/testdata/extfield_mac_gas_schedule.json
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin export-ext5-precompile-vectors -- sol-spartan-whir/testdata
-cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin ext5-precompile-node -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json 18547
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin export-extfield-mac-vectors -- sol-spartan-whir/testdata
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin ext5-precompile-node -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json sol-spartan-whir/testdata/extfield_mac_gas_schedule.json 18547
 cd sol-spartan-whir
-python3 script/run_ext5_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547
-python3 script/run_ext5_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547
+python3 script/run_ext5_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --gas-limit 30000000
+python3 script/run_ext5_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547 --gas-limit 30000000
 ```
 
 All RPC measurement scripts use state-changing transactions and write a derived value into `lastResult` so the compiler and EVM cannot remove output copying or arithmetic consumption.

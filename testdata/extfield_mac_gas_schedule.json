@@ -1,0 +1,43 @@
+{
+  "foundry_version": "1.5.1-stable",
+  "foundry_commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+  "eip1108_gas_per_microsecond": 25.86,
+  "safety_multiplier": 8.0,
+  "min_realistic_effective_gas": 700,
+  "samples": 101,
+  "ops_per_sample": 1024,
+  "vector_seed": 16771504454010951288,
+  "field_id": 5,
+  "n_max": 1024,
+  "extfield_mac": {
+    "assigned_base_gas": 50,
+    "assigned_per_pair_gas": 2,
+    "samples": [
+      {
+        "n": 0,
+        "median_runtime_ns": 2,
+        "assigned_gas_at_n": 50
+      },
+      {
+        "n": 1,
+        "median_runtime_ns": 8,
+        "assigned_gas_at_n": 50
+      },
+      {
+        "n": 16,
+        "median_runtime_ns": 187,
+        "assigned_gas_at_n": 50
+      },
+      {
+        "n": 64,
+        "median_runtime_ns": 549,
+        "assigned_gas_at_n": 150
+      },
+      {
+        "n": 1024,
+        "median_runtime_ns": 7857,
+        "assigned_gas_at_n": 1650
+      }
+    ]
+  }
+}

@@ -5,6 +5,8 @@ import { KoalaBearExt5 } from "../../src/field/KoalaBearExt5.sol";
 import { KoalaBearExt5Precompile } from "../../src/field/KoalaBearExt5Precompile.sol";
 
 contract Ext5PrecompileHarness {
+    uint256 internal constant EXTFIELD_MAC_FIELD_ID_EXT5 = 0x0005;
+
     uint256 public lastResult;
 
     function softwareMul(uint256 a, uint256 b) external pure returns (uint256) {
@@ -31,6 +33,25 @@ contract Ext5PrecompileHarness {
         return KoalaBearExt5Precompile.noopSquare(a);
     }
 
+    function precompileMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external view returns (uint256) {
+        return KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function precompileMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.mac(input);
+    }
+
+    function noopMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopMac(input);
+    }
+
     function benchmarkNoopMulClean(uint256 a, uint256 b) external {
         lastResult = KoalaBearExt5Precompile.noopMul(a, b);
     }
@@ -45,6 +66,28 @@ contract Ext5PrecompileHarness {
 
     function benchmarkSquareClean(uint256 a) external {
         lastResult = KoalaBearExt5Precompile.square(a);
+    }
+
+    function benchmarkMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function benchmarkNoopMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt5Precompile.noopMac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
     }
 
     function checkArithmeticVectorsTx(
@@ -80,6 +123,23 @@ contract Ext5PrecompileHarness {
         );
         lastResult = ok ? KoalaBearExt5.ONE : 0;
         return ok;
+    }
+
+    function checkMacVectorTx(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256 expected
+    ) external returns (bool) {
+        uint256 software = _softwareMac(accumulator, includeAccumulator, packedA, packedB);
+        if (software != expected) revert("SOFTWARE_MAC");
+        uint256 precompile = KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+        if (precompile != expected) revert("PRECOMPILE_MAC");
+        lastResult = precompile;
+        return true;
     }
 
     function benchmarkMulBatch(uint256[] calldata packedA, uint256[] calldata packedB) external {
@@ -220,6 +280,59 @@ contract Ext5PrecompileHarness {
         out = new bytes(len << 5);
         assembly ("memory-safe") {
             calldatacopy(add(out, 0x20), values.offset, shl(5, len))
+        }
+    }
+
+    function _packMacInput(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (bytes memory out) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        require(len <= 1024, "MAC_N");
+        uint256 flags = includeAccumulator ? 1 : 0;
+        uint256 bodyOffset = 8;
+        out = new bytes(8 + (includeAccumulator ? 32 : 0) + (len << 6));
+        assembly ("memory-safe") {
+            let dst := add(out, 0x20)
+            mstore8(dst, shr(8, EXTFIELD_MAC_FIELD_ID_EXT5))
+            mstore8(add(dst, 0x01), EXTFIELD_MAC_FIELD_ID_EXT5)
+            mstore8(add(dst, 0x02), shr(8, len))
+            mstore8(add(dst, 0x03), len)
+            mstore8(add(dst, 0x04), shr(24, flags))
+            mstore8(add(dst, 0x05), shr(16, flags))
+            mstore8(add(dst, 0x06), shr(8, flags))
+            mstore8(add(dst, 0x07), flags)
+            dst := add(dst, bodyOffset)
+            if includeAccumulator {
+                mstore(dst, accumulator)
+                dst := add(dst, 0x20)
+            }
+            let leftOffset := packedA.offset
+            let rightOffset := packedB.offset
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(dst, calldataload(add(leftOffset, shl(5, i))))
+                mstore(add(dst, 0x20), calldataload(add(rightOffset, shl(5, i))))
+                dst := add(dst, 0x40)
+            }
+        }
+    }
+
+    function _softwareMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (uint256 acc) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        acc = includeAccumulator ? accumulator : 0;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                acc = KoalaBearExt5.add(acc, KoalaBearExt5.mul(packedA[i], packedB[i]));
+            }
         }
     }
 

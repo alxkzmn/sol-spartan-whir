@@ -16,10 +16,12 @@ library KoalaBearExt5Precompile {
     uint256 internal constant EXT5_MUL_BATCH_PRECOMPILE = 0x0511;
     uint256 internal constant EXT5_SQUARE_BATCH_PRECOMPILE = 0x0512;
     uint256 internal constant EXT5_MUL_BASE_BATCH_PRECOMPILE = 0x0513;
+    uint256 internal constant EXTFIELD_MAC_PRECOMPILE = 0x0f01;
     uint256 internal constant NOOP_64_TO_32_PRECOMPILE = 0x05f1;
     uint256 internal constant NOOP_32_TO_32_PRECOMPILE = 0x05f2;
     uint256 internal constant NOOP_BATCH_64_TO_32_PRECOMPILE = 0x05f3;
     uint256 internal constant NOOP_BATCH_32_TO_32_PRECOMPILE = 0x05f4;
+    uint256 internal constant NOOP_EXTFIELD_MAC_PRECOMPILE = 0x0ff1;
 
     // Add/sub/base-scalar operations stay in Solidity on the verifier path: their arithmetic is
     // cheaper than paying a standalone STATICCALL. The corresponding precompile entry points are
@@ -83,6 +85,14 @@ library KoalaBearExt5Precompile {
         return _callBatch(EXT5_MUL_BASE_BATCH_PRECOMPILE, input, input.length / 2);
     }
 
+    function mac(bytes memory input) internal view returns (uint256 out) {
+        return _callRaw32(EXTFIELD_MAC_PRECOMPILE, input);
+    }
+
+    function macInto(uint256 inputPtr, uint256 inputLen, uint256 outputPtr) internal view {
+        _callBatchInto(EXTFIELD_MAC_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
+    }
+
     function noopMul(uint256 a, uint256 b) internal view returns (uint256 out) {
         return _callBinary(NOOP_64_TO_32_PRECOMPILE, a, b);
     }
@@ -99,6 +109,14 @@ library KoalaBearExt5Precompile {
     function noopBatch32To32(bytes memory input) internal view returns (bytes memory out) {
         _validateBatchInputLength(input.length, 0x20);
         return _callBatch(NOOP_BATCH_32_TO_32_PRECOMPILE, input, input.length);
+    }
+
+    function noopMac(bytes memory input) internal view returns (uint256 out) {
+        return _callRaw32(NOOP_EXTFIELD_MAC_PRECOMPILE, input);
+    }
+
+    function noopMacInto(uint256 inputPtr, uint256 inputLen, uint256 outputPtr) internal view {
+        _callBatchInto(NOOP_EXTFIELD_MAC_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
     }
 
     function _validateBatchInputLength(uint256 inputLength, uint256 itemLength) private pure {
@@ -163,6 +181,19 @@ library KoalaBearExt5Precompile {
                 revert(ptr, size)
             }
             if iszero(eq(returndatasize(), outputLen)) { revert(0, 0) }
+        }
+    }
+
+    function _callRaw32(uint256 precompile, bytes memory input) private view returns (uint256 out) {
+        assembly ("memory-safe") {
+            let ptr := mload(0x40)
+            if iszero(staticcall(gas(), precompile, add(input, 0x20), mload(input), ptr, 0x20)) {
+                let size := returndatasize()
+                returndatacopy(ptr, 0, size)
+                revert(ptr, size)
+            }
+            if iszero(eq(returndatasize(), 0x20)) { revert(0, 0) }
+            out := mload(ptr)
         }
     }
 

@@ -218,15 +218,7 @@ library WhirVerifierCore5PrecompilePhase1 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        (uint256 r00, uint256 r01, uint256 r02, uint256 r03, uint256 r04) =
-            WhirVerifierUtils5._unpackCoeffs(p0);
-        (uint256 r10, uint256 r11, uint256 r12, uint256 r13, uint256 r14) =
-            WhirVerifierUtils5._unpackCoeffs(p1);
-        (uint256 r20, uint256 r21, uint256 r22, uint256 r23, uint256 r24) =
-            WhirVerifierUtils5._unpackCoeffs(p2);
-        (uint256 r30, uint256 r31, uint256 r32, uint256 r33, uint256 r34) =
-            WhirVerifierUtils5._unpackCoeffs(p3);
-        uint256 eqWeightsPtr = _computeDim4EqWeightsUnpackedPrecompile(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -238,31 +230,8 @@ library WhirVerifierCore5PrecompilePhase1 {
                 prevIdx = idx;
 
                 uint256 rowOffset = valuesOffset + i * 320;
-                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateExtension5RowDim4BlobUnpacked(
-                    blob,
-                    rowOffset,
-                    eqWeightsPtr,
-                    r00,
-                    r01,
-                    r02,
-                    r03,
-                    r04,
-                    r10,
-                    r11,
-                    r12,
-                    r13,
-                    r14,
-                    r20,
-                    r21,
-                    r22,
-                    r23,
-                    r24,
-                    r30,
-                    r31,
-                    r32,
-                    r33,
-                    r34
-                );
+                (bytes32 hash, uint256 evalValue) =
+                    _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, eqWeightsPtr);
                 rowEvals[i] = evalValue;
 
                 assembly ("memory-safe") {
@@ -274,6 +243,130 @@ library WhirVerifierCore5PrecompilePhase1 {
         root = MerkleVerifier.computeRootFromPackedFrontier20Blob(
             frontierEntries, count, depth, blob, decommOffset, decommLen
         );
+    }
+
+    function _hashAndEvaluateExtension5RowDim4BlobMac(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 weightsPtr
+    ) private view returns (bytes32 digest, uint256 evalValue) {
+        uint256 src;
+        uint256 v0;
+        uint256 v1;
+        uint256 v2;
+        uint256 v3;
+        uint256 v4;
+        uint256 v5;
+        uint256 v6;
+        uint256 v7;
+        uint256 v8;
+        uint256 v9;
+        uint256 v10;
+        uint256 v11;
+        uint256 v12;
+        uint256 v13;
+        uint256 v14;
+        uint256 v15;
+        uint256 inputPtr;
+        uint256 outputPtr;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+            let lowMask := not(sub(shl(96, 1), 1))
+            let ptr := mload(0x40)
+            v0 := and(calldataload(src), lowMask)
+            v1 := and(calldataload(add(src, 20)), lowMask)
+            v2 := and(calldataload(add(src, 40)), lowMask)
+            v3 := and(calldataload(add(src, 60)), lowMask)
+            v4 := and(calldataload(add(src, 80)), lowMask)
+            v5 := and(calldataload(add(src, 100)), lowMask)
+            v6 := and(calldataload(add(src, 120)), lowMask)
+            v7 := and(calldataload(add(src, 140)), lowMask)
+            v8 := and(calldataload(add(src, 160)), lowMask)
+            v9 := and(calldataload(add(src, 180)), lowMask)
+            v10 := and(calldataload(add(src, 200)), lowMask)
+            v11 := and(calldataload(add(src, 220)), lowMask)
+            v12 := and(calldataload(add(src, 240)), lowMask)
+            v13 := and(calldataload(add(src, 260)), lowMask)
+            v14 := and(calldataload(add(src, 280)), lowMask)
+            v15 := and(calldataload(add(src, 300)), lowMask)
+
+            function validateExt5(packed) {
+                let modulus := 0x7f000001
+                let mask := 0xffffffff
+                if or(
+                    or(
+                        or(
+                            iszero(lt(shr(224, packed), modulus)),
+                            iszero(lt(and(shr(192, packed), mask), modulus))
+                        ),
+                        or(
+                            iszero(lt(and(shr(160, packed), mask), modulus)),
+                            iszero(lt(and(shr(128, packed), mask), modulus))
+                        )
+                    ),
+                    iszero(lt(and(shr(96, packed), mask), modulus))
+                ) {
+                    mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
+                    mstore(0x04, packed)
+                    revert(0x00, 0x24)
+                }
+            }
+
+            validateExt5(v0)
+            validateExt5(v1)
+            validateExt5(v2)
+            validateExt5(v3)
+            validateExt5(v4)
+            validateExt5(v5)
+            validateExt5(v6)
+            validateExt5(v7)
+            validateExt5(v8)
+            validateExt5(v9)
+            validateExt5(v10)
+            validateExt5(v11)
+            validateExt5(v12)
+            validateExt5(v13)
+            validateExt5(v14)
+            validateExt5(v15)
+
+            mstore8(ptr, 0x00)
+            calldatacopy(add(ptr, 0x01), src, 320)
+            digest := and(keccak256(ptr, 321), lowMask)
+
+            inputPtr := ptr
+            outputPtr := add(inputPtr, 0x420)
+            mstore(0x40, add(outputPtr, 0x20))
+            mstore(inputPtr, or(shl(240, 0x0005), shl(224, 16)))
+
+            // This MAC input is fixed-shape: exactly 16 row values and 16 weights.
+            function storePair(base, index, weight, value) {
+                let dst := add(add(base, 0x08), shl(6, index))
+                mstore(dst, weight)
+                mstore(add(dst, 0x20), value)
+            }
+
+            storePair(inputPtr, 0, mload(weightsPtr), v0)
+            storePair(inputPtr, 1, mload(add(weightsPtr, 0x20)), v1)
+            storePair(inputPtr, 2, mload(add(weightsPtr, 0x40)), v2)
+            storePair(inputPtr, 3, mload(add(weightsPtr, 0x60)), v3)
+            storePair(inputPtr, 4, mload(add(weightsPtr, 0x80)), v4)
+            storePair(inputPtr, 5, mload(add(weightsPtr, 0xa0)), v5)
+            storePair(inputPtr, 6, mload(add(weightsPtr, 0xc0)), v6)
+            storePair(inputPtr, 7, mload(add(weightsPtr, 0xe0)), v7)
+            storePair(inputPtr, 8, mload(add(weightsPtr, 0x100)), v8)
+            storePair(inputPtr, 9, mload(add(weightsPtr, 0x120)), v9)
+            storePair(inputPtr, 10, mload(add(weightsPtr, 0x140)), v10)
+            storePair(inputPtr, 11, mload(add(weightsPtr, 0x160)), v11)
+            storePair(inputPtr, 12, mload(add(weightsPtr, 0x180)), v12)
+            storePair(inputPtr, 13, mload(add(weightsPtr, 0x1a0)), v13)
+            storePair(inputPtr, 14, mload(add(weightsPtr, 0x1c0)), v14)
+            storePair(inputPtr, 15, mload(add(weightsPtr, 0x1e0)), v15)
+        }
+
+        KoalaBearExt5Precompile.macInto(inputPtr, 0x408, outputPtr);
+        assembly ("memory-safe") {
+            evalValue := mload(outputPtr)
+        }
     }
 
     function _computeBaseRootAndEvals16(
@@ -607,7 +700,7 @@ library WhirVerifierCore5PrecompilePhase1 {
                     }
                 }
             } else {
-                uint256 eqWeightsPtr = _computeDim4EqWeightsUnpackedPrecompile(p0, p1, p2, p3);
+                uint256 eqWeightsPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
                 rowOffset = valuesOffset + numQueries * 320;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
@@ -619,31 +712,8 @@ library WhirVerifierCore5PrecompilePhase1 {
                     nextHigher = idx;
                     rowOffset -= 320;
 
-                    (bytes32 hash, uint256 evalValue) = WhirVerifierUtils5._hashAndEvaluateExtension5RowDim4BlobUnpacked(
-                        blob,
-                        rowOffset,
-                        eqWeightsPtr,
-                        r00,
-                        r01,
-                        r02,
-                        r03,
-                        r04,
-                        r10,
-                        r11,
-                        r12,
-                        r13,
-                        r14,
-                        r20,
-                        r21,
-                        r22,
-                        r23,
-                        r24,
-                        r30,
-                        r31,
-                        r32,
-                        r33,
-                        r34
-                    );
+                    (bytes32 hash, uint256 evalValue) =
+                        _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, eqWeightsPtr);
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
 
                     assembly ("memory-safe") {
@@ -1847,33 +1917,6 @@ library WhirVerifierCore5PrecompilePhase1 {
             }
         }
         KoalaBearExt5Precompile.mulBatchInto(batchInput, 0x400, weightsPtr);
-    }
-
-    function _computeDim4EqWeightsUnpackedPrecompile(uint256 p0, uint256 p1, uint256 p2, uint256 p3)
-        private
-        view
-        returns (uint256 unpackedPtr)
-    {
-        uint256 packedPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
-        assembly ("memory-safe") {
-            unpackedPtr := mload(0x40)
-            mstore(0x40, add(unpackedPtr, 0xa00))
-
-            for {
-                let src := packedPtr
-                let dst := unpackedPtr
-            } lt(src, add(packedPtr, 0x200)) {
-                src := add(src, 0x20)
-                dst := add(dst, 0xa0)
-            } {
-                let packed := mload(src)
-                mstore(dst, shr(224, packed))
-                mstore(add(dst, 0x20), and(shr(192, packed), 0xffffffff))
-                mstore(add(dst, 0x40), and(shr(160, packed), 0xffffffff))
-                mstore(add(dst, 0x60), and(shr(128, packed), 0xffffffff))
-                mstore(add(dst, 0x80), and(shr(96, packed), 0xffffffff))
-            }
-        }
     }
 
     function _storeMulPair(uint256 ptr, uint256 index, uint256 a, uint256 b) private pure {
