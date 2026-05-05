@@ -15,7 +15,7 @@ DEFAULT_SENDER = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 BASELINE_CONTRACT = "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28"
 PRECOMPILE_CONTRACT = (
-    "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1"
+    "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile"
 )
 
 VERIFY_SIGNATURE = "verify(bytes32,bytes)(bool)"

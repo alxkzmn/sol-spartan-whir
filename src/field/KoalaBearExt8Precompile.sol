@@ -5,6 +5,9 @@ import { KoalaBearExt8 } from "./KoalaBearExt8.sol";
 
 library KoalaBearExt8Precompile {
     error InvalidExt8BatchInputLength(uint256 inputLength, uint256 itemLength);
+    error InvalidExt8PrecompileReturnData(
+        uint256 precompile, uint256 expectedLength, uint256 actualLength
+    );
 
     uint256 internal constant ONE = KoalaBearExt8.ONE;
 
@@ -107,11 +110,22 @@ library KoalaBearExt8Precompile {
         }
     }
 
+    function _checkReturnDataLength(
+        uint256 precompile,
+        uint256 expectedLength,
+        uint256 actualLength
+    ) private pure {
+        if (actualLength != expectedLength) {
+            revert InvalidExt8PrecompileReturnData(precompile, expectedLength, actualLength);
+        }
+    }
+
     function _callBinary(uint256 precompile, uint256 a, uint256 b)
         private
         view
         returns (uint256 out)
     {
+        uint256 actualLength;
         assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, a)
@@ -121,12 +135,14 @@ library KoalaBearExt8Precompile {
                 returndatacopy(ptr, 0, size)
                 revert(ptr, size)
             }
-            if iszero(eq(returndatasize(), 0x20)) { revert(0, 0) }
+            actualLength := returndatasize()
             out := mload(ptr)
         }
+        _checkReturnDataLength(precompile, 0x20, actualLength);
     }
 
     function _callUnary(uint256 precompile, uint256 a) private view returns (uint256 out) {
+        uint256 actualLength;
         assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, a)
@@ -135,9 +151,10 @@ library KoalaBearExt8Precompile {
                 returndatacopy(ptr, 0, size)
                 revert(ptr, size)
             }
-            if iszero(eq(returndatasize(), 0x20)) { revert(0, 0) }
+            actualLength := returndatasize()
             out := mload(ptr)
         }
+        _checkReturnDataLength(precompile, 0x20, actualLength);
     }
 
     function _callBatch(uint256 precompile, bytes memory input, uint256 outputLen)
@@ -146,6 +163,7 @@ library KoalaBearExt8Precompile {
         returns (bytes memory out)
     {
         out = new bytes(outputLen);
+        uint256 actualLength;
         assembly ("memory-safe") {
             if iszero(
                 staticcall(
@@ -162,8 +180,9 @@ library KoalaBearExt8Precompile {
                 returndatacopy(ptr, 0, size)
                 revert(ptr, size)
             }
-            if iszero(eq(returndatasize(), outputLen)) { revert(0, 0) }
+            actualLength := returndatasize()
         }
+        _checkReturnDataLength(precompile, outputLen, actualLength);
     }
 
     function _callBatchInto(
@@ -173,6 +192,7 @@ library KoalaBearExt8Precompile {
         uint256 outputPtr,
         uint256 outputLen
     ) private view {
+        uint256 actualLength;
         assembly ("memory-safe") {
             if iszero(staticcall(gas(), precompile, inputPtr, inputLen, outputPtr, outputLen)) {
                 let size := returndatasize()
@@ -180,7 +200,8 @@ library KoalaBearExt8Precompile {
                 returndatacopy(ptr, 0, size)
                 revert(ptr, size)
             }
-            if iszero(eq(returndatasize(), outputLen)) { revert(0, 0) }
+            actualLength := returndatasize()
         }
+        _checkReturnDataLength(precompile, outputLen, actualLength);
     }
 }

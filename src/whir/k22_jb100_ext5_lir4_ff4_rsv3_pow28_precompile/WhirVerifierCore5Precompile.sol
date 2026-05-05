@@ -12,7 +12,7 @@ import {
 } from "../k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
 import { WhirVerifierUtils5 } from "../k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol";
 
-library WhirVerifierCore5PrecompilePhase1 {
+library WhirVerifierCore5Precompile {
     using KeccakChallenger for KeccakChallenger.State;
 
     struct EqStatement {
@@ -269,6 +269,7 @@ library WhirVerifierCore5PrecompilePhase1 {
         uint256 v15;
         uint256 inputPtr;
         uint256 outputPtr;
+        uint256 macFieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
         assembly ("memory-safe") {
             src := add(blob.offset, offset)
             let lowMask := not(sub(shl(96, 1), 1))
@@ -336,7 +337,7 @@ library WhirVerifierCore5PrecompilePhase1 {
             inputPtr := ptr
             outputPtr := add(inputPtr, 0x420)
             mstore(0x40, add(outputPtr, 0x20))
-            mstore(inputPtr, or(shl(240, 0x0005), shl(224, 16)))
+            mstore(inputPtr, or(shl(240, macFieldId), shl(224, 16)))
 
             // This MAC input is fixed-shape: exactly 16 row values and 16 weights.
             function storePair(base, index, weight, value) {

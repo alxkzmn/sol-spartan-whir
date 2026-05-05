@@ -11,11 +11,11 @@ import {
     WhirBlobCodec5
 } from "../k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
 import {
-    WhirVerifierCore5PrecompilePhase1 as WhirVerifierCore5
-} from "./WhirVerifierCore5PrecompilePhase1.sol";
+    WhirVerifierCore5Precompile as WhirVerifierCore5
+} from "./WhirVerifierCore5Precompile.sol";
 import { WhirVerifierUtils5 } from "../k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol";
 
-contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1 {
+contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile {
     using KeccakChallenger for KeccakChallenger.State;
 
     function _validateHeaderNative(bytes calldata blob)

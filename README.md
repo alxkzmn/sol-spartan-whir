@@ -604,23 +604,23 @@ The only implemented `field_id` is `0x0005`, KoalaBear ext5 over `X^5 + X^2 - 1`
 
 Relevant files:
 
-| Path                                                                                          | Role                                                          |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `../foundry-b0a9dd9/crates/ext5-precompile-runner/`                                           | Rust implementations of the local ext5 precompiles            |
-| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/precompiles.rs`                         | precompile dispatch, input validation, and Rust arithmetic    |
-| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/gas_model.rs`                           | native runtime calibration and locked gas schedule generation |
-| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/vectors.rs`                             | deterministic arithmetic differential vector generation       |
-| `src/field/KoalaBearExt5Precompile.sol`                                                       | Solidity wrapper for scalar, batch, and MAC precompile calls  |
-| `src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1/`                              | precompile-backed quintic verifier variant                    |
-| `test/helpers/Ext5PrecompileHarness.sol`                                                      | arithmetic and transport benchmark harness                    |
-| `script/run_ext5_precompile_phase1_rpc.py`                                                    | arithmetic differential and transport benchmark driver        |
-| `script/run_ext5_precompile_full_verifier_rpc.py`                                             | full baseline-vs-precompile verifier A/B script               |
-| `script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1.s.sol` | broadcast benchmark script for the precompile-backed verifier |
-| `testdata/ext5_precompile_gas_schedule.json`                                                  | locked ext5 precompile gas schedule                           |
-| `testdata/extfield_mac_gas_schedule.json`                                                     | locked extension-field MAC gas schedule                       |
-| `testdata/ext5_precompile_vectors.json`                                                       | JSON arithmetic differential vectors                          |
-| `testdata/extfield_mac_vectors.json`                                                          | JSON MAC differential vectors                                 |
-| `testdata/ext5_precompile_vectors.abi`                                                        | ABI-encoded arithmetic differential vectors                   |
+| Path                                                                                   | Role                                                          |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/`                                    | Rust implementations of the local ext5 precompiles            |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/precompiles.rs`                  | precompile dispatch, input validation, and Rust arithmetic    |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/gas_model.rs`                    | native runtime calibration and locked gas schedule generation |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/src/vectors.rs`                      | deterministic arithmetic differential vector generation       |
+| `src/field/KoalaBearExt5Precompile.sol`                                                | Solidity wrapper for scalar, batch, and MAC precompile calls  |
+| `src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile/`                              | precompile-backed quintic verifier variant                    |
+| `test/helpers/Ext5PrecompileHarness.sol`                                               | arithmetic and transport benchmark harness                    |
+| `script/run_ext5_precompile_rpc.py`                                                    | arithmetic differential and transport benchmark driver        |
+| `script/run_ext5_precompile_full_verifier_rpc.py`                                      | full baseline-vs-precompile verifier A/B script               |
+| `script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile.s.sol` | broadcast benchmark script for the precompile-backed verifier |
+| `testdata/ext5_precompile_gas_schedule.json`                                           | locked ext5 precompile gas schedule                           |
+| `testdata/extfield_mac_gas_schedule.json`                                              | locked extension-field MAC gas schedule                       |
+| `testdata/ext5_precompile_vectors.json`                                                | JSON arithmetic differential vectors                          |
+| `testdata/extfield_mac_vectors.json`                                                   | JSON MAC differential vectors                                 |
+| `testdata/ext5_precompile_vectors.abi`                                                 | ABI-encoded arithmetic differential vectors                   |
 
 The runner implements KoalaBear quintic trinomial arithmetic with Plonky3 field types, matching the Solidity `KoalaBearExt5` layout and reduction. Scalar and batch ext5 inputs have no length prefix; the generic MAC input uses the 8-byte header above.
 
@@ -654,18 +654,18 @@ Measured on May 5, 2026 with the local ext5 runner:
 | deterministic ext5 arithmetic vectors  | 10,000 pass |
 | deterministic `EXTFIELD_MAC` vectors   | 128 pass    |
 | non-canonical ext5 and MAC inputs      | rejected    |
-| `EXT5_MUL` clean call                  | 27,296 gas  |
-| no-op 64-to-32 clean call              | 24,468 gas  |
-| `EXT5_SQUARE` clean call               | 26,784 gas  |
-| no-op 32-to-32 clean call              | 26,712 gas  |
+| `EXT5_MUL` clean call                  | 27,358 gas  |
+| no-op 64-to-32 clean call              | 24,530 gas  |
+| `EXT5_SQUARE` clean call               | 26,824 gas  |
+| no-op 32-to-32 clean call              | 26,752 gas  |
 | `EXT5_MUL_BATCH`, 64 pairs             | 94,330 gas  |
 | no-op batch 64-to-32, 64 pairs         | 94,330 gas  |
-| `EXTFIELD_MAC`, 16 pairs               | 54,079 gas  |
+| `EXTFIELD_MAC`, 16 pairs               | 54,119 gas  |
 | no-op `EXTFIELD_MAC`, 16 pairs         | 39,140 gas  |
 | software verifier tx gas               | 5,732,991   |
-| precompile verifier tx gas             | 4,725,482   |
-| tx gas saved                           | 1,007,509   |
-| additional saving vs pre-MAC ext5 path | 761,479     |
+| precompile verifier tx gas             | 4,735,480   |
+| tx gas saved                           | 997,511     |
+| additional saving vs pre-MAC ext5 path | 751,481     |
 
 The local MAC path clears the full-verifier gate for `rsv3_pow28`. A precompile-backed `rsv4` variant remains a separate port and must be measured independently before keeping it.
 
@@ -722,7 +722,7 @@ cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompil
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin export-extfield-mac-vectors -- sol-spartan-whir/testdata
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin ext5-precompile-node -- sol-spartan-whir/testdata/ext5_precompile_gas_schedule.json sol-spartan-whir/testdata/extfield_mac_gas_schedule.json 18547
 cd sol-spartan-whir
-python3 script/run_ext5_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --gas-limit 30000000
+python3 script/run_ext5_precompile_rpc.py --rpc-url http://127.0.0.1:18547 --gas-limit 30000000
 python3 script/run_ext5_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547 --gas-limit 30000000
 ```
 

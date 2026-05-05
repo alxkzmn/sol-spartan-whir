@@ -5,8 +5,6 @@ import { KoalaBearExt5 } from "../../src/field/KoalaBearExt5.sol";
 import { KoalaBearExt5Precompile } from "../../src/field/KoalaBearExt5Precompile.sol";
 
 contract Ext5PrecompileHarness {
-    uint256 internal constant EXTFIELD_MAC_FIELD_ID_EXT5 = 0x0005;
-
     uint256 public lastResult;
 
     function softwareMul(uint256 a, uint256 b) external pure returns (uint256) {
@@ -50,6 +48,15 @@ contract Ext5PrecompileHarness {
 
     function noopMacRaw(bytes memory input) external view returns (uint256) {
         return KoalaBearExt5Precompile.noopMac(input);
+    }
+
+    function packMacInputForTest(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external pure returns (bytes memory) {
+        return _packMacInput(accumulator, includeAccumulator, packedA, packedB);
     }
 
     function benchmarkNoopMulClean(uint256 a, uint256 b) external {
@@ -294,11 +301,12 @@ contract Ext5PrecompileHarness {
         require(len <= 1024, "MAC_N");
         uint256 flags = includeAccumulator ? 1 : 0;
         uint256 bodyOffset = 8;
+        uint256 fieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
         out = new bytes(8 + (includeAccumulator ? 32 : 0) + (len << 6));
         assembly ("memory-safe") {
             let dst := add(out, 0x20)
-            mstore8(dst, shr(8, EXTFIELD_MAC_FIELD_ID_EXT5))
-            mstore8(add(dst, 0x01), EXTFIELD_MAC_FIELD_ID_EXT5)
+            mstore8(dst, shr(8, fieldId))
+            mstore8(add(dst, 0x01), fieldId)
             mstore8(add(dst, 0x02), shr(8, len))
             mstore8(add(dst, 0x03), len)
             mstore8(add(dst, 0x04), shr(24, flags))

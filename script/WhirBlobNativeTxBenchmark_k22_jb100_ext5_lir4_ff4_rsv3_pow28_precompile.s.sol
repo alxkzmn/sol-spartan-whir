@@ -5,10 +5,10 @@ import { Script, console2 } from "forge-std/Script.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
 import {
-    WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1 as WhirBlobVerifierNative5Precompile
-} from "../src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile_phase1.sol";
+    WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile as WhirBlobVerifierNative5Precompile
+} from "../src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile.sol";
 
-contract WhirBlobNativeTxBenchmark5Pow28Rsv3PrecompilePhase1Script is Script {
+contract WhirBlobNativeTxBenchmark5Pow28Rsv3PrecompileScript is Script {
     string internal constant TESTDATA = "testdata/";
 
     function run() external returns (address nativeVerifierAddress) {
