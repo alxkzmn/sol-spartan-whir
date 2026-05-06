@@ -33,7 +33,7 @@ Documented precision for that model:
 - execution gas only, not total tx gas
 - `Constant(5)` with starting log inverse rate `11` and RS domain initial reduction factor `3`: model `911,902` vs measured `911,902`
 - `Constant(4)` with starting log inverse rate `6` and RS domain initial reduction factor `1`: model `899,906` vs measured `899,906`
-- octic `k22_jb100_lir6_ff4_rsv1`: model `7,383,992` vs measured `7,383,992`
+- octic `k22_jb100_lir6_ff4_rsv1`: measured native gas `6,908,778`; the schedule model still uses the older `7,383,992` calibration row, so rerun calibration before using the octic model row as an exact anchor
 - measured anchors: exact on the checked-in native blob verifier schedules
 - this is a measured calibration statement, not a guarantee for every unbenchmarked schedule
 
@@ -63,16 +63,16 @@ The current build target is `k22_jb100_ext5_lir4_ff4_rsv3_pow28`:
 | native blob execution gas          |      `4,768,744` |
 | native blob calldata bytes         |         `54,436` |
 
-The transaction gas rows are from the latest Anvil transaction benchmark for
-this target. The execution gas figure is the transaction gas with the `21,000`
-base cost and the calldata cost subtracted, so it reflects only the code that
-runs inside the verifier contract.
+The transaction gas rows are measured with Anvil for this target. The execution
+gas figure is the transaction gas with the `21,000` base cost and the calldata
+cost subtracted, so it reflects only the code that runs inside the verifier
+contract.
 
 The previous quintic build target, `k22_jb100_ext5_lir4_ff4_rsv4`, is still
 checked in for comparison. It uses `pow_bits = 27`,
 `rs_domain_initial_reduction_factor = 4`, measured `133.516761291s` prover
-time, measures `6,447,048` native blob transaction gas after the same base-row
-and pairwise select-evaluation optimizations, and measures `6,357,321` in the
+time, measures `6,447,048` native blob transaction gas with the same base row
+and pairwise select evaluation kernels, and measures `6,357,321` in the
 Foundry native blob gas test.
 
 #### Native blob deployability
@@ -212,11 +212,11 @@ Phase column meanings:
 | `final_value_check`     | Final polynomial value evaluation and closing multiplication/check.                                                                                                                                                                 |
 | `phase_sum`             | Sum of all reported phases.                                                                                                                                                                                                         |
 
-| Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |     R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
-| ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | ----------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
-| quartic | `lir6_ff5_rsv1`                      | `33,593` |         `17,967` | `17,228` | `171,798` |    `17,923` | `13,076` |   `143,981` |    `20,527` |          |           |             |           `18,622` |  `132,455` |       `17,944` |             `178,866` |          `10,220` |   `794,200` |
-| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,864` |         `27,353` |  `2,799` | `703,346` |    `27,243` |  `2,784` |   `925,758` |    `27,301` |  `2,793` | `582,564` |    `27,209` |           `63,759` |  `669,008` |       `37,047` |           `1,512,664` |         `135,805` | `4,768,297` |
-| octic   | `k22_jb100_lir6_ff4_rsv1`            | `27,749` |         `44,397` |  `3,797` | `743,816` |    `44,309` |  `3,803` | `1,120,247` |    `44,309` |  `3,803` | `856,151` |    `44,324` |           `90,172` |  `999,536` |       `67,096` |           `2,584,127` |         `222,114` | `6,899,750` |
+| Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |   R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
+| ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
+| quartic | `lir6_ff5_rsv1`                      | `33,593` |         `17,967` | `17,228` | `171,798` |    `17,923` | `13,076` | `143,981` |    `20,527` |          |           |             |           `18,622` |  `132,455` |       `17,944` |             `178,866` |          `10,220` |   `794,200` |
+| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,864` |         `27,353` |  `2,799` | `703,346` |    `27,243` |  `2,784` | `925,758` |    `27,301` |  `2,793` | `582,564` |    `27,209` |           `63,759` |  `669,008` |       `37,047` |           `1,512,664` |         `135,805` | `4,768,297` |
+| octic   | `k22_jb100_lir6_ff4_rsv1`            | `27,743` |         `44,430` |  `3,809` | `633,541` |    `44,318` |  `3,794` | `966,932` |    `44,315` |  `3,803` | `742,542` |    `44,318` |           `90,336` |  `905,340` |       `67,096` |           `2,584,127` |         `222,140` | `6,428,584` |
 
 Phase rows are produced by:
 
@@ -409,11 +409,11 @@ Metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
 
 | Metric                                                                       |          Value |
 | ---------------------------------------------------------------------------- | -------------: |
-| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `7,383,992` |
-| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `7,384,080` |
+| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `6,908,778` |
+| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `6,908,866` |
 | `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,847,475` |
-| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `7,665,684` |
-| execution remainder                                                          |    `6,890,884` |
+| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `7,190,470` |
+| execution remainder                                                          |    `6,415,670` |
 | `verify(bytes32,bytes)` calldata bytes                                       |       `47,780` |
 | `verify(bytes32,bytes)` calldata gas                                         |      `753,800` |
 | success blob size                                                            | `47,666` bytes |
@@ -452,7 +452,8 @@ The quartic contract and the octic JohnsonBound configuration use different proo
 - Round-constraint accumulation uses fixed `18/14/10` select kernels and a fused ext8 equality-term path instead of the generic ext8 multiplication helpers in the shared verifier code.
 - Final STIR uses two fixed five-query checks for the `64`-coefficient final polynomial.
 - Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
-- [whir_param_sweep.py](./whir_param_sweep.py) is calibrated to this octic configuration. The measured native verifier execution gas is `7,383,992`.
+- Extension-row STIR dot products use lazy reduction across the 16 row values, avoiding a chain of packed ext8 multiply/add operations.
+- [whir_param_sweep.py](./whir_param_sweep.py) models this octic configuration, but its octic gas calibration row still uses `7,383,992`. The measured native blob gas is `6,908,778`; rerun calibration before using the octic model row as an exact anchor.
 
 #### Precompile-backed octic experiment
 
@@ -833,9 +834,9 @@ Gas result:
 
 | Verifier                       | Total tx gas | Calldata gas | Execution gas |
 | ------------------------------ | ------------ | ------------ | ------------- |
-| baseline native octic          | `8,095,104`  | `753,800`    | `7,320,304`   |
-| precompile-backed native octic | `5,057,190`  | `753,800`    | `4,282,390`   |
-| savings                        | `3,037,914`  | `0`          | `3,037,914`   |
+| baseline native octic          | `7,190,470`  | `753,800`    | `6,415,670`   |
+| precompile-backed native octic | `4,722,241`  | `753,800`    | `3,947,441`   |
+| savings                        | `2,468,229`  | `0`          | `2,468,229`   |
 
 The calldata gas is identical because the protocol and blob format are unchanged.
 
