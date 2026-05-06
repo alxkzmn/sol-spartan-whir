@@ -58,9 +58,9 @@ The current build target is `k22_jb100_ext5_lir4_ff4_rsv3_pow28`:
 | achieved security bits             |       `100.0145` |
 | achieved Merkle security bits      |            `160` |
 | measured prover time               | `274.163664792s` |
-| native blob Foundry gas            |      `5,613,844` |
-| native blob transaction gas        |      `5,732,991` |
-| native blob execution gas          |      `4,855,655` |
+| native blob Foundry gas            |      `5,526,933` |
+| native blob transaction gas        |      `5,646,080` |
+| native blob execution gas          |      `4,768,744` |
 | native blob calldata bytes         |         `54,436` |
 
 The transaction gas rows are from the latest Anvil transaction benchmark for
@@ -71,8 +71,25 @@ runs inside the verifier contract.
 The previous quintic build target, `k22_jb100_ext5_lir4_ff4_rsv4`, is still
 checked in for comparison. It uses `pow_bits = 27`,
 `rs_domain_initial_reduction_factor = 4`, measured `133.516761291s` prover
-time, measures `6,544,154` native blob transaction gas after the same base-row
-optimization, and measures `6,454,427` in the Foundry native blob gas test.
+time, measures `6,447,048` native blob transaction gas after the same base-row
+and pairwise select-evaluation optimizations, and measures `6,357,321` in the
+Foundry native blob gas test.
+
+#### Native blob deployability
+
+None of the checked-in quintic native blob verifier variants is deployable as a
+single contract under EIP-170 at the current default build settings:
+
+| Native blob verifier variant       | Runtime bytecode | EIP-170 status |
+| ---------------------------------- | ---------------: | -------------- |
+| `rsv3_pow28` software              |       `33,119` B | `8,543` B over |
+| `rsv4` software                    |       `33,776` B | `9,200` B over |
+| `rsv3_pow28` local precompile path |       `30,208` B | `5,632` B over |
+
+Optimizer-run tuning alone does not make these native blob contracts fit. The
+best low-run checks found `29,529` bytes for `rsv3_pow28` software,
+`29,818` bytes for `rsv4` software, and `26,156` bytes for the local
+precompile-backed `rsv3_pow28` verifier.
 
 Generated fixture prefix:
 
@@ -110,7 +127,7 @@ The scorer reads three inputs:
 - Solidity `BENCH:{...}` gas microbenchmark lines under solc `0.8.28`, `via_ir = true`, optimizer runs `833`.
 - Rust prover measurements: PoW calibrated through `TraceChallenger::grind` and full 22-variable commit+prove timings for selected candidates.
 
-`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow28_ff4_lir4_rsv3`, with raw score `8,408,842`, measured native transaction gas `5,732,991`, and scale factor `0.6817812726175614`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
+`quintic_schedule_scorer.py` writes `schedule_scores.json` and SVG plots under `testdata/quintic_scores/`. The verifier axis is quintic-calibrated: lower is better, and the raw microbenchmark score is scaled to match the measured native quintic verifier transaction gas. The current anchor is `constant_pow28_ff4_lir4_rsv3`, with raw score `8,408,842`, measured native transaction gas `5,646,080`, and scale factor `0.67144560451962354`. This keeps the Pareto frontier purely quintic. The calibrated score is still a predictor for unmeasured candidates, not a substitute for measuring the leading candidate's native gas directly. The earlier ordinal sanity check still uses the existing standard-EVM native blob verifiers:
 
 - `WhirBlobVerifierNative4_lir6_ff5_rsv1` on the checked-in `lir6_ff5_rsv1` fixture.
 - `WhirBlobVerifierNative4_lir11_ff5_rsv3` on the checked-in `lir11_ff5_rsv3` fixture.
@@ -198,7 +215,7 @@ Phase column meanings:
 | Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |     R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
 | ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | ----------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
 | quartic | `lir6_ff5_rsv1`                      | `33,593` |         `17,967` | `17,228` | `171,798` |    `17,923` | `13,076` |   `143,981` |    `20,527` |          |           |             |           `18,622` |  `132,455` |       `17,944` |             `178,866` |          `10,220` |   `794,200` |
-| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,865` |         `27,353` |  `2,799` | `703,347` |    `27,243` |  `2,784` |   `925,760` |    `27,301` |  `2,793` | `582,566` |    `27,209` |           `63,760` |  `669,010` |       `37,047` |           `1,599,553` |         `135,805` | `4,855,195` |
+| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,864` |         `27,353` |  `2,799` | `703,346` |    `27,243` |  `2,784` |   `925,758` |    `27,301` |  `2,793` | `582,564` |    `27,209` |           `63,759` |  `669,008` |       `37,047` |           `1,512,664` |         `135,805` | `4,768,297` |
 | octic   | `k22_jb100_lir6_ff4_rsv1`            | `27,749` |         `44,397` |  `3,797` | `743,816` |    `44,309` |  `3,803` | `1,120,247` |    `44,309` |  `3,803` | `856,151` |    `44,324` |           `90,172` |  `999,536` |       `67,096` |           `2,584,127` |         `222,114` | `6,899,750` |
 
 Phase rows are produced by:
@@ -226,7 +243,7 @@ forge test \
   --flamegraph
 ```
 
-The canonical Foundry gas for this path is `5,613,844`. The verifier call itself, excluding fixture-loading harness noise, accounts for `4,855,655` gas.
+The canonical Foundry gas for this path is `5,526,933`. The verifier call itself, excluding fixture-loading harness noise, accounts for `4,768,744` gas.
 
 | Profile bucket                                                             |         Gas | Share of verifier call |
 | -------------------------------------------------------------------------- | ----------: | ---------------------: |
@@ -662,12 +679,13 @@ Measured on May 5, 2026 with the local ext5 runner:
 | no-op batch 64-to-32, 64 pairs         | 94,330 gas  |
 | `EXTFIELD_MAC`, 16 pairs               | 54,119 gas  |
 | no-op `EXTFIELD_MAC`, 16 pairs         | 39,140 gas  |
-| software verifier tx gas               | 5,732,991   |
-| precompile verifier tx gas             | 4,735,480   |
-| tx gas saved                           | 997,511     |
-| additional saving vs pre-MAC ext5 path | 751,481     |
+| software verifier tx gas               | 5,646,080   |
+| precompile verifier tx gas             | 4,386,546   |
+| tx gas saved                           | 1,259,534   |
+| additional saving vs pre-MAC ext5 path | 1,100,415   |
+| precompile verifier runtime bytecode   | 30,208 B    |
 
-The local MAC path clears the full-verifier gate for `rsv3_pow28`. A precompile-backed `rsv4` variant remains a separate port and must be measured independently before keeping it.
+The local MAC path clears the full-verifier gate for `rsv3_pow28`. The precompile-backed verifier keeps extension-row canonical checks inside the MAC precompile and evaluates constraint-select terms two at a time to share `fullPoint` loads. A precompile-backed `rsv4` variant remains a separate port and must be measured independently before keeping it.
 
 ##### Measurement commands
 

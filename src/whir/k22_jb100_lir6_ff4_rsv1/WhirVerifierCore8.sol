@@ -210,7 +210,7 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -562,7 +562,9 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(frontierEntries, 0x20), shl(5, numQueries)))
         }
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = expectedKind == 0
+            ? WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3)
+            : WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
 
         unchecked {
             uint256 rowOffset;

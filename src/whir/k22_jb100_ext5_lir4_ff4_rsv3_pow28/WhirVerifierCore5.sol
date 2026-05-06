@@ -1498,9 +1498,19 @@ library WhirVerifierCore5 {
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 4, 18);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 4, 18)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 4, 18)
                 );
             }
         }
@@ -1514,9 +1524,19 @@ library WhirVerifierCore5 {
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 8, 14);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 8, 14)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 8, 14)
                 );
             }
         }
@@ -1530,9 +1550,19 @@ library WhirVerifierCore5 {
         uint256[] memory fullPoint
     ) internal pure returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 12, 10);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 12, 10)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 12, 10)
                 );
             }
         }
@@ -1625,6 +1655,31 @@ library WhirVerifierCore5 {
                 uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
                 acc = _mulBySelectTermExt5(acc, fullPoint[pointOffset + i - 1], scalar);
                 current = KoalaBear.mul(current, current);
+            }
+        }
+    }
+
+    function _selectPolyEvalFixedPair(
+        uint256 var0,
+        uint256 var1,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc0, uint256 acc1) {
+        acc0 = KoalaBearExt5.ONE;
+        acc1 = KoalaBearExt5.ONE;
+        uint256 current0 = var0;
+        uint256 current1 = var1;
+
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 pointValue = fullPoint[pointOffset + i - 1];
+                uint256 scalar0 = current0 == 0 ? KoalaBear.MODULUS - 1 : current0 - 1;
+                uint256 scalar1 = current1 == 0 ? KoalaBear.MODULUS - 1 : current1 - 1;
+                acc0 = _mulBySelectTermExt5(acc0, pointValue, scalar0);
+                acc1 = _mulBySelectTermExt5(acc1, pointValue, scalar1);
+                current0 = KoalaBear.mul(current0, current0);
+                current1 = KoalaBear.mul(current1, current1);
             }
         }
     }

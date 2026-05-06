@@ -291,45 +291,6 @@ library WhirVerifierCore5Precompile {
             v14 := and(calldataload(add(src, 280)), lowMask)
             v15 := and(calldataload(add(src, 300)), lowMask)
 
-            function validateExt5(packed) {
-                let modulus := 0x7f000001
-                let mask := 0xffffffff
-                if or(
-                    or(
-                        or(
-                            iszero(lt(shr(224, packed), modulus)),
-                            iszero(lt(and(shr(192, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(160, packed), mask), modulus)),
-                            iszero(lt(and(shr(128, packed), mask), modulus))
-                        )
-                    ),
-                    iszero(lt(and(shr(96, packed), mask), modulus))
-                ) {
-                    mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
-                    mstore(0x04, packed)
-                    revert(0x00, 0x24)
-                }
-            }
-
-            validateExt5(v0)
-            validateExt5(v1)
-            validateExt5(v2)
-            validateExt5(v3)
-            validateExt5(v4)
-            validateExt5(v5)
-            validateExt5(v6)
-            validateExt5(v7)
-            validateExt5(v8)
-            validateExt5(v9)
-            validateExt5(v10)
-            validateExt5(v11)
-            validateExt5(v12)
-            validateExt5(v13)
-            validateExt5(v14)
-            validateExt5(v15)
-
             mstore8(ptr, 0x00)
             calldatacopy(add(ptr, 0x01), src, 320)
             digest := and(keccak256(ptr, 321), lowMask)
@@ -1660,9 +1621,19 @@ library WhirVerifierCore5Precompile {
         uint256[] memory fullPoint
     ) internal view returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 4, 18);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 4, 18)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 4, 18)
                 );
             }
         }
@@ -1676,9 +1647,19 @@ library WhirVerifierCore5Precompile {
         uint256[] memory fullPoint
     ) internal view returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 8, 14);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 8, 14)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 8, 14)
                 );
             }
         }
@@ -1692,9 +1673,19 @@ library WhirVerifierCore5Precompile {
         uint256[] memory fullPoint
     ) internal view returns (uint256 total) {
         unchecked {
-            for (uint256 i = selVars.length; i > 0; --i) {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) =
+                    _selectPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 12, 10);
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectPolyEvalFixed(selVars[i - 1], fullPoint, 12, 10)
+                    total, challenge, _selectPolyEvalFixed(selVars[0], fullPoint, 12, 10)
                 );
             }
         }
@@ -1789,6 +1780,31 @@ library WhirVerifierCore5Precompile {
                 uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
                 acc = _mulBySelectTermExt5(acc, fullPoint[pointOffset + i - 1], scalar);
                 current = KoalaBear.mul(current, current);
+            }
+        }
+    }
+
+    function _selectPolyEvalFixedPair(
+        uint256 var0,
+        uint256 var1,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc0, uint256 acc1) {
+        acc0 = KoalaBearExt5.ONE;
+        acc1 = KoalaBearExt5.ONE;
+        uint256 current0 = var0;
+        uint256 current1 = var1;
+
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 pointValue = fullPoint[pointOffset + i - 1];
+                uint256 scalar0 = current0 == 0 ? KoalaBear.MODULUS - 1 : current0 - 1;
+                uint256 scalar1 = current1 == 0 ? KoalaBear.MODULUS - 1 : current1 - 1;
+                acc0 = _mulBySelectTermExt5(acc0, pointValue, scalar0);
+                acc1 = _mulBySelectTermExt5(acc1, pointValue, scalar1);
+                current0 = KoalaBear.mul(current0, current0);
+                current1 = KoalaBear.mul(current1, current1);
             }
         }
     }

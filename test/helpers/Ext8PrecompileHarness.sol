@@ -766,7 +766,7 @@ contract Ext8PrecompileHarness {
     {
         _checkRowsLength(rows);
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
 
         bytes32 hashAcc;
         unchecked {
