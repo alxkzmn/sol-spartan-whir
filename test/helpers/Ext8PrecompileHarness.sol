@@ -830,14 +830,7 @@ contract Ext8PrecompileHarness {
         out = new bytes(8 + (includeAccumulator ? 32 : 0) + (len << 6));
         assembly ("memory-safe") {
             let dst := add(out, 0x20)
-            mstore8(dst, shr(8, fieldId))
-            mstore8(add(dst, 0x01), fieldId)
-            mstore8(add(dst, 0x02), shr(8, len))
-            mstore8(add(dst, 0x03), len)
-            mstore8(add(dst, 0x04), shr(24, flags))
-            mstore8(add(dst, 0x05), shr(16, flags))
-            mstore8(add(dst, 0x06), shr(8, flags))
-            mstore8(add(dst, 0x07), flags)
+            mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
             dst := add(dst, bodyOffset)
             if includeAccumulator {
                 mstore(dst, accumulator)

@@ -218,7 +218,7 @@ library WhirVerifierCore5Precompile {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        uint256 eqWeightsPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
+        uint256 macTemplatePtr = _computeDim4EqWeightsMacTemplatePrecompile(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -231,7 +231,7 @@ library WhirVerifierCore5Precompile {
 
                 uint256 rowOffset = valuesOffset + i * 320;
                 (bytes32 hash, uint256 evalValue) =
-                    _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, eqWeightsPtr);
+                    _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, macTemplatePtr);
                 rowEvals[i] = evalValue;
 
                 assembly ("memory-safe") {
@@ -248,7 +248,7 @@ library WhirVerifierCore5Precompile {
     function _hashAndEvaluateExtension5RowDim4BlobMac(
         bytes calldata blob,
         uint256 offset,
-        uint256 weightsPtr
+        uint256 macTemplatePtr
     ) private view returns (bytes32 digest, uint256 evalValue) {
         uint256 src;
         uint256 v0;
@@ -269,11 +269,11 @@ library WhirVerifierCore5Precompile {
         uint256 v15;
         uint256 inputPtr;
         uint256 outputPtr;
-        uint256 macFieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
         assembly ("memory-safe") {
             src := add(blob.offset, offset)
             let lowMask := not(sub(shl(96, 1), 1))
-            let ptr := mload(0x40)
+            let ptr := macTemplatePtr
+            let hashPtr := add(ptr, 0x440)
             v0 := and(calldataload(src), lowMask)
             v1 := and(calldataload(add(src, 20)), lowMask)
             v2 := and(calldataload(add(src, 40)), lowMask)
@@ -291,38 +291,34 @@ library WhirVerifierCore5Precompile {
             v14 := and(calldataload(add(src, 280)), lowMask)
             v15 := and(calldataload(add(src, 300)), lowMask)
 
-            mstore8(ptr, 0x00)
-            calldatacopy(add(ptr, 0x01), src, 320)
-            digest := and(keccak256(ptr, 321), lowMask)
+            mstore8(hashPtr, 0x00)
+            calldatacopy(add(hashPtr, 0x01), src, 320)
+            digest := and(keccak256(hashPtr, 321), lowMask)
 
             inputPtr := ptr
             outputPtr := add(inputPtr, 0x420)
-            mstore(0x40, add(outputPtr, 0x20))
-            mstore(inputPtr, or(shl(240, macFieldId), shl(224, 16)))
 
-            // This MAC input is fixed-shape: exactly 16 row values and 16 weights.
-            function storePair(base, index, weight, value) {
-                let dst := add(add(base, 0x08), shl(6, index))
-                mstore(dst, weight)
-                mstore(add(dst, 0x20), value)
+            // This MAC input is fixed-shape: exactly 16 row values and 16 template weights.
+            function storeValue(base, index, value) {
+                mstore(add(add(base, 0x28), shl(6, index)), value)
             }
 
-            storePair(inputPtr, 0, mload(weightsPtr), v0)
-            storePair(inputPtr, 1, mload(add(weightsPtr, 0x20)), v1)
-            storePair(inputPtr, 2, mload(add(weightsPtr, 0x40)), v2)
-            storePair(inputPtr, 3, mload(add(weightsPtr, 0x60)), v3)
-            storePair(inputPtr, 4, mload(add(weightsPtr, 0x80)), v4)
-            storePair(inputPtr, 5, mload(add(weightsPtr, 0xa0)), v5)
-            storePair(inputPtr, 6, mload(add(weightsPtr, 0xc0)), v6)
-            storePair(inputPtr, 7, mload(add(weightsPtr, 0xe0)), v7)
-            storePair(inputPtr, 8, mload(add(weightsPtr, 0x100)), v8)
-            storePair(inputPtr, 9, mload(add(weightsPtr, 0x120)), v9)
-            storePair(inputPtr, 10, mload(add(weightsPtr, 0x140)), v10)
-            storePair(inputPtr, 11, mload(add(weightsPtr, 0x160)), v11)
-            storePair(inputPtr, 12, mload(add(weightsPtr, 0x180)), v12)
-            storePair(inputPtr, 13, mload(add(weightsPtr, 0x1a0)), v13)
-            storePair(inputPtr, 14, mload(add(weightsPtr, 0x1c0)), v14)
-            storePair(inputPtr, 15, mload(add(weightsPtr, 0x1e0)), v15)
+            storeValue(inputPtr, 0, v0)
+            storeValue(inputPtr, 1, v1)
+            storeValue(inputPtr, 2, v2)
+            storeValue(inputPtr, 3, v3)
+            storeValue(inputPtr, 4, v4)
+            storeValue(inputPtr, 5, v5)
+            storeValue(inputPtr, 6, v6)
+            storeValue(inputPtr, 7, v7)
+            storeValue(inputPtr, 8, v8)
+            storeValue(inputPtr, 9, v9)
+            storeValue(inputPtr, 10, v10)
+            storeValue(inputPtr, 11, v11)
+            storeValue(inputPtr, 12, v12)
+            storeValue(inputPtr, 13, v13)
+            storeValue(inputPtr, 14, v14)
+            storeValue(inputPtr, 15, v15)
         }
 
         KoalaBearExt5Precompile.macInto(inputPtr, 0x408, outputPtr);
@@ -662,7 +658,7 @@ library WhirVerifierCore5Precompile {
                     }
                 }
             } else {
-                uint256 eqWeightsPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
+                uint256 macTemplatePtr = _computeDim4EqWeightsMacTemplatePrecompile(p0, p1, p2, p3);
                 rowOffset = valuesOffset + numQueries * 320;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
@@ -675,7 +671,7 @@ library WhirVerifierCore5Precompile {
                     rowOffset -= 320;
 
                     (bytes32 hash, uint256 evalValue) =
-                        _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, eqWeightsPtr);
+                        _hashAndEvaluateExtension5RowDim4BlobMac(blob, rowOffset, macTemplatePtr);
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
 
                     assembly ("memory-safe") {
@@ -1934,6 +1930,44 @@ library WhirVerifierCore5Precompile {
             }
         }
         KoalaBearExt5Precompile.mulBatchInto(batchInput, 0x400, weightsPtr);
+    }
+
+    function _computeDim4EqWeightsMacTemplatePrecompile(
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) private view returns (uint256 macTemplatePtr) {
+        uint256 weightsPtr = _computeDim4EqWeightsPrecompile(p0, p1, p2, p3);
+        uint256 macFieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
+        assembly ("memory-safe") {
+            macTemplatePtr := mload(0x40)
+            mstore(0x40, add(macTemplatePtr, 0x5a0))
+            mstore(macTemplatePtr, or(shl(240, macFieldId), shl(224, 16)))
+
+            // Fixed-shape EXTFIELD_MAC input. Weights are immutable per round;
+            // row values are filled later at the interleaved value slots.
+            function storeWeight(base, index, weight) {
+                mstore(add(add(base, 0x08), shl(6, index)), weight)
+            }
+
+            storeWeight(macTemplatePtr, 0, mload(weightsPtr))
+            storeWeight(macTemplatePtr, 1, mload(add(weightsPtr, 0x20)))
+            storeWeight(macTemplatePtr, 2, mload(add(weightsPtr, 0x40)))
+            storeWeight(macTemplatePtr, 3, mload(add(weightsPtr, 0x60)))
+            storeWeight(macTemplatePtr, 4, mload(add(weightsPtr, 0x80)))
+            storeWeight(macTemplatePtr, 5, mload(add(weightsPtr, 0xa0)))
+            storeWeight(macTemplatePtr, 6, mload(add(weightsPtr, 0xc0)))
+            storeWeight(macTemplatePtr, 7, mload(add(weightsPtr, 0xe0)))
+            storeWeight(macTemplatePtr, 8, mload(add(weightsPtr, 0x100)))
+            storeWeight(macTemplatePtr, 9, mload(add(weightsPtr, 0x120)))
+            storeWeight(macTemplatePtr, 10, mload(add(weightsPtr, 0x140)))
+            storeWeight(macTemplatePtr, 11, mload(add(weightsPtr, 0x160)))
+            storeWeight(macTemplatePtr, 12, mload(add(weightsPtr, 0x180)))
+            storeWeight(macTemplatePtr, 13, mload(add(weightsPtr, 0x1a0)))
+            storeWeight(macTemplatePtr, 14, mload(add(weightsPtr, 0x1c0)))
+            storeWeight(macTemplatePtr, 15, mload(add(weightsPtr, 0x1e0)))
+        }
     }
 
     function _storeMulPair(uint256 ptr, uint256 index, uint256 a, uint256 b) private pure {

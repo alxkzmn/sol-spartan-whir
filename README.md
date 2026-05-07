@@ -574,8 +574,8 @@ Measured ext8 `EXTFIELD_MAC` transport on May 6, 2026:
 
 | Call shape                 | No-op tx gas | Real tx gas |
 | -------------------------- | ------------ | ----------- |
-| `EXTFIELD_MAC`, `n = 1`    | `28,069`     | `46,987`    |
-| `EXTFIELD_MAC`, `n = 16`   | `43,940`     | `56,502`    |
+| `EXTFIELD_MAC`, `n = 1`    | `28,001`     | `46,919`    |
+| `EXTFIELD_MAC`, `n = 16`   | `43,940`     | `56,434`    |
 | `EXTFIELD_MAC`, `n = 64`   | `117,200`    | `117,200`   |
 | `EXTFIELD_MAC`, `n = 1024` | `1,650,770`  | `1,650,770` |
 
@@ -678,7 +678,7 @@ The runner implements KoalaBear quintic trinomial arithmetic with Plonky3 field 
 | `0x05f4` | no-op batch 32-to-32  | `N * 32`              | `N * 32`     | transport calibration             |
 | `0x0ff1` | no-op `EXTFIELD_MAC`  | `8 + opt 32 + N * 64` | `32`         | transport calibration             |
 
-The precompile-backed quintic verifier routes fixed-equality products and equality-weight batches through `EXT5_MUL_BATCH`, and routes extension-row dimension-4 STIR dot products through `EXTFIELD_MAC(n = 16)`. Base-row dot products remain in software because they are scalar-times-ext5 products and the fused software kernel is cheaper than widening every scalar row value to an ext5 word. Existing batch call sites that need individual product outputs stay on `EXT5_MUL_BATCH`.
+The precompile-backed quintic verifier routes fixed-equality products and equality-weight batches through `EXT5_MUL_BATCH`, and routes extension-row dimension-4 STIR dot products through `EXTFIELD_MAC(n = 16)`. The extension-row path templates the MAC header and equality weights once per round, then fills only the row values before each precompile call. Base-row dot products remain in software because they are scalar-times-ext5 products and the fused software kernel is cheaper than widening every scalar row value to an ext5 word. Existing batch call sites that need individual product outputs stay on `EXT5_MUL_BATCH`.
 
 The arithmetic and no-op transport benchmarks show that scalar ext5 calls are mostly transport overhead, while batched multiplication is cheap enough to use in loops with many independent products. The MAC precompile fits the row-dot shape that `EXT5_MUL_BATCH` does not: it accumulates inside the precompile and returns one canonical ext5 output instead of returning 16 individual products for Solidity to add.
 
@@ -697,12 +697,13 @@ Measured on May 5, 2026 with the local ext5 runner:
 | no-op 32-to-32 clean call              | 26,752 gas  |
 | `EXT5_MUL_BATCH`, 64 pairs             | 94,330 gas  |
 | no-op batch 64-to-32, 64 pairs         | 94,330 gas  |
-| `EXTFIELD_MAC`, 16 pairs               | 54,119 gas  |
+| `EXTFIELD_MAC`, 16 pairs               | 54,051 gas  |
 | no-op `EXTFIELD_MAC`, 16 pairs         | 39,140 gas  |
 | software verifier tx gas               | 5,646,080   |
-| precompile verifier tx gas             | 4,386,546   |
-| tx gas saved                           | 1,259,534   |
-| additional saving vs pre-MAC ext5 path | 1,100,415   |
+| precompile verifier tx gas             | 4,328,805   |
+| tx gas saved                           | 1,317,275   |
+| additional saving vs pre-MAC ext5 path | 1,158,156   |
+| additional saving from MAC templating  | 57,741      |
 | precompile verifier runtime bytecode   | 30,208 B    |
 
 The local MAC path clears the full-verifier gate for `rsv3_pow28`. The precompile-backed verifier keeps extension-row canonical checks inside the MAC precompile and evaluates constraint-select terms two at a time to share `fullPoint` loads. A precompile-backed `rsv4` variant remains a separate port and must be measured independently before keeping it.
