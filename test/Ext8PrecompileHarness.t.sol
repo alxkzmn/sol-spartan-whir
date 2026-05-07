@@ -92,6 +92,58 @@ contract Ext8PrecompileHarnessTest is Test {
         harness.packMacInputForTest(0, false, packedA, packedB);
     }
 
+    function testPackLinProdInputExplicitTerms() external view {
+        uint256[] memory alpha = _pair(A0, A1);
+        uint256[] memory beta = _pair(B0, B1);
+        uint256[] memory scalars = new uint256[](0);
+        uint256[] memory x = _pair(ACC, A0);
+
+        bytes memory expected = bytes.concat(
+            _linProdHeader(2, 0),
+            bytes32(A0),
+            bytes32(B0),
+            bytes32(ACC),
+            bytes32(A1),
+            bytes32(B1),
+            bytes32(A0)
+        );
+        bytes memory actual = harness.packLinProdInputForTest(0, alpha, beta, scalars, x);
+
+        assertEq(actual, expected);
+    }
+
+    function testPackLinProdInputImplicitAlphaExtBeta() external view {
+        uint256[] memory beta = _pair(B0, B1);
+        uint256[] memory x = _pair(A0, A1);
+
+        bytes memory expected =
+            bytes.concat(_linProdHeader(2, 1), bytes32(B0), bytes32(A0), bytes32(B1), bytes32(A1));
+        bytes memory actual =
+            harness.packLinProdInputForTest(1, new uint256[](0), beta, new uint256[](0), x);
+
+        assertEq(actual, expected);
+    }
+
+    function testPackLinProdInputImplicitAlphaBaseBeta() external view {
+        uint256[] memory scalars = _pair(0x01020304, 0x05060708);
+        uint256[] memory x = _pair(A0, A1);
+
+        bytes memory expected = bytes.concat(
+            _linProdHeader(2, 3), bytes4(0x01020304), bytes32(A0), bytes4(0x05060708), bytes32(A1)
+        );
+        bytes memory actual =
+            harness.packLinProdInputForTest(3, new uint256[](0), new uint256[](0), scalars, x);
+
+        assertEq(actual, expected);
+    }
+
+    function testPackLinProdInputRejectsFlags2() external {
+        vm.expectRevert(bytes("FLAGS"));
+        harness.packLinProdInputForTest(
+            2, new uint256[](0), new uint256[](0), new uint256[](0), new uint256[](0)
+        );
+    }
+
     function testDotProductMatchesFoldFixedVector() external view {
         uint256[16] memory row = _fixedRow();
         uint256 p0 = _ext8FromSeed(1000);
@@ -146,5 +198,27 @@ contract Ext8PrecompileHarnessTest is Test {
             mstore8(add(ptr, 0x06), shr(8, flags))
             mstore8(add(ptr, 0x07), flags)
         }
+    }
+
+    function _linProdHeader(uint256 n, uint256 flags) internal pure returns (bytes memory out) {
+        uint256 fieldId = KoalaBearExt8Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT8;
+        out = new bytes(8);
+        assembly ("memory-safe") {
+            let ptr := add(out, 0x20)
+            mstore8(ptr, shr(8, fieldId))
+            mstore8(add(ptr, 0x01), fieldId)
+            mstore8(add(ptr, 0x02), shr(8, n))
+            mstore8(add(ptr, 0x03), n)
+            mstore8(add(ptr, 0x04), shr(24, flags))
+            mstore8(add(ptr, 0x05), shr(16, flags))
+            mstore8(add(ptr, 0x06), shr(8, flags))
+            mstore8(add(ptr, 0x07), flags)
+        }
+    }
+
+    function _pair(uint256 a, uint256 b) internal pure returns (uint256[] memory out) {
+        out = new uint256[](2);
+        out[0] = a;
+        out[1] = b;
     }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import { KoalaBearExt5 } from "../../src/field/KoalaBearExt5.sol";
 import { KoalaBearExt5Precompile } from "../../src/field/KoalaBearExt5Precompile.sol";
+import { KoalaBear } from "../../src/field/KoalaBear.sol";
 
 contract Ext5PrecompileHarness {
     uint256 public lastResult;
@@ -50,6 +51,14 @@ contract Ext5PrecompileHarness {
         return KoalaBearExt5Precompile.noopMac(input);
     }
 
+    function precompileLinProdRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.linProd(input);
+    }
+
+    function noopLinProdRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopLinProd(input);
+    }
+
     function packMacInputForTest(
         uint256 accumulator,
         bool includeAccumulator,
@@ -57,6 +66,16 @@ contract Ext5PrecompileHarness {
         uint256[] calldata packedB
     ) external pure returns (bytes memory) {
         return _packMacInput(accumulator, includeAccumulator, packedA, packedB);
+    }
+
+    function packLinProdInputForTest(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external pure returns (bytes memory) {
+        return _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX);
     }
 
     function benchmarkNoopMulClean(uint256 a, uint256 b) external {
@@ -84,6 +103,39 @@ contract Ext5PrecompileHarness {
         lastResult = KoalaBearExt5Precompile.mac(
             _packMacInput(accumulator, includeAccumulator, packedA, packedB)
         );
+    }
+
+    function benchmarkLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external {
+        lastResult = KoalaBearExt5Precompile.linProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+    }
+
+    function benchmarkNoopLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external {
+        lastResult = KoalaBearExt5Precompile.noopLinProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+    }
+
+    function benchmarkSelectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external {
+        lastResult = _selectEvalSoftware(var_, fullPoint, pointOffset, numVariables);
     }
 
     function benchmarkNoopMac(
@@ -147,6 +199,50 @@ contract Ext5PrecompileHarness {
         if (precompile != expected) revert("PRECOMPILE_MAC");
         lastResult = precompile;
         return true;
+    }
+
+    function checkLinProdVectorTx(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX,
+        uint256 expected
+    ) external returns (bool) {
+        uint256 software = _softwareLinProd(flags, packedAlpha, packedBeta, scalars, packedX);
+        if (software != expected) revert("SOFTWARE_LIN_PROD");
+        uint256 precompile = KoalaBearExt5Precompile.linProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+        if (precompile != expected) revert("PRECOMPILE_LIN_PROD");
+        lastResult = precompile;
+        return true;
+    }
+
+    function selectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external pure returns (uint256) {
+        return _selectEvalSoftware(var_, fullPoint, pointOffset, numVariables);
+    }
+
+    function selectEvalLinProdSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external pure returns (uint256) {
+        uint256[] memory scalars = new uint256[](numVariables);
+        uint256 current = var_;
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                scalars[numVariables - i] = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                current = KoalaBear.mul(current, current);
+            }
+        }
+        return _softwareLinProdMemoryScalars(scalars, fullPoint, pointOffset, numVariables);
     }
 
     function benchmarkMulBatch(uint256[] calldata packedA, uint256[] calldata packedB) external {
@@ -321,6 +417,69 @@ contract Ext5PrecompileHarness {
         }
     }
 
+    function _packLinProdInput(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) internal pure returns (bytes memory out) {
+        uint256 len = packedX.length;
+        require(len <= 1024, "LIN_PROD_N");
+        uint256 fieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
+        if (flags == 0) {
+            require(packedAlpha.length == len, "LEN_ALPHA");
+            require(packedBeta.length == len, "LEN_BETA");
+            out = new bytes(8 + len * 96);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let alphaOffset := packedAlpha.offset
+                let betaOffset := packedBeta.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, calldataload(add(alphaOffset, shl(5, i))))
+                    mstore(add(dst, 0x20), calldataload(add(betaOffset, shl(5, i))))
+                    mstore(add(dst, 0x40), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 0x60)
+                }
+            }
+        } else if (flags == 1) {
+            require(packedBeta.length == len, "LEN_BETA");
+            out = new bytes(8 + len * 64);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let betaOffset := packedBeta.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, calldataload(add(betaOffset, shl(5, i))))
+                    mstore(add(dst, 0x20), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 0x40)
+                }
+            }
+        } else if (flags == 3) {
+            require(scalars.length == len, "LEN_SCALAR");
+            out = new bytes(8 + len * 36);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let scalarOffset := scalars.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, shl(224, calldataload(add(scalarOffset, shl(5, i)))))
+                    mstore(add(dst, 4), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 36)
+                }
+            }
+        } else {
+            revert("FLAGS");
+        }
+    }
+
     function _softwareMac(
         uint256 accumulator,
         bool includeAccumulator,
@@ -333,6 +492,76 @@ contract Ext5PrecompileHarness {
         unchecked {
             for (uint256 i = 0; i < len; ++i) {
                 acc = KoalaBearExt5.add(acc, KoalaBearExt5.mul(packedA[i], packedB[i]));
+            }
+        }
+    }
+
+    function _softwareLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) internal pure returns (uint256 acc) {
+        uint256 len = packedX.length;
+        acc = KoalaBearExt5.ONE;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 term;
+                if (flags == 0) {
+                    term = KoalaBearExt5.add(
+                        packedAlpha[i], KoalaBearExt5.mul(packedBeta[i], packedX[i])
+                    );
+                } else if (flags == 1) {
+                    term = KoalaBearExt5.add(
+                        KoalaBearExt5.ONE, KoalaBearExt5.mul(packedBeta[i], packedX[i])
+                    );
+                } else if (flags == 3) {
+                    term = KoalaBearExt5.add(
+                        KoalaBearExt5.ONE, KoalaBearExt5.mulBase(packedX[i], scalars[i])
+                    );
+                } else {
+                    revert("FLAGS");
+                }
+                acc = KoalaBearExt5.mul(acc, term);
+            }
+        }
+    }
+
+    function _selectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt5.ONE;
+        uint256 current = var_;
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                uint256 term = KoalaBearExt5.add(
+                    KoalaBearExt5.ONE, KoalaBearExt5.mulBase(fullPoint[pointOffset + i - 1], scalar)
+                );
+                acc = KoalaBearExt5.mul(acc, term);
+                current = KoalaBear.mul(current, current);
+            }
+        }
+    }
+
+    function _softwareLinProdMemoryScalars(
+        uint256[] memory scalars,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt5.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 term = KoalaBearExt5.add(
+                    KoalaBearExt5.ONE,
+                    KoalaBearExt5.mulBase(fullPoint[pointOffset + numVariables - 1 - i], scalars[i])
+                );
+                acc = KoalaBearExt5.mul(acc, term);
             }
         }
     }

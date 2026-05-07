@@ -21,11 +21,13 @@ library KoalaBearExt8Precompile {
     uint256 internal constant EXT8_SQUARE_BATCH_PRECOMPILE = 0x0812;
     uint256 internal constant EXT8_MUL_BASE_BATCH_PRECOMPILE = 0x0813;
     uint256 internal constant EXTFIELD_MAC_PRECOMPILE = 0x0f01;
+    uint256 internal constant EXTFIELD_LIN_PROD_PRECOMPILE = 0x0f02;
     uint256 internal constant NOOP_64_TO_32_PRECOMPILE = 0x08f1;
     uint256 internal constant NOOP_32_TO_32_PRECOMPILE = 0x08f2;
     uint256 internal constant NOOP_BATCH_64_TO_32_PRECOMPILE = 0x08f3;
     uint256 internal constant NOOP_BATCH_32_TO_32_PRECOMPILE = 0x08f4;
     uint256 internal constant NOOP_EXTFIELD_MAC_PRECOMPILE = 0x0ff1;
+    uint256 internal constant NOOP_EXTFIELD_LIN_PROD_PRECOMPILE = 0x0ff2;
 
     // Add/sub/base-scalar operations stay in Solidity on the verifier path: their arithmetic is
     // cheaper than paying a standalone STATICCALL. The corresponding precompile entry points are
@@ -97,6 +99,14 @@ library KoalaBearExt8Precompile {
         _callBatchInto(EXTFIELD_MAC_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
     }
 
+    function linProd(bytes memory input) internal view returns (uint256 out) {
+        return _callRaw32(EXTFIELD_LIN_PROD_PRECOMPILE, input);
+    }
+
+    function linProdInto(uint256 inputPtr, uint256 inputLen, uint256 outputPtr) internal view {
+        _callBatchInto(EXTFIELD_LIN_PROD_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
+    }
+
     function noopMul(uint256 a, uint256 b) internal view returns (uint256 out) {
         return _callBinary(NOOP_64_TO_32_PRECOMPILE, a, b);
     }
@@ -121,6 +131,14 @@ library KoalaBearExt8Precompile {
 
     function noopMacInto(uint256 inputPtr, uint256 inputLen, uint256 outputPtr) internal view {
         _callBatchInto(NOOP_EXTFIELD_MAC_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
+    }
+
+    function noopLinProd(bytes memory input) internal view returns (uint256 out) {
+        return _callRaw32(NOOP_EXTFIELD_LIN_PROD_PRECOMPILE, input);
+    }
+
+    function noopLinProdInto(uint256 inputPtr, uint256 inputLen, uint256 outputPtr) internal view {
+        _callBatchInto(NOOP_EXTFIELD_LIN_PROD_PRECOMPILE, inputPtr, inputLen, outputPtr, 0x20);
     }
 
     function _validateBatchInputLength(uint256 inputLength, uint256 itemLength) private pure {
