@@ -98,9 +98,12 @@ def array_arg(values: list[str | int]) -> str:
     return "[" + ",".join(hex(v) if isinstance(v, int) else v for v in values) + "]"
 
 
-def load_mac_protocol(path: Path) -> tuple[int, int]:
+def load_mac_protocol(path: Path, field_id: int = 0x0005) -> tuple[int, int]:
     schedule = json.loads(path.read_text())
-    return int(schedule["field_id"]), int(schedule["n_max"])
+    for field in schedule["fields"]:
+        if int(field["field_id"]) == field_id:
+            return int(field["field_id"]), int(field["n_max"])
+    raise RuntimeError(f"missing EXTFIELD_MAC field_id={field_id}")
 
 
 def ext5_from_coeffs(c0: int, c1: int, c2: int, c3: int, c4: int) -> int:

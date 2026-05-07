@@ -39,12 +39,81 @@ contract Ext8PrecompileHarness {
         return KoalaBearExt8Precompile.noopSquare(a);
     }
 
+    function precompileMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external view returns (uint256) {
+        return KoalaBearExt8Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function precompileMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt8Precompile.mac(input);
+    }
+
+    function noopMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt8Precompile.noopMac(input);
+    }
+
+    function packMacInputForTest(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external pure returns (bytes memory) {
+        return _packMacInput(accumulator, includeAccumulator, packedA, packedB);
+    }
+
+    function foldRowForTest(
+        uint256[16] calldata row,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) external pure returns (uint256) {
+        return _foldRowSoftware(row, p0, p1, p2, p3);
+    }
+
+    function dotRowForTest(uint256[16] calldata row, uint256 p0, uint256 p1, uint256 p2, uint256 p3)
+        external
+        pure
+        returns (uint256)
+    {
+        uint256 weightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+        return _dotRowSoftware(row, weightsPtr);
+    }
+
     function benchmarkNoopMulClean(uint256 a, uint256 b) external {
         lastResult = KoalaBearExt8Precompile.noopMul(a, b);
     }
 
     function benchmarkNoopSquareClean(uint256 a) external {
         lastResult = KoalaBearExt8Precompile.noopSquare(a);
+    }
+
+    function benchmarkMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt8Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function benchmarkNoopMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt8Precompile.noopMac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
     }
 
     function benchmarkEqExpanded22Software(uint256 point, uint256[] memory fullPoint) external {
@@ -498,6 +567,23 @@ contract Ext8PrecompileHarness {
         return ok;
     }
 
+    function checkMacVectorTx(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256 expected
+    ) external returns (bool) {
+        uint256 software = _softwareMac(accumulator, includeAccumulator, packedA, packedB);
+        if (software != expected) revert("SOFTWARE_MAC");
+        uint256 precompile = KoalaBearExt8Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+        if (precompile != expected) revert("PRECOMPILE_MAC");
+        lastResult = precompile;
+        return true;
+    }
+
     function _checkArithmeticVectors(
         uint256[] calldata packedA,
         uint256[] calldata packedB,
@@ -729,6 +815,60 @@ contract Ext8PrecompileHarness {
         }
     }
 
+    function _packMacInput(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (bytes memory out) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        require(len <= 1024, "MAC_N");
+        uint256 flags = includeAccumulator ? 1 : 0;
+        uint256 bodyOffset = 8;
+        uint256 fieldId = KoalaBearExt8Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT8;
+        out = new bytes(8 + (includeAccumulator ? 32 : 0) + (len << 6));
+        assembly ("memory-safe") {
+            let dst := add(out, 0x20)
+            mstore8(dst, shr(8, fieldId))
+            mstore8(add(dst, 0x01), fieldId)
+            mstore8(add(dst, 0x02), shr(8, len))
+            mstore8(add(dst, 0x03), len)
+            mstore8(add(dst, 0x04), shr(24, flags))
+            mstore8(add(dst, 0x05), shr(16, flags))
+            mstore8(add(dst, 0x06), shr(8, flags))
+            mstore8(add(dst, 0x07), flags)
+            dst := add(dst, bodyOffset)
+            if includeAccumulator {
+                mstore(dst, accumulator)
+                dst := add(dst, 0x20)
+            }
+            let leftOffset := packedA.offset
+            let rightOffset := packedB.offset
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(dst, calldataload(add(leftOffset, shl(5, i))))
+                mstore(add(dst, 0x20), calldataload(add(rightOffset, shl(5, i))))
+                dst := add(dst, 0x40)
+            }
+        }
+    }
+
+    function _softwareMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (uint256 acc) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        acc = includeAccumulator ? accumulator : 0;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                acc = KoalaBearExt8.add(acc, KoalaBearExt8.mul(packedA[i], packedB[i]));
+            }
+        }
+    }
+
     function _consumeBatchOutput(bytes memory output) internal pure returns (uint256 acc) {
         require(output.length % 32 == 0, "BATCH_OUT_LEN");
         unchecked {
@@ -927,6 +1067,44 @@ contract Ext8PrecompileHarness {
         return _foldPrecompile(_foldPrecompile(m0, m2, p2), _foldPrecompile(m1, m3, p2), p3);
     }
 
+    function _foldRowSoftware(
+        uint256[16] calldata row,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) internal pure returns (uint256) {
+        uint256 m0 = _foldSoftware(
+            _foldSoftware(row[0], row[8], p0), _foldSoftware(row[4], row[12], p0), p1
+        );
+        uint256 m1 = _foldSoftware(
+            _foldSoftware(row[1], row[9], p0), _foldSoftware(row[5], row[13], p0), p1
+        );
+        uint256 m2 = _foldSoftware(
+            _foldSoftware(row[2], row[10], p0), _foldSoftware(row[6], row[14], p0), p1
+        );
+        uint256 m3 = _foldSoftware(
+            _foldSoftware(row[3], row[11], p0), _foldSoftware(row[7], row[15], p0), p1
+        );
+        return _foldSoftware(_foldSoftware(m0, m2, p2), _foldSoftware(m1, m3, p2), p3);
+    }
+
+    function _dotRowSoftware(uint256[16] calldata row, uint256 weightsPtr)
+        internal
+        pure
+        returns (uint256 acc)
+    {
+        unchecked {
+            for (uint256 i = 0; i < 16; ++i) {
+                uint256 weight;
+                assembly ("memory-safe") {
+                    weight := mload(add(weightsPtr, shl(5, i)))
+                }
+                acc = KoalaBearExt8.add(acc, KoalaBearExt8.mul(row[i], weight));
+            }
+        }
+    }
+
     function _rowWord(uint256 rowBase, uint256 i) internal pure returns (uint256 word) {
         assembly ("memory-safe") {
             word := mload(add(rowBase, shl(5, i)))
@@ -939,6 +1117,10 @@ contract Ext8PrecompileHarness {
 
     function _foldPrecompile(uint256 a0, uint256 a1, uint256 r) internal view returns (uint256) {
         return KoalaBearExt8.add(a0, KoalaBearExt8Precompile.mul(KoalaBearExt8.sub(a1, a0), r));
+    }
+
+    function _foldSoftware(uint256 a0, uint256 a1, uint256 r) internal pure returns (uint256) {
+        return KoalaBearExt8.add(a0, KoalaBearExt8.mul(KoalaBearExt8.sub(a1, a0), r));
     }
 
     function _checkRowsLength(bytes calldata rows) internal pure {

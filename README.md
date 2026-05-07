@@ -488,14 +488,16 @@ Relevant files:
 | `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/precompiles.rs` | precompile dispatch, input validation, and Rust arithmetic calls   |
 | `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/gas_model.rs`   | native runtime calibration and locked gas schedule generation      |
 | `../foundry-b0a9dd9/crates/ext8-precompile-runner/src/vectors.rs`     | deterministic arithmetic differential vector generation            |
+| `../foundry-b0a9dd9/crates/ext5-precompile-runner/`                   | generic `EXTFIELD_MAC` calibration and vector generation           |
 | `src/field/KoalaBearExt8Precompile.sol`                               | Solidity wrapper for scalar and batch precompile calls             |
 | `src/whir/k22_jb100_lir6_ff4_rsv1/`                                   | unchanged baseline native octic verifier                           |
 | `src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/`                 | precompile-backed octic verifier variant                           |
 | `test/helpers/Ext8PrecompileHarness.sol`                              | arithmetic, transport, row-layout, and candidate benchmark harness |
 | `script/run_ext8_precompile_phase1_rpc.py`                            | arithmetic differential plus equality/select A/B benchmark         |
-| `script/run_ext8_precompile_stir_transport_rpc.py`                    | STIR extension-row transport gate                                  |
 | `script/run_ext8_precompile_full_verifier_rpc.py`                     | full baseline-vs-precompile verifier A/B script                    |
 | `script/run_ext8_precompile_eip_candidate_rpc.py`                     | standalone and batch EIP-compatible candidate sweep                |
+| `testdata/extfield_mac_gas_schedule.json`                             | locked multi-field extension-field MAC gas schedule                |
+| `testdata/extfield_mac_ext8_vectors.json`                             | deterministic ext8 MAC differential vectors                        |
 
 The precompile-backed verifier exposes the same external entrypoint:
 
@@ -518,20 +520,24 @@ For scalar inputs, the scalar is a 32-byte `uint256`; the Rust precompile reject
 
 Batch inputs have no length prefix. The precompile derives `N` from calldata length and rejects malformed lengths.
 
-| Address  | Name                  | Input bytes | Output bytes | Status in verifier            |
-| -------- | --------------------- | ----------- | ------------ | ----------------------------- | --------------- | ------------------ |
-| `0x0801` | `EXT8_MUL`            | `64 = a     |              | b`                            | `32 = a*b`      | integrated         |
-| `0x0802` | `EXT8_SQUARE`         | `32 = a`    | `32 = a^2`   | integrated                    |
-| `0x0803` | `EXT8_ADD`            | `64 = a     |              | b`                            | `32 = a+b`      | measured, rejected |
-| `0x0804` | `EXT8_SUB`            | `64 = a     |              | b`                            | `32 = a-b`      | measured, rejected |
-| `0x0805` | `EXT8_MUL_BASE`       | `64 = a     |              | scalar`                       | `32 = a*scalar` | measured, rejected |
-| `0x0811` | `EXT8_MUL_BATCH`      | `N * 64`    | `N * 32`     | integrated for fixed equality |
-| `0x0812` | `EXT8_SQUARE_BATCH`   | `N * 32`    | `N * 32`     | measured, rejected            |
-| `0x0813` | `EXT8_MUL_BASE_BATCH` | `N * 64`    | `N * 32`     | measured, rejected            |
-| `0x08f1` | no-op 64-to-32        | `64`        | `32`         | transport calibration         |
-| `0x08f2` | no-op 32-to-32        | `32`        | `32`         | transport calibration         |
-| `0x08f3` | no-op batch 64-to-32  | `N * 64`    | `N * 32`     | transport calibration         |
-| `0x08f4` | no-op batch 32-to-32  | `N * 32`    | `N * 32`     | transport calibration         |
+`EXTFIELD_MAC` uses a raw 8-byte header followed by optional accumulator and `N` extension-element pairs. The current schedule supports `field_id = 0x0005` for KoalaBear ext5 and `field_id = 0x0008` for KoalaBear ext8, both capped at `N = 1024`. The ext8 path uses the same packed `uint256` layout as the octic verifier and rejects any non-canonical limb before arithmetic.
+
+| Address  | Name                  | Input bytes           | Output bytes | Status in verifier                |
+| -------- | --------------------- | --------------------- | ------------ | --------------------------------- |
+| `0x0801` | `EXT8_MUL`            | `64 = a \|\| b`       | `32 = a*b`   | integrated                        |
+| `0x0802` | `EXT8_SQUARE`         | `32 = a`              | `32 = a^2`   | integrated                        |
+| `0x0803` | `EXT8_ADD`            | `64 = a \|\| b`       | `32 = a+b`   | measured, rejected                |
+| `0x0804` | `EXT8_SUB`            | `64 = a \|\| b`       | `32 = a-b`   | measured, rejected                |
+| `0x0805` | `EXT8_MUL_BASE`       | `64 = a \|\| scalar`  | `32 = a*s`   | measured, rejected                |
+| `0x0811` | `EXT8_MUL_BATCH`      | `N * 64`              | `N * 32`     | integrated for fixed equality     |
+| `0x0812` | `EXT8_SQUARE_BATCH`   | `N * 32`              | `N * 32`     | measured, rejected                |
+| `0x0813` | `EXT8_MUL_BASE_BATCH` | `N * 64`              | `N * 32`     | measured, rejected                |
+| `0x0f01` | `EXTFIELD_MAC`        | `8 + opt 32 + N * 64` | `32`         | integrated for extension-row dots |
+| `0x08f1` | no-op 64-to-32        | `64`                  | `32`         | transport calibration             |
+| `0x08f2` | no-op 32-to-32        | `32`                  | `32`         | transport calibration             |
+| `0x08f3` | no-op batch 64-to-32  | `N * 64`              | `N * 32`     | transport calibration             |
+| `0x08f4` | no-op batch 32-to-32  | `N * 32`              | `N * 32`     | transport calibration             |
+| `0x0ff1` | no-op `EXTFIELD_MAC`  | `8 + opt 32 + N * 64` | `32`         | transport calibration             |
 
 ##### Gas calibration
 
@@ -562,6 +568,18 @@ Locked schedule:
 | `EXT8_MUL_BATCH`      | `8 ns` per item       | `50` per item     |
 | `EXT8_SQUARE_BATCH`   | `9 ns` per item       | `50` per item     |
 | `EXT8_MUL_BASE_BATCH` | `2 ns` per item       | `50` per item     |
+| `EXTFIELD_MAC`, ext8  | `~1.5 ns` per item    | `50 + 2 * N`      |
+
+Measured ext8 `EXTFIELD_MAC` transport on May 6, 2026:
+
+| Call shape                 | No-op tx gas | Real tx gas |
+| -------------------------- | ------------ | ----------- |
+| `EXTFIELD_MAC`, `n = 1`    | `28,069`     | `46,987`    |
+| `EXTFIELD_MAC`, `n = 16`   | `43,940`     | `56,502`    |
+| `EXTFIELD_MAC`, `n = 64`   | `117,200`    | `117,200`   |
+| `EXTFIELD_MAC`, `n = 1024` | `1,650,770`  | `1,650,770` |
+
+The identical no-op and real rows for `n = 64` and `n = 1024` are measured results, not copy-paste placeholders. At those sizes the Solidity input packing, dynamic-bytes transport, and calldata/memory costs dominate; the assigned ext8 MAC arithmetic charge is only `50 + 2 * N`.
 
 ##### Integrated verifier path
 
@@ -577,14 +595,14 @@ The precompile-backed verifier is a parallel variant and is `view` because it us
 src/whir/k22_jb100_lir6_ff4_rsv1_precompile_phase1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1_precompile_phase1.sol
 ```
 
-The precompile-backed verifier routes these ext8-heavy paths through `EXT8_MUL`, `EXT8_SQUARE`, or `EXT8_MUL_BATCH`:
+The precompile-backed verifier routes these ext8-heavy paths through `EXT8_MUL`, `EXT8_SQUARE`, `EXT8_MUL_BATCH`, or `EXTFIELD_MAC`:
 
 - expanded equality products
 - select accumulator products
 - final-value folding
 - final closing multiplication
 - generic Horner-step extension multiplications
-- Round 1, Round 2, and final STIR extension-row folds
+- Round 1, Round 2, and final STIR extension-row dot products
 
 The precompile-backed verifier keeps these paths on existing software arithmetic:
 
@@ -592,6 +610,7 @@ The precompile-backed verifier keeps these paths on existing software arithmetic
 - ext8-by-base multiplication
 - Round 0 STIR base rows, because their first layer is a base-row fold rather than a pure ext8 row fold
 - rejected batch candidates other than `EXT8_MUL_BATCH`
+- singleton Horner-step MAC calls, because `EXTFIELD_MAC(n = 1)` is transport-bound
 
 The helper functions `addViaPrecompile`, `subViaPrecompile`, `mulBaseViaPrecompile`, and the rejected batch wrappers remain available in `KoalaBearExt8Precompile.sol` for measurement harnesses. They are not used by the precompile-backed verifier.
 
@@ -618,7 +637,7 @@ EXTFIELD_MAC input, raw precompile bytes:
     a_0, b_0, ..., a_{n-1}, b_{n-1}
 ```
 
-The only implemented `field_id` is `0x0005`, KoalaBear ext5 over `X^5 + X^2 - 1`, using the same 32-byte packed `uint256` representation as the Solidity verifier: five 32-bit KoalaBear limbs in the high 160 bits and zero low 96 bits. `n` is capped at `1024`; `n = 0` returns the optional accumulator or packed zero. The real precompile rejects unknown fields, oversized `n`, reserved flag bits, malformed input length, non-canonical limbs, and non-zero low 96 bits. The no-op control parses the same header and length before returning one zero word.
+The implemented `field_id` values are `0x0005` for KoalaBear ext5 over `X^5 + X^2 - 1` and `0x0008` for KoalaBear ext8 over `X^8 - 3`. The ext5 path uses the same 32-byte packed `uint256` representation as the Solidity verifier: five 32-bit KoalaBear limbs in the high 160 bits and zero low 96 bits. The ext8 path uses the octic packed representation: eight 32-bit KoalaBear limbs filling the full 32-byte word, with no low-96 padding rule. `n` is capped at `1024`; `n = 0` returns the optional accumulator or packed zero. The real precompile rejects unknown fields, oversized `n`, reserved flag bits, malformed input length, non-canonical limbs, and non-zero low 96 bits for ext5. The no-op control parses the same header and length before returning one zero word.
 
 Relevant files:
 
@@ -711,13 +730,15 @@ Regenerate the locked gas schedule and arithmetic vectors:
 cd ..
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin calibrate-ext8-precompile-gas -- sol-spartan-whir/testdata/ext8_precompile_gas_schedule.json
 cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin export-ext8-precompile-vectors -- sol-spartan-whir/testdata
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin calibrate-extfield-mac-gas -- sol-spartan-whir/testdata/extfield_mac_gas_schedule.json
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext5-precompile-runner --bin export-extfield-mac-vectors -- sol-spartan-whir/testdata
 cd sol-spartan-whir
 ```
 
 Start the custom node in a dedicated terminal from the workspace root:
 
 ```sh
-cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin ext8-precompile-node -- sol-spartan-whir/testdata/ext8_precompile_gas_schedule.json 18547
+cargo run --release --manifest-path foundry-b0a9dd9/Cargo.toml -p ext8-precompile-runner --bin ext8-precompile-node -- sol-spartan-whir/testdata/ext8_precompile_gas_schedule.json sol-spartan-whir/testdata/extfield_mac_gas_schedule.json 18547
 ```
 
 Run the RPC measurements from this Foundry project:
@@ -725,7 +746,6 @@ Run the RPC measurements from this Foundry project:
 ```sh
 python3 script/run_ext8_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --skip-arithmetic
 python3 script/run_ext8_precompile_phase1_rpc.py --rpc-url http://127.0.0.1:18547 --skip-benchmarks
-python3 script/run_ext8_precompile_stir_transport_rpc.py --rpc-url http://127.0.0.1:18547
 python3 script/run_ext8_precompile_full_verifier_rpc.py --rpc-url http://127.0.0.1:18547
 python3 script/run_ext8_precompile_eip_candidate_rpc.py --rpc-url http://127.0.0.1:18547
 ```
@@ -790,28 +810,15 @@ Clean no-op transport transactions:
 
 Gate result: pass. Equality-only saves more than `100,000`, select-only does not regress, and combined equality plus select saves more than `300,000`.
 
-##### STIR row-layout gate
+##### STIR extension-row MAC use
 
-STIR row folding was gated separately because row folds operate on contiguous packed row bytes, while a generic ext8 precompile consumes normalized 32-byte words. A microbenchmark using clean `bytes32` locals would understate the transport cost.
+STIR extension-row evaluation was gated separately because row folds operate on contiguous packed row bytes, while a generic precompile consumes normalized 32-byte extension elements. The integrated verifier now evaluates each Round 1, Round 2, and final STIR extension row with one `EXTFIELD_MAC(n = 16)` call.
 
-The row-layout benchmark extracts real extension rows from `octic_whir_k22_jb100_lir6_ff4_rsv1_success.blob`. It excludes Round 0 base rows and covers Round 1, Round 2, and final STIR extension rows.
+The swap is local to extension rows. Round 0 base rows remain in software, and the inter-round fold calls remain on the existing scalar `EXT8_MUL` precompile path.
 
-| Rows                    | Count | Software    | No-op transport | Precompile  | Software minus precompile |
-| ----------------------- | ----- | ----------- | --------------- | ----------- | ------------------------- |
-| Round 1 extension rows  | `16`  | `1,051,347` | `492,078`       | `503,616`   | `547,731`                 |
-| Round 2 extension rows  | `12`  | `795,771`   | `376,040`       | `384,578`   | `411,193`                 |
-| Final extension rows    | `10`  | `668,085`   | `318,131`       | `325,169`   | `342,916`                 |
-| Combined extension rows | `38`  | `2,455,869` | `1,129,499`     | `1,157,537` | `1,298,332`               |
+The ordering gate compares the current fold-tree row evaluation against the MAC dot product over the same 16 row words and equality weights. The fixed-vector and fuzz tests in `test/Ext8PrecompileHarness.t.sol` verify that `WhirVerifierUtils8._computeDim4EqWeights` weight index `i` matches row index `i = b3 b2 b1 b0` over `(p3, p2, p1, p0)`.
 
-Gate calculation:
-
-```text
-fold_mul_count = 38 * 15 = 570
-assigned_mul_total = 570 * 50 = 28,500
-projected_saving = 2,455,869 - 1,129,499 - 28,500 = 1,297,870
-```
-
-Gate result: pass. The projected saving is above the `300,000` gas threshold, so Round 1, Round 2, and final extension-row STIR folds are integrated in the precompile-backed verifier.
+The verifier-level A/B is the final gate. Before the MAC row helper, the documented precompile-backed octic path used `4,722,241` transaction gas. With the extension-row MAC helper, it uses `4,345,429`, saving another `376,812` gas while preserving the same calldata and verifier behavior.
 
 ##### Full-verifier A/B
 
@@ -835,8 +842,8 @@ Gas result:
 | Verifier                       | Total tx gas | Calldata gas | Execution gas |
 | ------------------------------ | ------------ | ------------ | ------------- |
 | baseline native octic          | `7,190,470`  | `753,800`    | `6,415,670`   |
-| precompile-backed native octic | `4,722,241`  | `753,800`    | `3,947,441`   |
-| savings                        | `2,468,229`  | `0`          | `2,468,229`   |
+| precompile-backed native octic | `4,345,429`  | `753,800`    | `3,570,629`   |
+| savings                        | `2,845,041`  | `0`          | `2,845,041`   |
 
 The calldata gas is identical because the protocol and blob format are unchanged.
 

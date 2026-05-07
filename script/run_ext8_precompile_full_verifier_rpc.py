@@ -2,6 +2,8 @@
 import argparse
 import json
 import subprocess
+import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +11,7 @@ DEFAULT_RPC_URL = "http://127.0.0.1:18547"
 DEFAULT_PRIVATE_KEY = (
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 )
+DEFAULT_SENDER = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 BASELINE_CONTRACT = (
     "src/whir/k22_jb100_lir6_ff4_rsv1/"
@@ -55,28 +58,42 @@ def run_stdout(args: list[str], *, cwd: Path) -> str:
     return run(args, cwd=cwd).stdout
 
 
-def deploy_contract(
-    rpc_url: str, private_key: str, contract: str, gas_limit: int, cwd: Path
-) -> str:
-    out = run_stdout(
-        [
-            "forge",
-            "create",
-            contract,
-            "--rpc-url",
-            rpc_url,
-            "--private-key",
-            private_key,
-            "--broadcast",
-            "--gas-limit",
-            str(gas_limit),
-        ],
-        cwd=cwd,
+def rpc(rpc_url: str, method: str, params: list) -> object:
+    payload = json.dumps(
+        {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
+    ).encode()
+    req = urllib.request.Request(
+        rpc_url, data=payload, headers={"content-type": "application/json"}
     )
-    for line in out.splitlines():
-        if line.startswith("Deployed to:"):
-            return line.split(":", 1)[1].strip()
-    raise RuntimeError(f"failed to parse deployed contract address:\n{out}")
+    with urllib.request.urlopen(req) as resp:
+        decoded = json.loads(resp.read())
+    if "error" in decoded:
+        raise RuntimeError(f"rpc {method} failed: {decoded['error']}")
+    return decoded["result"]
+
+
+def wait_receipt(rpc_url: str, tx_hash: str) -> dict:
+    for _ in range(120):
+        receipt = rpc(rpc_url, "eth_getTransactionReceipt", [tx_hash])
+        if receipt is not None:
+            return receipt
+        time.sleep(0.25)
+    raise RuntimeError(f"timed out waiting for receipt {tx_hash}")
+
+
+def deploy_contract(
+    rpc_url: str, sender: str, contract: str, gas_limit: int, cwd: Path
+) -> str:
+    bytecode = run_stdout(["forge", "inspect", contract, "bytecode"], cwd=cwd).strip()
+    tx_hash = rpc(
+        rpc_url,
+        "eth_sendTransaction",
+        [{"from": sender, "data": bytecode, "gas": hex(gas_limit)}],
+    )
+    receipt = wait_receipt(rpc_url, tx_hash)
+    if receipt.get("status") != "0x1":
+        raise RuntimeError(f"deployment reverted for {contract}: {receipt}")
+    return receipt["contractAddress"]
 
 
 def load_blob(fixtures_dir: Path, name: str) -> str:
@@ -240,6 +257,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rpc-url", default=DEFAULT_RPC_URL)
     parser.add_argument("--private-key", default=DEFAULT_PRIVATE_KEY)
+    parser.add_argument("--sender", default=DEFAULT_SENDER)
     parser.add_argument("--fixtures-dir", type=Path, default=cwd / "testdata")
     parser.add_argument("--baseline")
     parser.add_argument("--precompile")
@@ -254,10 +272,10 @@ def main() -> None:
     print(f"expected_commitment={commitment}")
 
     baseline = args.baseline or deploy_contract(
-        args.rpc_url, args.private_key, BASELINE_CONTRACT, args.gas_limit, cwd
+        args.rpc_url, args.sender, BASELINE_CONTRACT, args.gas_limit, cwd
     )
     precompile = args.precompile or deploy_contract(
-        args.rpc_url, args.private_key, PRECOMPILE_CONTRACT, args.gas_limit, cwd
+        args.rpc_url, args.sender, PRECOMPILE_CONTRACT, args.gas_limit, cwd
     )
     print(f"baseline={baseline}")
     print(f"precompile={precompile}")

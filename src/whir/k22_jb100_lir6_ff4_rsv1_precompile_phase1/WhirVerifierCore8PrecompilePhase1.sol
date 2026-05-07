@@ -213,6 +213,8 @@ library WhirVerifierCore8PrecompilePhase1 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+
         unchecked {
             uint256 prevIdx;
             for (uint256 i = 0; i < count; ++i) {
@@ -224,7 +226,7 @@ library WhirVerifierCore8PrecompilePhase1 {
 
                 uint256 rowOffset = valuesOffset + i * 512;
                 (bytes32 hash, uint256 evalValue) =
-                    _hashAndEvaluateExtensionRowDim4BlobPrecompile(blob, rowOffset, p0, p1, p2, p3);
+                    _hashAndEvaluateExtensionRowDim4BlobPrecompile(blob, rowOffset, eqWeightsPtr);
                 rowEvals[i] = evalValue;
 
                 assembly ("memory-safe") {
@@ -241,14 +243,11 @@ library WhirVerifierCore8PrecompilePhase1 {
     function _hashAndEvaluateExtensionRowDim4BlobPrecompile(
         bytes calldata blob,
         uint256 offset,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
+        uint256 weightsPtr
     ) private view returns (bytes32 digest, uint256 evalValue) {
         uint256 rowBase = _copyHashAndValidateExtensionRow(blob, offset);
         digest = _hashCopiedExtensionRow(rowBase);
-        evalValue = _foldExtensionRowPrecompile(rowBase, p0, p1, p2, p3);
+        evalValue = _macExtensionRowPrecompile(rowBase, weightsPtr);
     }
 
     function _copyHashAndValidateExtensionRow(bytes calldata blob, uint256 offset)
@@ -277,37 +276,49 @@ library WhirVerifierCore8PrecompilePhase1 {
         }
     }
 
-    function _foldExtensionRowPrecompile(
-        uint256 rowBase,
-        uint256 p0,
-        uint256 p1,
-        uint256 p2,
-        uint256 p3
-    ) private view returns (uint256) {
-        uint256 m0 = _foldOncePrecompile(
-            _foldOncePrecompile(_extensionRowWord(rowBase, 0), _extensionRowWord(rowBase, 8), p0),
-            _foldOncePrecompile(_extensionRowWord(rowBase, 4), _extensionRowWord(rowBase, 12), p0),
-            p1
-        );
-        uint256 m1 = _foldOncePrecompile(
-            _foldOncePrecompile(_extensionRowWord(rowBase, 1), _extensionRowWord(rowBase, 9), p0),
-            _foldOncePrecompile(_extensionRowWord(rowBase, 5), _extensionRowWord(rowBase, 13), p0),
-            p1
-        );
-        uint256 m2 = _foldOncePrecompile(
-            _foldOncePrecompile(_extensionRowWord(rowBase, 2), _extensionRowWord(rowBase, 10), p0),
-            _foldOncePrecompile(_extensionRowWord(rowBase, 6), _extensionRowWord(rowBase, 14), p0),
-            p1
-        );
-        uint256 m3 = _foldOncePrecompile(
-            _foldOncePrecompile(_extensionRowWord(rowBase, 3), _extensionRowWord(rowBase, 11), p0),
-            _foldOncePrecompile(_extensionRowWord(rowBase, 7), _extensionRowWord(rowBase, 15), p0),
-            p1
-        );
-        return
-            _foldOncePrecompile(
-                _foldOncePrecompile(m0, m2, p2), _foldOncePrecompile(m1, m3, p2), p3
-            );
+    function _macExtensionRowPrecompile(uint256 rowBase, uint256 weightsPtr)
+        private
+        view
+        returns (uint256 evalValue)
+    {
+        uint256 inputPtr;
+        uint256 outputPtr;
+        uint256 macFieldId = KoalaBearExt8Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT8;
+        assembly ("memory-safe") {
+            inputPtr := mload(0x40)
+            outputPtr := add(inputPtr, 0x420)
+            mstore(0x40, add(outputPtr, 0x20))
+            mstore(inputPtr, or(shl(240, macFieldId), shl(224, 16)))
+
+            // This MAC input is fixed-shape: exactly 16 row values and 16 weights.
+            function storePair(base, index, weight, value) {
+                let dst := add(add(base, 0x08), shl(6, index))
+                mstore(dst, weight)
+                mstore(add(dst, 0x20), value)
+            }
+
+            storePair(inputPtr, 0, mload(weightsPtr), mload(rowBase))
+            storePair(inputPtr, 1, mload(add(weightsPtr, 0x20)), mload(add(rowBase, 0x20)))
+            storePair(inputPtr, 2, mload(add(weightsPtr, 0x40)), mload(add(rowBase, 0x40)))
+            storePair(inputPtr, 3, mload(add(weightsPtr, 0x60)), mload(add(rowBase, 0x60)))
+            storePair(inputPtr, 4, mload(add(weightsPtr, 0x80)), mload(add(rowBase, 0x80)))
+            storePair(inputPtr, 5, mload(add(weightsPtr, 0xa0)), mload(add(rowBase, 0xa0)))
+            storePair(inputPtr, 6, mload(add(weightsPtr, 0xc0)), mload(add(rowBase, 0xc0)))
+            storePair(inputPtr, 7, mload(add(weightsPtr, 0xe0)), mload(add(rowBase, 0xe0)))
+            storePair(inputPtr, 8, mload(add(weightsPtr, 0x100)), mload(add(rowBase, 0x100)))
+            storePair(inputPtr, 9, mload(add(weightsPtr, 0x120)), mload(add(rowBase, 0x120)))
+            storePair(inputPtr, 10, mload(add(weightsPtr, 0x140)), mload(add(rowBase, 0x140)))
+            storePair(inputPtr, 11, mload(add(weightsPtr, 0x160)), mload(add(rowBase, 0x160)))
+            storePair(inputPtr, 12, mload(add(weightsPtr, 0x180)), mload(add(rowBase, 0x180)))
+            storePair(inputPtr, 13, mload(add(weightsPtr, 0x1a0)), mload(add(rowBase, 0x1a0)))
+            storePair(inputPtr, 14, mload(add(weightsPtr, 0x1c0)), mload(add(rowBase, 0x1c0)))
+            storePair(inputPtr, 15, mload(add(weightsPtr, 0x1e0)), mload(add(rowBase, 0x1e0)))
+        }
+
+        KoalaBearExt8Precompile.macInto(inputPtr, 0x408, outputPtr);
+        assembly ("memory-safe") {
+            evalValue := mload(outputPtr)
+        }
     }
 
     function _extensionRowWord(uint256 rowBase, uint256 i) private pure returns (uint256 word) {
@@ -685,7 +696,7 @@ library WhirVerifierCore8PrecompilePhase1 {
                     rowOffset -= 512;
 
                     (bytes32 hash, uint256 evalValue) = _hashAndEvaluateExtensionRowDim4BlobPrecompile(
-                        blob, rowOffset, p0, p1, p2, p3
+                        blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
                     selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
