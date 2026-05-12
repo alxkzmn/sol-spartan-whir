@@ -183,6 +183,17 @@ contract WhirBlobVerifierNativeLir11Test is Test {
         nativeBlobVerifier.verify(proof.initialCommitment, wrongFlags);
     }
 
+    function testRejectsNonZeroUnusedRoundLengthNative() external {
+        (, WhirStructs.WhirProof memory proof) = _loadSuccessFixture();
+        bytes memory blob = vm.readFileBinary(
+            string.concat(TESTDATA, "quartic_whir_lir11_ff5_rsv3_success.blob")
+        );
+        blob[13] = 0x01;
+
+        vm.expectRevert(WhirBlobCodecLir11.BlobUnusedRoundLengthMismatch.selector);
+        nativeBlobVerifier.verify(proof.initialCommitment, blob);
+    }
+
     function testRejectsTruncatedBlobNative() external {
         (, WhirStructs.WhirProof memory proof) = _loadSuccessFixture();
         bytes memory blob = vm.readFileBinary(

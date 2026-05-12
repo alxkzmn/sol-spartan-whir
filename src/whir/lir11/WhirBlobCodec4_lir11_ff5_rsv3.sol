@@ -38,6 +38,7 @@ library WhirBlobCodecLir11 {
     error BlobFlagsMismatch();
     error BlobLengthMismatch();
     error BlobTrailingBytes();
+    error BlobUnusedRoundLengthMismatch();
 
     function decode(bytes calldata blob)
         internal
@@ -175,6 +176,9 @@ library WhirBlobCodecLir11 {
         }
         if (readU8(blob, 9) != FLAGS) {
             revert BlobFlagsMismatch();
+        }
+        if (round1DecommLen != 0) {
+            revert BlobUnusedRoundLengthMismatch();
         }
 
         uint256 expectedLen = expectedLength(round0DecommLen, round1DecommLen, finalDecommLen);
