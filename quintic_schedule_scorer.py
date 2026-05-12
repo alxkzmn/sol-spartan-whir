@@ -171,6 +171,15 @@ def main() -> None:
         default=[],
         help="Candidate label to mark as already implemented in JSON, CSV, and Pareto SVGs",
     )
+    parser.add_argument(
+        "--report-plot-label",
+        help="Write a static report Pareto SVG and mark only this candidate as implemented",
+    )
+    parser.add_argument(
+        "--report-plot-filename",
+        default="pareto_verifier_vs_prover_report.svg",
+        help="Filename for the static report Pareto SVG when --report-plot-label is set",
+    )
     args = parser.parse_args()
 
     schedule = read_json(Path(args.schedule))
@@ -268,6 +277,13 @@ def main() -> None:
         },
     )
     write_plots(out_dir, scores, plot_axis_limits(args))
+    if args.report_plot_label:
+        write_report_plot(
+            out_dir / args.report_plot_filename,
+            scores,
+            args.report_plot_label,
+            plot_axis_limits(args),
+        )
 
 
 def calibrated_candidate_overrides(
@@ -1634,11 +1650,44 @@ def write_plots(
         )
 
 
+def write_report_plot(
+    path: Path,
+    scores: list[dict[str, Any]],
+    implemented_label: str,
+    axis_limits: dict[str, Any] | None = None,
+) -> None:
+    report_scores = []
+    found = False
+    for score in scores:
+        if score.get("prover_time_estimate_kind") == "timeout_cap":
+            continue
+        if score.get("prover_estimator_extrapolation"):
+            continue
+        copied = copy.deepcopy(score)
+        copied["implemented"] = copied.get("label") == implemented_label
+        found = found or copied["implemented"]
+        report_scores.append(copied)
+    if not found:
+        raise SystemExit(f"report plot label not found: {implemented_label}")
+    write_svg_plot(
+        path,
+        report_scores,
+        "verifier_score",
+        "estimated_prover_time_score",
+        True,
+        axis_limits_for_plot(
+            "verifier_score", "estimated_prover_time_score", axis_limits or {}
+        ),
+        interactive=False,
+        report_mode=True,
+    )
+
+
 AXIS_LABELS = {
-    "verifier_score": "quintic-calibrated verifier score (lower is better)",
+    "verifier_score": "synthetic verifier score, gas-equivalent units (lower is better)",
     "row_work_score": "query rows * row values (lower is better)",
     "prover_time_score": "measured prover seconds",
-    "estimated_prover_time_score": "prover seconds (measured where available; modeled otherwise)",
+    "estimated_prover_time_score": "prover time, seconds (measured or interpolated)",
 }
 
 
@@ -1675,6 +1724,8 @@ def write_svg_plot(
     y_key: str,
     y_lower_is_better: bool,
     axis_limits: dict[str, Any],
+    interactive: bool = True,
+    report_mode: bool = False,
 ) -> None:
     points = [
         score
@@ -1687,7 +1738,7 @@ def write_svg_plot(
     plot_width, plot_height = 900, 620
     detail_top = plot_height + 20
     width = plot_width
-    height = detail_top + 112
+    height = detail_top + 112 if interactive else plot_height
     margin = 70
     if not points:
         path.write_text(
@@ -1738,15 +1789,38 @@ def write_svg_plot(
             - (value - min_y) / (max_y - min_y) * (plot_height - 2 * margin)
         )
 
+    x_axis_y = plot_height - margin
+    y_axis_x = margin
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
-        plot_click_script(),
         '<rect width="100%" height="100%" fill="white"/>',
-        f'<line x1="{margin}" y1="{plot_height-margin}" x2="{plot_width-margin}" y2="{plot_height-margin}" stroke="#333"/>',
-        f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{plot_height-margin}" stroke="#333"/>',
+        f'<line x1="{margin}" y1="{x_axis_y}" x2="{plot_width-margin}" y2="{x_axis_y}" stroke="#333"/>',
+        f'<line x1="{y_axis_x}" y1="{margin}" x2="{y_axis_x}" y2="{x_axis_y}" stroke="#333"/>',
         f'<text x="{plot_width/2}" y="{plot_height-20}" text-anchor="middle" font-size="14">{axis_label(x_key)}</text>',
         f'<text x="18" y="{plot_height/2}" transform="rotate(-90 18 {plot_height/2})" text-anchor="middle" font-size="14">{axis_label(y_key)}</text>',
     ]
+    parts.extend(
+        axis_ticks(
+            min_x,
+            max_x,
+            sx,
+            x_axis_y,
+            x_key,
+            axis="x",
+        )
+    )
+    parts.extend(
+        axis_ticks(
+            min_y,
+            max_y,
+            sy,
+            y_axis_x,
+            y_key,
+            axis="y",
+        )
+    )
+    if interactive:
+        parts.insert(1, plot_click_script())
     estimated_frontier = pareto_frontier(
         [
             point
@@ -1757,12 +1831,6 @@ def write_svg_plot(
         y_key,
         y_lower_is_better,
     )
-    if len(estimated_frontier) > 1:
-        parts.append(
-            frontier_polyline(
-                estimated_frontier, x_key, y_key, sx, sy, "#777", "3 3", 0.5
-            )
-        )
     measured_frontier = pareto_frontier(
         [
             point
@@ -1773,6 +1841,15 @@ def write_svg_plot(
         y_key,
         y_lower_is_better,
     )
+    estimated_frontier_visible = len(estimated_frontier) > 1 and [
+        point.get("label") for point in estimated_frontier
+    ] != [point.get("label") for point in measured_frontier]
+    if estimated_frontier_visible:
+        parts.append(
+            frontier_polyline(
+                estimated_frontier, x_key, y_key, sx, sy, "#777", "3 3", 0.5
+            )
+        )
     if len(measured_frontier) > 1:
         parts.append(
             frontier_polyline(
@@ -1783,7 +1860,8 @@ def write_svg_plot(
         x = sx(float(point[x_key]))
         y = sy(float(point[y_key]))
         constant_from_second_round = (
-            point.get("folding_variant") == "ConstantFromSecondRound"
+            not report_mode
+            and point.get("folding_variant") == "ConstantFromSecondRound"
         )
         implemented = bool(point.get("implemented"))
         color = marker_color(point)
@@ -1802,18 +1880,22 @@ def write_svg_plot(
             f"selectPoint({index}, {escape_xml(json.dumps(detail_text))}); "
             "event.stopPropagation();"
         )
+        group_attrs = (
+            f' onclick="{onclick}" style="cursor:pointer"' if interactive else ""
+        )
         if constant_from_second_round:
             parts.append(
-                f'<g onclick="{onclick}" style="cursor:pointer"><path id="point-marker-{index}" data-stroke-width="{stroke_width}" d="M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
+                f'<g{group_attrs}><path id="point-marker-{index}" data-stroke-width="{stroke_width}" d="M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
             )
         else:
             parts.append(
-                f'<g onclick="{onclick}" style="cursor:pointer"><circle id="point-marker-{index}" data-stroke-width="{stroke_width}" cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
+                f'<g{group_attrs}><circle id="point-marker-{index}" data-stroke-width="{stroke_width}" cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
             )
-    parts.extend(plot_legend(width))
-    parts.extend(plot_selected_detail_box(detail_top))
+    parts.extend(plot_legend(width, report_mode, estimated_frontier_visible))
+    if interactive:
+        parts.extend(plot_selected_detail_box(detail_top))
     parts.append("</svg>")
     path.write_text("\n".join(parts) + "\n")
 
@@ -1865,6 +1947,75 @@ def passes_plot_pow_filter(
 
 def axis_label(key: str) -> str:
     return AXIS_LABELS.get(key, key)
+
+
+def axis_ticks(
+    min_value: float,
+    max_value: float,
+    scale: Any,
+    axis_pos: float,
+    key: str,
+    axis: str,
+) -> list[str]:
+    values = axis_tick_values(min_value, max_value, key)
+
+    parts = []
+    for value in values:
+        pos = scale(value)
+        label = format_axis_tick(value, key)
+        if axis == "x":
+            parts.extend(
+                [
+                    f'<line x1="{pos:.1f}" y1="{axis_pos}" x2="{pos:.1f}" y2="{axis_pos + 5}" stroke="#333"/>',
+                    f'<text x="{pos:.1f}" y="{axis_pos + 20}" text-anchor="middle" font-size="11" fill="#333">{label}</text>',
+                ]
+            )
+        else:
+            parts.extend(
+                [
+                    f'<line x1="{axis_pos - 5}" y1="{pos:.1f}" x2="{axis_pos}" y2="{pos:.1f}" stroke="#333"/>',
+                    f'<text x="{axis_pos - 9}" y="{pos + 4:.1f}" text-anchor="end" font-size="11" fill="#333">{label}</text>',
+                ]
+            )
+    return parts
+
+
+def axis_tick_values(min_value: float, max_value: float, key: str) -> list[float]:
+    if min_value == max_value:
+        return [min_value]
+    if key == "verifier_score":
+        return regular_ticks(min_value, max_value, 1_000_000.0)
+    if key in {"prover_time_score", "estimated_prover_time_score"}:
+        return regular_ticks(min_value, max_value, 100.0)
+
+    count = 5
+    step = (max_value - min_value) / (count - 1)
+    return [min_value + step * index for index in range(count)]
+
+
+def regular_ticks(min_value: float, max_value: float, step: float) -> list[float]:
+    start = math.ceil(min_value / step) * step
+    end = math.floor(max_value / step) * step
+    values = []
+    value = start
+    while value <= end + 1e-9:
+        values.append(value)
+        value += step
+    if values:
+        return values
+    return [min_value, max_value]
+
+
+def format_axis_tick(value: float, key: str) -> str:
+    if key == "verifier_score" and abs(value) >= 1_000_000:
+        return f"{value / 1_000_000:.1f}M"
+    if key in {"prover_time_score", "estimated_prover_time_score"}:
+        return f"{value:.0f}s"
+    if abs(value) >= 1_000_000:
+        return f"{value / 1_000_000:.1f}M"
+    if abs(value) >= 1_000:
+        return f"{value / 1_000:.1f}k"
+    return f"{value:.0f}"
 
 
 def frontier_polyline(
@@ -1924,30 +2075,63 @@ def pareto_frontier(
     return frontier
 
 
-def plot_legend(width: int) -> list[str]:
+def plot_legend(
+    width: int,
+    report_mode: bool = False,
+    estimated_frontier_visible: bool = True,
+) -> list[str]:
     x = width - 330
-    return [
+    entries = [
         f'<g font-size="12">',
         f'<circle cx="{x}" cy="28" r="4" fill="#1769aa" stroke="#333"/>',
-        f'<text x="{x + 12}" y="32">measured full prover timing</text>',
+        f'<text x="{x + 12}" y="32">measured prover time</text>',
         f'<circle cx="{x}" cy="48" r="4" fill="#8a8a8a" stroke="#333"/>',
-        f'<text x="{x + 12}" y="52">estimated by calibrated prover model</text>',
-        f'<circle cx="{x}" cy="68" r="4" fill="#d17b00" stroke="#333"/>',
-        f'<text x="{x + 12}" y="72">estimated outside measured neighborhood</text>',
-        f'<circle cx="{x}" cy="88" r="4" fill="#b3261e" stroke="#333"/>',
-        f'<text x="{x + 12}" y="92">timed out at cap</text>',
-        f'<path d="M {x:.1f} 108 L {x+5:.1f} 113 L {x:.1f} 118 L {x-5:.1f} 113 Z" fill="#8a8a8a" stroke="#d17b00"/>',
-        f'<text x="{x + 12}" y="117">ConstantFromSecondRound schedule</text>',
-        f'<line x1="{x - 4}" y1="134" x2="{x + 8}" y2="134" stroke="#1769aa" stroke-width="1.5"/>',
-        f'<text x="{x + 12}" y="138">measured frontier</text>',
-        f'<line x1="{x - 4}" y1="154" x2="{x + 8}" y2="154" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
-        f'<text x="{x + 12}" y="158">modeled frontier</text>',
-        f'<circle cx="{x}" cy="178" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
-        f'<text x="{x + 12}" y="182">implemented verifier target</text>',
-        f'<text x="{x - 8}" y="204" fill="#555">model is ordinal; see JSON for leave-one-out error</text>',
-        f'<text x="{x - 8}" y="222" fill="#555">final gas choice needs native tx measurement</text>',
-        "</g>",
+        f'<text x="{x + 12}" y="52">interpolated</text>',
     ]
+    if not report_mode:
+        entries.extend(
+            [
+                f'<circle cx="{x}" cy="68" r="4" fill="#d17b00" stroke="#333"/>',
+                f'<text x="{x + 12}" y="72">estimated outside measured neighborhood</text>',
+                f'<circle cx="{x}" cy="88" r="4" fill="#b3261e" stroke="#333"/>',
+                f'<text x="{x + 12}" y="92">timed out at cap</text>',
+                f'<path d="M {x:.1f} 108 L {x+5:.1f} 113 L {x:.1f} 118 L {x-5:.1f} 113 Z" fill="#8a8a8a" stroke="#d17b00"/>',
+                f'<text x="{x + 12}" y="117">ConstantFromSecondRound schedule</text>',
+                f'<line x1="{x - 4}" y1="134" x2="{x + 8}" y2="134" stroke="#1769aa" stroke-width="1.5"/>',
+                f'<text x="{x + 12}" y="138">measured frontier</text>',
+                f'<line x1="{x - 4}" y1="154" x2="{x + 8}" y2="154" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
+                f'<text x="{x + 12}" y="158">modeled frontier</text>',
+                f'<circle cx="{x}" cy="178" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                f'<text x="{x + 12}" y="182">implemented verifier target</text>',
+                f'<text x="{x - 8}" y="204" fill="#555">model is ordinal; see JSON for leave-one-out error</text>',
+                f'<text x="{x - 8}" y="222" fill="#555">final gas choice needs native tx measurement</text>',
+            ]
+        )
+    else:
+        entries.extend(
+            [
+                f'<line x1="{x - 4}" y1="72" x2="{x + 8}" y2="72" stroke="#1769aa" stroke-width="1.5"/>',
+                f'<text x="{x + 12}" y="76">measured frontier</text>',
+            ]
+        )
+        if estimated_frontier_visible:
+            entries.extend(
+                [
+                    f'<line x1="{x - 4}" y1="92" x2="{x + 8}" y2="92" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
+                    f'<text x="{x + 12}" y="96">measured + interpolated frontier</text>',
+                    f'<circle cx="{x}" cy="116" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                    f'<text x="{x + 12}" y="120">implemented quintic verifier</text>',
+                ]
+            )
+        else:
+            entries.extend(
+                [
+                    f'<circle cx="{x}" cy="96" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                    f'<text x="{x + 12}" y="100">implemented quintic verifier</text>',
+                ]
+            )
+    entries.append("</g>")
+    return entries
 
 
 def plot_click_script() -> str:

@@ -141,10 +141,11 @@ The quartic and octic references are retained as diagnostic comparisons for the 
 
 Prover work is ranked with measured full 22-variable commit+prove timings when available. `estimated_prover_time_score` fills in unmeasured candidates on the plots. Auxiliary `pow24`, `pow25`, and `pow26` schedule dumps attach previously-collected PoW timings to the prover estimator so it can score candidates whose PoW bits fall outside the current calibration sweep.
 
-The default SVGs are:
+The SVG outputs are:
 
 - `pareto_verifier_vs_prover.svg`: quintic-calibrated verifier score against measured-or-estimated prover seconds.
 - `pareto_verifier_vs_measured_prover.svg`: quintic-calibrated verifier score against measured prover seconds.
+- `pareto_verifier_vs_prover_report.svg`: static report figure with measured and interpolated prover points, no interactive point selector, and only the implemented quintic schedule marked.
 
 The SVGs use distinct markers for `ConstantFromSecondRound` candidates because they use a different WHIR schedule shape.
 
@@ -178,6 +179,7 @@ python3 quintic_schedule_scorer.py \
   --calibration testdata/quintic_calibration.json \
   --require-calibration \
   --target-security-bits 100 \
+  --report-plot-label constant_pow28_ff4_lir4_rsv3 \
   --out-dir testdata/quintic_scores
 ```
 
