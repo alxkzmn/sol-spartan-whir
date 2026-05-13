@@ -5,7 +5,7 @@ Usage:
     python3 .agents/skills/tx-gas-benchmarking/scripts/parse_tx_gas.py
     python3 .agents/skills/tx-gas-benchmarking/scripts/parse_tx_gas.py native
     python3 .agents/skills/tx-gas-benchmarking/scripts/parse_tx_gas.py \
-        script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol
+        script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ BROADCAST_DIR = PROJECT_ROOT / "broadcast"
 MODE_SPECS = {
     "native": {
         "script_family": "WhirBlobNativeTxBenchmark",
-        "label": "Native blob tx (EOA -> WhirBlobVerifierNative4.verify)",
+        "label": "Native blob verifier tx",
         "verify_receipt_idx": 1,
         "min_receipts": 2,
     },

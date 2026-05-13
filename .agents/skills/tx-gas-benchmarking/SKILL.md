@@ -25,19 +25,20 @@ The `--code-size-limit` flag is required because the native verifier exceeds the
 Use the bundled helper:
 
 ```bash
-.agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh native
+.agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh \
+  script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol
 ```
 
 You can also pass an explicit benchmark script path:
 
 ```bash
 .agents/skills/tx-gas-benchmarking/scripts/run_tx_gas_benchmark.sh \
-  script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol
+  script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol
 ```
 
 Supported mode aliases:
 
-- `native`: production path, `EOA -> WhirBlobVerifierNative4.verify(...)`
+- `native`: legacy mode alias for the native blob benchmark script family; prefer an explicit script path when multiple schedules are checked in
 - `direct`: typed verifier, `EOA -> WhirVerifier4.verify(...)`
 - `blob`: blob decode-and-delegate verifier
 - `wrapper`: typed wrapper path
