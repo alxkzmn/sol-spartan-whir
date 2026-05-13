@@ -7,7 +7,6 @@ import { KoalaBearExt4 } from "../src/field/KoalaBearExt4.sol";
 import { KeccakChallenger } from "../src/transcript/KeccakChallenger.sol";
 import { QuarticWhirFixedConfig } from "../src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol";
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
-import { WhirVerifier4 } from "../src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol";
 import { WhirVerifierCore4 } from "../src/whir/WhirVerifierCore4.sol";
 import { WhirVerifierUtils4 } from "../src/whir/WhirVerifierUtils4.sol";
 

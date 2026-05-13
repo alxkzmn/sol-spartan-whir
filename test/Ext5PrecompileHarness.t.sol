@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 import { Test } from "forge-std/Test.sol";
 import { KoalaBear } from "../src/field/KoalaBear.sol";
-import { KoalaBearExt5 } from "../src/field/KoalaBearExt5.sol";
 import { KoalaBearExt5Precompile } from "../src/field/KoalaBearExt5Precompile.sol";
 import { Ext5PrecompileHarness } from "./helpers/Ext5PrecompileHarness.sol";
 

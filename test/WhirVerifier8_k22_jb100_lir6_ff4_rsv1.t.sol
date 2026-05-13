@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 
 import { WhirStructs } from "../src/whir/WhirStructs.sol";
 import { WhirVerifierCore8 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierCore8.sol";
-import { WhirVerifierUtils8 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol";
 import {
     WhirVerifier8_k22_jb100_lir6_ff4_rsv1 as WhirVerifier8
 } from "../src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifier8_k22_jb100_lir6_ff4_rsv1.sol";
