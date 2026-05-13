@@ -1856,6 +1856,9 @@ def write_svg_plot(
                 measured_frontier, x_key, y_key, sx, sy, "#1769aa", "", 0.8
             )
         )
+    label_frontier = (
+        estimated_frontier if estimated_frontier_visible else measured_frontier
+    )
     for index, point in enumerate(points):
         x = sx(float(point[x_key]))
         y = sy(float(point[y_key]))
@@ -1864,7 +1867,7 @@ def write_svg_plot(
             and point.get("folding_variant") == "ConstantFromSecondRound"
         )
         implemented = bool(point.get("implemented"))
-        color = marker_color(point)
+        color = lir_marker_color(point) if report_mode else marker_color(point)
         stroke = (
             "#7b2cbf"
             if implemented
@@ -1883,7 +1886,12 @@ def write_svg_plot(
         group_attrs = (
             f' onclick="{onclick}" style="cursor:pointer"' if interactive else ""
         )
-        if constant_from_second_round:
+        if report_mode and point.get("prover_time_estimate_kind") != "measured":
+            parts.append(
+                f'<g{group_attrs}><path id="point-marker-{index}" data-stroke-width="{stroke_width}" d="M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
+                f"<title>{escape_xml(title)}</title></g>"
+            )
+        elif constant_from_second_round:
             parts.append(
                 f'<g{group_attrs}><path id="point-marker-{index}" data-stroke-width="{stroke_width}" d="M {x:.1f} {y-5:.1f} L {x+5:.1f} {y:.1f} L {x:.1f} {y+5:.1f} L {x-5:.1f} {y:.1f} Z" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
@@ -1893,7 +1901,9 @@ def write_svg_plot(
                 f'<g{group_attrs}><circle id="point-marker-{index}" data-stroke-width="{stroke_width}" cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}" stroke="{stroke}" stroke-width="{stroke_width}"/>'
                 f"<title>{escape_xml(title)}</title></g>"
             )
-    parts.extend(plot_legend(width, report_mode, estimated_frontier_visible))
+    if report_mode:
+        parts.extend(frontier_point_labels(label_frontier, x_key, y_key, sx, sy))
+    parts.extend(plot_legend(width, points, report_mode, estimated_frontier_visible))
     if interactive:
         parts.extend(plot_selected_detail_box(detail_top))
     parts.append("</svg>")
@@ -2039,7 +2049,95 @@ def frontier_polyline(
     )
 
 
+def frontier_point_labels(
+    frontier: list[dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    sx: Any,
+    sy: Any,
+) -> list[str]:
+    parts = []
+    placed: list[tuple[float, float, float, float]] = []
+    for index, point in enumerate(frontier):
+        x = sx(float(point[x_key]))
+        y = sy(float(point[y_key]))
+        label = frontier_point_label(point)
+        text_width = max(42, len(label) * 6 + 8)
+        text_height = 16
+        text_x, text_y, rect_x, rect_y = place_frontier_label(
+            x, y, text_width, text_height, placed, index
+        )
+        placed.append((rect_x, rect_y, rect_x + text_width, rect_y + text_height))
+        rect_x = text_x - 4
+        rect_y = text_y - text_height + 3
+        parts.extend(
+            [
+                f'<rect x="{rect_x:.1f}" y="{rect_y:.1f}" width="{text_width}" height="{text_height}" fill="white" opacity="0.88" stroke="#d0d0d0" stroke-width="0.5"/>',
+                f'<text x="{text_x:.1f}" y="{text_y:.1f}" font-size="11" fill="#222">{escape_xml(label)}</text>',
+            ]
+        )
+    return parts
+
+
+def place_frontier_label(
+    x: float,
+    y: float,
+    text_width: int,
+    text_height: int,
+    placed: list[tuple[float, float, float, float]],
+    index: int,
+) -> tuple[float, float, float, float]:
+    del index
+    candidates = [
+        (8, -18),
+        (8, -36),
+        (8, -54),
+        (8, -72),
+        (8, -90),
+        (8, -108),
+        (8, -126),
+        (8, -144),
+    ]
+    for dx, dy in candidates:
+        text_x = x + dx
+        text_y = y + dy
+        rect_x = text_x - 4
+        rect_y = text_y - text_height + 3
+        rect = (rect_x, rect_y, rect_x + text_width, rect_y + text_height)
+        if not (66 <= rect_x and rect[2] <= 834 and 58 <= rect_y and rect[3] <= 552):
+            continue
+        if not any(rects_overlap(rect, other) for other in placed):
+            return text_x, text_y, rect_x, rect_y
+
+    dx = 8
+    dy = -18
+    text_x = x + dx
+    text_y = y + dy
+    rect_x = text_x - 4
+    rect_y = text_y - text_height + 3
+    return text_x, text_y, rect_x, rect_y
+
+
+def rects_overlap(
+    a: tuple[float, float, float, float],
+    b: tuple[float, float, float, float],
+) -> bool:
+    padding = 2
+    return not (
+        a[2] + padding < b[0]
+        or b[2] + padding < a[0]
+        or a[3] + padding < b[1]
+        or b[3] + padding < a[1]
+    )
+
+
+def frontier_point_label(point: dict[str, Any]) -> str:
+    return str(point.get("label") or "")
+
+
 def marker_color(point: dict[str, Any]) -> str:
+    if point.get("plot_highlight_color"):
+        return str(point["plot_highlight_color"])
     kind = point.get("prover_time_estimate_kind")
     if kind == "measured":
         return "#1769aa"
@@ -2050,6 +2148,23 @@ def marker_color(point: dict[str, Any]) -> str:
             return "#d17b00"
         return "#8a8a8a"
     return "#bbbbbb"
+
+
+LIR_MARKER_COLORS = {
+    1: "#7f7f7f",
+    2: "#4c78a8",
+    3: "#f58518",
+    4: "#54a24b",
+    5: "#d62728",
+    6: "#9467bd",
+}
+
+
+def lir_marker_color(point: dict[str, Any]) -> str:
+    lir = point.get("starting_log_inv_rate")
+    if isinstance(lir, int):
+        return LIR_MARKER_COLORS.get(lir, "#8a8a8a")
+    return "#8a8a8a"
 
 
 def pareto_frontier(
@@ -2077,18 +2192,21 @@ def pareto_frontier(
 
 def plot_legend(
     width: int,
+    points: list[dict[str, Any]],
     report_mode: bool = False,
     estimated_frontier_visible: bool = True,
 ) -> list[str]:
     x = width - 330
-    entries = [
-        f'<g font-size="12">',
-        f'<circle cx="{x}" cy="28" r="4" fill="#1769aa" stroke="#333"/>',
-        f'<text x="{x + 12}" y="32">measured prover time</text>',
-        f'<circle cx="{x}" cy="48" r="4" fill="#8a8a8a" stroke="#333"/>',
-        f'<text x="{x + 12}" y="52">interpolated</text>',
-    ]
+    entries = [f'<g font-size="12">']
     if not report_mode:
+        entries.extend(
+            [
+                f'<circle cx="{x}" cy="28" r="4" fill="#1769aa" stroke="#333"/>',
+                f'<text x="{x + 12}" y="32">measured prover time</text>',
+                f'<circle cx="{x}" cy="48" r="4" fill="#8a8a8a" stroke="#333"/>',
+                f'<text x="{x + 12}" y="52">interpolated</text>',
+            ]
+        )
         entries.extend(
             [
                 f'<circle cx="{x}" cy="68" r="4" fill="#d17b00" stroke="#333"/>',
@@ -2110,6 +2228,14 @@ def plot_legend(
     else:
         entries.extend(
             [
+                f'<circle cx="{x}" cy="28" r="4" fill="none" stroke="#333" stroke-width="1.5"/>',
+                f'<text x="{x + 12}" y="32">measured prover time</text>',
+                f'<path d="M {x:.1f} 43 L {x+5:.1f} 48 L {x:.1f} 53 L {x-5:.1f} 48 Z" fill="none" stroke="#333" stroke-width="1.5"/>',
+                f'<text x="{x + 12}" y="52">interpolated</text>',
+            ]
+        )
+        entries.extend(
+            [
                 f'<line x1="{x - 4}" y1="72" x2="{x + 8}" y2="72" stroke="#1769aa" stroke-width="1.5"/>',
                 f'<text x="{x + 12}" y="76">measured frontier</text>',
             ]
@@ -2123,6 +2249,7 @@ def plot_legend(
                     f'<text x="{x + 12}" y="120">implemented quintic verifier</text>',
                 ]
             )
+            color_start_y = 144
         else:
             entries.extend(
                 [
@@ -2130,8 +2257,27 @@ def plot_legend(
                     f'<text x="{x + 12}" y="100">implemented quintic verifier</text>',
                 ]
             )
+            color_start_y = 124
+        for offset, lir in enumerate(plot_lir_values(points)):
+            y = color_start_y + offset * 20
+            entries.extend(
+                [
+                    f'<circle cx="{x}" cy="{y - 4}" r="4" fill="{LIR_MARKER_COLORS.get(lir, "#8a8a8a")}" stroke="#333"/>',
+                    f'<text x="{x + 12}" y="{y}">lir = {lir}</text>',
+                ]
+            )
     entries.append("</g>")
     return entries
+
+
+def plot_lir_values(points: list[dict[str, Any]]) -> list[int]:
+    return sorted(
+        {
+            int(point["starting_log_inv_rate"])
+            for point in points
+            if isinstance(point.get("starting_log_inv_rate"), int)
+        }
+    )
 
 
 def plot_click_script() -> str:

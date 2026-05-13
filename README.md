@@ -83,7 +83,7 @@ single contract under EIP-170 at the current default build settings:
 | Native blob verifier variant       | Runtime bytecode | EIP-170 status |
 | ---------------------------------- | ---------------: | -------------- |
 | `rsv3_pow28` software              |       `33,119` B | `8,543` B over |
-| `rsv4` software                    |       `33,776` B | `9,200` B over |
+| `rsv4` software                    |       `32,870` B | `8,294` B over |
 | `rsv3_pow28` local precompile path |       `29,551` B | `4,975` B over |
 
 Optimizer-run tuning alone does not make these native blob contracts fit. The
