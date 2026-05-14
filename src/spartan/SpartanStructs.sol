@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {WhirStructs} from "../whir/WhirStructs.sol";
+import { WhirStructs } from "../whir/WhirStructs.sol";
 
 library SpartanStructs {
     struct SpartanInstance {

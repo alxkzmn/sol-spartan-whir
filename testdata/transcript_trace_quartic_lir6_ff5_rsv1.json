@@ -1,0 +1,6737 @@
+{
+  "prover_events": [
+    {
+      "step": 0,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 1,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 2,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 3,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "01000000",
+      "arg0": 1,
+      "arg1": 0
+    },
+    {
+      "step": 4,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 5,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 6,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 7,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 8,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 9,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 10,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 11,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 12,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 13,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 14,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 15,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f000000",
+      "arg0": 31,
+      "arg1": 0
+    },
+    {
+      "step": 16,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02000000",
+      "arg0": 2,
+      "arg1": 0
+    },
+    {
+      "step": 17,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 18,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 19,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 20,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 21,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 22,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 23,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 24,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 25,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 26,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 27,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 28,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 29,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 30,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 31,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 32,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16000000",
+      "arg0": 22,
+      "arg1": 0
+    },
+    {
+      "step": 33,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02000000",
+      "arg0": 2,
+      "arg1": 0
+    },
+    {
+      "step": 34,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 35,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 36,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 37,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 38,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 39,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 40,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 41,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 42,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 43,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 44,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 45,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 46,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 47,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 48,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 49,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 50,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 51,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 52,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 53,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 54,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16000000",
+      "arg0": 22,
+      "arg1": 0
+    },
+    {
+      "step": 55,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 56,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 57,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 58,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 59,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 60,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 61,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 62,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 63,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 64,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 65,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 66,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 67,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 68,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 69,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "202c7d459d0dd4e2691d8a450383c6f00000000007e0c6640000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 70,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 796230892,
+      "arg1": 0
+    },
+    {
+      "step": 71,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 432568002,
+      "arg1": 0
+    },
+    {
+      "step": 72,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 928253808,
+      "arg1": 0
+    },
+    {
+      "step": 73,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1047979932,
+      "arg1": 0
+    },
+    {
+      "step": 74,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f455b09",
+      "arg0": 156976463,
+      "arg1": 0
+    },
+    {
+      "step": 75,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "10c34c21",
+      "arg0": 558678800,
+      "arg1": 0
+    },
+    {
+      "step": 76,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "160cce31",
+      "arg0": 835587094,
+      "arg1": 0
+    },
+    {
+      "step": 77,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "63202376",
+      "arg0": 1982013539,
+      "arg1": 0
+    },
+    {
+      "step": 78,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1037399273,
+      "arg1": 0
+    },
+    {
+      "step": 79,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 343237772,
+      "arg1": 0
+    },
+    {
+      "step": 80,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1494048464,
+      "arg1": 0
+    },
+    {
+      "step": 81,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1571375247,
+      "arg1": 0
+    },
+    {
+      "step": 82,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b8ec6324",
+      "arg0": 610528440,
+      "arg1": 0
+    },
+    {
+      "step": 83,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aa489905",
+      "arg0": 93931690,
+      "arg1": 0
+    },
+    {
+      "step": 84,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed671672",
+      "arg0": 1914071021,
+      "arg1": 0
+    },
+    {
+      "step": 85,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53573569",
+      "arg0": 1765103443,
+      "arg1": 0
+    },
+    {
+      "step": 86,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 249037476,
+      "arg1": 0
+    },
+    {
+      "step": 87,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 572662360,
+      "arg1": 0
+    },
+    {
+      "step": 88,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 576103390,
+      "arg1": 0
+    },
+    {
+      "step": 89,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 651132215,
+      "arg1": 0
+    },
+    {
+      "step": 90,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f81b064e",
+      "arg0": 1309023224,
+      "arg1": 0
+    },
+    {
+      "step": 91,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "011c8844",
+      "arg0": 1149770753,
+      "arg1": 0
+    },
+    {
+      "step": 92,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d19f8321",
+      "arg0": 562274257,
+      "arg1": 0
+    },
+    {
+      "step": 93,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a106a031",
+      "arg0": 832571041,
+      "arg1": 0
+    },
+    {
+      "step": 94,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "55c7a87d",
+      "arg0": 2108213077,
+      "arg1": 0
+    },
+    {
+      "step": 95,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3bdbe469",
+      "arg0": 1776606011,
+      "arg1": 0
+    },
+    {
+      "step": 96,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1d164305",
+      "arg0": 88282653,
+      "arg1": 0
+    },
+    {
+      "step": 97,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6162c12b",
+      "arg0": 734093921,
+      "arg1": 0
+    },
+    {
+      "step": 98,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1546684651,
+      "arg1": 0
+    },
+    {
+      "step": 99,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1755570095,
+      "arg1": 0
+    },
+    {
+      "step": 100,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 698021111,
+      "arg1": 0
+    },
+    {
+      "step": 101,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 25376472,
+      "arg1": 0
+    },
+    {
+      "step": 102,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "28207275",
+      "arg0": 1970413608,
+      "arg1": 0
+    },
+    {
+      "step": 103,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "68a19819",
+      "arg0": 429433192,
+      "arg1": 0
+    },
+    {
+      "step": 104,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02a0cc76",
+      "arg0": 1993121794,
+      "arg1": 0
+    },
+    {
+      "step": 105,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6339bc4f",
+      "arg0": 1337735523,
+      "arg1": 0
+    },
+    {
+      "step": 106,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc894376",
+      "arg0": 1984137676,
+      "arg1": 0
+    },
+    {
+      "step": 107,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed4fd258",
+      "arg0": 1490178029,
+      "arg1": 0
+    },
+    {
+      "step": 108,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b1134f0f",
+      "arg0": 256840625,
+      "arg1": 0
+    },
+    {
+      "step": 109,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b5ac1564",
+      "arg0": 1679142069,
+      "arg1": 0
+    },
+    {
+      "step": 110,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 898327104,
+      "arg1": 0
+    },
+    {
+      "step": 111,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1342735746,
+      "arg1": 0
+    },
+    {
+      "step": 112,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 615153059,
+      "arg1": 0
+    },
+    {
+      "step": 113,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1309082083,
+      "arg1": 0
+    },
+    {
+      "step": 114,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e5f21144",
+      "arg0": 1142026981,
+      "arg1": 0
+    },
+    {
+      "step": 115,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8efbd741",
+      "arg0": 1104673678,
+      "arg1": 0
+    },
+    {
+      "step": 116,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d06e3020",
+      "arg0": 540045008,
+      "arg1": 0
+    },
+    {
+      "step": 117,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aa215f2a",
+      "arg0": 710877610,
+      "arg1": 0
+    },
+    {
+      "step": 118,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0d511d73",
+      "arg0": 1931301133,
+      "arg1": 0
+    },
+    {
+      "step": 119,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e513ff61",
+      "arg0": 1644106725,
+      "arg1": 0
+    },
+    {
+      "step": 120,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "19586734",
+      "arg0": 879187993,
+      "arg1": 0
+    },
+    {
+      "step": 121,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6984a204",
+      "arg0": 77759593,
+      "arg1": 0
+    },
+    {
+      "step": 122,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 558454164,
+      "arg1": 0
+    },
+    {
+      "step": 123,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2060189705,
+      "arg1": 0
+    },
+    {
+      "step": 124,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1659296162,
+      "arg1": 0
+    },
+    {
+      "step": 125,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1058163663,
+      "arg1": 0
+    },
+    {
+      "step": 126,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "59a99003",
+      "arg0": 59812185,
+      "arg1": 0
+    },
+    {
+      "step": 127,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46bad024",
+      "arg0": 617658950,
+      "arg1": 0
+    },
+    {
+      "step": 128,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "61a0c956",
+      "arg0": 1456054369,
+      "arg1": 0
+    },
+    {
+      "step": 129,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f1fde839",
+      "arg0": 971570673,
+      "arg1": 0
+    },
+    {
+      "step": 130,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4fd13837",
+      "arg0": 926470479,
+      "arg1": 0
+    },
+    {
+      "step": 131,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "af444f58",
+      "arg0": 1481589935,
+      "arg1": 0
+    },
+    {
+      "step": 132,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7685d74c",
+      "arg0": 1289192822,
+      "arg1": 0
+    },
+    {
+      "step": 133,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ab648647",
+      "arg0": 1199989931,
+      "arg1": 0
+    },
+    {
+      "step": 134,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 686383557,
+      "arg1": 0
+    },
+    {
+      "step": 135,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 227350491,
+      "arg1": 0
+    },
+    {
+      "step": 136,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 387897835,
+      "arg1": 0
+    },
+    {
+      "step": 137,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1478073478,
+      "arg1": 0
+    },
+    {
+      "step": 138,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "621f8fce95e37899f323620c59c32cfc000000005a5d36e50000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 139,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 691770121,
+      "arg1": 0
+    },
+    {
+      "step": 140,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1878707867,
+      "arg1": 0
+    },
+    {
+      "step": 141,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 80137081,
+      "arg1": 0
+    },
+    {
+      "step": 142,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 328262825,
+      "arg1": 0
+    },
+    {
+      "step": 143,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53562406",
+      "arg0": 103044691,
+      "arg1": 0
+    },
+    {
+      "step": 144,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "123c0a03",
+      "arg0": 51002386,
+      "arg1": 0
+    },
+    {
+      "step": 145,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46b17630",
+      "arg0": 813084998,
+      "arg1": 0
+    },
+    {
+      "step": 146,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6da9ef33",
+      "arg0": 871344493,
+      "arg1": 0
+    },
+    {
+      "step": 147,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1962432000,
+      "arg1": 0
+    },
+    {
+      "step": 148,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 769211022,
+      "arg1": 0
+    },
+    {
+      "step": 149,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 784371458,
+      "arg1": 0
+    },
+    {
+      "step": 150,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1006327379,
+      "arg1": 0
+    },
+    {
+      "step": 151,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b11e2e79",
+      "arg0": 2033065649,
+      "arg1": 0
+    },
+    {
+      "step": 152,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f4a173b",
+      "arg0": 991382095,
+      "arg1": 0
+    },
+    {
+      "step": 153,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bdd48d56",
+      "arg0": 1452135613,
+      "arg1": 0
+    },
+    {
+      "step": 154,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4af8280e",
+      "arg0": 237566026,
+      "arg1": 0
+    },
+    {
+      "step": 155,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 163545673
+    },
+    {
+      "step": 156,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 984287346,
+      "arg1": 0
+    },
+    {
+      "step": 157,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 13706
+    },
+    {
+      "step": 158,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 254368
+    },
+    {
+      "step": 159,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 162628
+    },
+    {
+      "step": 160,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 260313
+    },
+    {
+      "step": 161,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 243642
+    },
+    {
+      "step": 162,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 79663
+    },
+    {
+      "step": 163,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 202380
+    },
+    {
+      "step": 164,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 169583
+    },
+    {
+      "step": 165,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 181410
+    },
+    {
+      "step": 166,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 387988261,
+      "arg1": 0
+    },
+    {
+      "step": 167,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 163740802,
+      "arg1": 0
+    },
+    {
+      "step": 168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 963015540,
+      "arg1": 0
+    },
+    {
+      "step": 169,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 770046879,
+      "arg1": 0
+    },
+    {
+      "step": 170,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "adf1f801",
+      "arg0": 33092013,
+      "arg1": 0
+    },
+    {
+      "step": 171,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "22e5b15c",
+      "arg0": 1555162402,
+      "arg1": 0
+    },
+    {
+      "step": 172,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9a41365a",
+      "arg0": 1513505178,
+      "arg1": 0
+    },
+    {
+      "step": 173,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "08169c20",
+      "arg0": 547100168,
+      "arg1": 0
+    },
+    {
+      "step": 174,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1631061e",
+      "arg0": 503722262,
+      "arg1": 0
+    },
+    {
+      "step": 175,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f59bd413",
+      "arg0": 332700661,
+      "arg1": 0
+    },
+    {
+      "step": 176,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7a00ec7e",
+      "arg0": 2129395834,
+      "arg1": 0
+    },
+    {
+      "step": 177,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5d16320e",
+      "arg0": 238163549,
+      "arg1": 0
+    },
+    {
+      "step": 178,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 101396019,
+      "arg1": 0
+    },
+    {
+      "step": 179,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 417231321,
+      "arg1": 0
+    },
+    {
+      "step": 180,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1585232538,
+      "arg1": 0
+    },
+    {
+      "step": 181,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1460946978,
+      "arg1": 0
+    },
+    {
+      "step": 182,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97912e56",
+      "arg0": 1445892503,
+      "arg1": 0
+    },
+    {
+      "step": 183,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "399bb86c",
+      "arg0": 1824037689,
+      "arg1": 0
+    },
+    {
+      "step": 184,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcf43653",
+      "arg0": 1396110588,
+      "arg1": 0
+    },
+    {
+      "step": 185,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e38ac91c",
+      "arg0": 482970339,
+      "arg1": 0
+    },
+    {
+      "step": 186,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cd0dc174",
+      "arg0": 1958809037,
+      "arg1": 0
+    },
+    {
+      "step": 187,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f0495f26",
+      "arg0": 643779056,
+      "arg1": 0
+    },
+    {
+      "step": 188,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7ee0a16d",
+      "arg0": 1839325310,
+      "arg1": 0
+    },
+    {
+      "step": 189,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7a11b517",
+      "arg0": 397742458,
+      "arg1": 0
+    },
+    {
+      "step": 190,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 756754150,
+      "arg1": 0
+    },
+    {
+      "step": 191,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 152995130,
+      "arg1": 0
+    },
+    {
+      "step": 192,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 695920504,
+      "arg1": 0
+    },
+    {
+      "step": 193,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2065860876,
+      "arg1": 0
+    },
+    {
+      "step": 194,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f4a5c12",
+      "arg0": 308038175,
+      "arg1": 0
+    },
+    {
+      "step": 195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed43f105",
+      "arg0": 99697645,
+      "arg1": 0
+    },
+    {
+      "step": 196,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0dc03f1d",
+      "arg0": 490717197,
+      "arg1": 0
+    },
+    {
+      "step": 197,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bf574d6d",
+      "arg0": 1833785279,
+      "arg1": 0
+    },
+    {
+      "step": 198,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a8f63e2e",
+      "arg0": 775878312,
+      "arg1": 0
+    },
+    {
+      "step": 199,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f698a52f",
+      "arg0": 799381750,
+      "arg1": 0
+    },
+    {
+      "step": 200,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8d69f39",
+      "arg0": 966776568,
+      "arg1": 0
+    },
+    {
+      "step": 201,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d5db8d7e",
+      "arg0": 2123226069,
+      "arg1": 0
+    },
+    {
+      "step": 202,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1242633526,
+      "arg1": 0
+    },
+    {
+      "step": 203,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1272287002,
+      "arg1": 0
+    },
+    {
+      "step": 204,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 187915945,
+      "arg1": 0
+    },
+    {
+      "step": 205,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1937045989,
+      "arg1": 0
+    },
+    {
+      "step": 206,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c08f914c",
+      "arg0": 1284607936,
+      "arg1": 0
+    },
+    {
+      "step": 207,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bddb4076",
+      "arg0": 1983962045,
+      "arg1": 0
+    },
+    {
+      "step": 208,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fa5e3a76",
+      "arg0": 1983536890,
+      "arg1": 0
+    },
+    {
+      "step": 209,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8b2a1212",
+      "arg0": 303180427,
+      "arg1": 0
+    },
+    {
+      "step": 210,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "55009927",
+      "arg0": 664338517,
+      "arg1": 0
+    },
+    {
+      "step": 211,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ee68e240",
+      "arg0": 1088579822,
+      "arg1": 0
+    },
+    {
+      "step": 212,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0b18fa60",
+      "arg0": 1627002891,
+      "arg1": 0
+    },
+    {
+      "step": 213,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3d27ac6a",
+      "arg0": 1789667133,
+      "arg1": 0
+    },
+    {
+      "step": 214,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2001067912,
+      "arg1": 0
+    },
+    {
+      "step": 215,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1439335545,
+      "arg1": 0
+    },
+    {
+      "step": 216,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 217633122,
+      "arg1": 0
+    },
+    {
+      "step": 217,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1432418031,
+      "arg1": 0
+    },
+    {
+      "step": 218,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "779dad0317d95cb19cc9d391e8557c31000000009458e72f0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 219,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2056834756,
+      "arg1": 0
+    },
+    {
+      "step": 220,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1278829611,
+      "arg1": 0
+    },
+    {
+      "step": 221,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 993152978,
+      "arg1": 0
+    },
+    {
+      "step": 222,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1011103137,
+      "arg1": 0
+    },
+    {
+      "step": 223,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0e16a911",
+      "arg0": 296293902,
+      "arg1": 0
+    },
+    {
+      "step": 224,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5b574039",
+      "arg0": 960517979,
+      "arg1": 0
+    },
+    {
+      "step": 225,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ae22fe39",
+      "arg0": 972956334,
+      "arg1": 0
+    },
+    {
+      "step": 226,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f0d1427",
+      "arg0": 655625567,
+      "arg1": 0
+    },
+    {
+      "step": 227,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1744871275,
+      "arg1": 0
+    },
+    {
+      "step": 228,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1024222035,
+      "arg1": 0
+    },
+    {
+      "step": 229,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2086260423,
+      "arg1": 0
+    },
+    {
+      "step": 230,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 569564215,
+      "arg1": 0
+    },
+    {
+      "step": 231,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dadeb00b",
+      "arg0": 196140762,
+      "arg1": 0
+    },
+    {
+      "step": 232,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b8be03a",
+      "arg0": 987794251,
+      "arg1": 0
+    },
+    {
+      "step": 233,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f60cc35c",
+      "arg0": 1556286710,
+      "arg1": 0
+    },
+    {
+      "step": 234,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "00d3fd2e",
+      "arg0": 788386560,
+      "arg1": 0
+    },
+    {
+      "step": 235,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 16093703
+    },
+    {
+      "step": 236,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1476996556,
+      "arg1": 0
+    },
+    {
+      "step": 237,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 109033
+    },
+    {
+      "step": 238,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 79543
+    },
+    {
+      "step": 239,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 57247
+    },
+    {
+      "step": 240,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 113684
+    },
+    {
+      "step": 241,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 29214
+    },
+    {
+      "step": 242,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 48340
+    },
+    {
+      "step": 243,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 220929325,
+      "arg1": 0
+    },
+    {
+      "step": 244,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 777622157,
+      "arg1": 0
+    },
+    {
+      "step": 245,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 750916337,
+      "arg1": 0
+    },
+    {
+      "step": 246,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 616649085,
+      "arg1": 0
+    },
+    {
+      "step": 247,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6019ab1d",
+      "arg0": 497752416,
+      "arg1": 0
+    },
+    {
+      "step": 248,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5a3faa20",
+      "arg0": 548028250,
+      "arg1": 0
+    },
+    {
+      "step": 249,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "22588762",
+      "arg0": 1653037090,
+      "arg1": 0
+    },
+    {
+      "step": 250,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9205128",
+      "arg0": 676405465,
+      "arg1": 0
+    },
+    {
+      "step": 251,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f1de8515",
+      "arg0": 361094897,
+      "arg1": 0
+    },
+    {
+      "step": 252,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "196f711c",
+      "arg0": 477196057,
+      "arg1": 0
+    },
+    {
+      "step": 253,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "58ad804a",
+      "arg0": 1249946968,
+      "arg1": 0
+    },
+    {
+      "step": 254,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0d913e7e",
+      "arg0": 2118029581,
+      "arg1": 0
+    },
+    {
+      "step": 255,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 13
+    },
+    {
+      "step": 256,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2008712574,
+      "arg1": 0
+    },
+    {
+      "step": 257,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 463775481,
+      "arg1": 0
+    },
+    {
+      "step": 258,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1722255386,
+      "arg1": 0
+    },
+    {
+      "step": 259,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1247943144,
+      "arg1": 0
+    },
+    {
+      "step": 260,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1555c905",
+      "arg0": 97080597,
+      "arg1": 0
+    },
+    {
+      "step": 261,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2c37526d",
+      "arg0": 1834104620,
+      "arg1": 0
+    },
+    {
+      "step": 262,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b8c5cc35",
+      "arg0": 902612408,
+      "arg1": 0
+    },
+    {
+      "step": 263,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ce0b17a",
+      "arg0": 2058477708,
+      "arg1": 0
+    },
+    {
+      "step": 264,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "205dfb29",
+      "arg0": 704339232,
+      "arg1": 0
+    },
+    {
+      "step": 265,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3498ab06",
+      "arg0": 111908916,
+      "arg1": 0
+    },
+    {
+      "step": 266,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "40c22e77",
+      "arg0": 1999553088,
+      "arg1": 0
+    },
+    {
+      "step": 267,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b928553",
+      "arg0": 1401262667,
+      "arg1": 0
+    },
+    {
+      "step": 268,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 36
+    },
+    {
+      "step": 269,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 355913259,
+      "arg1": 0
+    },
+    {
+      "step": 270,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 604483869,
+      "arg1": 0
+    },
+    {
+      "step": 271,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1453875280,
+      "arg1": 0
+    },
+    {
+      "step": 272,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1349653170,
+      "arg1": 0
+    },
+    {
+      "step": 273,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "977c6d56",
+      "arg0": 1450015895,
+      "arg1": 0
+    },
+    {
+      "step": 274,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6ffd6920",
+      "arg0": 543817071,
+      "arg1": 0
+    },
+    {
+      "step": 275,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f345635a",
+      "arg0": 1516455411,
+      "arg1": 0
+    },
+    {
+      "step": 276,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bc767039",
+      "arg0": 963671740,
+      "arg1": 0
+    },
+    {
+      "step": 277,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6213f277",
+      "arg0": 2012353378,
+      "arg1": 0
+    },
+    {
+      "step": 278,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e9ccec3d",
+      "arg0": 1038929129,
+      "arg1": 0
+    },
+    {
+      "step": 279,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b228e014",
+      "arg0": 350234802,
+      "arg1": 0
+    },
+    {
+      "step": 280,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "333e781f",
+      "arg0": 527973939,
+      "arg1": 0
+    },
+    {
+      "step": 281,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 19
+    },
+    {
+      "step": 282,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1973911970,
+      "arg1": 0
+    },
+    {
+      "step": 283,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 544123776,
+      "arg1": 0
+    },
+    {
+      "step": 284,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 601085823,
+      "arg1": 0
+    },
+    {
+      "step": 285,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1449735619,
+      "arg1": 0
+    },
+    {
+      "step": 286,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ca4a2d",
+      "arg0": 759876322,
+      "arg1": 0
+    },
+    {
+      "step": 287,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "af470a77",
+      "arg0": 1997162415,
+      "arg1": 0
+    },
+    {
+      "step": 288,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7f25d26",
+      "arg0": 643691255,
+      "arg1": 0
+    },
+    {
+      "step": 289,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "12e9e934",
+      "arg0": 887744786,
+      "arg1": 0
+    },
+    {
+      "step": 290,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c4c9c001",
+      "arg0": 29411780,
+      "arg1": 0
+    },
+    {
+      "step": 291,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7de14d75",
+      "arg0": 1968038269,
+      "arg1": 0
+    },
+    {
+      "step": 292,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bef8746a",
+      "arg0": 1786050750,
+      "arg1": 0
+    },
+    {
+      "step": 293,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09aa5c2d",
+      "arg0": 761047561,
+      "arg1": 0
+    },
+    {
+      "step": 294,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 2
+    },
+    {
+      "step": 295,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1498947555,
+      "arg1": 0
+    },
+    {
+      "step": 296,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 15264348,
+      "arg1": 0
+    },
+    {
+      "step": 297,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 315889640,
+      "arg1": 0
+    },
+    {
+      "step": 298,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1993121174,
+      "arg1": 0
+    },
+    {
+      "step": 299,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2c665306",
+      "arg0": 106128940,
+      "arg1": 0
+    },
+    {
+      "step": 300,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 301,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 302,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 303,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2d665306",
+      "arg0": 106128941,
+      "arg1": 0
+    },
+    {
+      "step": 304,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 305,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 306,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 307,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2e665306",
+      "arg0": 106128942,
+      "arg1": 0
+    },
+    {
+      "step": 308,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 309,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 310,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 311,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2f665306",
+      "arg0": 106128943,
+      "arg1": 0
+    },
+    {
+      "step": 312,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 313,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 314,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 315,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "30665306",
+      "arg0": 106128944,
+      "arg1": 0
+    },
+    {
+      "step": 316,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 317,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 318,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 319,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "31665306",
+      "arg0": 106128945,
+      "arg1": 0
+    },
+    {
+      "step": 320,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 321,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 322,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 323,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "32665306",
+      "arg0": 106128946,
+      "arg1": 0
+    },
+    {
+      "step": 324,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 325,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 326,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 327,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "33665306",
+      "arg0": 106128947,
+      "arg1": 0
+    },
+    {
+      "step": 328,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 330,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 331,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "34665306",
+      "arg0": 106128948,
+      "arg1": 0
+    },
+    {
+      "step": 332,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 333,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 334,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 335,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "35665306",
+      "arg0": 106128949,
+      "arg1": 0
+    },
+    {
+      "step": 336,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 337,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 338,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 339,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "36665306",
+      "arg0": 106128950,
+      "arg1": 0
+    },
+    {
+      "step": 340,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 341,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 342,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 343,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37665306",
+      "arg0": 106128951,
+      "arg1": 0
+    },
+    {
+      "step": 344,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 345,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 346,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 347,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38665306",
+      "arg0": 106128952,
+      "arg1": 0
+    },
+    {
+      "step": 348,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 349,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 350,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 351,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "39665306",
+      "arg0": 106128953,
+      "arg1": 0
+    },
+    {
+      "step": 352,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 353,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 354,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 355,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3a665306",
+      "arg0": 106128954,
+      "arg1": 0
+    },
+    {
+      "step": 356,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 357,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 358,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 359,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3b665306",
+      "arg0": 106128955,
+      "arg1": 0
+    },
+    {
+      "step": 360,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 361,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 362,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 363,
+      "op": "grind",
+      "op_code": 3,
+      "observed_bytes_hex": "",
+      "arg0": 20,
+      "arg1": 105945
+    },
+    {
+      "step": 364,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 17966
+    },
+    {
+      "step": 365,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 20566
+    },
+    {
+      "step": 366,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 60898
+    },
+    {
+      "step": 367,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 57486
+    },
+    {
+      "step": 368,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 30062
+    },
+    {
+      "step": 369,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aade7059",
+      "arg0": 1500569258,
+      "arg1": 0
+    },
+    {
+      "step": 370,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2c9496e",
+      "arg0": 1850329586,
+      "arg1": 0
+    },
+    {
+      "step": 371,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5ed63545",
+      "arg0": 1161156190,
+      "arg1": 0
+    },
+    {
+      "step": 372,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "192aca54",
+      "arg0": 1422535193,
+      "arg1": 0
+    },
+    {
+      "step": 373,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "158cd866",
+      "arg0": 1725467669,
+      "arg1": 0
+    },
+    {
+      "step": 374,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "446f016a",
+      "arg0": 1778478916,
+      "arg1": 0
+    },
+    {
+      "step": 375,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5e8f0e4b",
+      "arg0": 1259245406,
+      "arg1": 0
+    },
+    {
+      "step": 376,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02a40955",
+      "arg0": 1426695170,
+      "arg1": 0
+    },
+    {
+      "step": 377,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1880430671,
+      "arg1": 0
+    },
+    {
+      "step": 378,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1889041638,
+      "arg1": 0
+    },
+    {
+      "step": 379,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1762324733,
+      "arg1": 0
+    },
+    {
+      "step": 380,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1113090480,
+      "arg1": 0
+    },
+    {
+      "step": 381,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05e4fb63",
+      "arg0": 1677452293,
+      "arg1": 0
+    },
+    {
+      "step": 382,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fba8392f",
+      "arg0": 792307963,
+      "arg1": 0
+    },
+    {
+      "step": 383,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b9ac5b47",
+      "arg0": 1197190329,
+      "arg1": 0
+    },
+    {
+      "step": 384,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2af2f64",
+      "arg0": 1680846786,
+      "arg1": 0
+    },
+    {
+      "step": 385,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2403e209",
+      "arg0": 165806884,
+      "arg1": 0
+    },
+    {
+      "step": 386,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a9f4953e",
+      "arg0": 1050014889,
+      "arg1": 0
+    },
+    {
+      "step": 387,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0a69f621",
+      "arg0": 569796874,
+      "arg1": 0
+    },
+    {
+      "step": 388,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed12597d",
+      "arg0": 2102989549,
+      "arg1": 0
+    },
+    {
+      "step": 389,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1490578069,
+      "arg1": 0
+    },
+    {
+      "step": 390,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1459062330,
+      "arg1": 0
+    },
+    {
+      "step": 391,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1885712536,
+      "arg1": 0
+    },
+    {
+      "step": 392,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 174749465,
+      "arg1": 0
+    },
+    {
+      "step": 393,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2f3bb615",
+      "arg0": 364264239,
+      "arg1": 0
+    },
+    {
+      "step": 394,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e9a2963a",
+      "arg0": 982950633,
+      "arg1": 0
+    },
+    {
+      "step": 395,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7ab57a53",
+      "arg0": 1400550778,
+      "arg1": 0
+    },
+    {
+      "step": 396,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "47bd2915",
+      "arg0": 355056967,
+      "arg1": 0
+    },
+    {
+      "step": 397,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "262b9020",
+      "arg0": 546319142,
+      "arg1": 0
+    },
+    {
+      "step": 398,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0714a075",
+      "arg0": 1973425159,
+      "arg1": 0
+    },
+    {
+      "step": 399,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2819b7d",
+      "arg0": 2107343330,
+      "arg1": 0
+    },
+    {
+      "step": 400,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ece4583c",
+      "arg0": 1012458732,
+      "arg1": 0
+    },
+    {
+      "step": 401,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1869530671,
+      "arg1": 0
+    },
+    {
+      "step": 402,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1876971122,
+      "arg1": 0
+    },
+    {
+      "step": 403,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2039299149,
+      "arg1": 0
+    },
+    {
+      "step": 404,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1490276821,
+      "arg1": 0
+    },
+    {
+      "step": 405,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b0efb217",
+      "arg0": 397602736,
+      "arg1": 0
+    },
+    {
+      "step": 406,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "91f2bd04",
+      "arg0": 79557265,
+      "arg1": 0
+    },
+    {
+      "step": 407,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1138066f",
+      "arg0": 1862678545,
+      "arg1": 0
+    },
+    {
+      "step": 408,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "27da8207",
+      "arg0": 126016039,
+      "arg1": 0
+    },
+    {
+      "step": 409,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "854f2809",
+      "arg0": 153636741,
+      "arg1": 0
+    },
+    {
+      "step": 410,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bdd75974",
+      "arg0": 1952044989,
+      "arg1": 0
+    },
+    {
+      "step": 411,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1bfd145f",
+      "arg0": 1595211035,
+      "arg1": 0
+    },
+    {
+      "step": 412,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9281844",
+      "arg0": 1142434009,
+      "arg1": 0
+    },
+    {
+      "step": 413,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 23710939,
+      "arg1": 0
+    },
+    {
+      "step": 414,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1493313077,
+      "arg1": 0
+    },
+    {
+      "step": 415,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 763482844,
+      "arg1": 0
+    },
+    {
+      "step": 416,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 254891217,
+      "arg1": 0
+    }
+  ],
+  "verifier_events": [
+    {
+      "step": 0,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 1,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 2,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 3,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "01000000",
+      "arg0": 1,
+      "arg1": 0
+    },
+    {
+      "step": 4,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 5,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 6,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 7,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 8,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 9,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 10,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 11,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 12,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 13,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 14,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 15,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f000000",
+      "arg0": 31,
+      "arg1": 0
+    },
+    {
+      "step": 16,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02000000",
+      "arg0": 2,
+      "arg1": 0
+    },
+    {
+      "step": 17,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 18,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 19,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 20,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 21,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 22,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 23,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 24,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 25,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 26,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 27,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 28,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 29,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 30,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09000000",
+      "arg0": 9,
+      "arg1": 0
+    },
+    {
+      "step": 31,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 32,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16000000",
+      "arg0": 22,
+      "arg1": 0
+    },
+    {
+      "step": 33,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02000000",
+      "arg0": 2,
+      "arg1": 0
+    },
+    {
+      "step": 34,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 35,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 36,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 37,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 38,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 39,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 40,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 41,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 42,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 43,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 44,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 45,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 46,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 47,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 48,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 49,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 50,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 51,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 52,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 53,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 54,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "16000000",
+      "arg0": 22,
+      "arg1": 0
+    },
+    {
+      "step": 55,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 56,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 57,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "04000000",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 58,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "26000000",
+      "arg0": 38,
+      "arg1": 0
+    },
+    {
+      "step": 59,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0f000000",
+      "arg0": 15,
+      "arg1": 0
+    },
+    {
+      "step": 60,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 61,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 62,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 63,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 64,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 65,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 66,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "06000000",
+      "arg0": 6,
+      "arg1": 0
+    },
+    {
+      "step": 67,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "03000000",
+      "arg0": 3,
+      "arg1": 0
+    },
+    {
+      "step": 68,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05000000",
+      "arg0": 5,
+      "arg1": 0
+    },
+    {
+      "step": 69,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "202c7d459d0dd4e2691d8a450383c6f00000000007e0c6640000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 70,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 796230892,
+      "arg1": 0
+    },
+    {
+      "step": 71,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 432568002,
+      "arg1": 0
+    },
+    {
+      "step": 72,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 928253808,
+      "arg1": 0
+    },
+    {
+      "step": 73,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1047979932,
+      "arg1": 0
+    },
+    {
+      "step": 74,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f455b09",
+      "arg0": 156976463,
+      "arg1": 0
+    },
+    {
+      "step": 75,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "10c34c21",
+      "arg0": 558678800,
+      "arg1": 0
+    },
+    {
+      "step": 76,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "160cce31",
+      "arg0": 835587094,
+      "arg1": 0
+    },
+    {
+      "step": 77,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "63202376",
+      "arg0": 1982013539,
+      "arg1": 0
+    },
+    {
+      "step": 78,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1037399273,
+      "arg1": 0
+    },
+    {
+      "step": 79,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 343237772,
+      "arg1": 0
+    },
+    {
+      "step": 80,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1494048464,
+      "arg1": 0
+    },
+    {
+      "step": 81,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1571375247,
+      "arg1": 0
+    },
+    {
+      "step": 82,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b8ec6324",
+      "arg0": 610528440,
+      "arg1": 0
+    },
+    {
+      "step": 83,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aa489905",
+      "arg0": 93931690,
+      "arg1": 0
+    },
+    {
+      "step": 84,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed671672",
+      "arg0": 1914071021,
+      "arg1": 0
+    },
+    {
+      "step": 85,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53573569",
+      "arg0": 1765103443,
+      "arg1": 0
+    },
+    {
+      "step": 86,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 249037476,
+      "arg1": 0
+    },
+    {
+      "step": 87,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 572662360,
+      "arg1": 0
+    },
+    {
+      "step": 88,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 576103390,
+      "arg1": 0
+    },
+    {
+      "step": 89,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 651132215,
+      "arg1": 0
+    },
+    {
+      "step": 90,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f81b064e",
+      "arg0": 1309023224,
+      "arg1": 0
+    },
+    {
+      "step": 91,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "011c8844",
+      "arg0": 1149770753,
+      "arg1": 0
+    },
+    {
+      "step": 92,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d19f8321",
+      "arg0": 562274257,
+      "arg1": 0
+    },
+    {
+      "step": 93,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a106a031",
+      "arg0": 832571041,
+      "arg1": 0
+    },
+    {
+      "step": 94,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "55c7a87d",
+      "arg0": 2108213077,
+      "arg1": 0
+    },
+    {
+      "step": 95,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3bdbe469",
+      "arg0": 1776606011,
+      "arg1": 0
+    },
+    {
+      "step": 96,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1d164305",
+      "arg0": 88282653,
+      "arg1": 0
+    },
+    {
+      "step": 97,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6162c12b",
+      "arg0": 734093921,
+      "arg1": 0
+    },
+    {
+      "step": 98,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1546684651,
+      "arg1": 0
+    },
+    {
+      "step": 99,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1755570095,
+      "arg1": 0
+    },
+    {
+      "step": 100,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 698021111,
+      "arg1": 0
+    },
+    {
+      "step": 101,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 25376472,
+      "arg1": 0
+    },
+    {
+      "step": 102,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "28207275",
+      "arg0": 1970413608,
+      "arg1": 0
+    },
+    {
+      "step": 103,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "68a19819",
+      "arg0": 429433192,
+      "arg1": 0
+    },
+    {
+      "step": 104,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02a0cc76",
+      "arg0": 1993121794,
+      "arg1": 0
+    },
+    {
+      "step": 105,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6339bc4f",
+      "arg0": 1337735523,
+      "arg1": 0
+    },
+    {
+      "step": 106,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cc894376",
+      "arg0": 1984137676,
+      "arg1": 0
+    },
+    {
+      "step": 107,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed4fd258",
+      "arg0": 1490178029,
+      "arg1": 0
+    },
+    {
+      "step": 108,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b1134f0f",
+      "arg0": 256840625,
+      "arg1": 0
+    },
+    {
+      "step": 109,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b5ac1564",
+      "arg0": 1679142069,
+      "arg1": 0
+    },
+    {
+      "step": 110,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 898327104,
+      "arg1": 0
+    },
+    {
+      "step": 111,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1342735746,
+      "arg1": 0
+    },
+    {
+      "step": 112,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 615153059,
+      "arg1": 0
+    },
+    {
+      "step": 113,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1309082083,
+      "arg1": 0
+    },
+    {
+      "step": 114,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e5f21144",
+      "arg0": 1142026981,
+      "arg1": 0
+    },
+    {
+      "step": 115,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8efbd741",
+      "arg0": 1104673678,
+      "arg1": 0
+    },
+    {
+      "step": 116,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d06e3020",
+      "arg0": 540045008,
+      "arg1": 0
+    },
+    {
+      "step": 117,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aa215f2a",
+      "arg0": 710877610,
+      "arg1": 0
+    },
+    {
+      "step": 118,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0d511d73",
+      "arg0": 1931301133,
+      "arg1": 0
+    },
+    {
+      "step": 119,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e513ff61",
+      "arg0": 1644106725,
+      "arg1": 0
+    },
+    {
+      "step": 120,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "19586734",
+      "arg0": 879187993,
+      "arg1": 0
+    },
+    {
+      "step": 121,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6984a204",
+      "arg0": 77759593,
+      "arg1": 0
+    },
+    {
+      "step": 122,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 558454164,
+      "arg1": 0
+    },
+    {
+      "step": 123,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2060189705,
+      "arg1": 0
+    },
+    {
+      "step": 124,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1659296162,
+      "arg1": 0
+    },
+    {
+      "step": 125,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1058163663,
+      "arg1": 0
+    },
+    {
+      "step": 126,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "59a99003",
+      "arg0": 59812185,
+      "arg1": 0
+    },
+    {
+      "step": 127,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46bad024",
+      "arg0": 617658950,
+      "arg1": 0
+    },
+    {
+      "step": 128,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "61a0c956",
+      "arg0": 1456054369,
+      "arg1": 0
+    },
+    {
+      "step": 129,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f1fde839",
+      "arg0": 971570673,
+      "arg1": 0
+    },
+    {
+      "step": 130,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4fd13837",
+      "arg0": 926470479,
+      "arg1": 0
+    },
+    {
+      "step": 131,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "af444f58",
+      "arg0": 1481589935,
+      "arg1": 0
+    },
+    {
+      "step": 132,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7685d74c",
+      "arg0": 1289192822,
+      "arg1": 0
+    },
+    {
+      "step": 133,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ab648647",
+      "arg0": 1199989931,
+      "arg1": 0
+    },
+    {
+      "step": 134,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 686383557,
+      "arg1": 0
+    },
+    {
+      "step": 135,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 227350491,
+      "arg1": 0
+    },
+    {
+      "step": 136,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 387897835,
+      "arg1": 0
+    },
+    {
+      "step": 137,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1478073478,
+      "arg1": 0
+    },
+    {
+      "step": 138,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "621f8fce95e37899f323620c59c32cfc000000005a5d36e50000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 139,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 691770121,
+      "arg1": 0
+    },
+    {
+      "step": 140,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1878707867,
+      "arg1": 0
+    },
+    {
+      "step": 141,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 80137081,
+      "arg1": 0
+    },
+    {
+      "step": 142,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 328262825,
+      "arg1": 0
+    },
+    {
+      "step": 143,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "53562406",
+      "arg0": 103044691,
+      "arg1": 0
+    },
+    {
+      "step": 144,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "123c0a03",
+      "arg0": 51002386,
+      "arg1": 0
+    },
+    {
+      "step": 145,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "46b17630",
+      "arg0": 813084998,
+      "arg1": 0
+    },
+    {
+      "step": 146,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6da9ef33",
+      "arg0": 871344493,
+      "arg1": 0
+    },
+    {
+      "step": 147,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1962432000,
+      "arg1": 0
+    },
+    {
+      "step": 148,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 769211022,
+      "arg1": 0
+    },
+    {
+      "step": 149,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 784371458,
+      "arg1": 0
+    },
+    {
+      "step": 150,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1006327379,
+      "arg1": 0
+    },
+    {
+      "step": 151,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b11e2e79",
+      "arg0": 2033065649,
+      "arg1": 0
+    },
+    {
+      "step": 152,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4f4a173b",
+      "arg0": 991382095,
+      "arg1": 0
+    },
+    {
+      "step": 153,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bdd48d56",
+      "arg0": 1452135613,
+      "arg1": 0
+    },
+    {
+      "step": 154,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4af8280e",
+      "arg0": 237566026,
+      "arg1": 0
+    },
+    {
+      "step": 155,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4982bf09",
+      "arg0": 163545673,
+      "arg1": 0
+    },
+    {
+      "step": 156,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 0
+    },
+    {
+      "step": 157,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 984287346,
+      "arg1": 0
+    },
+    {
+      "step": 158,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 13706
+    },
+    {
+      "step": 159,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 254368
+    },
+    {
+      "step": 160,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 162628
+    },
+    {
+      "step": 161,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 260313
+    },
+    {
+      "step": 162,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 243642
+    },
+    {
+      "step": 163,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 79663
+    },
+    {
+      "step": 164,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 202380
+    },
+    {
+      "step": 165,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 169583
+    },
+    {
+      "step": 166,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 18,
+      "arg1": 181410
+    },
+    {
+      "step": 167,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 387988261,
+      "arg1": 0
+    },
+    {
+      "step": 168,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 163740802,
+      "arg1": 0
+    },
+    {
+      "step": 169,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 963015540,
+      "arg1": 0
+    },
+    {
+      "step": 170,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 770046879,
+      "arg1": 0
+    },
+    {
+      "step": 171,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "adf1f801",
+      "arg0": 33092013,
+      "arg1": 0
+    },
+    {
+      "step": 172,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "22e5b15c",
+      "arg0": 1555162402,
+      "arg1": 0
+    },
+    {
+      "step": 173,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "9a41365a",
+      "arg0": 1513505178,
+      "arg1": 0
+    },
+    {
+      "step": 174,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "08169c20",
+      "arg0": 547100168,
+      "arg1": 0
+    },
+    {
+      "step": 175,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1631061e",
+      "arg0": 503722262,
+      "arg1": 0
+    },
+    {
+      "step": 176,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f59bd413",
+      "arg0": 332700661,
+      "arg1": 0
+    },
+    {
+      "step": 177,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7a00ec7e",
+      "arg0": 2129395834,
+      "arg1": 0
+    },
+    {
+      "step": 178,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5d16320e",
+      "arg0": 238163549,
+      "arg1": 0
+    },
+    {
+      "step": 179,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 101396019,
+      "arg1": 0
+    },
+    {
+      "step": 180,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 417231321,
+      "arg1": 0
+    },
+    {
+      "step": 181,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1585232538,
+      "arg1": 0
+    },
+    {
+      "step": 182,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1460946978,
+      "arg1": 0
+    },
+    {
+      "step": 183,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "97912e56",
+      "arg0": 1445892503,
+      "arg1": 0
+    },
+    {
+      "step": 184,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "399bb86c",
+      "arg0": 1824037689,
+      "arg1": 0
+    },
+    {
+      "step": 185,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fcf43653",
+      "arg0": 1396110588,
+      "arg1": 0
+    },
+    {
+      "step": 186,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e38ac91c",
+      "arg0": 482970339,
+      "arg1": 0
+    },
+    {
+      "step": 187,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "cd0dc174",
+      "arg0": 1958809037,
+      "arg1": 0
+    },
+    {
+      "step": 188,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f0495f26",
+      "arg0": 643779056,
+      "arg1": 0
+    },
+    {
+      "step": 189,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7ee0a16d",
+      "arg0": 1839325310,
+      "arg1": 0
+    },
+    {
+      "step": 190,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7a11b517",
+      "arg0": 397742458,
+      "arg1": 0
+    },
+    {
+      "step": 191,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 756754150,
+      "arg1": 0
+    },
+    {
+      "step": 192,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 152995130,
+      "arg1": 0
+    },
+    {
+      "step": 193,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 695920504,
+      "arg1": 0
+    },
+    {
+      "step": 194,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2065860876,
+      "arg1": 0
+    },
+    {
+      "step": 195,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f4a5c12",
+      "arg0": 308038175,
+      "arg1": 0
+    },
+    {
+      "step": 196,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed43f105",
+      "arg0": 99697645,
+      "arg1": 0
+    },
+    {
+      "step": 197,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0dc03f1d",
+      "arg0": 490717197,
+      "arg1": 0
+    },
+    {
+      "step": 198,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bf574d6d",
+      "arg0": 1833785279,
+      "arg1": 0
+    },
+    {
+      "step": 199,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a8f63e2e",
+      "arg0": 775878312,
+      "arg1": 0
+    },
+    {
+      "step": 200,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f698a52f",
+      "arg0": 799381750,
+      "arg1": 0
+    },
+    {
+      "step": 201,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f8d69f39",
+      "arg0": 966776568,
+      "arg1": 0
+    },
+    {
+      "step": 202,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d5db8d7e",
+      "arg0": 2123226069,
+      "arg1": 0
+    },
+    {
+      "step": 203,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1242633526,
+      "arg1": 0
+    },
+    {
+      "step": 204,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1272287002,
+      "arg1": 0
+    },
+    {
+      "step": 205,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 187915945,
+      "arg1": 0
+    },
+    {
+      "step": 206,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1937045989,
+      "arg1": 0
+    },
+    {
+      "step": 207,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c08f914c",
+      "arg0": 1284607936,
+      "arg1": 0
+    },
+    {
+      "step": 208,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bddb4076",
+      "arg0": 1983962045,
+      "arg1": 0
+    },
+    {
+      "step": 209,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fa5e3a76",
+      "arg0": 1983536890,
+      "arg1": 0
+    },
+    {
+      "step": 210,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8b2a1212",
+      "arg0": 303180427,
+      "arg1": 0
+    },
+    {
+      "step": 211,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "55009927",
+      "arg0": 664338517,
+      "arg1": 0
+    },
+    {
+      "step": 212,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ee68e240",
+      "arg0": 1088579822,
+      "arg1": 0
+    },
+    {
+      "step": 213,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0b18fa60",
+      "arg0": 1627002891,
+      "arg1": 0
+    },
+    {
+      "step": 214,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3d27ac6a",
+      "arg0": 1789667133,
+      "arg1": 0
+    },
+    {
+      "step": 215,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2001067912,
+      "arg1": 0
+    },
+    {
+      "step": 216,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1439335545,
+      "arg1": 0
+    },
+    {
+      "step": 217,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 217633122,
+      "arg1": 0
+    },
+    {
+      "step": 218,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1432418031,
+      "arg1": 0
+    },
+    {
+      "step": 219,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "779dad0317d95cb19cc9d391e8557c31000000009458e72f0000000000000000",
+      "arg0": 0,
+      "arg1": 0
+    },
+    {
+      "step": 220,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2056834756,
+      "arg1": 0
+    },
+    {
+      "step": 221,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1278829611,
+      "arg1": 0
+    },
+    {
+      "step": 222,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 993152978,
+      "arg1": 0
+    },
+    {
+      "step": 223,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1011103137,
+      "arg1": 0
+    },
+    {
+      "step": 224,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0e16a911",
+      "arg0": 296293902,
+      "arg1": 0
+    },
+    {
+      "step": 225,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5b574039",
+      "arg0": 960517979,
+      "arg1": 0
+    },
+    {
+      "step": 226,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ae22fe39",
+      "arg0": 972956334,
+      "arg1": 0
+    },
+    {
+      "step": 227,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5f0d1427",
+      "arg0": 655625567,
+      "arg1": 0
+    },
+    {
+      "step": 228,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1744871275,
+      "arg1": 0
+    },
+    {
+      "step": 229,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1024222035,
+      "arg1": 0
+    },
+    {
+      "step": 230,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2086260423,
+      "arg1": 0
+    },
+    {
+      "step": 231,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 569564215,
+      "arg1": 0
+    },
+    {
+      "step": 232,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "dadeb00b",
+      "arg0": 196140762,
+      "arg1": 0
+    },
+    {
+      "step": 233,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b8be03a",
+      "arg0": 987794251,
+      "arg1": 0
+    },
+    {
+      "step": 234,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f60cc35c",
+      "arg0": 1556286710,
+      "arg1": 0
+    },
+    {
+      "step": 235,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "00d3fd2e",
+      "arg0": 788386560,
+      "arg1": 0
+    },
+    {
+      "step": 236,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0792f500",
+      "arg0": 16093703,
+      "arg1": 0
+    },
+    {
+      "step": 237,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 26,
+      "arg1": 0
+    },
+    {
+      "step": 238,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1476996556,
+      "arg1": 0
+    },
+    {
+      "step": 239,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 109033
+    },
+    {
+      "step": 240,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 79543
+    },
+    {
+      "step": 241,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 57247
+    },
+    {
+      "step": 242,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 113684
+    },
+    {
+      "step": 243,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 29214
+    },
+    {
+      "step": 244,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 17,
+      "arg1": 48340
+    },
+    {
+      "step": 245,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 220929325,
+      "arg1": 0
+    },
+    {
+      "step": 246,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 777622157,
+      "arg1": 0
+    },
+    {
+      "step": 247,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 750916337,
+      "arg1": 0
+    },
+    {
+      "step": 248,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 616649085,
+      "arg1": 0
+    },
+    {
+      "step": 249,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6019ab1d",
+      "arg0": 497752416,
+      "arg1": 0
+    },
+    {
+      "step": 250,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5a3faa20",
+      "arg0": 548028250,
+      "arg1": 0
+    },
+    {
+      "step": 251,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "22588762",
+      "arg0": 1653037090,
+      "arg1": 0
+    },
+    {
+      "step": 252,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9205128",
+      "arg0": 676405465,
+      "arg1": 0
+    },
+    {
+      "step": 253,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f1de8515",
+      "arg0": 361094897,
+      "arg1": 0
+    },
+    {
+      "step": 254,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "196f711c",
+      "arg0": 477196057,
+      "arg1": 0
+    },
+    {
+      "step": 255,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "58ad804a",
+      "arg0": 1249946968,
+      "arg1": 0
+    },
+    {
+      "step": 256,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0d913e7e",
+      "arg0": 2118029581,
+      "arg1": 0
+    },
+    {
+      "step": 257,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0d000000",
+      "arg0": 13,
+      "arg1": 0
+    },
+    {
+      "step": 258,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 259,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2008712574,
+      "arg1": 0
+    },
+    {
+      "step": 260,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 463775481,
+      "arg1": 0
+    },
+    {
+      "step": 261,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1722255386,
+      "arg1": 0
+    },
+    {
+      "step": 262,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1247943144,
+      "arg1": 0
+    },
+    {
+      "step": 263,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1555c905",
+      "arg0": 97080597,
+      "arg1": 0
+    },
+    {
+      "step": 264,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2c37526d",
+      "arg0": 1834104620,
+      "arg1": 0
+    },
+    {
+      "step": 265,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b8c5cc35",
+      "arg0": 902612408,
+      "arg1": 0
+    },
+    {
+      "step": 266,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "8ce0b17a",
+      "arg0": 2058477708,
+      "arg1": 0
+    },
+    {
+      "step": 267,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "205dfb29",
+      "arg0": 704339232,
+      "arg1": 0
+    },
+    {
+      "step": 268,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3498ab06",
+      "arg0": 111908916,
+      "arg1": 0
+    },
+    {
+      "step": 269,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "40c22e77",
+      "arg0": 1999553088,
+      "arg1": 0
+    },
+    {
+      "step": 270,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "4b928553",
+      "arg0": 1401262667,
+      "arg1": 0
+    },
+    {
+      "step": 271,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "24000000",
+      "arg0": 36,
+      "arg1": 0
+    },
+    {
+      "step": 272,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 273,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 355913259,
+      "arg1": 0
+    },
+    {
+      "step": 274,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 604483869,
+      "arg1": 0
+    },
+    {
+      "step": 275,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1453875280,
+      "arg1": 0
+    },
+    {
+      "step": 276,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1349653170,
+      "arg1": 0
+    },
+    {
+      "step": 277,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "977c6d56",
+      "arg0": 1450015895,
+      "arg1": 0
+    },
+    {
+      "step": 278,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6ffd6920",
+      "arg0": 543817071,
+      "arg1": 0
+    },
+    {
+      "step": 279,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f345635a",
+      "arg0": 1516455411,
+      "arg1": 0
+    },
+    {
+      "step": 280,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bc767039",
+      "arg0": 963671740,
+      "arg1": 0
+    },
+    {
+      "step": 281,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "6213f277",
+      "arg0": 2012353378,
+      "arg1": 0
+    },
+    {
+      "step": 282,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e9ccec3d",
+      "arg0": 1038929129,
+      "arg1": 0
+    },
+    {
+      "step": 283,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b228e014",
+      "arg0": 350234802,
+      "arg1": 0
+    },
+    {
+      "step": 284,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "333e781f",
+      "arg0": 527973939,
+      "arg1": 0
+    },
+    {
+      "step": 285,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "13000000",
+      "arg0": 19,
+      "arg1": 0
+    },
+    {
+      "step": 286,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 287,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1973911970,
+      "arg1": 0
+    },
+    {
+      "step": 288,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 544123776,
+      "arg1": 0
+    },
+    {
+      "step": 289,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 601085823,
+      "arg1": 0
+    },
+    {
+      "step": 290,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1449735619,
+      "arg1": 0
+    },
+    {
+      "step": 291,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2ca4a2d",
+      "arg0": 759876322,
+      "arg1": 0
+    },
+    {
+      "step": 292,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "af470a77",
+      "arg0": 1997162415,
+      "arg1": 0
+    },
+    {
+      "step": 293,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7f25d26",
+      "arg0": 643691255,
+      "arg1": 0
+    },
+    {
+      "step": 294,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "12e9e934",
+      "arg0": 887744786,
+      "arg1": 0
+    },
+    {
+      "step": 295,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c4c9c001",
+      "arg0": 29411780,
+      "arg1": 0
+    },
+    {
+      "step": 296,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7de14d75",
+      "arg0": 1968038269,
+      "arg1": 0
+    },
+    {
+      "step": 297,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bef8746a",
+      "arg0": 1786050750,
+      "arg1": 0
+    },
+    {
+      "step": 298,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "09aa5c2d",
+      "arg0": 761047561,
+      "arg1": 0
+    },
+    {
+      "step": 299,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02000000",
+      "arg0": 2,
+      "arg1": 0
+    },
+    {
+      "step": 300,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 4,
+      "arg1": 0
+    },
+    {
+      "step": 301,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1498947555,
+      "arg1": 0
+    },
+    {
+      "step": 302,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 15264348,
+      "arg1": 0
+    },
+    {
+      "step": 303,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 315889640,
+      "arg1": 0
+    },
+    {
+      "step": 304,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1993121174,
+      "arg1": 0
+    },
+    {
+      "step": 305,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2c665306",
+      "arg0": 106128940,
+      "arg1": 0
+    },
+    {
+      "step": 306,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 307,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 308,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 309,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2d665306",
+      "arg0": 106128941,
+      "arg1": 0
+    },
+    {
+      "step": 310,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 311,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 312,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 313,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2e665306",
+      "arg0": 106128942,
+      "arg1": 0
+    },
+    {
+      "step": 314,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 315,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 316,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 317,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2f665306",
+      "arg0": 106128943,
+      "arg1": 0
+    },
+    {
+      "step": 318,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 319,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 320,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 321,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "30665306",
+      "arg0": 106128944,
+      "arg1": 0
+    },
+    {
+      "step": 322,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 323,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 324,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 325,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "31665306",
+      "arg0": 106128945,
+      "arg1": 0
+    },
+    {
+      "step": 326,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 327,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 328,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 329,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "32665306",
+      "arg0": 106128946,
+      "arg1": 0
+    },
+    {
+      "step": 330,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 331,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 332,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 333,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "33665306",
+      "arg0": 106128947,
+      "arg1": 0
+    },
+    {
+      "step": 334,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 335,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 336,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 337,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "34665306",
+      "arg0": 106128948,
+      "arg1": 0
+    },
+    {
+      "step": 338,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 339,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 340,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 341,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "35665306",
+      "arg0": 106128949,
+      "arg1": 0
+    },
+    {
+      "step": 342,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 343,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 344,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 345,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "36665306",
+      "arg0": 106128950,
+      "arg1": 0
+    },
+    {
+      "step": 346,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 347,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 348,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 349,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "37665306",
+      "arg0": 106128951,
+      "arg1": 0
+    },
+    {
+      "step": 350,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 351,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 352,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 353,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "38665306",
+      "arg0": 106128952,
+      "arg1": 0
+    },
+    {
+      "step": 354,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 355,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 356,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 357,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "39665306",
+      "arg0": 106128953,
+      "arg1": 0
+    },
+    {
+      "step": 358,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 359,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 360,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 361,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3a665306",
+      "arg0": 106128954,
+      "arg1": 0
+    },
+    {
+      "step": 362,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 363,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 364,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 365,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "3b665306",
+      "arg0": 106128955,
+      "arg1": 0
+    },
+    {
+      "step": 366,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1f50a017",
+      "arg0": 396382239,
+      "arg1": 0
+    },
+    {
+      "step": 367,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fac2501f",
+      "arg0": 525386490,
+      "arg1": 0
+    },
+    {
+      "step": 368,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f7daf806",
+      "arg0": 116972279,
+      "arg1": 0
+    },
+    {
+      "step": 369,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d99d0100",
+      "arg0": 105945,
+      "arg1": 0
+    },
+    {
+      "step": 370,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 20,
+      "arg1": 0
+    },
+    {
+      "step": 371,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 17966
+    },
+    {
+      "step": 372,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 20566
+    },
+    {
+      "step": 373,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 60898
+    },
+    {
+      "step": 374,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 57486
+    },
+    {
+      "step": 375,
+      "op": "sample_bits",
+      "op_code": 2,
+      "observed_bytes_hex": "",
+      "arg0": 16,
+      "arg1": 30062
+    },
+    {
+      "step": 376,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "aade7059",
+      "arg0": 1500569258,
+      "arg1": 0
+    },
+    {
+      "step": 377,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "f2c9496e",
+      "arg0": 1850329586,
+      "arg1": 0
+    },
+    {
+      "step": 378,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5ed63545",
+      "arg0": 1161156190,
+      "arg1": 0
+    },
+    {
+      "step": 379,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "192aca54",
+      "arg0": 1422535193,
+      "arg1": 0
+    },
+    {
+      "step": 380,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "158cd866",
+      "arg0": 1725467669,
+      "arg1": 0
+    },
+    {
+      "step": 381,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "446f016a",
+      "arg0": 1778478916,
+      "arg1": 0
+    },
+    {
+      "step": 382,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "5e8f0e4b",
+      "arg0": 1259245406,
+      "arg1": 0
+    },
+    {
+      "step": 383,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "02a40955",
+      "arg0": 1426695170,
+      "arg1": 0
+    },
+    {
+      "step": 384,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1880430671,
+      "arg1": 0
+    },
+    {
+      "step": 385,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1889041638,
+      "arg1": 0
+    },
+    {
+      "step": 386,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1762324733,
+      "arg1": 0
+    },
+    {
+      "step": 387,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1113090480,
+      "arg1": 0
+    },
+    {
+      "step": 388,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "05e4fb63",
+      "arg0": 1677452293,
+      "arg1": 0
+    },
+    {
+      "step": 389,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "fba8392f",
+      "arg0": 792307963,
+      "arg1": 0
+    },
+    {
+      "step": 390,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b9ac5b47",
+      "arg0": 1197190329,
+      "arg1": 0
+    },
+    {
+      "step": 391,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "c2af2f64",
+      "arg0": 1680846786,
+      "arg1": 0
+    },
+    {
+      "step": 392,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2403e209",
+      "arg0": 165806884,
+      "arg1": 0
+    },
+    {
+      "step": 393,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "a9f4953e",
+      "arg0": 1050014889,
+      "arg1": 0
+    },
+    {
+      "step": 394,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0a69f621",
+      "arg0": 569796874,
+      "arg1": 0
+    },
+    {
+      "step": 395,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ed12597d",
+      "arg0": 2102989549,
+      "arg1": 0
+    },
+    {
+      "step": 396,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1490578069,
+      "arg1": 0
+    },
+    {
+      "step": 397,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1459062330,
+      "arg1": 0
+    },
+    {
+      "step": 398,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1885712536,
+      "arg1": 0
+    },
+    {
+      "step": 399,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 174749465,
+      "arg1": 0
+    },
+    {
+      "step": 400,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "2f3bb615",
+      "arg0": 364264239,
+      "arg1": 0
+    },
+    {
+      "step": 401,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e9a2963a",
+      "arg0": 982950633,
+      "arg1": 0
+    },
+    {
+      "step": 402,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "7ab57a53",
+      "arg0": 1400550778,
+      "arg1": 0
+    },
+    {
+      "step": 403,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "47bd2915",
+      "arg0": 355056967,
+      "arg1": 0
+    },
+    {
+      "step": 404,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "262b9020",
+      "arg0": 546319142,
+      "arg1": 0
+    },
+    {
+      "step": 405,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "0714a075",
+      "arg0": 1973425159,
+      "arg1": 0
+    },
+    {
+      "step": 406,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "e2819b7d",
+      "arg0": 2107343330,
+      "arg1": 0
+    },
+    {
+      "step": 407,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "ece4583c",
+      "arg0": 1012458732,
+      "arg1": 0
+    },
+    {
+      "step": 408,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1869530671,
+      "arg1": 0
+    },
+    {
+      "step": 409,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1876971122,
+      "arg1": 0
+    },
+    {
+      "step": 410,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 2039299149,
+      "arg1": 0
+    },
+    {
+      "step": 411,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1490276821,
+      "arg1": 0
+    },
+    {
+      "step": 412,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "b0efb217",
+      "arg0": 397602736,
+      "arg1": 0
+    },
+    {
+      "step": 413,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "91f2bd04",
+      "arg0": 79557265,
+      "arg1": 0
+    },
+    {
+      "step": 414,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1138066f",
+      "arg0": 1862678545,
+      "arg1": 0
+    },
+    {
+      "step": 415,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "27da8207",
+      "arg0": 126016039,
+      "arg1": 0
+    },
+    {
+      "step": 416,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "854f2809",
+      "arg0": 153636741,
+      "arg1": 0
+    },
+    {
+      "step": 417,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "bdd75974",
+      "arg0": 1952044989,
+      "arg1": 0
+    },
+    {
+      "step": 418,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "1bfd145f",
+      "arg0": 1595211035,
+      "arg1": 0
+    },
+    {
+      "step": 419,
+      "op": "observe_bytes",
+      "op_code": 0,
+      "observed_bytes_hex": "d9281844",
+      "arg0": 1142434009,
+      "arg1": 0
+    },
+    {
+      "step": 420,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 23710939,
+      "arg1": 0
+    },
+    {
+      "step": 421,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 1493313077,
+      "arg1": 0
+    },
+    {
+      "step": 422,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 763482844,
+      "arg1": 0
+    },
+    {
+      "step": 423,
+      "op": "sample_base",
+      "op_code": 1,
+      "observed_bytes_hex": "",
+      "arg0": 254891217,
+      "arg1": 0
+    }
+  ],
+  "checkpoint_prover": [1981641505, 1442566903, 1559228871, 162353081],
+  "checkpoint_verifier": [1981641505, 1442566903, 1559228871, 162353081],
+  "checkpoint_match": true
+}

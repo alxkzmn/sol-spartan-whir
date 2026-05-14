@@ -1,0 +1,598 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import { KoalaBearExt5 } from "../../src/field/KoalaBearExt5.sol";
+import { KoalaBearExt5Precompile } from "../../src/field/KoalaBearExt5Precompile.sol";
+import { KoalaBear } from "../../src/field/KoalaBear.sol";
+
+contract Ext5PrecompileHarness {
+    uint256 public lastResult;
+
+    function softwareMul(uint256 a, uint256 b) external pure returns (uint256) {
+        return KoalaBearExt5.mul(a, b);
+    }
+
+    function precompileMul(uint256 a, uint256 b) external view returns (uint256) {
+        return KoalaBearExt5Precompile.mul(a, b);
+    }
+
+    function softwareSquare(uint256 a) external pure returns (uint256) {
+        return KoalaBearExt5.square(a);
+    }
+
+    function precompileSquare(uint256 a) external view returns (uint256) {
+        return KoalaBearExt5Precompile.square(a);
+    }
+
+    function noopMulClean(uint256 a, uint256 b) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopMul(a, b);
+    }
+
+    function noopSquareClean(uint256 a) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopSquare(a);
+    }
+
+    function precompileMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external view returns (uint256) {
+        return KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function precompileMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.mac(input);
+    }
+
+    function noopMacRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopMac(input);
+    }
+
+    function precompileLinProdRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.linProd(input);
+    }
+
+    function noopLinProdRaw(bytes memory input) external view returns (uint256) {
+        return KoalaBearExt5Precompile.noopLinProd(input);
+    }
+
+    function packMacInputForTest(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external pure returns (bytes memory) {
+        return _packMacInput(accumulator, includeAccumulator, packedA, packedB);
+    }
+
+    function packLinProdInputForTest(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external pure returns (bytes memory) {
+        return _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX);
+    }
+
+    function benchmarkNoopMulClean(uint256 a, uint256 b) external {
+        lastResult = KoalaBearExt5Precompile.noopMul(a, b);
+    }
+
+    function benchmarkNoopSquareClean(uint256 a) external {
+        lastResult = KoalaBearExt5Precompile.noopSquare(a);
+    }
+
+    function benchmarkMulClean(uint256 a, uint256 b) external {
+        lastResult = KoalaBearExt5Precompile.mul(a, b);
+    }
+
+    function benchmarkSquareClean(uint256 a) external {
+        lastResult = KoalaBearExt5Precompile.square(a);
+    }
+
+    function benchmarkMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function benchmarkLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external {
+        lastResult = KoalaBearExt5Precompile.linProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+    }
+
+    function benchmarkNoopLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) external {
+        lastResult = KoalaBearExt5Precompile.noopLinProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+    }
+
+    function benchmarkSelectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external {
+        lastResult = _selectEvalSoftware(var_, fullPoint, pointOffset, numVariables);
+    }
+
+    function benchmarkNoopMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) external {
+        lastResult = KoalaBearExt5Precompile.noopMac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+    }
+
+    function checkArithmeticVectorsTx(
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256[] calldata expectedMul,
+        uint256[] calldata expectedSquareA
+    ) external returns (bool) {
+        bool ok = _checkArithmeticVectors(packedA, packedB, expectedMul, expectedSquareA);
+        lastResult = ok ? KoalaBearExt5.ONE : 0;
+        return ok;
+    }
+
+    function checkExtendedArithmeticVectorsTx(
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256[] calldata scalars,
+        uint256[] calldata expectedAdd,
+        uint256[] calldata expectedSub,
+        uint256[] calldata expectedMul,
+        uint256[] calldata expectedSquareA,
+        uint256[] calldata expectedMulBase
+    ) external returns (bool) {
+        bool ok = _checkExtendedArithmeticVectors(
+            packedA,
+            packedB,
+            scalars,
+            expectedAdd,
+            expectedSub,
+            expectedMul,
+            expectedSquareA,
+            expectedMulBase
+        );
+        lastResult = ok ? KoalaBearExt5.ONE : 0;
+        return ok;
+    }
+
+    function checkMacVectorTx(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256 expected
+    ) external returns (bool) {
+        uint256 software = _softwareMac(accumulator, includeAccumulator, packedA, packedB);
+        if (software != expected) revert("SOFTWARE_MAC");
+        uint256 precompile = KoalaBearExt5Precompile.mac(
+            _packMacInput(accumulator, includeAccumulator, packedA, packedB)
+        );
+        if (precompile != expected) revert("PRECOMPILE_MAC");
+        lastResult = precompile;
+        return true;
+    }
+
+    function checkLinProdVectorTx(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX,
+        uint256 expected
+    ) external returns (bool) {
+        uint256 software = _softwareLinProd(flags, packedAlpha, packedBeta, scalars, packedX);
+        if (software != expected) revert("SOFTWARE_LIN_PROD");
+        uint256 precompile = KoalaBearExt5Precompile.linProd(
+            _packLinProdInput(flags, packedAlpha, packedBeta, scalars, packedX)
+        );
+        if (precompile != expected) revert("PRECOMPILE_LIN_PROD");
+        lastResult = precompile;
+        return true;
+    }
+
+    function selectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external pure returns (uint256) {
+        return _selectEvalSoftware(var_, fullPoint, pointOffset, numVariables);
+    }
+
+    function selectEvalLinProdSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) external pure returns (uint256) {
+        uint256[] memory scalars = new uint256[](numVariables);
+        uint256 current = var_;
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                scalars[numVariables - i] = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                current = KoalaBear.mul(current, current);
+            }
+        }
+        return _softwareLinProdMemoryScalars(scalars, fullPoint, pointOffset, numVariables);
+    }
+
+    function benchmarkMulBatch(uint256[] calldata packedA, uint256[] calldata packedB) external {
+        lastResult =
+            _consumeBatchOutput(KoalaBearExt5Precompile.mulBatch(_packPairs(packedA, packedB)));
+    }
+
+    function benchmarkNoopMulBatch(uint256[] calldata packedA, uint256[] calldata packedB)
+        external
+    {
+        lastResult = _consumeBatchOutput(
+            KoalaBearExt5Precompile.noopBatch64To32(_packPairs(packedA, packedB))
+        );
+    }
+
+    function benchmarkSquareBatch(uint256[] calldata packedA) external {
+        lastResult = _consumeBatchOutput(KoalaBearExt5Precompile.squareBatch(_packSingles(packedA)));
+    }
+
+    function benchmarkNoopSquareBatch(uint256[] calldata packedA) external {
+        lastResult =
+            _consumeBatchOutput(KoalaBearExt5Precompile.noopBatch32To32(_packSingles(packedA)));
+    }
+
+    function _checkArithmeticVectors(
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256[] calldata expectedMul,
+        uint256[] calldata expectedSquareA
+    ) internal view returns (bool) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_B");
+        require(len == expectedMul.length, "LEN_MUL");
+        require(len == expectedSquareA.length, "LEN_SQ");
+
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                if (KoalaBearExt5.mul(packedA[i], packedB[i]) != expectedMul[i]) {
+                    revert("SOFTWARE_MUL");
+                }
+                if (KoalaBearExt5Precompile.mul(packedA[i], packedB[i]) != expectedMul[i]) {
+                    revert("PRECOMPILE_MUL");
+                }
+                if (KoalaBearExt5.square(packedA[i]) != expectedSquareA[i]) {
+                    revert("SOFTWARE_SQUARE");
+                }
+                if (KoalaBearExt5Precompile.square(packedA[i]) != expectedSquareA[i]) {
+                    revert("PRECOMPILE_SQUARE");
+                }
+            }
+        }
+        return true;
+    }
+
+    function _checkExtendedArithmeticVectors(
+        uint256[] calldata packedA,
+        uint256[] calldata packedB,
+        uint256[] calldata scalars,
+        uint256[] calldata expectedAdd,
+        uint256[] calldata expectedSub,
+        uint256[] calldata expectedMul,
+        uint256[] calldata expectedSquareA,
+        uint256[] calldata expectedMulBase
+    ) internal view returns (bool) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_B");
+        require(len == scalars.length, "LEN_SCALAR");
+        require(len == expectedAdd.length, "LEN_ADD");
+        require(len == expectedSub.length, "LEN_SUB");
+        require(len == expectedMul.length, "LEN_MUL");
+        require(len == expectedSquareA.length, "LEN_SQ");
+        require(len == expectedMulBase.length, "LEN_MUL_BASE");
+
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 a = packedA[i];
+                uint256 b = packedB[i];
+                uint256 scalar = scalars[i];
+                if (KoalaBearExt5.add(a, b) != expectedAdd[i]) revert("SOFTWARE_ADD");
+                if (KoalaBearExt5Precompile.addViaPrecompile(a, b) != expectedAdd[i]) {
+                    revert("PRECOMPILE_ADD");
+                }
+                if (KoalaBearExt5.sub(a, b) != expectedSub[i]) revert("SOFTWARE_SUB");
+                if (KoalaBearExt5Precompile.subViaPrecompile(a, b) != expectedSub[i]) {
+                    revert("PRECOMPILE_SUB");
+                }
+                if (KoalaBearExt5.mul(a, b) != expectedMul[i]) revert("SOFTWARE_MUL");
+                if (KoalaBearExt5Precompile.mul(a, b) != expectedMul[i]) {
+                    revert("PRECOMPILE_MUL");
+                }
+                if (KoalaBearExt5.square(a) != expectedSquareA[i]) revert("SOFTWARE_SQUARE");
+                if (KoalaBearExt5Precompile.square(a) != expectedSquareA[i]) {
+                    revert("PRECOMPILE_SQUARE");
+                }
+                if (KoalaBearExt5.mulBase(a, scalar) != expectedMulBase[i]) {
+                    revert("SOFTWARE_MUL_BASE");
+                }
+                if (KoalaBearExt5Precompile.mulBaseViaPrecompile(a, scalar) != expectedMulBase[i]) {
+                    revert("PRECOMPILE_MUL_BASE");
+                }
+            }
+        }
+
+        _checkBatchOutput(
+            KoalaBearExt5Precompile.mulBatch(_packPairs(packedA, packedB)), expectedMul
+        );
+        _checkBatchOutput(
+            KoalaBearExt5Precompile.squareBatch(_packSingles(packedA)), expectedSquareA
+        );
+        _checkBatchOutput(
+            KoalaBearExt5Precompile.mulBaseBatch(_packPairs(packedA, scalars)), expectedMulBase
+        );
+        return true;
+    }
+
+    function _packPairs(uint256[] calldata left, uint256[] calldata right)
+        internal
+        pure
+        returns (bytes memory out)
+    {
+        uint256 len = left.length;
+        require(len == right.length, "LEN_PAIR");
+        out = new bytes(len << 6);
+        assembly ("memory-safe") {
+            let dst := add(out, 0x20)
+            let leftOffset := left.offset
+            let rightOffset := right.offset
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(dst, calldataload(add(leftOffset, shl(5, i))))
+                mstore(add(dst, 0x20), calldataload(add(rightOffset, shl(5, i))))
+                dst := add(dst, 0x40)
+            }
+        }
+    }
+
+    function _packSingles(uint256[] calldata values) internal pure returns (bytes memory out) {
+        uint256 len = values.length;
+        out = new bytes(len << 5);
+        assembly ("memory-safe") {
+            calldatacopy(add(out, 0x20), values.offset, shl(5, len))
+        }
+    }
+
+    function _packMacInput(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (bytes memory out) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        require(len <= 1024, "MAC_N");
+        uint256 flags = includeAccumulator ? 1 : 0;
+        uint256 bodyOffset = 8;
+        uint256 fieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
+        out = new bytes(8 + (includeAccumulator ? 32 : 0) + (len << 6));
+        assembly ("memory-safe") {
+            let dst := add(out, 0x20)
+            mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+            dst := add(dst, bodyOffset)
+            if includeAccumulator {
+                mstore(dst, accumulator)
+                dst := add(dst, 0x20)
+            }
+            let leftOffset := packedA.offset
+            let rightOffset := packedB.offset
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                mstore(dst, calldataload(add(leftOffset, shl(5, i))))
+                mstore(add(dst, 0x20), calldataload(add(rightOffset, shl(5, i))))
+                dst := add(dst, 0x40)
+            }
+        }
+    }
+
+    function _packLinProdInput(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) internal pure returns (bytes memory out) {
+        uint256 len = packedX.length;
+        require(len <= 1024, "LIN_PROD_N");
+        uint256 fieldId = KoalaBearExt5Precompile.EXTFIELD_MAC_FIELD_ID_KOALABEAR_EXT5;
+        if (flags == 0) {
+            require(packedAlpha.length == len, "LEN_ALPHA");
+            require(packedBeta.length == len, "LEN_BETA");
+            out = new bytes(8 + len * 96);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let alphaOffset := packedAlpha.offset
+                let betaOffset := packedBeta.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, calldataload(add(alphaOffset, shl(5, i))))
+                    mstore(add(dst, 0x20), calldataload(add(betaOffset, shl(5, i))))
+                    mstore(add(dst, 0x40), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 0x60)
+                }
+            }
+        } else if (flags == 1) {
+            require(packedBeta.length == len, "LEN_BETA");
+            out = new bytes(8 + len * 64);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let betaOffset := packedBeta.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, calldataload(add(betaOffset, shl(5, i))))
+                    mstore(add(dst, 0x20), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 0x40)
+                }
+            }
+        } else if (flags == 3) {
+            require(scalars.length == len, "LEN_SCALAR");
+            out = new bytes(8 + len * 36);
+            assembly ("memory-safe") {
+                let dst := add(out, 0x20)
+                mstore(dst, or(or(shl(240, fieldId), shl(224, len)), shl(192, flags)))
+                dst := add(dst, 8)
+                let scalarOffset := scalars.offset
+                let xOffset := packedX.offset
+                for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                    mstore(dst, shl(224, calldataload(add(scalarOffset, shl(5, i)))))
+                    mstore(add(dst, 4), calldataload(add(xOffset, shl(5, i))))
+                    dst := add(dst, 36)
+                }
+            }
+        } else {
+            revert("FLAGS");
+        }
+    }
+
+    function _softwareMac(
+        uint256 accumulator,
+        bool includeAccumulator,
+        uint256[] calldata packedA,
+        uint256[] calldata packedB
+    ) internal pure returns (uint256 acc) {
+        uint256 len = packedA.length;
+        require(len == packedB.length, "LEN_MAC");
+        acc = includeAccumulator ? accumulator : 0;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                acc = KoalaBearExt5.add(acc, KoalaBearExt5.mul(packedA[i], packedB[i]));
+            }
+        }
+    }
+
+    function _softwareLinProd(
+        uint256 flags,
+        uint256[] calldata packedAlpha,
+        uint256[] calldata packedBeta,
+        uint256[] calldata scalars,
+        uint256[] calldata packedX
+    ) internal pure returns (uint256 acc) {
+        uint256 len = packedX.length;
+        acc = KoalaBearExt5.ONE;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 term;
+                if (flags == 0) {
+                    term = KoalaBearExt5.add(
+                        packedAlpha[i], KoalaBearExt5.mul(packedBeta[i], packedX[i])
+                    );
+                } else if (flags == 1) {
+                    term = KoalaBearExt5.add(
+                        KoalaBearExt5.ONE, KoalaBearExt5.mul(packedBeta[i], packedX[i])
+                    );
+                } else if (flags == 3) {
+                    term = KoalaBearExt5.add(
+                        KoalaBearExt5.ONE, KoalaBearExt5.mulBase(packedX[i], scalars[i])
+                    );
+                } else {
+                    revert("FLAGS");
+                }
+                acc = KoalaBearExt5.mul(acc, term);
+            }
+        }
+    }
+
+    function _selectEvalSoftware(
+        uint256 var_,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt5.ONE;
+        uint256 current = var_;
+        unchecked {
+            for (uint256 i = numVariables; i > 0; --i) {
+                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+                uint256 term = KoalaBearExt5.add(
+                    KoalaBearExt5.ONE, KoalaBearExt5.mulBase(fullPoint[pointOffset + i - 1], scalar)
+                );
+                acc = KoalaBearExt5.mul(acc, term);
+                current = KoalaBear.mul(current, current);
+            }
+        }
+    }
+
+    function _softwareLinProdMemoryScalars(
+        uint256[] memory scalars,
+        uint256[] calldata fullPoint,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
+        acc = KoalaBearExt5.ONE;
+        unchecked {
+            for (uint256 i = 0; i < numVariables; ++i) {
+                uint256 term = KoalaBearExt5.add(
+                    KoalaBearExt5.ONE,
+                    KoalaBearExt5.mulBase(fullPoint[pointOffset + numVariables - 1 - i], scalars[i])
+                );
+                acc = KoalaBearExt5.mul(acc, term);
+            }
+        }
+    }
+
+    function _checkBatchOutput(bytes memory output, uint256[] calldata expected) internal pure {
+        uint256 len = expected.length;
+        require(output.length == len << 5, "OUT_LEN");
+        assembly ("memory-safe") {
+            let ptr := add(output, 0x20)
+            let expectedOffset := expected.offset
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                if iszero(
+                    eq(mload(add(ptr, shl(5, i))), calldataload(add(expectedOffset, shl(5, i))))
+                ) {
+                    mstore(0, 0x4f55545055540000000000000000000000000000000000000000000000000000)
+                    revert(0, 0x20)
+                }
+            }
+        }
+    }
+
+    function _consumeBatchOutput(bytes memory output) internal pure returns (uint256 acc) {
+        uint256 len = output.length >> 5;
+        unchecked {
+            for (uint256 i = 0; i < len; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := mload(add(add(output, 0x20), shl(5, i)))
+                }
+                acc = KoalaBearExt5.add(acc, value);
+            }
+        }
+    }
+}

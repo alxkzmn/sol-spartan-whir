@@ -1,0 +1,4 @@
+interface:
+  display_name: "Forge Flamegraphs"
+  short_description: "Profile Solidity gas with Foundry flamegraphs"
+  default_prompt: "Use $forge-flamegraph-profiling to profile the Solidity verifier with Foundry flamegraphs and summarize the hotspots."

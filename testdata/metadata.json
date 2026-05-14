@@ -1,13 +1,14 @@
 {
   "schema_version": "fixtures-v1",
   "koalabear_modulus": 2130706433,
-  "whir_fs_pattern_length": 21,
+  "whir_fs_pattern_length": 62,
   "fixture_family": "quartic-standalone-whir",
   "notes": [
-    "Fixtures are generated from a real quartic WHIR proving flow.",
+    "Fixtures are generated from real quartic WHIR proving flows.",
     "Failure fixture mutates initial commitment to force commitment mismatch.",
     "Failure fixture mutates one STIR query opening while keeping commitments and OOD answers intact.",
     "Failure fixture mutates one initial OOD answer, which also changes the downstream transcript.",
+    "Blob fixtures include the current stage4 schedule and the parallel lir=11 schedule.",
     "Transcript trace records every observe/sample call in canonical replay form.",
     "Spartan transcript fixture records domain-separator preimage, digest, public inputs, and checkpoint.",
     "Field vectors include base/quartic/octic arithmetic tuples.",

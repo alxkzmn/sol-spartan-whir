@@ -1,0 +1,2150 @@
+{
+  "build_profile": "release",
+  "by_label": [
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff5_rest4_lir2_rsv4",
+      "max_seconds": 11.797487375,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 11.72475775,
+      "min_seconds": 11.640468125,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 11.640468125,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 11.72475775,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 11.797487375,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 11.72475775,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff5_rest4_lir3_rsv4",
+      "max_seconds": 13.4959925,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 13.430840083,
+      "min_seconds": 13.355624416,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 13.4959925,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 13.355624416,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 13.430840083,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 13.430840083,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff5_rest4_lir3_rsv5",
+      "max_seconds": 18.41779925,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 18.391836959,
+      "min_seconds": 18.205556417,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 18.391836959,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 18.41779925,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 18.205556417,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 18.391836959,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff6_rest4_lir3_rsv6",
+      "max_seconds": 28.57766,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 28.501732833,
+      "min_seconds": 28.082357417,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 28.501732833,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 28.57766,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 28.082357417,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 28.501732833,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff6_rest5_lir3_rsv4",
+      "max_seconds": 20.809716792,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 20.675227875,
+      "min_seconds": 20.453716833,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 20.453716833,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 20.675227875,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 20.809716792,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 20.675227875,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff6_rest5_lir3_rsv5",
+      "max_seconds": 11.877479042,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 11.836599417,
+      "min_seconds": 11.825969875,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 11.836599417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 11.825969875,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 11.877479042,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 11.836599417,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow24_ff6_rest5_lir3_rsv6",
+      "max_seconds": 8.963312875,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 8.932476375,
+      "min_seconds": 8.755772499999999,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 8.963312875,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 8.932476375,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 8.755772499999999,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 8.932476375,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow25_ff5_rest4_lir3_rsv4",
+      "max_seconds": 14.04065675,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 14.0330645,
+      "min_seconds": 14.019334583,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 14.019334583,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 14.0330645,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 14.04065675,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 14.0330645,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow25_ff6_rest5_lir3_rsv4",
+      "max_seconds": 19.269270959,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 19.252962834,
+      "min_seconds": 19.212969667,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 19.252962834,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 19.269270959,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 19.212969667,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 19.252962834,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow25_ff6_rest5_lir3_rsv5",
+      "max_seconds": 11.79494625,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 11.708279167,
+      "min_seconds": 11.615619291,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 11.615619291,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 11.708279167,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 11.79494625,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 11.708279167,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow25_ff6_rest5_lir3_rsv6",
+      "max_seconds": 8.614552041,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 8.57265275,
+      "min_seconds": 8.555924917,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 8.614552041,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 8.555924917,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 8.57265275,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 8.57265275,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff5_rest4_lir3_rsv3",
+      "max_seconds": 60.598371959,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 60.435565917,
+      "min_seconds": 60.198827,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 60.435565917,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 60.198827,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 60.598371959,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 60.435565917,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff5_rest4_lir3_rsv4",
+      "max_seconds": 14.34167425,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 14.304816041,
+      "min_seconds": 14.169495666,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 14.34167425,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 14.169495666,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 14.304816041,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 14.304816041,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff6_rest4_lir3_rsv4",
+      "max_seconds": 78.719241417,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 73.972841583,
+      "min_seconds": 72.434459167,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 78.719241417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 72.434459167,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 73.972841583,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 73.972841583,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff6_rest5_lir3_rsv3",
+      "max_seconds": 118.368083042,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 115.036724042,
+      "min_seconds": 114.477295208,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 115.036724042,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 118.368083042,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 114.477295208,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 115.036724042,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff6_rest5_lir3_rsv4",
+      "max_seconds": 67.72841925,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 65.735781209,
+      "min_seconds": 65.596107417,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 67.72841925,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 65.596107417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 65.735781209,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 65.735781209,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff6_rest5_lir3_rsv5",
+      "max_seconds": 51.238810208,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 50.966732084,
+      "min_seconds": 50.352307334,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 50.966732084,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 50.352307334,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 51.238810208,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 50.966732084,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow26_ff6_rest5_lir3_rsv6",
+      "max_seconds": 26.071298417,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 26.050257083,
+      "min_seconds": 26.032251834,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 26.050257083,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 26.071298417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 26.032251834,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 26.050257083,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff3_rest2_lir3_rsv1",
+      "max_seconds": 130.19413125,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 130.19413125,
+      "min_seconds": 130.19413125,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 130.19413125,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 130.19413125,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff3_rest2_lir4_rsv2",
+      "max_seconds": 153.852833667,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 153.852833667,
+      "min_seconds": 153.852833667,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 153.852833667,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 153.852833667,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff4_rest3_lir3_rsv2",
+      "max_seconds": 169.310803542,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 169.310803542,
+      "min_seconds": 169.310803542,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 169.310803542,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 169.310803542,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff4_rest3_lir4_rsv3",
+      "max_seconds": 440.876283917,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 440.876283917,
+      "min_seconds": 440.876283917,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 440.876283917,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 440.876283917,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff4_rest3_lir4_rsv4",
+      "max_seconds": 194.133226792,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 193.140116042,
+      "min_seconds": 191.316843584,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 191.316843584,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 193.140116042,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 194.133226792,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 193.140116042,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff5_rest3_lir3_rsv3",
+      "max_seconds": 65.772937417,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 63.806003833,
+      "min_seconds": 63.178223458,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 65.772937417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 63.178223458,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 63.806003833,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 63.806003833,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": "partial measurement: 2 successful samples; kept failed samples in samples",
+      "label": "cfsr_pow27_ff5_rest3_lir4_rsv4",
+      "max_seconds": 140.668734917,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 140.444536167,
+      "min_seconds": 140.220337417,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 140.220337417,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 140.668734917,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": "child failed with status signal: 15 (SIGTERM); stderr=",
+          "repetition": 2,
+          "seconds": null,
+          "status": "error",
+          "timed_out": false
+        }
+      ],
+      "seconds": 140.444536167,
+      "status": "partial_ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff5_rest4_lir3_rsv3",
+      "max_seconds": 64.459372625,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 64.344136584,
+      "min_seconds": 63.829714625,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 64.344136584,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 64.459372625,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 63.829714625,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 64.344136584,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff5_rest4_lir3_rsv4",
+      "max_seconds": 85.629577875,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 84.338970708,
+      "min_seconds": 84.233127834,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 84.233127834,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 84.338970708,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 85.629577875,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 84.338970708,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff5_rest4_lir4_rsv4",
+      "max_seconds": 426.6288325,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 422.990533042,
+      "min_seconds": 418.582172791,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 418.582172791,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 426.6288325,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 422.990533042,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 422.990533042,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff5_rest4_lir4_rsv5",
+      "max_seconds": 343.885382916,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 339.652202083,
+      "min_seconds": 339.494133125,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 343.885382916,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 339.494133125,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 339.652202083,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 339.652202083,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff6_rest5_lir3_rsv3",
+      "max_seconds": 77.88354375,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 77.74566325,
+      "min_seconds": 76.5165005,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 76.5165005,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 77.74566325,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 77.88354375,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 77.74566325,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff6_rest5_lir3_rsv5",
+      "max_seconds": 143.164156375,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 142.160306667,
+      "min_seconds": 140.217601416,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 140.217601416,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 143.164156375,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 142.160306667,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 142.160306667,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff6_rest5_lir3_rsv6",
+      "max_seconds": 121.800328583,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 118.910462375,
+      "min_seconds": 118.77984925,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 118.77984925,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 118.910462375,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 121.800328583,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 118.910462375,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff6_rest5_lir4_rsv4",
+      "max_seconds": 228.76258625,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 223.730735625,
+      "min_seconds": 222.58415175,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 223.730735625,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 228.76258625,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 222.58415175,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 223.730735625,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow27_ff6_rest5_lir4_rsv5",
+      "max_seconds": 231.516008458,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 230.954425083,
+      "min_seconds": 230.4984775,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 231.516008458,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 230.4984775,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 230.954425083,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 230.954425083,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow28_ff4_rest3_lir3_rsv2",
+      "max_seconds": 173.645090209,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 171.027540875,
+      "min_seconds": 167.54060075,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 173.645090209,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 171.027540875,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 167.54060075,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 171.027540875,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow28_ff4_rest3_lir4_rsv3",
+      "max_seconds": 339.030101334,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 339.030101334,
+      "min_seconds": 339.030101334,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 339.030101334,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 339.030101334,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow28_ff5_rest3_lir3_rsv3",
+      "max_seconds": 65.628040875,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 63.392682125,
+      "min_seconds": 63.117091208,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 65.628040875,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 63.392682125,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 63.117091208,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 63.392682125,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "cfsr_pow28_ff5_rest4_lir3_rsv3",
+      "max_seconds": 63.552005167,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 63.445891791,
+      "min_seconds": 62.505530208,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 63.552005167,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 63.445891791,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 62.505530208,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 63.445891791,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": "candidate exceeded cap_seconds_per_candidate",
+      "label": "cfsr_pow30_ff3_rest2_lir4_rsv1",
+      "max_seconds": 900.0,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 900.0,
+      "min_seconds": 900.0,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": "candidate exceeded cap_seconds_per_candidate",
+          "repetition": 0,
+          "seconds": 900.0,
+          "status": "timeout",
+          "timed_out": true
+        }
+      ],
+      "seconds": 900.0,
+      "status": "timeout",
+      "target_cpu_native": true,
+      "timed_out": true
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": "candidate exceeded cap_seconds_per_candidate",
+      "label": "cfsr_pow30_ff4_rest3_lir4_rsv2",
+      "max_seconds": 900.0,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 900.0,
+      "min_seconds": 900.0,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": "candidate exceeded cap_seconds_per_candidate",
+          "repetition": 0,
+          "seconds": 900.0,
+          "status": "timeout",
+          "timed_out": true
+        }
+      ],
+      "seconds": 900.0,
+      "status": "timeout",
+      "target_cpu_native": true,
+      "timed_out": true
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow24_ff4_lir2_rsv3",
+      "max_seconds": 9.220674209,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 9.115876916,
+      "min_seconds": 9.045459291,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 9.045459291,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 9.115876916,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 9.220674209,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 9.115876916,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow24_ff4_lir3_rsv4",
+      "max_seconds": 15.213589333,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 15.153143666,
+      "min_seconds": 15.146529542,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 15.153143666,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 15.213589333,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 15.146529542,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 15.153143666,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow24_ff5_lir3_rsv5",
+      "max_seconds": 11.687067458,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 11.622757333,
+      "min_seconds": 11.6116985,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 11.687067458,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 11.6116985,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 11.622757333,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 11.622757333,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow26_ff4_lir3_rsv3",
+      "max_seconds": 42.887172917,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 42.337316208,
+      "min_seconds": 41.861867833,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 42.887172917,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 42.337316208,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 41.861867833,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 42.337316208,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow26_ff5_lir3_rsv5",
+      "max_seconds": 37.650144917,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 37.375477791,
+      "min_seconds": 37.101082584,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 37.101082584,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 37.375477791,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 37.650144917,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 37.375477791,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff2_lir4_rsv1",
+      "max_seconds": 390.858395083,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 390.858395083,
+      "min_seconds": 390.858395083,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 390.858395083,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 390.858395083,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff2_lir4_rsv2",
+      "max_seconds": 150.795561416,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 150.795561416,
+      "min_seconds": 150.795561416,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 150.795561416,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 150.795561416,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff4_lir3_rsv3",
+      "max_seconds": 87.494994375,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 87.340971,
+      "min_seconds": 86.833163583,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 86.833163583,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 87.494994375,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 87.340971,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 87.340971,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff4_lir4_rsv3",
+      "max_seconds": 520.906366625,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 520.906366625,
+      "min_seconds": 520.906366625,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 520.906366625,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 520.906366625,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff4_lir4_rsv4",
+      "max_seconds": 136.036785291,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 133.516761291,
+      "min_seconds": 132.377209875,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 136.036785291,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 133.516761291,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 132.377209875,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 133.516761291,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow27_ff5_lir3_rsv4",
+      "max_seconds": 108.925793709,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 105.191882416,
+      "min_seconds": 100.94635625,
+      "repetitions": 3,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 105.191882416,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 1,
+          "seconds": 100.94635625,
+          "status": "ok",
+          "timed_out": false
+        },
+        {
+          "error": null,
+          "repetition": 2,
+          "seconds": 108.925793709,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 105.191882416,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow28_ff2_lir4_rsv1",
+      "max_seconds": 449.814026,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 449.814026,
+      "min_seconds": 449.814026,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 449.814026,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 449.814026,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow29_ff2_lir4_rsv1",
+      "max_seconds": 510.745737,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 510.745737,
+      "min_seconds": 510.745737,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 510.745737,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 510.745737,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "error": null,
+      "label": "constant_pow30_ff2_lir4_rsv1",
+      "max_seconds": 534.232255,
+      "measured_num_variables": 22,
+      "measurement_kind": "actual_whir_commit_prove",
+      "median_seconds": 534.232255,
+      "min_seconds": 534.232255,
+      "repetitions": 1,
+      "samples": [
+        {
+          "error": null,
+          "repetition": 0,
+          "seconds": 534.232255,
+          "status": "ok",
+          "timed_out": false
+        }
+      ],
+      "seconds": 534.232255,
+      "status": "ok",
+      "target_cpu_native": true,
+      "timed_out": false
+    },
+    {
+      "label": "cfsr_pow28_ff5_rest3_lir4_rsv4",
+      "measurement_kind": "actual_whir_commit_prove",
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "target_cpu_native": true,
+      "measured_num_variables": 22,
+      "seconds": 251.984604792,
+      "min_seconds": 251.823079791,
+      "median_seconds": 251.984604792,
+      "max_seconds": 254.08835725,
+      "repetitions": 3,
+      "samples": [
+        {
+          "repetition": 0,
+          "seconds": 251.984604792,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 1,
+          "seconds": 254.08835725,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 2,
+          "seconds": 251.823079791,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        }
+      ],
+      "timed_out": false,
+      "status": "ok",
+      "error": null
+    },
+    {
+      "label": "cfsr_pow27_ff4_rest3_lir3_rsv3",
+      "measurement_kind": "actual_whir_commit_prove",
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "target_cpu_native": true,
+      "measured_num_variables": 22,
+      "seconds": 83.694827458,
+      "min_seconds": 83.652960625,
+      "median_seconds": 83.694827458,
+      "max_seconds": 84.254411458,
+      "repetitions": 3,
+      "samples": [
+        {
+          "repetition": 0,
+          "seconds": 83.694827458,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 1,
+          "seconds": 83.652960625,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 2,
+          "seconds": 84.254411458,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        }
+      ],
+      "timed_out": false,
+      "status": "ok",
+      "error": null
+    },
+    {
+      "label": "constant_pow28_ff4_lir4_rsv3",
+      "measurement_kind": "actual_whir_commit_prove",
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "target_cpu_native": true,
+      "measured_num_variables": 22,
+      "seconds": 274.163664792,
+      "min_seconds": 271.156928875,
+      "median_seconds": 274.163664792,
+      "max_seconds": 275.333881042,
+      "repetitions": 3,
+      "samples": [
+        {
+          "repetition": 0,
+          "seconds": 271.156928875,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 1,
+          "seconds": 274.163664792,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 2,
+          "seconds": 275.333881042,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        }
+      ],
+      "timed_out": false,
+      "status": "ok",
+      "error": null
+    },
+    {
+      "label": "constant_pow29_ff4_lir4_rsv3",
+      "measurement_kind": "actual_whir_commit_prove",
+      "build_profile": "release",
+      "compile_rustflags": "-C target-cpu=native",
+      "target_cpu_native": true,
+      "measured_num_variables": 22,
+      "seconds": 367.516805542,
+      "min_seconds": 364.216714875,
+      "median_seconds": 367.516805542,
+      "max_seconds": 372.597994208,
+      "repetitions": 3,
+      "samples": [
+        {
+          "repetition": 0,
+          "seconds": 364.216714875,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 1,
+          "seconds": 372.597994208,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        },
+        {
+          "repetition": 2,
+          "seconds": 367.516805542,
+          "timed_out": false,
+          "status": "ok",
+          "error": null
+        }
+      ],
+      "timed_out": false,
+      "status": "ok",
+      "error": null
+    }
+  ],
+  "cap_seconds_per_candidate": null,
+  "compile_rustflags": "-C target-cpu=native",
+  "max_candidates": 35,
+  "measurement_kind": "actual_whir_commit_prove",
+  "num_variables": 22,
+  "release_required_for_timings": true,
+  "repetitions_per_candidate": 3,
+  "schema_version": 1,
+  "selected_labels": [
+    "cfsr_pow24_ff5_rest4_lir2_rsv4",
+    "cfsr_pow24_ff5_rest4_lir3_rsv4",
+    "cfsr_pow24_ff5_rest4_lir3_rsv5",
+    "cfsr_pow24_ff6_rest4_lir3_rsv6",
+    "cfsr_pow24_ff6_rest5_lir3_rsv4",
+    "cfsr_pow24_ff6_rest5_lir3_rsv5",
+    "cfsr_pow24_ff6_rest5_lir3_rsv6",
+    "cfsr_pow25_ff5_rest4_lir3_rsv4",
+    "cfsr_pow25_ff6_rest5_lir3_rsv4",
+    "cfsr_pow25_ff6_rest5_lir3_rsv5",
+    "cfsr_pow25_ff6_rest5_lir3_rsv6",
+    "cfsr_pow26_ff5_rest4_lir3_rsv3",
+    "cfsr_pow26_ff5_rest4_lir3_rsv4",
+    "cfsr_pow26_ff6_rest4_lir3_rsv4",
+    "cfsr_pow26_ff6_rest5_lir3_rsv3",
+    "cfsr_pow26_ff6_rest5_lir3_rsv4",
+    "cfsr_pow26_ff6_rest5_lir3_rsv5",
+    "cfsr_pow26_ff6_rest5_lir3_rsv6",
+    "cfsr_pow27_ff3_rest2_lir3_rsv1",
+    "cfsr_pow27_ff3_rest2_lir4_rsv2",
+    "cfsr_pow27_ff4_rest3_lir3_rsv2",
+    "cfsr_pow27_ff4_rest3_lir4_rsv3",
+    "cfsr_pow27_ff4_rest3_lir4_rsv4",
+    "cfsr_pow27_ff5_rest3_lir3_rsv3",
+    "cfsr_pow27_ff5_rest3_lir4_rsv4",
+    "cfsr_pow27_ff5_rest4_lir3_rsv3",
+    "cfsr_pow27_ff5_rest4_lir3_rsv4",
+    "cfsr_pow27_ff5_rest4_lir4_rsv4",
+    "cfsr_pow27_ff5_rest4_lir4_rsv5",
+    "cfsr_pow27_ff6_rest5_lir3_rsv3",
+    "cfsr_pow27_ff6_rest5_lir3_rsv5",
+    "cfsr_pow27_ff6_rest5_lir3_rsv6",
+    "cfsr_pow27_ff6_rest5_lir4_rsv4",
+    "cfsr_pow27_ff6_rest5_lir4_rsv5",
+    "cfsr_pow28_ff4_rest3_lir3_rsv2",
+    "cfsr_pow28_ff4_rest3_lir4_rsv3",
+    "cfsr_pow28_ff5_rest3_lir3_rsv3",
+    "cfsr_pow28_ff5_rest4_lir3_rsv3",
+    "cfsr_pow30_ff3_rest2_lir4_rsv1",
+    "cfsr_pow30_ff4_rest3_lir4_rsv2",
+    "constant_pow24_ff4_lir2_rsv3",
+    "constant_pow24_ff4_lir3_rsv4",
+    "constant_pow24_ff5_lir3_rsv5",
+    "constant_pow26_ff4_lir3_rsv3",
+    "constant_pow26_ff5_lir3_rsv5",
+    "constant_pow27_ff2_lir4_rsv1",
+    "constant_pow27_ff2_lir4_rsv2",
+    "constant_pow27_ff4_lir3_rsv3",
+    "constant_pow27_ff4_lir4_rsv3",
+    "constant_pow27_ff4_lir4_rsv4",
+    "constant_pow27_ff5_lir3_rsv4",
+    "constant_pow28_ff2_lir4_rsv1",
+    "constant_pow29_ff2_lir4_rsv1",
+    "constant_pow30_ff2_lir4_rsv1"
+  ],
+  "target_cpu_native": true
+}

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {KeccakChallenger} from "./KeccakChallenger.sol";
+import { KeccakChallenger } from "./KeccakChallenger.sol";
 
 library SpartanTranscript {
     using KeccakChallenger for KeccakChallenger.State;
@@ -21,9 +21,11 @@ library SpartanTranscript {
         uint256 rsDomainInitialReductionFactor;
     }
 
-    function domainSeparatorPreimage(
-        DomainSeparator memory domainSeparator
-    ) internal pure returns (bytes memory out) {
+    function domainSeparatorPreimage(DomainSeparator memory domainSeparator)
+        internal
+        pure
+        returns (bytes memory out)
+    {
         bytes memory protocolId = abi.encodePacked(PROTOCOL_ID);
 
         out = bytes.concat(
@@ -41,9 +43,11 @@ library SpartanTranscript {
         );
     }
 
-    function domainSeparatorDigest(
-        DomainSeparator memory domainSeparator
-    ) internal pure returns (bytes32) {
+    function domainSeparatorDigest(DomainSeparator memory domainSeparator)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(domainSeparatorPreimage(domainSeparator));
     }
 
@@ -51,11 +55,7 @@ library SpartanTranscript {
         KeccakChallenger.State memory challenger,
         DomainSeparator memory domainSeparator,
         uint256[] memory publicInputs
-    )
-        internal
-        pure
-        returns (KeccakChallenger.State memory updatedChallenger, bytes32 digest)
-    {
+    ) internal pure returns (KeccakChallenger.State memory updatedChallenger, bytes32 digest) {
         updatedChallenger = challenger;
         digest = domainSeparatorDigest(domainSeparator);
         updatedChallenger.observeHashU8Digest(digest);

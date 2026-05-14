@@ -1,0 +1,318 @@
+{
+  "foundry_version": "1.5.1-stable",
+  "foundry_commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+  "eip1108_gas_per_microsecond": 25.86,
+  "safety_multiplier": 8.0,
+  "min_realistic_effective_gas": 700,
+  "samples": 101,
+  "ops_per_sample": 1024,
+  "vector_seed": 16771504454010951288,
+  "fields": [
+    {
+      "field_id": 5,
+      "n_max": 1024,
+      "modes": [
+        {
+          "flags": 0,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 4,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 3,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 39,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 377,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 1194,
+              "assigned_gas_at_n": 250
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 17708,
+              "assigned_gas_at_n": 3700
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 173,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 242,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 311,
+              "assigned_gas_at_n": 100
+            }
+          ]
+        },
+        {
+          "flags": 1,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 4,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 2,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 17,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 279,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 1103,
+              "assigned_gas_at_n": 250
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 17615,
+              "assigned_gas_at_n": 3650
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 170,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 241,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 310,
+              "assigned_gas_at_n": 100
+            }
+          ]
+        },
+        {
+          "flags": 3,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 3,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 1,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 11,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 208,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 828,
+              "assigned_gas_at_n": 200
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 13057,
+              "assigned_gas_at_n": 2750
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 129,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 181,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 234,
+              "assigned_gas_at_n": 50
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field_id": 8,
+      "n_max": 1024,
+      "modes": [
+        {
+          "flags": 0,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 4,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 1,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 19,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 301,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 1207,
+              "assigned_gas_at_n": 250
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 19292,
+              "assigned_gas_at_n": 4000
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 189,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 264,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 338,
+              "assigned_gas_at_n": 100
+            }
+          ]
+        },
+        {
+          "flags": 1,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 4,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 1,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 19,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 299,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 1191,
+              "assigned_gas_at_n": 250
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 19068,
+              "assigned_gas_at_n": 3950
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 185,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 259,
+              "assigned_gas_at_n": 100
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 337,
+              "assigned_gas_at_n": 100
+            }
+          ]
+        },
+        {
+          "flags": 3,
+          "assigned_base_gas": 50,
+          "assigned_per_term_gas": 3,
+          "samples": [
+            {
+              "n": 0,
+              "median_runtime_ns": 2,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 1,
+              "median_runtime_ns": 11,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 16,
+              "median_runtime_ns": 179,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 64,
+              "median_runtime_ns": 716,
+              "assigned_gas_at_n": 150
+            },
+            {
+              "n": 1024,
+              "median_runtime_ns": 11497,
+              "assigned_gas_at_n": 2400
+            }
+          ],
+          "measurement_samples": [
+            {
+              "n": 10,
+              "median_runtime_ns": 111,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 14,
+              "median_runtime_ns": 156,
+              "assigned_gas_at_n": 50
+            },
+            {
+              "n": 18,
+              "median_runtime_ns": 197,
+              "assigned_gas_at_n": 50
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

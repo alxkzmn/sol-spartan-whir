@@ -1,9 +1,69 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {stdJson} from "forge-std/StdJson.sol";
-import {Test} from "forge-std/Test.sol";
-import {FieldHarness} from "./helpers/FieldHarness.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { Test } from "forge-std/Test.sol";
+import { FieldHarness } from "./helpers/FieldHarness.sol";
+
+struct BaseFieldVectorFixture {
+    uint256 a;
+    uint256 b;
+    uint256 add;
+    uint256 sub;
+    uint256 mul;
+    uint256 inv;
+}
+
+struct ExtensionFieldVectorFixture {
+    uint256[] a;
+    uint256[] b;
+    uint256[] add;
+    uint256[] sub;
+    uint256[] mul;
+    uint256[] inv;
+    uint256 packed_a;
+    uint256 packed_b;
+    uint256 packed_add;
+    uint256 packed_sub;
+    uint256 packed_mul;
+    uint256 packed_inv;
+}
+
+struct ExtensionExtrapolateVectorFixture {
+    uint256 packed_e0;
+    uint256 packed_e1;
+    uint256 packed_e2;
+    uint256 packed_r;
+    uint256 packed_result;
+}
+
+struct ExtensionEqPolyVectorFixture {
+    uint256[] packed_p;
+    uint256[] packed_q;
+    uint256 packed_result;
+}
+
+struct ExtensionHypercubeVectorFixture {
+    uint256[] packed_evals;
+    uint256[] packed_point;
+    uint256 packed_result;
+}
+
+struct FieldVectorFixture {
+    BaseFieldVectorFixture[] base;
+    ExtensionFieldVectorFixture[] quartic;
+    ExtensionFieldVectorFixture[] quintic;
+    ExtensionFieldVectorFixture[] octic;
+    ExtensionExtrapolateVectorFixture[] quartic_extrapolate;
+    ExtensionEqPolyVectorFixture[] quartic_eq_poly;
+    ExtensionHypercubeVectorFixture[] quartic_hypercube;
+    ExtensionExtrapolateVectorFixture[] quintic_extrapolate;
+    ExtensionEqPolyVectorFixture[] quintic_eq_poly;
+    ExtensionHypercubeVectorFixture[] quintic_hypercube;
+    ExtensionExtrapolateVectorFixture[] octic_extrapolate;
+    ExtensionEqPolyVectorFixture[] octic_eq_poly;
+    ExtensionHypercubeVectorFixture[] octic_hypercube;
+}
 
 contract FieldArithmeticTest is Test {
     using stdJson for string;
@@ -11,37 +71,21 @@ contract FieldArithmeticTest is Test {
     string internal constant TESTDATA = "testdata/";
 
     FieldHarness internal harness;
-    string internal vectorsJson;
+    FieldVectorFixture internal vectors;
 
     function setUp() public {
         harness = new FieldHarness();
-        vectorsJson = vm.readFile(
-            string.concat(TESTDATA, "field_vectors.json")
-        );
+        string memory raw = vm.readFile(string.concat(TESTDATA, "field_vectors.json"));
+        vectors = abi.decode(raw.parseRaw("$"), (FieldVectorFixture));
     }
 
     function testKoalaBearBaseFieldVectors() external view {
-        for (uint256 i = 0; _vectorExists("base", i); ++i) {
-            string memory prefix = _vectorPrefix("base", i);
-            uint256 a = vectorsJson.readUint(string.concat(prefix, ".a"));
-            uint256 b = vectorsJson.readUint(string.concat(prefix, ".b"));
-
-            assertEq(
-                harness.baseAdd(a, b),
-                vectorsJson.readUint(string.concat(prefix, ".add"))
-            );
-            assertEq(
-                harness.baseSub(a, b),
-                vectorsJson.readUint(string.concat(prefix, ".sub"))
-            );
-            assertEq(
-                harness.baseMul(a, b),
-                vectorsJson.readUint(string.concat(prefix, ".mul"))
-            );
-            assertEq(
-                harness.baseInv(a),
-                vectorsJson.readUint(string.concat(prefix, ".inv"))
-            );
+        for (uint256 i = 0; i < vectors.base.length; ++i) {
+            BaseFieldVectorFixture memory vector = vectors.base[i];
+            assertEq(harness.baseAdd(vector.a, vector.b), vector.add);
+            assertEq(harness.baseSub(vector.a, vector.b), vector.sub);
+            assertEq(harness.baseMul(vector.a, vector.b), vector.mul);
+            assertEq(harness.baseInv(vector.a), vector.inv);
         }
     }
 
@@ -56,10 +100,7 @@ contract FieldArithmeticTest is Test {
         harness.baseInv(0x7f000001 * 3);
     }
 
-    function testKoalaBearInvAcceptsUnreducedNonzeroRepresentative()
-        external
-        view
-    {
+    function testKoalaBearInvAcceptsUnreducedNonzeroRepresentative() external view {
         uint256 modulus = 0x7f000001;
         uint256 canonical = 7;
         uint256 unreduced = canonical + modulus * 2;
@@ -68,328 +109,209 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt4Vectors() external view {
-        for (uint256 i = 0; _vectorExists("quartic", i); ++i) {
-            string memory prefix = _vectorPrefix("quartic", i);
-            uint256[] memory aCoeffs = vectorsJson.readUintArray(
-                string.concat(prefix, ".a")
-            );
-            uint256[] memory bCoeffs = vectorsJson.readUintArray(
-                string.concat(prefix, ".b")
-            );
+        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
+            assertEq(harness.ext4Pack(vector.a), vector.packed_a);
+            assertEq(harness.ext4Pack(vector.b), vector.packed_b);
+            _assertEqArray(harness.ext4Unpack(vector.packed_a), vector.a);
+            _assertEqArray(harness.ext4Unpack(vector.packed_b), vector.b);
 
-            uint256 packedA = uint256(
-                vectorsJson.readBytes32(string.concat(prefix, ".packed_a"))
+            assertEq(harness.ext4Add(vector.packed_a, vector.packed_b), vector.packed_add);
+            assertEq(harness.ext4Sub(vector.packed_a, vector.packed_b), vector.packed_sub);
+            assertEq(harness.ext4Mul(vector.packed_a, vector.packed_b), vector.packed_mul);
+            assertEq(harness.ext4Inv(vector.packed_a), vector.packed_inv);
+            assertEq(
+                harness.ext4MulByW(vector.packed_a), harness.ext4Pack(_scaleCoeffs(vector.a, 3))
             );
-            uint256 packedB = uint256(
-                vectorsJson.readBytes32(string.concat(prefix, ".packed_b"))
-            );
+        }
+    }
 
-            assertEq(harness.ext4Pack(aCoeffs), packedA);
-            assertEq(harness.ext4Pack(bCoeffs), packedB);
-            _assertEqArray(harness.ext4Unpack(packedA), aCoeffs);
-            _assertEqArray(harness.ext4Unpack(packedB), bCoeffs);
-
+    function testKoalaBearExt4MulMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
             assertEq(
-                harness.ext4Add(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_add")
-                    )
-                )
+                harness.ext4Mul(vector.packed_a, vector.packed_b),
+                harness.ext4MulReference(vector.packed_a, vector.packed_b)
             );
             assertEq(
-                harness.ext4Sub(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_sub")
-                    )
-                )
+                harness.ext4Mul(vector.packed_a, vector.packed_a),
+                harness.ext4MulReference(vector.packed_a, vector.packed_a)
             );
             assertEq(
-                harness.ext4Mul(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_mul")
-                    )
-                )
-            );
-            assertEq(
-                harness.ext4Inv(packedA),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_inv")
-                    )
-                )
-            );
-            assertEq(
-                harness.ext4MulByW(packedA),
-                harness.ext4Pack(_scaleCoeffs(aCoeffs, 3))
+                harness.ext4Square(vector.packed_a),
+                harness.ext4Mul(vector.packed_a, vector.packed_a)
             );
         }
     }
 
     function testKoalaBearExt4RejectsNonCanonicalLowBits() external {
-        uint256 packed = (uint256(1) << 224) |
-            (uint256(2) << 192) |
-            (uint256(3) << 160) |
-            (uint256(4) << 128) |
-            1;
+        uint256 packed = (uint256(1) << 224) | (uint256(2) << 192) | (uint256(3) << 160)
+            | (uint256(4) << 128) | 1;
 
-        vm.expectRevert(bytes("LOW_BITS"));
-        harness.ext4Unpack(packed);
+        vm.expectRevert(
+            abi.encodeWithSignature("PackedExtensionElementOutOfRange(uint256)", packed)
+        );
+        harness.ext4Validate(packed);
     }
 
     function testKoalaBearExt8Vectors() external view {
-        for (uint256 i = 0; _vectorExists("octic", i); ++i) {
-            string memory prefix = _vectorPrefix("octic", i);
-            uint256[] memory aCoeffs = vectorsJson.readUintArray(
-                string.concat(prefix, ".a")
-            );
-            uint256[] memory bCoeffs = vectorsJson.readUintArray(
-                string.concat(prefix, ".b")
-            );
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+            assertEq(harness.ext8Pack(vector.a), vector.packed_a);
+            assertEq(harness.ext8Pack(vector.b), vector.packed_b);
+            _assertEqArray(harness.ext8Unpack(vector.packed_a), vector.a);
+            _assertEqArray(harness.ext8Unpack(vector.packed_b), vector.b);
 
-            uint256 packedA = uint256(
-                vectorsJson.readBytes32(string.concat(prefix, ".packed_a"))
+            assertEq(harness.ext8Add(vector.packed_a, vector.packed_b), vector.packed_add);
+            assertEq(harness.ext8Sub(vector.packed_a, vector.packed_b), vector.packed_sub);
+            assertEq(harness.ext8Mul(vector.packed_a, vector.packed_b), vector.packed_mul);
+            assertEq(harness.ext8Inv(vector.packed_a), vector.packed_inv);
+            assertEq(
+                harness.ext8MulByW(vector.packed_a), harness.ext8Pack(_scaleCoeffs(vector.a, 3))
             );
-            uint256 packedB = uint256(
-                vectorsJson.readBytes32(string.concat(prefix, ".packed_b"))
-            );
+        }
+    }
 
-            assertEq(harness.ext8Pack(aCoeffs), packedA);
-            assertEq(harness.ext8Pack(bCoeffs), packedB);
-            _assertEqArray(harness.ext8Unpack(packedA), aCoeffs);
-            _assertEqArray(harness.ext8Unpack(packedB), bCoeffs);
+    function testKoalaBearExt5Vectors() external view {
+        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
+            assertEq(harness.ext5Pack(vector.a), vector.packed_a);
+            assertEq(harness.ext5Pack(vector.b), vector.packed_b);
+            _assertEqArray(harness.ext5Unpack(vector.packed_a), vector.a);
+            _assertEqArray(harness.ext5Unpack(vector.packed_b), vector.b);
 
+            assertEq(harness.ext5Add(vector.packed_a, vector.packed_b), vector.packed_add);
+            assertEq(harness.ext5Sub(vector.packed_a, vector.packed_b), vector.packed_sub);
+            assertEq(harness.ext5Mul(vector.packed_a, vector.packed_b), vector.packed_mul);
+            assertEq(harness.ext5Inv(vector.packed_a), vector.packed_inv);
+        }
+    }
+
+    function testKoalaBearExt5MulMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
             assertEq(
-                harness.ext8Add(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_add")
-                    )
-                )
+                harness.ext5Mul(vector.packed_a, vector.packed_b),
+                harness.ext5MulReference(vector.packed_a, vector.packed_b)
             );
             assertEq(
-                harness.ext8Sub(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_sub")
-                    )
-                )
+                harness.ext5Square(vector.packed_a),
+                harness.ext5Mul(vector.packed_a, vector.packed_a)
+            );
+        }
+    }
+
+    function testKoalaBearExt5RejectsNonCanonicalLowBits() external {
+        uint256 packed = (uint256(1) << 224) | (uint256(2) << 192) | (uint256(3) << 160)
+            | (uint256(4) << 128) | (uint256(5) << 96) | 1;
+
+        vm.expectRevert(
+            abi.encodeWithSignature("PackedExtensionElementOutOfRange(uint256)", packed)
+        );
+        harness.ext5Validate(packed);
+    }
+
+    function testKoalaBearExt8MulMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+            assertEq(
+                harness.ext8Mul(vector.packed_a, vector.packed_b),
+                harness.ext8MulReference(vector.packed_a, vector.packed_b)
             );
             assertEq(
-                harness.ext8Mul(packedA, packedB),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_mul")
-                    )
-                )
+                harness.ext8Mul(vector.packed_a, vector.packed_a),
+                harness.ext8MulReference(vector.packed_a, vector.packed_a)
             );
             assertEq(
-                harness.ext8Inv(packedA),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_inv")
-                    )
-                )
-            );
-            assertEq(
-                harness.ext8MulByW(packedA),
-                harness.ext8Pack(_scaleCoeffs(aCoeffs, 3))
+                harness.ext8Square(vector.packed_a),
+                harness.ext8Mul(vector.packed_a, vector.packed_a)
             );
         }
     }
 
     function testKoalaBearExt4ExtrapolateVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("quartic_extrapolate", i, ".packed_e0");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("quartic_extrapolate", i);
+        for (uint256 i = 0; i < vectors.quartic_extrapolate.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors.quartic_extrapolate[i];
             assertEq(
                 harness.ext4Extrapolate012(
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e0")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e1")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e2")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_r")
-                        )
-                    )
+                    vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
                 ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
+                vector.packed_result
             );
         }
     }
 
     function testKoalaBearExt8ExtrapolateVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("octic_extrapolate", i, ".packed_e0");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("octic_extrapolate", i);
+        for (uint256 i = 0; i < vectors.octic_extrapolate.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors.octic_extrapolate[i];
             assertEq(
                 harness.ext8Extrapolate012(
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e0")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e1")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_e2")
-                        )
-                    ),
-                    uint256(
-                        vectorsJson.readBytes32(
-                            string.concat(prefix, ".packed_r")
-                        )
-                    )
+                    vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
                 ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
+                vector.packed_result
+            );
+        }
+    }
+
+    function testKoalaBearExt5ExtrapolateVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_extrapolate.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors.quintic_extrapolate[i];
+            assertEq(
+                harness.ext5Extrapolate012(
+                    vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
+                ),
+                vector.packed_result
             );
         }
     }
 
     function testKoalaBearExt4EqPolyVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("quartic_eq_poly", i, ".packed_p");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("quartic_eq_poly", i);
-            assertEq(
-                harness.ext4EqPolyEval(
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_p")
-                        )
-                    ),
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_q")
-                        )
-                    )
-                ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
-            );
+        for (uint256 i = 0; i < vectors.quartic_eq_poly.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors.quartic_eq_poly[i];
+            assertEq(harness.ext4EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
     function testKoalaBearExt8EqPolyVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("octic_eq_poly", i, ".packed_p");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("octic_eq_poly", i);
-            assertEq(
-                harness.ext8EqPolyEval(
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_p")
-                        )
-                    ),
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_q")
-                        )
-                    )
-                ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
-            );
+        for (uint256 i = 0; i < vectors.octic_eq_poly.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors.octic_eq_poly[i];
+            assertEq(harness.ext8EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
+        }
+    }
+
+    function testKoalaBearExt5EqPolyVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_eq_poly.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors.quintic_eq_poly[i];
+            assertEq(harness.ext5EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
     function testKoalaBearExt4HypercubeVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("quartic_hypercube", i, ".packed_evals");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("quartic_hypercube", i);
+        for (uint256 i = 0; i < vectors.quartic_hypercube.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors.quartic_hypercube[i];
             assertEq(
-                harness.ext4EvaluateHypercube(
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_evals")
-                        )
-                    ),
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_point")
-                        )
-                    )
-                ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
+                harness.ext4EvaluateHypercube(vector.packed_evals, vector.packed_point),
+                vector.packed_result
             );
         }
     }
 
     function testKoalaBearExt8HypercubeVectors() external view {
-        for (
-            uint256 i = 0;
-            _helperVectorExists("octic_hypercube", i, ".packed_evals");
-            ++i
-        ) {
-            string memory prefix = _vectorPrefix("octic_hypercube", i);
+        for (uint256 i = 0; i < vectors.octic_hypercube.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors.octic_hypercube[i];
             assertEq(
-                harness.ext8EvaluateHypercube(
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_evals")
-                        )
-                    ),
-                    _bytes32ArrayToUintArray(
-                        vectorsJson.readBytes32Array(
-                            string.concat(prefix, ".packed_point")
-                        )
-                    )
-                ),
-                uint256(
-                    vectorsJson.readBytes32(
-                        string.concat(prefix, ".packed_result")
-                    )
-                )
+                harness.ext8EvaluateHypercube(vector.packed_evals, vector.packed_point),
+                vector.packed_result
+            );
+        }
+    }
+
+    function testKoalaBearExt5HypercubeVectors() external view {
+        for (uint256 i = 0; i < vectors.quintic_hypercube.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors.quintic_hypercube[i];
+            assertEq(
+                harness.ext5EvaluateHypercube(vector.packed_evals, vector.packed_point),
+                vector.packed_result
             );
         }
     }
@@ -404,16 +326,76 @@ contract FieldArithmeticTest is Test {
         assertEq(harness.ext4Extrapolate012(e0, e1, e2, _extConst4(2)), e2);
     }
 
+    function testExt4Extrapolate012MatchesReference() external view {
+        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
+
+            assertEq(
+                harness.ext4Extrapolate012(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                ),
+                harness.ext4Extrapolate012Reference(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                )
+            );
+            assertEq(
+                harness.ext4Extrapolate012(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                ),
+                harness.ext4Extrapolate012Reference(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                )
+            );
+        }
+    }
+
     function testExt8Extrapolate012AtInterpolationPoints() external view {
         uint256 e0 = harness.ext8Pack(_coeffs8(5, 7, 11, 13, 17, 19, 23, 29));
         uint256 e1 = harness.ext8Pack(_coeffs8(31, 37, 41, 43, 47, 53, 59, 61));
-        uint256 e2 = harness.ext8Pack(
-            _coeffs8(67, 71, 73, 79, 83, 89, 97, 101)
-        );
+        uint256 e2 = harness.ext8Pack(_coeffs8(67, 71, 73, 79, 83, 89, 97, 101));
 
         assertEq(harness.ext8Extrapolate012(e0, e1, e2, 0), e0);
         assertEq(harness.ext8Extrapolate012(e0, e1, e2, _extConst8(1)), e1);
         assertEq(harness.ext8Extrapolate012(e0, e1, e2, _extConst8(2)), e2);
+    }
+
+    function testExt8Extrapolate012FromSumcheckMatchesDirectPath() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+            uint256 c0 = vector.packed_a;
+            uint256 delta = vector.packed_b;
+            uint256 claimedEval = harness.ext8Add(c0, delta);
+            uint256 c2 = vector.packed_mul;
+            uint256 r = vector.packed_add;
+
+            assertEq(
+                harness.ext8Extrapolate012FromSumcheck(c0, claimedEval, c2, r),
+                harness.ext8Extrapolate012(c0, harness.ext8Sub(claimedEval, c0), c2, r)
+            );
+        }
+    }
+
+    function testExt8Extrapolate012MatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+
+            assertEq(
+                harness.ext8Extrapolate012(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                ),
+                harness.ext8Extrapolate012Reference(
+                    vector.packed_a, vector.packed_b, vector.packed_mul, vector.packed_add
+                )
+            );
+            assertEq(
+                harness.ext8Extrapolate012(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                ),
+                harness.ext8Extrapolate012Reference(
+                    vector.packed_inv, vector.packed_sub, vector.packed_add, vector.packed_b
+                )
+            );
+        }
     }
 
     function testExt4EqPolyEvalForBooleanPoints() external view {
@@ -463,17 +445,11 @@ contract FieldArithmeticTest is Test {
         uint256 oneMinusR1 = harness.ext4Sub(_extConst4(1), point[1]);
         uint256 expected = harness.ext4Add(
             harness.ext4Add(
-                harness.ext4Mul(
-                    evals[0],
-                    harness.ext4Mul(oneMinusR0, oneMinusR1)
-                ),
+                harness.ext4Mul(evals[0], harness.ext4Mul(oneMinusR0, oneMinusR1)),
                 harness.ext4Mul(evals[1], harness.ext4Mul(oneMinusR0, point[1]))
             ),
             harness.ext4Add(
-                harness.ext4Mul(
-                    evals[2],
-                    harness.ext4Mul(point[0], oneMinusR1)
-                ),
+                harness.ext4Mul(evals[2], harness.ext4Mul(point[0], oneMinusR1)),
                 harness.ext4Mul(evals[3], harness.ext4Mul(point[0], point[1]))
             )
         );
@@ -496,17 +472,11 @@ contract FieldArithmeticTest is Test {
         uint256 oneMinusR1 = harness.ext8Sub(_extConst8(1), point[1]);
         uint256 expected = harness.ext8Add(
             harness.ext8Add(
-                harness.ext8Mul(
-                    evals[0],
-                    harness.ext8Mul(oneMinusR0, oneMinusR1)
-                ),
+                harness.ext8Mul(evals[0], harness.ext8Mul(oneMinusR0, oneMinusR1)),
                 harness.ext8Mul(evals[1], harness.ext8Mul(oneMinusR0, point[1]))
             ),
             harness.ext8Add(
-                harness.ext8Mul(
-                    evals[2],
-                    harness.ext8Mul(point[0], oneMinusR1)
-                ),
+                harness.ext8Mul(evals[2], harness.ext8Mul(point[0], oneMinusR1)),
                 harness.ext8Mul(evals[3], harness.ext8Mul(point[0], point[1]))
             )
         );
@@ -514,10 +484,53 @@ contract FieldArithmeticTest is Test {
         assertEq(harness.ext8EvaluateHypercube(evals, point), expected);
     }
 
+    function testExt8FoldOnceMatchesReference() external view {
+        for (uint256 i = 0; i < vectors.octic.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+
+            uint256 fast0 =
+                harness.ext8FoldOnce(vector.packed_a, vector.packed_b, vector.packed_add);
+            assertEq(
+                fast0,
+                harness.ext8FoldOnceSchoolbook(vector.packed_a, vector.packed_b, vector.packed_add)
+            );
+            assertEq(
+                fast0,
+                harness.ext8FoldOnceReference(vector.packed_a, vector.packed_b, vector.packed_add)
+            );
+
+            uint256 fast1 =
+                harness.ext8FoldOnce(vector.packed_inv, vector.packed_sub, vector.packed_mul);
+            assertEq(
+                fast1,
+                harness.ext8FoldOnceSchoolbook(
+                    vector.packed_inv, vector.packed_sub, vector.packed_mul
+                )
+            );
+            assertEq(
+                fast1,
+                harness.ext8FoldOnceReference(
+                    vector.packed_inv, vector.packed_sub, vector.packed_mul
+                )
+            );
+        }
+    }
+
+    function testExt8FoldOncePseudoRandomMatchesReference() external view {
+        for (uint256 i = 0; i < 16; ++i) {
+            uint256 a0 = _pseudoRandomExt8(i * 3 + 1);
+            uint256 a1 = _pseudoRandomExt8(i * 3 + 2);
+            uint256 r = _pseudoRandomExt8(i * 3 + 3);
+
+            uint256 fast = harness.ext8FoldOnce(a0, a1, r);
+            assertEq(fast, harness.ext8FoldOnceSchoolbook(a0, a1, r));
+            assertEq(fast, harness.ext8FoldOnceReference(a0, a1, r));
+        }
+    }
+
     function testGasExt4PackUnpack() external view {
-        uint256 packed = harness.ext4Pack(
-            _coeffs4(605_061_430, 867_831_285, 498_902_190, 1_861_564_007)
-        );
+        uint256 packed =
+            harness.ext4Pack(_coeffs4(605_061_430, 867_831_285, 498_902_190, 1_861_564_007));
         uint256[] memory unpacked = harness.ext4Unpack(packed);
         assertEq(unpacked[0], 605_061_430);
     }
@@ -571,69 +584,105 @@ contract FieldArithmeticTest is Test {
         assertTrue(harness.ext8EvaluateHypercube(evals, point) != 0);
     }
 
-    function _vectorExists(
-        string memory family,
-        uint256 index
-    ) internal view returns (bool) {
-        return
-            vectorsJson.keyExists(
-                string.concat(_vectorPrefix(family, index), ".a")
+    function testGasExt8FoldOnce() external view {
+        uint256 a0 = _pseudoRandomExt8(101);
+        uint256 a1 = _pseudoRandomExt8(102);
+        uint256 r = _pseudoRandomExt8(103);
+
+        assertTrue(harness.ext8FoldOnce(a0, a1, r) != 0);
+    }
+
+    function testGasExt8FoldOnceSchoolbook() external view {
+        uint256 a0 = _pseudoRandomExt8(101);
+        uint256 a1 = _pseudoRandomExt8(102);
+        uint256 r = _pseudoRandomExt8(103);
+
+        assertTrue(harness.ext8FoldOnceSchoolbook(a0, a1, r) != 0);
+    }
+
+    function testGasExt8Extrapolate012() external view {
+        uint256 e0 = harness.ext8Pack(
+            _coeffs8(
+                1_183_641_764,
+                916_668_484,
+                1_662_695_301,
+                1_758_839_722,
+                1_364_968_108,
+                932_085_352,
+                580_647_060,
+                1_375_234_661
+            )
+        );
+        uint256 e1 = harness.ext8Pack(_coeffs8(17, 29, 43, 71, 113, 127, 131, 137));
+        uint256 e2 = harness.ext8Pack(_coeffs8(139, 149, 157, 163, 173, 181, 191, 193));
+        uint256 r = harness.ext8Pack(_coeffs8(199, 211, 223, 227, 229, 233, 239, 241));
+
+        assertTrue(harness.ext8Extrapolate012(e0, e1, e2, r) != 0);
+    }
+
+    function testGasExt8Extrapolate012FromSumcheck() external view {
+        uint256 c0 = harness.ext8Pack(
+            _coeffs8(
+                1_183_641_764,
+                916_668_484,
+                1_662_695_301,
+                1_758_839_722,
+                1_364_968_108,
+                932_085_352,
+                580_647_060,
+                1_375_234_661
+            )
+        );
+        uint256 delta = harness.ext8Pack(_coeffs8(17, 29, 43, 71, 113, 127, 131, 137));
+        uint256 claimedEval = harness.ext8Add(c0, delta);
+        uint256 c2 = harness.ext8Pack(_coeffs8(139, 149, 157, 163, 173, 181, 191, 193));
+        uint256 r = harness.ext8Pack(_coeffs8(199, 211, 223, 227, 229, 233, 239, 241));
+
+        assertTrue(harness.ext8Extrapolate012FromSumcheck(c0, claimedEval, c2, r) != 0);
+    }
+
+    function testGasEvaluateHypercubeExt8Dim6() external view {
+        uint256[] memory evals = new uint256[](64);
+        for (uint256 i = 0; i < 64; ++i) {
+            evals[i] = harness.ext8Pack(
+                _coeffs8(i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8)
             );
+        }
+
+        uint256[] memory point = new uint256[](6);
+        point[0] = _extConst8(3);
+        point[1] = _extConst8(5);
+        point[2] = _extConst8(7);
+        point[3] = _extConst8(11);
+        point[4] = _extConst8(13);
+        point[5] = _extConst8(17);
+
+        assertTrue(harness.ext8EvaluateHypercube(evals, point) != 0);
     }
 
-    function _helperVectorExists(
-        string memory family,
-        uint256 index,
-        string memory fieldSuffix
-    ) internal view returns (bool) {
-        return
-            vectorsJson.keyExists(
-                string.concat(_vectorPrefix(family, index), fieldSuffix)
-            );
-    }
-
-    function _vectorPrefix(
-        string memory family,
-        uint256 index
-    ) internal pure returns (string memory) {
-        return string.concat(".", family, "[", vm.toString(index), "]");
-    }
-
-    function _scaleCoeffs(
-        uint256[] memory coeffs,
-        uint256 scalar
-    ) internal view returns (uint256[] memory out) {
+    function _scaleCoeffs(uint256[] memory coeffs, uint256 scalar)
+        internal
+        view
+        returns (uint256[] memory out)
+    {
         out = new uint256[](coeffs.length);
         for (uint256 i = 0; i < coeffs.length; ++i) {
             out[i] = harness.baseMul(coeffs[i], scalar);
         }
     }
 
-    function _assertEqArray(
-        uint256[] memory lhs,
-        uint256[] memory rhs
-    ) internal pure {
+    function _assertEqArray(uint256[] memory lhs, uint256[] memory rhs) internal pure {
         assertEq(lhs.length, rhs.length);
         for (uint256 i = 0; i < lhs.length; ++i) {
             assertEq(lhs[i], rhs[i]);
         }
     }
 
-    function _bytes32ArrayToUintArray(
-        bytes32[] memory values
-    ) internal pure returns (uint256[] memory out) {
-        out = new uint256[](values.length);
-        for (uint256 i = 0; i < values.length; ++i) {
-            out[i] = uint256(values[i]);
-        }
-    }
-
-    function _coeffs4(
-        uint256 a0,
-        uint256 a1,
-        uint256 a2,
-        uint256 a3
-    ) internal pure returns (uint256[] memory out) {
+    function _coeffs4(uint256 a0, uint256 a1, uint256 a2, uint256 a3)
+        internal
+        pure
+        returns (uint256[] memory out)
+    {
         out = new uint256[](4);
         out[0] = a0;
         out[1] = a1;
@@ -660,6 +709,18 @@ contract FieldArithmeticTest is Test {
         out[5] = a5;
         out[6] = a6;
         out[7] = a7;
+    }
+
+    function _pseudoRandomExt8(uint256 seed) internal pure returns (uint256 packed) {
+        uint256 modulus = 0x7f000001;
+        packed = (uint256(keccak256(abi.encodePacked(seed, uint256(0)))) % modulus) << 224
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(1)))) % modulus) << 192
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(2)))) % modulus) << 160
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(3)))) % modulus) << 128
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(4)))) % modulus) << 96
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(5)))) % modulus) << 64
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(6)))) % modulus) << 32
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(7)))) % modulus);
     }
 
     function _extConst4(uint256 scalar) internal pure returns (uint256) {

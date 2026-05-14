@@ -1,0 +1,42 @@
+{
+  "foundry_version": "1.5.1-stable",
+  "foundry_commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+  "eip1108_gas_per_microsecond": 25.86,
+  "safety_multiplier": 8.0,
+  "min_realistic_effective_gas": 700,
+  "samples": 101,
+  "ops_per_sample": 1024,
+  "vector_seed": 16771504454010951288,
+  "ext5_mul": {
+    "median_runtime_ns": 7,
+    "assigned_base_gas": 50
+  },
+  "ext5_square": {
+    "median_runtime_ns": 7,
+    "assigned_base_gas": 50
+  },
+  "ext5_add": {
+    "median_runtime_ns": 2,
+    "assigned_base_gas": 50
+  },
+  "ext5_sub": {
+    "median_runtime_ns": 2,
+    "assigned_base_gas": 50
+  },
+  "ext5_mul_base": {
+    "median_runtime_ns": 2,
+    "assigned_base_gas": 50
+  },
+  "ext5_mul_batch": {
+    "median_runtime_ns": 7,
+    "assigned_base_gas": 50
+  },
+  "ext5_square_batch": {
+    "median_runtime_ns": 7,
+    "assigned_base_gas": 50
+  },
+  "ext5_mul_base_batch": {
+    "median_runtime_ns": 4,
+    "assigned_base_gas": 50
+  }
+}
