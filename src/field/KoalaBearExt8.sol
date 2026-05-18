@@ -650,73 +650,65 @@ library KoalaBearExt8 {
     }
 
     function _squarePacked(uint256 a) internal pure returns (uint256 out) {
-        uint256 a0 = a >> 224;
-        uint256 a1 = (a >> 192) & COEFF_MASK;
-        uint256 a2 = (a >> 160) & COEFF_MASK;
-        uint256 a3 = (a >> 128) & COEFF_MASK;
-        uint256 a4 = (a >> 96) & COEFF_MASK;
-        uint256 a5 = (a >> 64) & COEFF_MASK;
-        uint256 a6 = (a >> 32) & COEFF_MASK;
-        uint256 a7 = a & COEFF_MASK;
+        assembly ("memory-safe") {
+            let M := 0x7f000001
 
-        unchecked {
-            uint256 a0a0 = a0 * a0;
-            uint256 a0a1 = a0 * a1;
-            uint256 a0a2 = a0 * a2;
-            uint256 a0a3 = a0 * a3;
-            uint256 a0a4 = a0 * a4;
-            uint256 a0a5 = a0 * a5;
-            uint256 a0a6 = a0 * a6;
-            uint256 a0a7 = a0 * a7;
-            uint256 a1a1 = a1 * a1;
-            uint256 a1a2 = a1 * a2;
-            uint256 a1a3 = a1 * a3;
-            uint256 a1a4 = a1 * a4;
-            uint256 a1a5 = a1 * a5;
-            uint256 a1a6 = a1 * a6;
-            uint256 a1a7 = a1 * a7;
-            uint256 a2a2 = a2 * a2;
-            uint256 a2a3 = a2 * a3;
-            uint256 a2a4 = a2 * a4;
-            uint256 a2a5 = a2 * a5;
-            uint256 a2a6 = a2 * a6;
-            uint256 a2a7 = a2 * a7;
-            uint256 a3a3 = a3 * a3;
-            uint256 a3a4 = a3 * a4;
-            uint256 a3a5 = a3 * a5;
-            uint256 a3a6 = a3 * a6;
-            uint256 a3a7 = a3 * a7;
-            uint256 a4a4 = a4 * a4;
-            uint256 a4a5 = a4 * a5;
-            uint256 a4a6 = a4 * a6;
-            uint256 a4a7 = a4 * a7;
-            uint256 a5a5 = a5 * a5;
-            uint256 a5a6 = a5 * a6;
-            uint256 a5a7 = a5 * a7;
-            uint256 a6a6 = a6 * a6;
-            uint256 a6a7 = a6 * a7;
-            uint256 a7a7 = a7 * a7;
+            let e0 := shr(224, a)
+            let o0 := and(shr(192, a), 0xffffffff)
+            let e1 := and(shr(160, a), 0xffffffff)
+            let o1 := and(shr(128, a), 0xffffffff)
+            let e2 := and(shr(96, a), 0xffffffff)
+            let o2 := and(shr(64, a), 0xffffffff)
+            let e3 := and(shr(32, a), 0xffffffff)
+            let o3 := and(a, 0xffffffff)
 
-            uint256 c0 = a0a0 + 3 * ((2 * a1a7) + (2 * a2a6) + (2 * a3a5) + a4a4);
-            uint256 c1 = (2 * a0a1) + 3 * ((2 * a2a7) + (2 * a3a6) + (2 * a4a5));
-            uint256 c2 = (2 * a0a2) + a1a1 + 3 * ((2 * a3a7) + (2 * a4a6) + a5a5);
-            uint256 c3 = (2 * a0a3) + (2 * a1a2) + 3 * ((2 * a4a7) + (2 * a5a6));
-            uint256 c4 = (2 * a0a4) + (2 * a1a3) + a2a2 + 3 * ((2 * a5a7) + a6a6);
-            uint256 c5 = (2 * a0a5) + (2 * a1a4) + (2 * a2a3) + 3 * (2 * a6a7);
-            uint256 c6 = (2 * a0a6) + (2 * a1a5) + (2 * a2a4) + a3a3 + 3 * a7a7;
-            uint256 c7 = (2 * a0a7) + (2 * a1a6) + (2 * a2a5) + (2 * a3a4);
+            let e0e0 := mul(e0, e0)
+            let e0e1 := mul(e0, e1)
+            let e0e2 := mul(e0, e2)
+            let e0e3 := mul(e0, e3)
+            let e1e1 := mul(e1, e1)
+            let e1e2 := mul(e1, e2)
+            let e1e3 := mul(e1, e3)
+            let e2e2 := mul(e2, e2)
+            let e2e3 := mul(e2, e3)
+            let e3e3 := mul(e3, e3)
 
-            c0 %= KoalaBear.MODULUS;
-            c1 %= KoalaBear.MODULUS;
-            c2 %= KoalaBear.MODULUS;
-            c3 %= KoalaBear.MODULUS;
-            c4 %= KoalaBear.MODULUS;
-            c5 %= KoalaBear.MODULUS;
-            c6 %= KoalaBear.MODULUS;
-            c7 %= KoalaBear.MODULUS;
+            let se0 := add(e0e0, mul(3, add(e2e2, mul(2, e1e3))))
+            let se1 := add(mul(2, e0e1), mul(3, mul(2, e2e3)))
+            let se2 := add(add(mul(2, e0e2), e1e1), mul(3, e3e3))
+            let se3 := add(mul(2, e0e3), mul(2, e1e2))
 
-            out = (c0 << 224) | (c1 << 192) | (c2 << 160) | (c3 << 128) | (c4 << 96) | (c5 << 64)
-                | (c6 << 32) | c7;
+            let o0o0 := mul(o0, o0)
+            let o0o1 := mul(o0, o1)
+            let o0o2 := mul(o0, o2)
+            let o0o3 := mul(o0, o3)
+            let o1o1 := mul(o1, o1)
+            let o1o2 := mul(o1, o2)
+            let o1o3 := mul(o1, o3)
+            let o2o2 := mul(o2, o2)
+            let o2o3 := mul(o2, o3)
+            let o3o3 := mul(o3, o3)
+
+            let so0 := add(o0o0, mul(3, add(o2o2, mul(2, o1o3))))
+            let so1 := add(mul(2, o0o1), mul(3, mul(2, o2o3)))
+            let so2 := add(add(mul(2, o0o2), o1o1), mul(3, o3o3))
+            let so3 := add(mul(2, o0o3), mul(2, o1o2))
+
+            let eo0 := add(mul(e0, o0), mul(3, add(add(mul(e1, o3), mul(e2, o2)), mul(e3, o1))))
+            let eo1 := add(add(mul(e0, o1), mul(e1, o0)), mul(3, add(mul(e2, o3), mul(e3, o2))))
+            let eo2 := add(add(add(mul(e0, o2), mul(e1, o1)), mul(e2, o0)), mul(3, mul(e3, o3)))
+            let eo3 := add(add(mul(e0, o3), mul(e1, o2)), add(mul(e2, o1), mul(e3, o0)))
+
+            out := or(
+                or(
+                    or(shl(224, mod(add(se0, mul(3, so3)), M)), shl(192, mod(mul(2, eo0), M))),
+                    or(shl(160, mod(add(se1, so0), M)), shl(128, mod(mul(2, eo1), M)))
+                ),
+                or(
+                    or(shl(96, mod(add(se2, so1), M)), shl(64, mod(mul(2, eo2), M))),
+                    or(shl(32, mod(add(se3, so2), M)), mod(mul(2, eo3), M))
+                )
+            )
         }
     }
 

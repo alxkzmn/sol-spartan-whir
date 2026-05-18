@@ -1054,12 +1054,12 @@ contract Ext8PrecompileHarness {
     {
         _checkRowsLength(rows);
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
 
         bytes32 hashAcc;
         unchecked {
             for (uint256 offset = 0; offset < rows.length; offset += EXT8_ROW_BYTES) {
-                (bytes32 digest, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
+                (bytes32 digest, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobTowerPackedPoints(
                     rows, offset, eqWeightsPtr
                 );
                 hashAcc = bytes32(uint256(hashAcc) ^ uint256(digest));

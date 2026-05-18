@@ -210,7 +210,7 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
 
         unchecked {
             uint256 prevIdx;
@@ -222,7 +222,7 @@ library WhirVerifierCore8 {
                 prevIdx = idx;
 
                 uint256 rowOffset = valuesOffset + i * 512;
-                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
+                (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobTowerPackedPoints(
                     blob, rowOffset, eqWeightsPtr
                 );
                 rowEvals[i] = evalValue;
@@ -562,9 +562,7 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(frontierEntries, 0x20), shl(5, numQueries)))
         }
 
-        uint256 eqWeightsPtr = expectedKind == 0
-            ? WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3)
-            : WhirVerifierUtils8._computeDim4EqWeightsUnpacked(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
 
         unchecked {
             uint256 rowOffset;
@@ -609,7 +607,7 @@ library WhirVerifierCore8 {
                     nextHigher = idx;
                     rowOffset -= 512;
 
-                    (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobUnpacked(
+                    (bytes32 hash, uint256 evalValue) = WhirVerifierUtils8._hashAndEvaluateExtensionRowDim4BlobTowerPackedPoints(
                         blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
@@ -1885,18 +1883,18 @@ library WhirVerifierCore8 {
                     )
                 }
 
-                statementEq = KoalaBearExt8.mul(statementEq, _eqTerm(statementPointValue, q));
-                initialEq = KoalaBearExt8.mul(initialEq, _eqTerm(initialCurrent, q));
+                statementEq = _mulEqTermTower(statementEq, statementPointValue, q);
+                initialEq = _mulEqTermTower(initialEq, initialCurrent, q);
                 initialCurrent = KoalaBearExt8.square(initialCurrent);
 
                 if (i > 4) {
-                    round0Eq = KoalaBearExt8.mul(round0Eq, _eqTerm(round0Current, q));
+                    round0Eq = _mulEqTermTower(round0Eq, round0Current, q);
                     round0Current = KoalaBearExt8.square(round0Current);
                     if (i > 8) {
-                        round1Eq = KoalaBearExt8.mul(round1Eq, _eqTerm(round1Current, q));
+                        round1Eq = _mulEqTermTower(round1Eq, round1Current, q);
                         round1Current = KoalaBearExt8.square(round1Current);
                         if (i > 12) {
-                            round2Eq = KoalaBearExt8.mul(round2Eq, _eqTerm(round2Current, q));
+                            round2Eq = _mulEqTermTower(round2Eq, round2Current, q);
                             round2Current = KoalaBearExt8.square(round2Current);
                         }
                     }
@@ -2008,7 +2006,7 @@ library WhirVerifierCore8 {
             for (uint256 i = 24; i > 0; --i) {
                 total = _hornerStepWithChallengeCoeffs(
                     total,
-                    _selectPolyEvalAt18At4(selVars[i - 1], fullPoint),
+                    _selectPolyEvalAtOffsetTower(selVars[i - 1], fullPoint, 0x80, 18),
                     ch0,
                     ch1,
                     ch2,
@@ -2063,7 +2061,7 @@ library WhirVerifierCore8 {
             for (uint256 i = 16; i > 0; --i) {
                 total = _hornerStepWithChallengeCoeffs(
                     total,
-                    _selectPolyEvalAt14At8(selVars[i - 1], fullPoint),
+                    _selectPolyEvalAtOffsetTower(selVars[i - 1], fullPoint, 0x100, 14),
                     ch0,
                     ch1,
                     ch2,
@@ -2118,7 +2116,7 @@ library WhirVerifierCore8 {
             for (uint256 i = 12; i > 0; --i) {
                 total = _hornerStepWithChallengeCoeffs(
                     total,
-                    _selectPolyEvalAt10At12(selVars[i - 1], fullPoint),
+                    _selectPolyEvalAtOffsetTower(selVars[i - 1], fullPoint, 0x180, 10),
                     ch0,
                     ch1,
                     ch2,
@@ -2134,206 +2132,23 @@ library WhirVerifierCore8 {
             _hornerStepWithChallengeCoeffs(total, eqEval, ch0, ch1, ch2, ch3, ch4, ch5, ch6, ch7);
     }
 
-    function _selectPolyEvalAt18At4(uint256 var_, uint256[] memory fullPoint)
-        internal
-        pure
-        returns (uint256 acc)
-    {
+    function _selectPolyEvalAtOffsetTower(
+        uint256 var_,
+        uint256[] memory fullPoint,
+        uint256 pointOffsetBytes,
+        uint256 numVariables
+    ) internal pure returns (uint256 acc) {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
             let mask := 0xffffffff
-            let w := 3
 
-            let a0 := 1
-            let a1 := 0
-            let a2 := 0
-            let a3 := 0
-            let a4 := 0
-            let a5 := 0
-            let a6 := 0
-            let a7 := 0
-            let current := var_
-            let pointBase := add(add(fullPoint, 0x20), 0x80)
-
-            for { let i := 18 } gt(i, 0) { i := sub(i, 1) } {
-                let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
-                let scalar := sub(current, 1)
-                if iszero(current) { scalar := sub(modulus, 1) }
-
-                let p0 := shr(224, pointValue)
-                let p1 := and(shr(192, pointValue), mask)
-                let p2 := and(shr(160, pointValue), mask)
-                let p3 := and(shr(128, pointValue), mask)
-                let p4 := and(shr(96, pointValue), mask)
-                let p5 := and(shr(64, pointValue), mask)
-                let p6 := and(shr(32, pointValue), mask)
-                let p7 := and(pointValue, mask)
-
-                let t0 := add(1, mul(scalar, p0))
-                let t1 := mul(scalar, p1)
-                let t2 := mul(scalar, p2)
-                let t3 := mul(scalar, p3)
-                let t4 := mul(scalar, p4)
-                let t5 := mul(scalar, p5)
-                let t6 := mul(scalar, p6)
-                let t7 := mul(scalar, p7)
-
-                let n0 :=
-                    mod(
-                        add(
-                            mul(a0, t0),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a1, t7), mul(a2, t6)),
-                                        add(mul(a3, t5), mul(a4, t4))
-                                    ),
-                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n1 :=
-                    mod(
-                        add(
-                            add(mul(a0, t1), mul(a1, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a2, t7), mul(a3, t6)),
-                                        add(mul(a4, t5), mul(a5, t4))
-                                    ),
-                                    add(mul(a6, t3), mul(a7, t2))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n2 :=
-                    mod(
-                        add(
-                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(mul(a3, t7), mul(a4, t6)),
-                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n3 :=
-                    mod(
-                        add(
-                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
-                            mul(
-                                w,
-                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
-                            )
-                        ),
-                        modulus
-                    )
-                let n4 :=
-                    mod(
-                        add(
-                            add(
-                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
-                                mul(a4, t0)
-                            ),
-                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
-                        ),
-                        modulus
-                    )
-                let n5 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
-                                        mul(a3, t2)
-                                    ),
-                                    mul(a4, t1)
-                                ),
-                                mul(a5, t0)
-                            ),
-                            mul(w, add(mul(a6, t7), mul(a7, t6)))
-                        ),
-                        modulus
-                    )
-                let n6 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
-                                            mul(a3, t3)
-                                        ),
-                                        mul(a4, t2)
-                                    ),
-                                    mul(a5, t1)
-                                ),
-                                mul(a6, t0)
-                            ),
-                            mul(w, mul(a7, t7))
-                        ),
-                        modulus
-                    )
-                let n7 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
-                                            mul(a3, t4)
-                                        ),
-                                        mul(a4, t3)
-                                    ),
-                                    mul(a5, t2)
-                                ),
-                                mul(a6, t1)
-                            ),
-                            mul(a7, t0)
-                        ),
-                        modulus
-                    )
-
-                a0 := n0
-                a1 := n1
-                a2 := n2
-                a3 := n3
-                a4 := n4
-                a5 := n5
-                a6 := n6
-                a7 := n7
-                current := mulmod(current, current, modulus)
+            function qmul4(a0, a1, a2, a3, b0, b1, b2, b3) -> c0, c1, c2, c3 {
+                c0 := add(mul(a0, b0), mul(3, add(add(mul(a1, b3), mul(a2, b2)), mul(a3, b1))))
+                c1 := add(add(mul(a0, b1), mul(a1, b0)), mul(3, add(mul(a2, b3), mul(a3, b2))))
+                c2 := add(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), mul(3, mul(a3, b3)))
+                c3 := add(add(mul(a0, b3), mul(a1, b2)), add(mul(a2, b1), mul(a3, b0)))
             }
 
-            acc := or(
-                or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3))),
-                or(or(shl(96, a4), shl(64, a5)), or(shl(32, a6), a7))
-            )
-        }
-    }
-
-    function _selectPolyEvalAt14At8(uint256 var_, uint256[] memory fullPoint)
-        internal
-        pure
-        returns (uint256 acc)
-    {
-        assembly ("memory-safe") {
-            let modulus := 0x7f000001
-            let mask := 0xffffffff
-            let w := 3
-
             let a0 := 1
             let a1 := 0
             let a2 := 0
@@ -2343,9 +2158,9 @@ library WhirVerifierCore8 {
             let a6 := 0
             let a7 := 0
             let current := var_
-            let pointBase := add(add(fullPoint, 0x20), 0x100)
+            let pointBase := add(add(fullPoint, 0x20), pointOffsetBytes)
 
-            for { let i := 14 } gt(i, 0) { i := sub(i, 1) } {
+            for { let i := numVariables } gt(i, 0) { i := sub(i, 1) } {
                 let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
                 let scalar := sub(current, 1)
                 if iszero(current) { scalar := sub(modulus, 1) }
@@ -2359,341 +2174,37 @@ library WhirVerifierCore8 {
                 let p6 := and(shr(32, pointValue), mask)
                 let p7 := and(pointValue, mask)
 
-                let t0 := add(1, mul(scalar, p0))
-                let t1 := mul(scalar, p1)
-                let t2 := mul(scalar, p2)
-                let t3 := mul(scalar, p3)
-                let t4 := mul(scalar, p4)
-                let t5 := mul(scalar, p5)
-                let t6 := mul(scalar, p6)
-                let t7 := mul(scalar, p7)
+                let b0 := add(1, mul(scalar, p0))
+                let b1 := mul(scalar, p1)
+                let b2 := mul(scalar, p2)
+                let b3 := mul(scalar, p3)
+                let b4 := mul(scalar, p4)
+                let b5 := mul(scalar, p5)
+                let b6 := mul(scalar, p6)
+                let b7 := mul(scalar, p7)
 
-                let n0 :=
-                    mod(
-                        add(
-                            mul(a0, t0),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a1, t7), mul(a2, t6)),
-                                        add(mul(a3, t5), mul(a4, t4))
-                                    ),
-                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n1 :=
-                    mod(
-                        add(
-                            add(mul(a0, t1), mul(a1, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a2, t7), mul(a3, t6)),
-                                        add(mul(a4, t5), mul(a5, t4))
-                                    ),
-                                    add(mul(a6, t3), mul(a7, t2))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n2 :=
-                    mod(
-                        add(
-                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(mul(a3, t7), mul(a4, t6)),
-                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n3 :=
-                    mod(
-                        add(
-                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
-                            mul(
-                                w,
-                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
-                            )
-                        ),
-                        modulus
-                    )
-                let n4 :=
-                    mod(
-                        add(
-                            add(
-                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
-                                mul(a4, t0)
-                            ),
-                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
-                        ),
-                        modulus
-                    )
-                let n5 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
-                                        mul(a3, t2)
-                                    ),
-                                    mul(a4, t1)
-                                ),
-                                mul(a5, t0)
-                            ),
-                            mul(w, add(mul(a6, t7), mul(a7, t6)))
-                        ),
-                        modulus
-                    )
-                let n6 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
-                                            mul(a3, t3)
-                                        ),
-                                        mul(a4, t2)
-                                    ),
-                                    mul(a5, t1)
-                                ),
-                                mul(a6, t0)
-                            ),
-                            mul(w, mul(a7, t7))
-                        ),
-                        modulus
-                    )
-                let n7 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
-                                            mul(a3, t4)
-                                        ),
-                                        mul(a4, t3)
-                                    ),
-                                    mul(a5, t2)
-                                ),
-                                mul(a6, t1)
-                            ),
-                            mul(a7, t0)
-                        ),
-                        modulus
+                let z00, z01, z02, z03 := qmul4(a0, a2, a4, a6, b0, b2, b4, b6)
+                let z20, z21, z22, z23 := qmul4(a1, a3, a5, a7, b1, b3, b5, b7)
+                let s0, s1, s2, s3 :=
+                    qmul4(
+                        add(a0, a1),
+                        add(a2, a3),
+                        add(a4, a5),
+                        add(a6, a7),
+                        add(b0, b1),
+                        add(b2, b3),
+                        add(b4, b5),
+                        add(b6, b7)
                     )
 
-                a0 := n0
-                a1 := n1
-                a2 := n2
-                a3 := n3
-                a4 := n4
-                a5 := n5
-                a6 := n6
-                a7 := n7
-                current := mulmod(current, current, modulus)
-            }
-
-            acc := or(
-                or(or(shl(224, a0), shl(192, a1)), or(shl(160, a2), shl(128, a3))),
-                or(or(shl(96, a4), shl(64, a5)), or(shl(32, a6), a7))
-            )
-        }
-    }
-
-    function _selectPolyEvalAt10At12(uint256 var_, uint256[] memory fullPoint)
-        internal
-        pure
-        returns (uint256 acc)
-    {
-        assembly ("memory-safe") {
-            let modulus := 0x7f000001
-            let mask := 0xffffffff
-            let w := 3
-
-            let a0 := 1
-            let a1 := 0
-            let a2 := 0
-            let a3 := 0
-            let a4 := 0
-            let a5 := 0
-            let a6 := 0
-            let a7 := 0
-            let current := var_
-            let pointBase := add(add(fullPoint, 0x20), 0x180)
-
-            for { let i := 10 } gt(i, 0) { i := sub(i, 1) } {
-                let pointValue := mload(add(pointBase, shl(5, sub(i, 1))))
-                let scalar := sub(current, 1)
-                if iszero(current) { scalar := sub(modulus, 1) }
-
-                let p0 := shr(224, pointValue)
-                let p1 := and(shr(192, pointValue), mask)
-                let p2 := and(shr(160, pointValue), mask)
-                let p3 := and(shr(128, pointValue), mask)
-                let p4 := and(shr(96, pointValue), mask)
-                let p5 := and(shr(64, pointValue), mask)
-                let p6 := and(shr(32, pointValue), mask)
-                let p7 := and(pointValue, mask)
-
-                let t0 := add(1, mul(scalar, p0))
-                let t1 := mul(scalar, p1)
-                let t2 := mul(scalar, p2)
-                let t3 := mul(scalar, p3)
-                let t4 := mul(scalar, p4)
-                let t5 := mul(scalar, p5)
-                let t6 := mul(scalar, p6)
-                let t7 := mul(scalar, p7)
-
-                let n0 :=
-                    mod(
-                        add(
-                            mul(a0, t0),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a1, t7), mul(a2, t6)),
-                                        add(mul(a3, t5), mul(a4, t4))
-                                    ),
-                                    add(add(mul(a5, t3), mul(a6, t2)), mul(a7, t1))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n1 :=
-                    mod(
-                        add(
-                            add(mul(a0, t1), mul(a1, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(
-                                        add(mul(a2, t7), mul(a3, t6)),
-                                        add(mul(a4, t5), mul(a5, t4))
-                                    ),
-                                    add(mul(a6, t3), mul(a7, t2))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n2 :=
-                    mod(
-                        add(
-                            add(add(mul(a0, t2), mul(a1, t1)), mul(a2, t0)),
-                            mul(
-                                w,
-                                add(
-                                    add(mul(a3, t7), mul(a4, t6)),
-                                    add(mul(a5, t5), add(mul(a6, t4), mul(a7, t3)))
-                                )
-                            )
-                        ),
-                        modulus
-                    )
-                let n3 :=
-                    mod(
-                        add(
-                            add(add(add(mul(a0, t3), mul(a1, t2)), mul(a2, t1)), mul(a3, t0)),
-                            mul(
-                                w,
-                                add(add(mul(a4, t7), mul(a5, t6)), add(mul(a6, t5), mul(a7, t4)))
-                            )
-                        ),
-                        modulus
-                    )
-                let n4 :=
-                    mod(
-                        add(
-                            add(
-                                add(add(add(mul(a0, t4), mul(a1, t3)), mul(a2, t2)), mul(a3, t1)),
-                                mul(a4, t0)
-                            ),
-                            mul(w, add(add(mul(a5, t7), mul(a6, t6)), mul(a7, t5)))
-                        ),
-                        modulus
-                    )
-                let n5 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(add(mul(a0, t5), mul(a1, t4)), mul(a2, t3)),
-                                        mul(a3, t2)
-                                    ),
-                                    mul(a4, t1)
-                                ),
-                                mul(a5, t0)
-                            ),
-                            mul(w, add(mul(a6, t7), mul(a7, t6)))
-                        ),
-                        modulus
-                    )
-                let n6 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t6), mul(a1, t5)), mul(a2, t4)),
-                                            mul(a3, t3)
-                                        ),
-                                        mul(a4, t2)
-                                    ),
-                                    mul(a5, t1)
-                                ),
-                                mul(a6, t0)
-                            ),
-                            mul(w, mul(a7, t7))
-                        ),
-                        modulus
-                    )
-                let n7 :=
-                    mod(
-                        add(
-                            add(
-                                add(
-                                    add(
-                                        add(
-                                            add(add(mul(a0, t7), mul(a1, t6)), mul(a2, t5)),
-                                            mul(a3, t4)
-                                        ),
-                                        mul(a4, t3)
-                                    ),
-                                    mul(a5, t2)
-                                ),
-                                mul(a6, t1)
-                            ),
-                            mul(a7, t0)
-                        ),
-                        modulus
-                    )
-
-                a0 := n0
-                a1 := n1
-                a2 := n2
-                a3 := n3
-                a4 := n4
-                a5 := n5
-                a6 := n6
-                a7 := n7
+                a0 := mod(add(z00, mul(3, z23)), modulus)
+                a1 := mod(sub(sub(s0, z00), z20), modulus)
+                a2 := mod(add(z01, z20), modulus)
+                a3 := mod(sub(sub(s1, z01), z21), modulus)
+                a4 := mod(add(z02, z21), modulus)
+                a5 := mod(sub(sub(s2, z02), z22), modulus)
+                a6 := mod(add(z03, z22), modulus)
+                a7 := mod(sub(sub(s3, z03), z23), modulus)
                 current := mulmod(current, current, modulus)
             }
 
@@ -3046,27 +2557,6 @@ library WhirVerifierCore8 {
         );
     }
 
-    function _selectPolyEvalFixed(
-        uint256 var_,
-        uint256[] memory fullPoint,
-        uint256 pointOffset,
-        uint256 numVariables
-    ) internal pure returns (uint256 acc) {
-        acc = KoalaBearExt8.ONE;
-        uint256 current = var_;
-
-        unchecked {
-            for (uint256 i = numVariables; i > 0; --i) {
-                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
-                uint256 term = KoalaBearExt8.add(
-                    KoalaBearExt8.ONE, KoalaBearExt8.mulBase(fullPoint[pointOffset + i - 1], scalar)
-                );
-                acc = KoalaBearExt8.mul(acc, term);
-                current = KoalaBear.mul(current, current);
-            }
-        }
-    }
-
     function _hornerStep(uint256 total, uint256 challenge, uint256 weight)
         internal
         pure
@@ -3267,6 +2757,127 @@ library WhirVerifierCore8 {
             out := or(
                 or(or(shl(224, c0), shl(192, c1)), or(shl(160, c2), shl(128, c3))),
                 or(or(shl(96, c4), shl(64, c5)), or(shl(32, c6), c7))
+            )
+        }
+    }
+
+    function _mulEqTermTower(uint256 acc, uint256 p, uint256 q)
+        internal
+        pure
+        returns (uint256 out)
+    {
+        // Bounds: emul(p, q) leaves each lane around 2^65 before the eq-term
+        // reduction. The term lanes are reduced before the second emul; even
+        // the unreduced qmul4 sums stay far below 2^256.
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let twoM := 0xfe000002
+            let mask := 0xffffffff
+
+            function qmul4(a0, a1, a2, a3, b0, b1, b2, b3) -> c0, c1, c2, c3 {
+                c0 := add(mul(a0, b0), mul(3, add(add(mul(a1, b3), mul(a2, b2)), mul(a3, b1))))
+                c1 := add(add(mul(a0, b1), mul(a1, b0)), mul(3, add(mul(a2, b3), mul(a3, b2))))
+                c2 := add(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), mul(3, mul(a3, b3)))
+                c3 := add(add(mul(a0, b3), mul(a1, b2)), add(mul(a2, b1), mul(a3, b0)))
+            }
+
+            function emul(a, b) -> r0, r1, r2, r3, r4, r5, r6, r7 {
+                let ae0 := shr(224, a)
+                let ao0 := and(shr(192, a), 0xffffffff)
+                let ae1 := and(shr(160, a), 0xffffffff)
+                let ao1 := and(shr(128, a), 0xffffffff)
+                let ae2 := and(shr(96, a), 0xffffffff)
+                let ao2 := and(shr(64, a), 0xffffffff)
+                let ae3 := and(shr(32, a), 0xffffffff)
+                let ao3 := and(a, 0xffffffff)
+
+                let be0 := shr(224, b)
+                let bo0 := and(shr(192, b), 0xffffffff)
+                let be1 := and(shr(160, b), 0xffffffff)
+                let bo1 := and(shr(128, b), 0xffffffff)
+                let be2 := and(shr(96, b), 0xffffffff)
+                let bo2 := and(shr(64, b), 0xffffffff)
+                let be3 := and(shr(32, b), 0xffffffff)
+                let bo3 := and(b, 0xffffffff)
+
+                let z00, z01, z02, z03 := qmul4(ae0, ae1, ae2, ae3, be0, be1, be2, be3)
+                let z20, z21, z22, z23 := qmul4(ao0, ao1, ao2, ao3, bo0, bo1, bo2, bo3)
+                let s0, s1, s2, s3 :=
+                    qmul4(
+                        add(ae0, ao0),
+                        add(ae1, ao1),
+                        add(ae2, ao2),
+                        add(ae3, ao3),
+                        add(be0, bo0),
+                        add(be1, bo1),
+                        add(be2, bo2),
+                        add(be3, bo3)
+                    )
+
+                r0 := add(z00, mul(3, z23))
+                r1 := sub(sub(s0, z00), z20)
+                r2 := add(z01, z20)
+                r3 := sub(sub(s1, z01), z21)
+                r4 := add(z02, z21)
+                r5 := sub(sub(s2, z02), z22)
+                r6 := add(z03, z22)
+                r7 := sub(sub(s3, z03), z23)
+            }
+
+            let m0, m1, m2, m3, m4, m5, m6, m7 := emul(p, q)
+
+            let p0 := shr(224, p)
+            let p1 := and(shr(192, p), mask)
+            let p2 := and(shr(160, p), mask)
+            let p3 := and(shr(128, p), mask)
+            let p4 := and(shr(96, p), mask)
+            let p5 := and(shr(64, p), mask)
+            let p6 := and(shr(32, p), mask)
+            let p7 := and(p, mask)
+
+            let q0 := shr(224, q)
+            let q1 := and(shr(192, q), mask)
+            let q2 := and(shr(160, q), mask)
+            let q3 := and(shr(128, q), mask)
+            let q4 := and(shr(96, q), mask)
+            let q5 := and(shr(64, q), mask)
+            let q6 := and(shr(32, q), mask)
+            let q7 := and(q, mask)
+
+            let t :=
+                or(
+                    or(
+                        or(
+                            shl(224, mod(add(add(shl(1, m0), 1), sub(twoM, add(p0, q0))), M)),
+                            shl(192, mod(add(shl(1, m1), sub(twoM, add(p1, q1))), M))
+                        ),
+                        or(
+                            shl(160, mod(add(shl(1, m2), sub(twoM, add(p2, q2))), M)),
+                            shl(128, mod(add(shl(1, m3), sub(twoM, add(p3, q3))), M))
+                        )
+                    ),
+                    or(
+                        or(
+                            shl(96, mod(add(shl(1, m4), sub(twoM, add(p4, q4))), M)),
+                            shl(64, mod(add(shl(1, m5), sub(twoM, add(p5, q5))), M))
+                        ),
+                        or(
+                            shl(32, mod(add(shl(1, m6), sub(twoM, add(p6, q6))), M)),
+                            mod(add(shl(1, m7), sub(twoM, add(p7, q7))), M)
+                        )
+                    )
+                )
+
+            let c0, c1, c2, c3, c4, c5, c6, c7 := emul(acc, t)
+            out := or(
+                or(
+                    or(shl(224, mod(c0, M)), shl(192, mod(c1, M))),
+                    or(shl(160, mod(c2, M)), shl(128, mod(c3, M)))
+                ),
+                or(
+                    or(shl(96, mod(c4, M)), shl(64, mod(c5, M))),
+                    or(shl(32, mod(c6, M)), mod(c7, M))
+                )
             )
         }
     }

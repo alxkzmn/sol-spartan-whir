@@ -94,7 +94,7 @@ Phase-level verifier cost across the checked-in high-security software native bl
 | Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |   R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
 | ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
 | quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,864` |         `27,353` |  `2,799` | `703,346` |    `27,243` |  `2,784` | `925,758` |    `27,301` |  `2,793` | `582,564` |    `27,209` |           `63,759` |  `669,008` |       `37,047` |           `1,512,664` |         `135,805` | `4,768,297` |
-| octic   | `k22_jb100_lir6_ff4_rsv1`            | `27,743` |         `44,430` |  `3,809` | `633,541` |    `44,318` |  `3,794` | `966,932` |    `44,315` |  `3,803` | `742,542` |    `44,318` |           `90,336` |  `905,340` |       `67,096` |           `2,584,127` |         `222,140` | `6,428,584` |
+| octic   | `k22_jb100_lir6_ff4_rsv1`            | `28,015` |         `44,354` |  `3,741` | `632,941` |    `44,318` |  `3,747` | `882,959` |    `44,312` |  `3,738` | `678,217` |    `44,309` |           `90,344` |  `850,870` |       `67,103` |           `1,948,563` |         `222,114` | `5,589,645` |
 
 The phase rows come from the native compare harness and the quintic gas-profile harness listed in [AGENTS.md](./AGENTS.md).
 
@@ -176,18 +176,24 @@ This repository also includes a separate octic standalone-WHIR configuration for
 - contract file: `src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol`
 - fixture family: `export-fixtures-octic-k22-jb100-lir6-ff4-rsv1`
 
-Metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
+Current Foundry metrics for `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`:
 
 | Metric                                                                       |          Value |
 | ---------------------------------------------------------------------------- | -------------: |
-| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `6,908,778` |
-| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `6,908,866` |
-| `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,847,475` |
-| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1`        |    `7,190,470` |
-| execution remainder                                                          |    `6,415,670` |
-| `verify(bytes32,bytes)` calldata bytes                                       |       `47,780` |
-| `verify(bytes32,bytes)` calldata gas                                         |      `753,800` |
-| success blob size                                                            | `47,666` bytes |
+| `WhirBlobVerifierNative8K22Jb100Test.testGasWhirVerifyBlobNativeFixed()`     |    `6,085,570` |
+| `WhirBlobVerifierNative8K22Jb100Test.testVerifyOcticWhirSuccessBlobNative()` |    `6,085,658` |
+| `WhirVerifier8K22Jb100Test.testGasWhirVerifyFixed()`                         |    `8,843,827` |
+| deployed bytecode                                                            | `37,794` bytes |
+
+Transaction/calldata metrics for the same proof blob:
+
+| Metric                                                                |          Value |
+| --------------------------------------------------------------------- | -------------: |
+| total tx gas from `WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1` |    `6,367,262` |
+| execution remainder                                                   |    `5,592,462` |
+| `verify(bytes32,bytes)` calldata bytes                                |       `47,780` |
+| `verify(bytes32,bytes)` calldata gas                                  |      `753,800` |
+| success blob size                                                     | `47,666` bytes |
 
 The calldata number above is the exact ABI-encoded call payload for `verify(bytes32,bytes)`: function selector, expected commitment, dynamic-bytes head, blob payload, and trailing padding.
 
@@ -196,11 +202,13 @@ The calldata number above is the exact ABI-encoded call payload for `verify(byte
 - The octic contract is `WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1`. Its external entrypoint is `verify(bytes32 expectedCommitment, bytes blob)`, and it reads the proof blob directly from calldata.
 - The STIR row kernel is specialized for `rowLen=16` and uses the combined blob-side hash-and-evaluate path with packed 20-byte frontier reduction.
 - Ext8 folding uses direct arithmetic kernels, including the Karatsuba-based `_foldOnceWithCoeffs(...)` implementation used in the contract.
-- Round-constraint accumulation uses fixed `18/14/10` select kernels and a fused ext8 equality-term path instead of the generic ext8 multiplication helpers in the shared verifier code.
+- `KoalaBearExt8.square` uses a fused tower-style implementation behind the existing packed ext8 API.
+- Extension-row STIR dot products use a local-values tower helper over the 16 packed row values and packed equality weights.
+- Round-constraint accumulation uses a tower helper for the fixed `18/14/10` select products instead of generic ext8 multiplication.
+- Fixed equality-term accumulation fuses `acc * eq(p, q)` into one tower helper.
 - Final STIR uses two fixed five-query checks for the `64`-coefficient final polynomial.
 - Final-value evaluation uses a fixed scratch-memory fold tree instead of a dynamic `evals` array.
-- Extension-row STIR dot products use lazy reduction across the 16 row values, avoiding a chain of packed ext8 multiply/add operations.
-- [whir_param_sweep.py](./whir_param_sweep.py) models this octic configuration, but its octic gas calibration row still uses `7,383,992`. The measured native blob gas is `6,908,778`, so the octic model row is not an exact anchor.
+- [whir_param_sweep.py](./whir_param_sweep.py) models this octic configuration, but its octic gas calibration row still uses `7,383,992`. The measured native blob gas is `6,085,570`, so the octic model row is not an exact anchor.
 
 #### Precompile-backed octic experiment
 
