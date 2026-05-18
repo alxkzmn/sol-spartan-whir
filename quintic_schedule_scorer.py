@@ -22,6 +22,13 @@ DEFAULT_TARGET_SECURITY_BITS = 100.0
 DEFAULT_TARGET_MERKLE_SECURITY_BITS = 80
 DEFAULT_MAX_DERIVED_POW_BITS = 30
 NATIVE_TX_GAS_SHORTLIST_SIZE = 5
+PLOT_MEASURED = "#0072B2"
+PLOT_INTERPOLATED = "#8A8A8A"
+PLOT_EXTRAPOLATED = "#E69F00"
+PLOT_TIMEOUT = "#D55E00"
+PLOT_CFSR_STROKE = "#CC79A7"
+PLOT_IMPLEMENTED = "#000000"
+PLOT_MODELED_FRONTIER = "#666666"
 
 CALIBRATION_BUCKETS = ("merkle", "folding", "transcript", "sumcheck", "calldata")
 # Folding is known to overestimate until we have an end-to-end WHIR-round
@@ -1847,13 +1854,20 @@ def write_svg_plot(
     if estimated_frontier_visible:
         parts.append(
             frontier_polyline(
-                estimated_frontier, x_key, y_key, sx, sy, "#777", "3 3", 0.5
+                estimated_frontier,
+                x_key,
+                y_key,
+                sx,
+                sy,
+                PLOT_MODELED_FRONTIER,
+                "3 3",
+                0.5,
             )
         )
     if len(measured_frontier) > 1:
         parts.append(
             frontier_polyline(
-                measured_frontier, x_key, y_key, sx, sy, "#1769aa", "", 0.8
+                measured_frontier, x_key, y_key, sx, sy, PLOT_MEASURED, "", 0.8
             )
         )
     label_frontier = (
@@ -1869,9 +1883,9 @@ def write_svg_plot(
         implemented = bool(point.get("implemented"))
         color = lir_marker_color(point) if report_mode else marker_color(point)
         stroke = (
-            "#7b2cbf"
+            PLOT_IMPLEMENTED
             if implemented
-            else ("#d17b00" if constant_from_second_round else "#333")
+            else (PLOT_CFSR_STROKE if constant_from_second_round else "#333")
         )
         stroke_width = "2.6" if implemented else "1"
         title = (
@@ -2140,23 +2154,23 @@ def marker_color(point: dict[str, Any]) -> str:
         return str(point["plot_highlight_color"])
     kind = point.get("prover_time_estimate_kind")
     if kind == "measured":
-        return "#1769aa"
+        return PLOT_MEASURED
     if kind == "timeout_cap":
-        return "#b3261e"
+        return PLOT_TIMEOUT
     if kind == "estimated_calibrated_log_ratio":
         if point.get("prover_estimator_extrapolation"):
-            return "#d17b00"
-        return "#8a8a8a"
+            return PLOT_EXTRAPOLATED
+        return PLOT_INTERPOLATED
     return "#bbbbbb"
 
 
 LIR_MARKER_COLORS = {
-    1: "#7f7f7f",
-    2: "#4c78a8",
-    3: "#f58518",
-    4: "#54a24b",
-    5: "#d62728",
-    6: "#9467bd",
+    1: "#666666",
+    2: "#0072B2",
+    3: "#E69F00",
+    4: "#009E73",
+    5: "#D55E00",
+    6: "#CC79A7",
 }
 
 
@@ -2164,7 +2178,7 @@ def lir_marker_color(point: dict[str, Any]) -> str:
     lir = point.get("starting_log_inv_rate")
     if isinstance(lir, int):
         return LIR_MARKER_COLORS.get(lir, "#8a8a8a")
-    return "#8a8a8a"
+    return PLOT_INTERPOLATED
 
 
 def pareto_frontier(
@@ -2201,25 +2215,25 @@ def plot_legend(
     if not report_mode:
         entries.extend(
             [
-                f'<circle cx="{x}" cy="28" r="4" fill="#1769aa" stroke="#333"/>',
+                f'<circle cx="{x}" cy="28" r="4" fill="{PLOT_MEASURED}" stroke="#333"/>',
                 f'<text x="{x + 12}" y="32">measured prover time</text>',
-                f'<circle cx="{x}" cy="48" r="4" fill="#8a8a8a" stroke="#333"/>',
+                f'<circle cx="{x}" cy="48" r="4" fill="{PLOT_INTERPOLATED}" stroke="#333"/>',
                 f'<text x="{x + 12}" y="52">interpolated</text>',
             ]
         )
         entries.extend(
             [
-                f'<circle cx="{x}" cy="68" r="4" fill="#d17b00" stroke="#333"/>',
+                f'<circle cx="{x}" cy="68" r="4" fill="{PLOT_EXTRAPOLATED}" stroke="#333"/>',
                 f'<text x="{x + 12}" y="72">estimated outside measured neighborhood</text>',
-                f'<circle cx="{x}" cy="88" r="4" fill="#b3261e" stroke="#333"/>',
+                f'<circle cx="{x}" cy="88" r="4" fill="{PLOT_TIMEOUT}" stroke="#333"/>',
                 f'<text x="{x + 12}" y="92">timed out at cap</text>',
-                f'<path d="M {x:.1f} 108 L {x+5:.1f} 113 L {x:.1f} 118 L {x-5:.1f} 113 Z" fill="#8a8a8a" stroke="#d17b00"/>',
+                f'<path d="M {x:.1f} 108 L {x+5:.1f} 113 L {x:.1f} 118 L {x-5:.1f} 113 Z" fill="{PLOT_INTERPOLATED}" stroke="{PLOT_CFSR_STROKE}"/>',
                 f'<text x="{x + 12}" y="117">ConstantFromSecondRound schedule</text>',
-                f'<line x1="{x - 4}" y1="134" x2="{x + 8}" y2="134" stroke="#1769aa" stroke-width="1.5"/>',
+                f'<line x1="{x - 4}" y1="134" x2="{x + 8}" y2="134" stroke="{PLOT_MEASURED}" stroke-width="1.5"/>',
                 f'<text x="{x + 12}" y="138">measured frontier</text>',
-                f'<line x1="{x - 4}" y1="154" x2="{x + 8}" y2="154" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
+                f'<line x1="{x - 4}" y1="154" x2="{x + 8}" y2="154" stroke="{PLOT_MODELED_FRONTIER}" stroke-width="1.5" stroke-dasharray="3 3"/>',
                 f'<text x="{x + 12}" y="158">modeled frontier</text>',
-                f'<circle cx="{x}" cy="178" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                f'<circle cx="{x}" cy="178" r="4" fill="white" stroke="{PLOT_IMPLEMENTED}" stroke-width="2.6"/>',
                 f'<text x="{x + 12}" y="182">implemented verifier target</text>',
                 f'<text x="{x - 8}" y="204" fill="#555">model is ordinal; see JSON for leave-one-out error</text>',
                 f'<text x="{x - 8}" y="222" fill="#555">final gas choice needs native tx measurement</text>',
@@ -2236,16 +2250,16 @@ def plot_legend(
         )
         entries.extend(
             [
-                f'<line x1="{x - 4}" y1="72" x2="{x + 8}" y2="72" stroke="#1769aa" stroke-width="1.5"/>',
+                f'<line x1="{x - 4}" y1="72" x2="{x + 8}" y2="72" stroke="{PLOT_MEASURED}" stroke-width="1.5"/>',
                 f'<text x="{x + 12}" y="76">measured frontier</text>',
             ]
         )
         if estimated_frontier_visible:
             entries.extend(
                 [
-                    f'<line x1="{x - 4}" y1="92" x2="{x + 8}" y2="92" stroke="#777" stroke-width="1.5" stroke-dasharray="3 3"/>',
+                    f'<line x1="{x - 4}" y1="92" x2="{x + 8}" y2="92" stroke="{PLOT_MODELED_FRONTIER}" stroke-width="1.5" stroke-dasharray="3 3"/>',
                     f'<text x="{x + 12}" y="96">measured + interpolated frontier</text>',
-                    f'<circle cx="{x}" cy="116" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                    f'<circle cx="{x}" cy="116" r="4" fill="white" stroke="{PLOT_IMPLEMENTED}" stroke-width="2.6"/>',
                     f'<text x="{x + 12}" y="120">implemented quintic verifier</text>',
                 ]
             )
@@ -2253,7 +2267,7 @@ def plot_legend(
         else:
             entries.extend(
                 [
-                    f'<circle cx="{x}" cy="96" r="4" fill="white" stroke="#7b2cbf" stroke-width="2.6"/>',
+                    f'<circle cx="{x}" cy="96" r="4" fill="white" stroke="{PLOT_IMPLEMENTED}" stroke-width="2.6"/>',
                     f'<text x="{x + 12}" y="100">implemented quintic verifier</text>',
                 ]
             )
@@ -2262,7 +2276,7 @@ def plot_legend(
             y = color_start_y + offset * 20
             entries.extend(
                 [
-                    f'<circle cx="{x}" cy="{y - 4}" r="4" fill="{LIR_MARKER_COLORS.get(lir, "#8a8a8a")}" stroke="#333"/>',
+                    f'<circle cx="{x}" cy="{y - 4}" r="4" fill="{LIR_MARKER_COLORS.get(lir, PLOT_INTERPOLATED)}" stroke="#333"/>',
                     f'<text x="{x + 12}" y="{y}">lir = {lir}</text>',
                 ]
             )
