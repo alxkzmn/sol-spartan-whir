@@ -1609,45 +1609,37 @@ library WhirVerifierUtils5 {
         uint256 r3,
         uint256 r4
     ) private pure returns (uint256 out) {
-        assembly ("memory-safe") {
-            let M := 0x7f000001
-            let m := 0xffffffff
+        unchecked {
+            uint256 a00 = a0 >> 224;
+            uint256 a01 = (a0 >> 192) & 0xffffffff;
+            uint256 a02 = (a0 >> 160) & 0xffffffff;
+            uint256 a03 = (a0 >> 128) & 0xffffffff;
+            uint256 a04 = (a0 >> 96) & 0xffffffff;
 
-            let a00 := shr(224, a0)
-            let a01 := and(shr(192, a0), m)
-            let a02 := and(shr(160, a0), m)
-            let a03 := and(shr(128, a0), m)
-            let a04 := and(shr(96, a0), m)
+            uint256 d0 = (a1 >> 224) + KoalaBear.MODULUS - a00;
+            uint256 d1 = ((a1 >> 192) & 0xffffffff) + KoalaBear.MODULUS - a01;
+            uint256 d2 = ((a1 >> 160) & 0xffffffff) + KoalaBear.MODULUS - a02;
+            uint256 d3 = ((a1 >> 128) & 0xffffffff) + KoalaBear.MODULUS - a03;
+            uint256 d4 = ((a1 >> 96) & 0xffffffff) + KoalaBear.MODULUS - a04;
 
-            let d0 := sub(add(shr(224, a1), M), a00)
-            let d1 := sub(add(and(shr(192, a1), m), M), a01)
-            let d2 := sub(add(and(shr(160, a1), m), M), a02)
-            let d3 := sub(add(and(shr(128, a1), m), M), a03)
-            let d4 := sub(add(and(shr(96, a1), m), M), a04)
+            uint256 c0 = r0 * d0;
+            uint256 c1 = r0 * d1 + r1 * d0;
+            uint256 c2 = r0 * d2 + r1 * d1 + r2 * d0;
+            uint256 c3 = r0 * d3 + r1 * d2 + r2 * d1 + r3 * d0;
+            uint256 c4 = r0 * d4 + r1 * d3 + r2 * d2 + r3 * d1 + r4 * d0;
+            uint256 c5 = r1 * d4 + r2 * d3 + r3 * d2 + r4 * d1;
+            uint256 c6 = r2 * d4 + r3 * d3 + r4 * d2;
+            uint256 c7 = r3 * d4 + r4 * d3;
+            uint256 c8 = r4 * d4;
+            uint256 bias = KoalaBear.MODULUS << 35;
 
-            let c0 := mul(r0, d0)
-            let c1 := add(mul(r0, d1), mul(r1, d0))
-            let c2 := add(add(mul(r0, d2), mul(r1, d1)), mul(r2, d0))
-            let c3 := add(add(add(mul(r0, d3), mul(r1, d2)), mul(r2, d1)), mul(r3, d0))
-            let c4 :=
-                add(add(add(add(mul(r0, d4), mul(r1, d3)), mul(r2, d2)), mul(r3, d1)), mul(r4, d0))
-            let c5 := add(add(add(mul(r1, d4), mul(r2, d3)), mul(r3, d2)), mul(r4, d1))
-            let c6 := add(add(mul(r2, d4), mul(r3, d3)), mul(r4, d2))
-            let c7 := add(mul(r3, d4), mul(r4, d3))
-            let c8 := mul(r4, d4)
+            uint256 rOut0 = (a00 + c0 + c5 + bias - c8) % KoalaBear.MODULUS;
+            uint256 rOut1 = (a01 + c1 + c6) % KoalaBear.MODULUS;
+            uint256 rOut2 = (a02 + c2 + bias - c5 + c7 + c8) % KoalaBear.MODULUS;
+            uint256 rOut3 = (a03 + c3 + bias - c6 + c8) % KoalaBear.MODULUS;
+            uint256 rOut4 = (a04 + c4 + bias - c7) % KoalaBear.MODULUS;
 
-            let bias := shl(35, M)
-
-            let rOut0 := mod(add(add(add(a00, c0), c5), sub(bias, c8)), M)
-            let rOut1 := mod(add(add(a01, c1), c6), M)
-            let rOut2 := mod(add(add(add(add(a02, c2), sub(bias, c5)), c7), c8), M)
-            let rOut3 := mod(add(add(add(a03, c3), sub(bias, c6)), c8), M)
-            let rOut4 := mod(add(add(a04, c4), sub(bias, c7)), M)
-
-            out := or(
-                or(or(shl(224, rOut0), shl(192, rOut1)), or(shl(160, rOut2), shl(128, rOut3))),
-                shl(96, rOut4)
-            )
+            out = (rOut0 << 224) | (rOut1 << 192) | (rOut2 << 160) | (rOut3 << 128) | (rOut4 << 96);
         }
     }
 
