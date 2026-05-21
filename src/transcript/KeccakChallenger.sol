@@ -191,26 +191,21 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, mask) -> encoded {
-                if and(x, sub(shl(96, 1), 1)) {
-                    revertPacked(x)
-                }
+            function validateAndEncode(x, mask) -> encoded {
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
+                if or(
+                    or(and(x, sub(shl(96, 1), 1)), and(x, highBitMask)),
+                    and(add(and(x, low31Mask), bias), highBitMask)
+                ) { revertPacked(x) }
 
                 let x0 := shr(224, x)
                 let x1 := and(shr(192, x), mask)
                 let x2 := and(shr(160, x), mask)
                 let x3 := and(shr(128, x), mask)
                 let x4 := and(shr(96, x), mask)
-
-                if or(
-                    or(
-                        or(iszero(lt(x0, modulus)), iszero(lt(x1, modulus))),
-                        iszero(lt(x2, modulus))
-                    ),
-                    or(iszero(lt(x3, modulus)), iszero(lt(x4, modulus)))
-                ) {
-                    revertPacked(x)
-                }
 
                 encoded := or(
                     or(
@@ -221,7 +216,6 @@ library KeccakChallenger {
                 )
             }
 
-            let modulus := 0x7f000001
             let mask := 0xffffffff
             let src := values.offset
             let end := add(src, shl(5, values.length))
@@ -231,7 +225,7 @@ library KeccakChallenger {
                 src := add(src, 0x20)
                 dst := add(dst, 20)
             } {
-                mstore(dst, validateAndEncode(calldataload(src), modulus, mask))
+                mstore(dst, validateAndEncode(calldataload(src), mask))
             }
         }
 
@@ -258,22 +252,21 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, mask) -> encoded {
-                if and(x, sub(shl(96, 1), 1)) { revertPacked(x) }
+            function validateAndEncode(x, mask) -> encoded {
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
+                if or(
+                    or(and(x, sub(shl(96, 1), 1)), and(x, highBitMask)),
+                    and(add(and(x, low31Mask), bias), highBitMask)
+                ) { revertPacked(x) }
 
                 let x0 := shr(224, x)
                 let x1 := and(shr(192, x), mask)
                 let x2 := and(shr(160, x), mask)
                 let x3 := and(shr(128, x), mask)
                 let x4 := and(shr(96, x), mask)
-
-                if or(
-                    or(
-                        or(iszero(lt(x0, modulus)), iszero(lt(x1, modulus))),
-                        iszero(lt(x2, modulus))
-                    ),
-                    or(iszero(lt(x3, modulus)), iszero(lt(x4, modulus)))
-                ) { revertPacked(x) }
 
                 encoded := or(
                     or(
@@ -284,10 +277,9 @@ library KeccakChallenger {
                 )
             }
 
-            let modulus := 0x7f000001
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
-            mstore(dst, validateAndEncode(packed, modulus, mask))
+            mstore(dst, validateAndEncode(packed, mask))
         }
 
         self.inputLen = newLen;
@@ -316,22 +308,21 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, mask) -> encoded {
-                if and(x, sub(shl(96, 1), 1)) { revertPacked(x) }
+            function validateAndEncode(x, mask) -> encoded {
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
+                if or(
+                    or(and(x, sub(shl(96, 1), 1)), and(x, highBitMask)),
+                    and(add(and(x, low31Mask), bias), highBitMask)
+                ) { revertPacked(x) }
 
                 let x0 := shr(224, x)
                 let x1 := and(shr(192, x), mask)
                 let x2 := and(shr(160, x), mask)
                 let x3 := and(shr(128, x), mask)
                 let x4 := and(shr(96, x), mask)
-
-                if or(
-                    or(
-                        or(iszero(lt(x0, modulus)), iszero(lt(x1, modulus))),
-                        iszero(lt(x2, modulus))
-                    ),
-                    or(iszero(lt(x3, modulus)), iszero(lt(x4, modulus)))
-                ) { revertPacked(x) }
 
                 encoded := or(
                     or(
@@ -342,11 +333,10 @@ library KeccakChallenger {
                 )
             }
 
-            let modulus := 0x7f000001
             let mask := 0xffffffff
             let dst := add(add(buffer, 0x20), oldLen)
-            mstore(dst, validateAndEncode(first, modulus, mask))
-            mstore(add(dst, 20), validateAndEncode(second, modulus, mask))
+            mstore(dst, validateAndEncode(first, mask))
+            mstore(add(dst, 20), validateAndEncode(second, mask))
         }
 
         self.inputLen = newLen;

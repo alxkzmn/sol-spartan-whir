@@ -34,7 +34,7 @@ The current build target is the quintic schedule `k22_jb100_ext5_lir4_ff4_rsv3_p
 | achieved security bits             |       `100.0145` |
 | achieved Merkle security bits      |            `160` |
 | measured prover time               | `274.163664792s` |
-| native blob Foundry gas            |      `5,526,933` |
+| native blob Foundry gas            |      `5,455,748` |
 | native blob transaction gas        |      `5,646,080` |
 | native blob execution gas          |      `4,768,744` |
 | native blob calldata bytes         |         `54,436` |
@@ -58,9 +58,9 @@ single contract under EIP-170 at the current default build settings:
 
 | Native blob verifier variant       | Runtime bytecode | EIP-170 status |
 | ---------------------------------- | ---------------: | -------------- |
-| `rsv3_pow28` software              |       `33,119` B | `8,543` B over |
-| `rsv4` software                    |       `32,870` B | `8,294` B over |
-| `rsv3_pow28` local precompile path |       `29,551` B | `4,975` B over |
+| `rsv3_pow28` software              |       `31,875` B | `7,299` B over |
+| `rsv4` software                    |       `32,470` B | `7,894` B over |
+| `rsv3_pow28` local precompile path |       `28,230` B | `3,654` B over |
 
 Optimizer-run tuning alone does not make these native blob contracts fit. The
 best low-run checks found `29,529` bytes for `rsv3_pow28` software,
@@ -93,7 +93,7 @@ Phase-level verifier cost across the checked-in high-security software native bl
 
 | Family  | Schedule                             |    Setup | Initial sumcheck | R0 parse |   R0 STIR | R0 sumcheck | R1 parse |   R1 STIR | R1 sumcheck | R2 parse |   R2 STIR | R2 sumcheck | Observe final poly | Final STIR | Final sumcheck | Constraint evaluation | Final value check |   Phase sum |
 | ------- | ------------------------------------ | -------: | ---------------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -------: | --------: | ----------: | -----------------: | ---------: | -------------: | --------------------: | ----------------: | ----------: |
-| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `20,864` |         `27,353` |  `2,799` | `703,346` |    `27,243` |  `2,784` | `925,758` |    `27,301` |  `2,793` | `582,564` |    `27,209` |           `63,759` |  `669,008` |       `37,047` |           `1,512,664` |         `135,805` | `4,768,297` |
+| quintic | `k22_jb100_ext5_lir4_ff4_rsv3_pow28` | `16,253` |         `26,697` |  `2,799` | `701,481` |    `26,575` |  `2,784` | `901,357` |    `26,633` |  `2,793` | `567,475` |    `26,541` |           `56,783` |  `658,399` |       `36,063` |           `1,508,824` |         `135,805` | `4,697,262` |
 | octic   | `k22_jb100_lir6_ff4_rsv1`            | `28,015` |         `44,354` |  `3,741` | `632,941` |    `44,318` |  `3,747` | `882,959` |    `44,312` |  `3,738` | `678,217` |    `44,309` |           `90,344` |  `850,870` |       `67,103` |           `1,948,563` |         `222,114` | `5,589,645` |
 
 The phase rows come from the native compare harness and the quintic gas-profile harness listed in [AGENTS.md](./AGENTS.md).
@@ -102,7 +102,7 @@ The phase rows come from the native compare harness and the quintic gas-profile 
 
 The current quintic build target was profiled with the native blob verifier flamegraph harness.
 
-The canonical Foundry gas for this path is `5,526,933`. The verifier call itself, excluding fixture-loading harness noise, accounts for `4,768,744` gas.
+The canonical Foundry gas for this path is `5,455,748`. The verifier call itself, excluding fixture-loading harness noise, accounts for `4,697,262` gas in the current phase harness.
 
 | Profile bucket                                                             |         Gas | Share of verifier call |
 | -------------------------------------------------------------------------- | ----------: | ---------------------: |

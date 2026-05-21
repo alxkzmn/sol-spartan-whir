@@ -125,18 +125,7 @@ library WhirVerifierUtils5 {
     }
 
     function validatePackedExt5(uint256 packed) internal pure {
-        unchecked {
-            if (
-                (packed >> 224) >= KoalaBear.MODULUS
-                    || ((packed >> 192) & 0xffffffff) >= KoalaBear.MODULUS
-                    || ((packed >> 160) & 0xffffffff) >= KoalaBear.MODULUS
-                    || ((packed >> 128) & 0xffffffff) >= KoalaBear.MODULUS
-                    || ((packed >> 96) & 0xffffffff) >= KoalaBear.MODULUS
-                    || (packed & KoalaBearExt5.LOW_96_MASK) != 0
-            ) {
-                revert PackedExtensionElementOutOfRange(packed);
-            }
-        }
+        KoalaBearExt5.validatePacked(packed);
     }
 
     function expandFromUnivariateExtInto(
@@ -885,23 +874,13 @@ library WhirVerifierUtils5 {
             v15 := calldataload(add(src, 0x1e0))
 
             function validateExt5(packed) {
-                let modulus := 0x7f000001
-                let mask := 0xffffffff
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
                 if or(
-                    or(
-                        or(
-                            iszero(lt(shr(224, packed), modulus)),
-                            iszero(lt(and(shr(192, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(160, packed), mask), modulus)),
-                            iszero(lt(and(shr(128, packed), mask), modulus))
-                        )
-                    ),
-                    or(
-                        iszero(lt(and(shr(96, packed), mask), modulus)),
-                        and(packed, sub(shl(96, 1), 1))
-                    )
+                    or(and(packed, sub(shl(96, 1), 1)), and(packed, highBitMask)),
+                    and(add(and(packed, low31Mask), bias), highBitMask)
                 ) {
                     mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)
@@ -1137,23 +1116,13 @@ library WhirVerifierUtils5 {
             v15 := calldataload(add(src, 0x1e0))
 
             function validateExt5(packed) {
-                let modulus := 0x7f000001
-                let mask := 0xffffffff
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
                 if or(
-                    or(
-                        or(
-                            iszero(lt(shr(224, packed), modulus)),
-                            iszero(lt(and(shr(192, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(160, packed), mask), modulus)),
-                            iszero(lt(and(shr(128, packed), mask), modulus))
-                        )
-                    ),
-                    or(
-                        iszero(lt(and(shr(96, packed), mask), modulus)),
-                        and(packed, sub(shl(96, 1), 1))
-                    )
+                    or(and(packed, sub(shl(96, 1), 1)), and(packed, highBitMask)),
+                    and(add(and(packed, low31Mask), bias), highBitMask)
                 ) {
                     mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)
@@ -1265,20 +1234,13 @@ library WhirVerifierUtils5 {
             v15 := and(calldataload(add(src, 300)), lowMask)
 
             function validateExt5(packed) {
-                let modulus := 0x7f000001
-                let mask := 0xffffffff
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff000000000000000000000000
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000
                 if or(
-                    or(
-                        or(
-                            iszero(lt(shr(224, packed), modulus)),
-                            iszero(lt(and(shr(192, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(160, packed), mask), modulus)),
-                            iszero(lt(and(shr(128, packed), mask), modulus))
-                        )
-                    ),
-                    iszero(lt(and(shr(96, packed), mask), modulus))
+                    and(packed, highBitMask),
+                    and(add(and(packed, low31Mask), bias), highBitMask)
                 ) {
                     mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)

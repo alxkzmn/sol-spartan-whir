@@ -10,6 +10,15 @@ library KoalaBearExt5 {
     uint256 internal constant TWO = uint256(2) << 224;
     uint256 internal constant INV_TWO = 1_065_353_217;
     uint256 internal constant LOW_96_MASK = (uint256(1) << 96) - 1;
+    uint256 internal constant PACKED_HIGH_BIT = uint256(0x80000000) << 224
+        | (uint256(0x80000000) << 192) | (uint256(0x80000000) << 160) | (uint256(0x80000000) << 128)
+        | (uint256(0x80000000) << 96);
+    uint256 internal constant PACKED_LOW_31 = uint256(0x7fffffff) << 224
+        | (uint256(0x7fffffff) << 192) | (uint256(0x7fffffff) << 160) | (uint256(0x7fffffff) << 128)
+        | (uint256(0x7fffffff) << 96);
+    uint256 internal constant PACKED_CANONICAL_BIAS = uint256(0x00ffffff) << 224
+        | (uint256(0x00ffffff) << 192) | (uint256(0x00ffffff) << 160) | (uint256(0x00ffffff) << 128)
+        | (uint256(0x00ffffff) << 96);
 
     error BaseScalarOutOfRange(uint256 value);
     error PackedExtensionElementOutOfRange(uint256 value);
@@ -30,13 +39,13 @@ library KoalaBearExt5 {
     }
 
     function validatePacked(uint256 packed) internal pure {
-        if (
-            (packed & LOW_96_MASK) != 0 || packed >> 224 >= KoalaBear.MODULUS
-                || ((packed >> 192) & COEFF_MASK) >= KoalaBear.MODULUS
-                || ((packed >> 160) & COEFF_MASK) >= KoalaBear.MODULUS
-                || ((packed >> 128) & COEFF_MASK) >= KoalaBear.MODULUS
-                || ((packed >> 96) & COEFF_MASK) >= KoalaBear.MODULUS
-        ) {
+        unchecked {
+            uint256 invalidHighBits = packed & PACKED_HIGH_BIT;
+            uint256 invalidLow31 =
+                ((packed & PACKED_LOW_31) + PACKED_CANONICAL_BIAS) & PACKED_HIGH_BIT;
+            if (((packed & LOW_96_MASK) | invalidHighBits | invalidLow31) == 0) {
+                return;
+            }
             revert PackedExtensionElementOutOfRange(packed);
         }
     }
@@ -44,21 +53,15 @@ library KoalaBearExt5 {
     function add(uint256 a, uint256 b) internal pure returns (uint256 out) {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
-            let mask := 0xffffffff
             let sum := add(a, b)
-
-            out := or(
-                or(
-                    or(
-                        shl(224, mod(shr(224, sum), modulus)),
-                        shl(192, mod(and(shr(192, sum), mask), modulus))
-                    ),
-                    or(
-                        shl(160, mod(and(shr(160, sum), mask), modulus)),
-                        shl(128, mod(and(shr(128, sum), mask), modulus))
-                    )
-                ),
-                shl(96, mod(and(shr(96, sum), mask), modulus))
+            let highBits :=
+                and(
+                    add(sum, 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000),
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                )
+            out := and(
+                sub(sum, mul(shr(31, highBits), modulus)),
+                0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000
             )
         }
     }
@@ -66,22 +69,16 @@ library KoalaBearExt5 {
     function sub(uint256 a, uint256 b) internal pure returns (uint256 out) {
         assembly ("memory-safe") {
             let modulus := 0x7f000001
-            let mask := 0xffffffff
             let tmp :=
                 sub(add(a, 0x7f0000017f0000017f0000017f0000017f000001000000000000000000000000), b)
-
-            out := or(
-                or(
-                    or(
-                        shl(224, mod(shr(224, tmp), modulus)),
-                        shl(192, mod(and(shr(192, tmp), mask), modulus))
-                    ),
-                    or(
-                        shl(160, mod(and(shr(160, tmp), mask), modulus)),
-                        shl(128, mod(and(shr(128, tmp), mask), modulus))
-                    )
-                ),
-                shl(96, mod(and(shr(96, tmp), mask), modulus))
+            let highBits :=
+                and(
+                    add(tmp, 0x00ffffff00ffffff00ffffff00ffffff00ffffff000000000000000000000000),
+                    0x8000000080000000800000008000000080000000000000000000000000000000
+                )
+            out := and(
+                sub(tmp, mul(shr(31, highBits), modulus)),
+                0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000
             )
         }
     }
