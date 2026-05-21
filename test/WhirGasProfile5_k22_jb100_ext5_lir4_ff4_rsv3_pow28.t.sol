@@ -253,14 +253,11 @@ contract WhirProfileHarness5Pow28Rsv3 {
 
         uint256 finalPolyOffset = offset;
         g = gasleft();
+        challenger.observeValidatedPackedExt5Blob(
+            blob, offset, QuinticWhirFixedConfig.FINAL_POLY_LENGTH
+        );
         unchecked {
-            for (uint256 i = 0; i < QuinticWhirFixedConfig.FINAL_POLY_LENGTH; i += 2) {
-                uint256 coeff0;
-                uint256 coeff1;
-                (coeff0, offset) = WhirBlobCodec5.readExt5(blob, offset);
-                (coeff1, offset) = WhirBlobCodec5.readExt5(blob, offset);
-                challenger.observeValidatedPackedExt5Pair(coeff0, coeff1);
-            }
+            offset += QuinticWhirFixedConfig.FINAL_POLY_LENGTH * 20;
         }
         bd.observeFinalPoly = g - gasleft();
 

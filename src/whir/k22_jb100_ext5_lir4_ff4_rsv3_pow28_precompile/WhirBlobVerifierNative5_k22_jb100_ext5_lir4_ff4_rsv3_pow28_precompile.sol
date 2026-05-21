@@ -269,14 +269,11 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28_precompile {
         }
 
         uint256 finalPolyOffset = offset;
+        challenger.observeValidatedPackedExt5Blob(
+            blob, offset, QuinticWhirFixedConfig.FINAL_POLY_LENGTH
+        );
         unchecked {
-            for (uint256 i = 0; i < QuinticWhirFixedConfig.FINAL_POLY_LENGTH; i += 2) {
-                uint256 coeff0;
-                uint256 coeff1;
-                (coeff0, offset) = WhirBlobCodec5.readExt5(blob, offset);
-                (coeff1, offset) = WhirBlobCodec5.readExt5(blob, offset);
-                challenger.observeValidatedPackedExt5Pair(coeff0, coeff1);
-            }
+            offset += QuinticWhirFixedConfig.FINAL_POLY_LENGTH * 20;
         }
 
         uint256 finalPowWitnessOffset = offset;
