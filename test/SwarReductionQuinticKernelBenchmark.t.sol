@@ -56,6 +56,23 @@ contract SwarReductionQuinticKernelHarness {
         gasPerFold = (g - gasleft()) / ITERS;
     }
 
+    function benchKbFoldModSol(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerFold, uint256 acc)
+    {
+        (uint256 a0, uint256 a1, uint256 r0, uint256 r1, uint256 r2, uint256 r3, uint256 r4) =
+            _seeds(salt, KB_MODULUS);
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                a0 = _foldModSol(a0, a1, r0, r1, r2, r3, r4);
+                acc ^= a0;
+            }
+        }
+        gasPerFold = (g - gasleft()) / ITERS;
+    }
+
     function benchM31FoldMod(uint256 salt) external view returns (uint256 gasPerFold, uint256 acc) {
         (uint256 a0, uint256 a1, uint256 r0, uint256 r1, uint256 r2, uint256 r3, uint256 r4) =
             _seeds(salt, M31_MODULUS);
@@ -108,6 +125,18 @@ contract SwarReductionQuinticKernelHarness {
         uint256 r4
     ) external pure returns (uint256) {
         return _foldKbBitfold(a0, a1, r0, r1, r2, r3, r4);
+    }
+
+    function foldKbModSolPublic(
+        uint256 a0,
+        uint256 a1,
+        uint256 r0,
+        uint256 r1,
+        uint256 r2,
+        uint256 r3,
+        uint256 r4
+    ) external pure returns (uint256) {
+        return _foldModSol(a0, a1, r0, r1, r2, r3, r4);
     }
 
     function foldM31ModPublic(
@@ -180,6 +209,30 @@ contract SwarReductionQuinticKernelHarness {
 
     function validatePackedExt5MaskPublic(uint256 packed) external pure returns (bool) {
         return _isValidPackedExt5Mask(packed);
+    }
+
+    function mulPackedAsmPublic(uint256 a, uint256 b) external pure returns (uint256) {
+        return _mulPackedAsm(a, b);
+    }
+
+    function mulPackedSolPublic(uint256 a, uint256 b) external pure returns (uint256) {
+        return _mulPackedSol(a, b);
+    }
+
+    function squarePackedAsmPublic(uint256 a) external pure returns (uint256) {
+        return _squarePackedAsm(a);
+    }
+
+    function squarePackedSolPublic(uint256 a) external pure returns (uint256) {
+        return _squarePackedSol(a);
+    }
+
+    function scalarMulAsmPublic(uint256 a, uint256 scalar) external pure returns (uint256) {
+        return _scalarMulAsm(a, scalar);
+    }
+
+    function scalarMulSolPublic(uint256 a, uint256 scalar) external pure returns (uint256) {
+        return _scalarMulSol(a, scalar);
     }
 
     function benchKbDim4RowFoldMod(uint256 salt)
@@ -374,6 +427,100 @@ contract SwarReductionQuinticKernelHarness {
         gasPerBatch = (g - gasleft()) / ITERS;
     }
 
+    function benchKbMulPackedAsm16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory left = _packed16(salt, KB_MODULUS);
+        uint256[16] memory right = _packed16(salt ^ 0xabcdef, KB_MODULUS);
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _mulPackedAsm(left[i & 15], right[(i + 5) & 15]);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
+    function benchKbMulPackedSol16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory left = _packed16(salt, KB_MODULUS);
+        uint256[16] memory right = _packed16(salt ^ 0xabcdef, KB_MODULUS);
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _mulPackedSol(left[i & 15], right[(i + 5) & 15]);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
+    function benchKbSquarePackedAsm16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory values = _packed16(salt, KB_MODULUS);
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _squarePackedAsm(values[i & 15]);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
+    function benchKbSquarePackedSol16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory values = _packed16(salt, KB_MODULUS);
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _squarePackedSol(values[i & 15]);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
+    function benchKbScalarMulAsm16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory values = _packed16(salt, KB_MODULUS);
+        uint256 scalar = (salt + 0x12345) % KB_MODULUS;
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _scalarMulAsm(values[i & 15], scalar);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
+    function benchKbScalarMulSol16(uint256 salt)
+        external
+        view
+        returns (uint256 gasPerBatch, uint256 acc)
+    {
+        uint256[16] memory values = _packed16(salt, KB_MODULUS);
+        uint256 scalar = (salt + 0x12345) % KB_MODULUS;
+        uint256 g = gasleft();
+        unchecked {
+            for (uint256 i = 0; i < ITERS; ++i) {
+                acc ^= _scalarMulSol(values[i & 15], scalar);
+            }
+        }
+        gasPerBatch = (g - gasleft()) / ITERS;
+    }
+
     function _foldKbMod(
         uint256 a0,
         uint256 a1,
@@ -446,6 +593,49 @@ contract SwarReductionQuinticKernelHarness {
                 or(or(shl(224, rOut0), shl(192, rOut1)), or(shl(160, rOut2), shl(128, rOut3))),
                 shl(96, rOut4)
             )
+        }
+    }
+
+    function _foldModSol(
+        uint256 a0,
+        uint256 a1,
+        uint256 r0,
+        uint256 r1,
+        uint256 r2,
+        uint256 r3,
+        uint256 r4
+    ) private pure returns (uint256 out) {
+        unchecked {
+            uint256 a00 = a0 >> 224;
+            uint256 a01 = (a0 >> 192) & COEFF_MASK;
+            uint256 a02 = (a0 >> 160) & COEFF_MASK;
+            uint256 a03 = (a0 >> 128) & COEFF_MASK;
+            uint256 a04 = (a0 >> 96) & COEFF_MASK;
+
+            uint256 d0 = (a1 >> 224) + KB_MODULUS - a00;
+            uint256 d1 = ((a1 >> 192) & COEFF_MASK) + KB_MODULUS - a01;
+            uint256 d2 = ((a1 >> 160) & COEFF_MASK) + KB_MODULUS - a02;
+            uint256 d3 = ((a1 >> 128) & COEFF_MASK) + KB_MODULUS - a03;
+            uint256 d4 = ((a1 >> 96) & COEFF_MASK) + KB_MODULUS - a04;
+
+            uint256 c0 = r0 * d0;
+            uint256 c1 = r0 * d1 + r1 * d0;
+            uint256 c2 = r0 * d2 + r1 * d1 + r2 * d0;
+            uint256 c3 = r0 * d3 + r1 * d2 + r2 * d1 + r3 * d0;
+            uint256 c4 = r0 * d4 + r1 * d3 + r2 * d2 + r3 * d1 + r4 * d0;
+            uint256 c5 = r1 * d4 + r2 * d3 + r3 * d2 + r4 * d1;
+            uint256 c6 = r2 * d4 + r3 * d3 + r4 * d2;
+            uint256 c7 = r3 * d4 + r4 * d3;
+            uint256 c8 = r4 * d4;
+            uint256 bias = KB_MODULUS << 35;
+
+            uint256 rOut0 = (a00 + c0 + c5 + bias - c8) % KB_MODULUS;
+            uint256 rOut1 = (a01 + c1 + c6) % KB_MODULUS;
+            uint256 rOut2 = (a02 + c2 + bias - c5 + c7 + c8) % KB_MODULUS;
+            uint256 rOut3 = (a03 + c3 + bias - c6 + c8) % KB_MODULUS;
+            uint256 rOut4 = (a04 + c4 + bias - c7) % KB_MODULUS;
+
+            out = (rOut0 << 224) | (rOut1 << 192) | (rOut2 << 160) | (rOut3 << 128) | (rOut4 << 96);
         }
     }
 
@@ -817,6 +1007,209 @@ contract SwarReductionQuinticKernelHarness {
         }
     }
 
+    function _mulPackedAsm(uint256 a, uint256 b) private pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
+
+            let a0 := shr(224, a)
+            let a1 := and(shr(192, a), mask)
+            let a2 := and(shr(160, a), mask)
+            let a3 := and(shr(128, a), mask)
+            let a4 := and(shr(96, a), mask)
+
+            let b0 := shr(224, b)
+            let b1 := and(shr(192, b), mask)
+            let b2 := and(shr(160, b), mask)
+            let b3 := and(shr(128, b), mask)
+            let b4 := and(shr(96, b), mask)
+
+            let c0 := mul(a0, b0)
+            let c1 := add(mul(a0, b1), mul(a1, b0))
+            let c2 := add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0))
+            let c3 := add(add(add(mul(a0, b3), mul(a1, b2)), mul(a2, b1)), mul(a3, b0))
+            let c4 :=
+                add(add(add(add(mul(a0, b4), mul(a1, b3)), mul(a2, b2)), mul(a3, b1)), mul(a4, b0))
+            let c5 := add(add(add(mul(a1, b4), mul(a2, b3)), mul(a3, b2)), mul(a4, b1))
+            let c6 := add(add(mul(a2, b4), mul(a3, b3)), mul(a4, b2))
+            let c7 := add(mul(a3, b4), mul(a4, b3))
+            let c8 := mul(a4, b4)
+            let bias := shl(35, M)
+
+            out := or(
+                or(
+                    or(
+                        shl(224, mod(add(add(c0, c5), sub(bias, c8)), M)),
+                        shl(192, mod(add(c1, c6), M))
+                    ),
+                    or(
+                        shl(160, mod(add(add(add(c2, sub(bias, c5)), c7), c8), M)),
+                        shl(128, mod(add(add(c3, sub(bias, c6)), c8), M))
+                    )
+                ),
+                shl(96, mod(add(c4, sub(bias, c7)), M))
+            )
+        }
+    }
+
+    function _mulPackedSol(uint256 a, uint256 b) private pure returns (uint256 out) {
+        unchecked {
+            uint256 a0 = a >> 224;
+            uint256 a1 = (a >> 192) & COEFF_MASK;
+            uint256 a2 = (a >> 160) & COEFF_MASK;
+            uint256 a3 = (a >> 128) & COEFF_MASK;
+            uint256 a4 = (a >> 96) & COEFF_MASK;
+
+            uint256 b0 = b >> 224;
+            uint256 b1 = (b >> 192) & COEFF_MASK;
+            uint256 b2 = (b >> 160) & COEFF_MASK;
+            uint256 b3 = (b >> 128) & COEFF_MASK;
+            uint256 b4 = (b >> 96) & COEFF_MASK;
+
+            uint256 c0 = a0 * b0;
+            uint256 c1 = a0 * b1 + a1 * b0;
+            uint256 c2 = a0 * b2 + a1 * b1 + a2 * b0;
+            uint256 c3 = a0 * b3 + a1 * b2 + a2 * b1 + a3 * b0;
+            uint256 c4 = a0 * b4 + a1 * b3 + a2 * b2 + a3 * b1 + a4 * b0;
+            uint256 c5 = a1 * b4 + a2 * b3 + a3 * b2 + a4 * b1;
+            uint256 c6 = a2 * b4 + a3 * b3 + a4 * b2;
+            uint256 c7 = a3 * b4 + a4 * b3;
+            uint256 c8 = a4 * b4;
+            uint256 bias = KB_MODULUS << 35;
+
+            out = (((c0 + c5 + bias - c8) % KB_MODULUS) << 224) | (((c1 + c6) % KB_MODULUS) << 192)
+                | (((c2 + bias - c5 + c7 + c8) % KB_MODULUS) << 160)
+                | (((c3 + bias - c6 + c8) % KB_MODULUS) << 128)
+                | (((c4 + bias - c7) % KB_MODULUS) << 96);
+        }
+    }
+
+    function _squarePackedAsm(uint256 a) private pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let mask := 0xffffffff
+
+            let a0 := shr(224, a)
+            let a1 := and(shr(192, a), mask)
+            let a2 := and(shr(160, a), mask)
+            let a3 := and(shr(128, a), mask)
+            let a4 := and(shr(96, a), mask)
+
+            let a0a0 := mul(a0, a0)
+            let a0a1 := mul(a0, a1)
+            let a0a2 := mul(a0, a2)
+            let a0a3 := mul(a0, a3)
+            let a0a4 := mul(a0, a4)
+            let a1a1 := mul(a1, a1)
+            let a1a2 := mul(a1, a2)
+            let a1a3 := mul(a1, a3)
+            let a1a4 := mul(a1, a4)
+            let a2a2 := mul(a2, a2)
+            let a2a3 := mul(a2, a3)
+            let a2a4 := mul(a2, a4)
+            let a3a3 := mul(a3, a3)
+            let a3a4 := mul(a3, a4)
+            let a4a4 := mul(a4, a4)
+
+            let c0 := a0a0
+            let c1 := shl(1, a0a1)
+            let c2 := add(shl(1, a0a2), a1a1)
+            let c3 := add(shl(1, a0a3), shl(1, a1a2))
+            let c4 := add(add(shl(1, a0a4), shl(1, a1a3)), a2a2)
+            let c5 := add(shl(1, a1a4), shl(1, a2a3))
+            let c6 := add(shl(1, a2a4), a3a3)
+            let c7 := shl(1, a3a4)
+            let c8 := a4a4
+            let bias := shl(35, M)
+
+            out := or(
+                or(
+                    or(
+                        shl(224, mod(add(add(c0, c5), sub(bias, c8)), M)),
+                        shl(192, mod(add(c1, c6), M))
+                    ),
+                    or(
+                        shl(160, mod(add(add(add(c2, sub(bias, c5)), c7), c8), M)),
+                        shl(128, mod(add(add(c3, sub(bias, c6)), c8), M))
+                    )
+                ),
+                shl(96, mod(add(c4, sub(bias, c7)), M))
+            )
+        }
+    }
+
+    function _squarePackedSol(uint256 a) private pure returns (uint256 out) {
+        unchecked {
+            uint256 a0 = a >> 224;
+            uint256 a1 = (a >> 192) & COEFF_MASK;
+            uint256 a2 = (a >> 160) & COEFF_MASK;
+            uint256 a3 = (a >> 128) & COEFF_MASK;
+            uint256 a4 = (a >> 96) & COEFF_MASK;
+
+            uint256 a0a0 = a0 * a0;
+            uint256 a0a1 = a0 * a1;
+            uint256 a0a2 = a0 * a2;
+            uint256 a0a3 = a0 * a3;
+            uint256 a0a4 = a0 * a4;
+            uint256 a1a1 = a1 * a1;
+            uint256 a1a2 = a1 * a2;
+            uint256 a1a3 = a1 * a3;
+            uint256 a1a4 = a1 * a4;
+            uint256 a2a2 = a2 * a2;
+            uint256 a2a3 = a2 * a3;
+            uint256 a2a4 = a2 * a4;
+            uint256 a3a3 = a3 * a3;
+            uint256 a3a4 = a3 * a4;
+            uint256 a4a4 = a4 * a4;
+
+            uint256 c0 = a0a0;
+            uint256 c1 = a0a1 << 1;
+            uint256 c2 = (a0a2 << 1) + a1a1;
+            uint256 c3 = (a0a3 << 1) + (a1a2 << 1);
+            uint256 c4 = (a0a4 << 1) + (a1a3 << 1) + a2a2;
+            uint256 c5 = (a1a4 << 1) + (a2a3 << 1);
+            uint256 c6 = (a2a4 << 1) + a3a3;
+            uint256 c7 = a3a4 << 1;
+            uint256 c8 = a4a4;
+            uint256 bias = KB_MODULUS << 35;
+
+            out = (((c0 + c5 + bias - c8) % KB_MODULUS) << 224) | (((c1 + c6) % KB_MODULUS) << 192)
+                | (((c2 + bias - c5 + c7 + c8) % KB_MODULUS) << 160)
+                | (((c3 + bias - c6 + c8) % KB_MODULUS) << 128)
+                | (((c4 + bias - c7) % KB_MODULUS) << 96);
+        }
+    }
+
+    function _scalarMulAsm(uint256 a, uint256 scalar) private pure returns (uint256 out) {
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let mask := 0xffffffff
+            out := or(
+                or(
+                    or(
+                        shl(224, mulmod(shr(224, a), scalar, modulus)),
+                        shl(192, mulmod(and(shr(192, a), mask), scalar, modulus))
+                    ),
+                    or(
+                        shl(160, mulmod(and(shr(160, a), mask), scalar, modulus)),
+                        shl(128, mulmod(and(shr(128, a), mask), scalar, modulus))
+                    )
+                ),
+                shl(96, mulmod(and(shr(96, a), mask), scalar, modulus))
+            )
+        }
+    }
+
+    function _scalarMulSol(uint256 a, uint256 scalar) private pure returns (uint256 out) {
+        unchecked {
+            out = ((((a >> 224) * scalar) % KB_MODULUS) << 224)
+                | (((((a >> 192) & COEFF_MASK) * scalar) % KB_MODULUS) << 192)
+                | (((((a >> 160) & COEFF_MASK) * scalar) % KB_MODULUS) << 160)
+                | (((((a >> 128) & COEFF_MASK) * scalar) % KB_MODULUS) << 128)
+                | (((((a >> 96) & COEFF_MASK) * scalar) % KB_MODULUS) << 96);
+        }
+    }
+
     function _addPackedMod(uint256 a, uint256 b, uint256 modulus)
         private
         pure
@@ -1064,6 +1457,20 @@ contract SwarReductionQuinticKernelBenchmarkTest is Test {
         }
     }
 
+    function testSolidityTwinsMatchAssemblyArithmetic() external view {
+        for (uint256 i = 0; i < 16; ++i) {
+            (uint256 a, uint256 b, uint256 r0, uint256 r1, uint256 r2, uint256 r3, uint256 r4) =
+                _seedsForTest(i, 0x7f000001);
+            assertEq(harness.mulPackedSolPublic(a, b), harness.mulPackedAsmPublic(a, b));
+            assertEq(harness.squarePackedSolPublic(a), harness.squarePackedAsmPublic(a));
+            assertEq(harness.scalarMulSolPublic(a, r0), harness.scalarMulAsmPublic(a, r0));
+            assertEq(
+                harness.foldKbModSolPublic(a, b, r0, r1, r2, r3, r4),
+                harness.foldKbModPublic(a, b, r0, r1, r2, r3, r4)
+            );
+        }
+    }
+
     function testProfileQuinticFoldKernelReducers() external view {
         (uint256 kbModGas, uint256 kbModAcc) = harness.benchKbFoldMod(0xabc123);
         (uint256 kbBitfoldGas, uint256 kbBitfoldAcc) = harness.benchKbFoldBitfold(0xabc123);
@@ -1140,6 +1547,31 @@ contract SwarReductionQuinticKernelBenchmarkTest is Test {
         console.log("packed ext5 validation lanes: ", uint256(80));
         console.log("packed ext5 validation scalar:", scalarGas);
         console.log("packed ext5 validation mask:  ", maskGas);
+    }
+
+    function testProfileAsmVsSolidityExt5Arithmetic() external view {
+        (uint256 mulAsmGas, uint256 mulAsmAcc) = harness.benchKbMulPackedAsm16(0xabc123);
+        (uint256 mulSolGas, uint256 mulSolAcc) = harness.benchKbMulPackedSol16(0xabc123);
+        (uint256 squareAsmGas, uint256 squareAsmAcc) = harness.benchKbSquarePackedAsm16(0xabc123);
+        (uint256 squareSolGas, uint256 squareSolAcc) = harness.benchKbSquarePackedSol16(0xabc123);
+        (uint256 scalarAsmGas, uint256 scalarAsmAcc) = harness.benchKbScalarMulAsm16(0xabc123);
+        (uint256 scalarSolGas, uint256 scalarSolAcc) = harness.benchKbScalarMulSol16(0xabc123);
+        (uint256 foldAsmGas, uint256 foldAsmAcc) = harness.benchKbFoldMod(0xabc123);
+        (uint256 foldSolGas, uint256 foldSolAcc) = harness.benchKbFoldModSol(0xabc123);
+
+        assertEq(mulSolAcc, mulAsmAcc);
+        assertEq(squareSolAcc, squareAsmAcc);
+        assertEq(scalarSolAcc, scalarAsmAcc);
+        assertEq(foldSolAcc, foldAsmAcc);
+
+        console.log("ext5 mul asm:               ", mulAsmGas);
+        console.log("ext5 mul solidity:          ", mulSolGas);
+        console.log("ext5 square asm:            ", squareAsmGas);
+        console.log("ext5 square solidity:       ", squareSolGas);
+        console.log("ext5 scalar mul asm:        ", scalarAsmGas);
+        console.log("ext5 scalar mul solidity:   ", scalarSolGas);
+        console.log("ext5 fold asm:              ", foldAsmGas);
+        console.log("ext5 fold solidity:         ", foldSolGas);
     }
 
     function _seedsForTest(uint256 salt, uint256 modulus)
