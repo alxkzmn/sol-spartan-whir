@@ -1,0 +1,1343 @@
+{
+  "gas_metrics_available": [
+    "base_to_ext4_hypercube_dim1",
+    "base_to_ext4_hypercube_dim2",
+    "base_to_ext4_hypercube_dim3",
+    "base_to_ext4_hypercube_dim4",
+    "base_to_ext4_hypercube_dim5",
+    "base_to_ext4_hypercube_dim6",
+    "base_to_ext4_hypercube_dim7",
+    "base_to_ext4_hypercube_dim8",
+    "base_to_ext4_hypercube_dim9",
+    "base_to_ext5_hypercube_dim1",
+    "base_to_ext5_hypercube_dim2",
+    "base_to_ext5_hypercube_dim3",
+    "base_to_ext5_hypercube_dim4",
+    "base_to_ext5_hypercube_dim5",
+    "base_to_ext5_hypercube_dim6",
+    "base_to_ext5_hypercube_dim7",
+    "base_to_ext5_hypercube_dim8",
+    "base_to_ext5_hypercube_dim9",
+    "base_to_ext8_hypercube_dim1",
+    "base_to_ext8_hypercube_dim2",
+    "base_to_ext8_hypercube_dim3",
+    "base_to_ext8_hypercube_dim4",
+    "base_to_ext8_hypercube_dim5",
+    "base_to_ext8_hypercube_dim6",
+    "base_to_ext8_hypercube_dim7",
+    "base_to_ext8_hypercube_dim8",
+    "base_to_ext8_hypercube_dim9",
+    "ext4_eq_poly_1",
+    "ext4_eq_poly_10",
+    "ext4_eq_poly_11",
+    "ext4_eq_poly_12",
+    "ext4_eq_poly_13",
+    "ext4_eq_poly_14",
+    "ext4_eq_poly_15",
+    "ext4_eq_poly_16",
+    "ext4_eq_poly_17",
+    "ext4_eq_poly_18",
+    "ext4_eq_poly_19",
+    "ext4_eq_poly_2",
+    "ext4_eq_poly_20",
+    "ext4_eq_poly_21",
+    "ext4_eq_poly_22",
+    "ext4_eq_poly_3",
+    "ext4_eq_poly_4",
+    "ext4_eq_poly_5",
+    "ext4_eq_poly_6",
+    "ext4_eq_poly_7",
+    "ext4_eq_poly_8",
+    "ext4_eq_poly_9",
+    "ext4_eq_poly_step",
+    "ext4_extrapolate_012",
+    "ext4_hypercube_dim1",
+    "ext4_hypercube_dim2",
+    "ext4_hypercube_dim3",
+    "ext4_hypercube_dim4",
+    "ext4_hypercube_dim5",
+    "ext4_hypercube_dim6",
+    "ext4_hypercube_dim7",
+    "ext4_hypercube_dim8",
+    "ext4_hypercube_dim9",
+    "ext4_validate_packed",
+    "ext5_add",
+    "ext5_eq_poly_1",
+    "ext5_eq_poly_10",
+    "ext5_eq_poly_11",
+    "ext5_eq_poly_12",
+    "ext5_eq_poly_13",
+    "ext5_eq_poly_14",
+    "ext5_eq_poly_15",
+    "ext5_eq_poly_16",
+    "ext5_eq_poly_17",
+    "ext5_eq_poly_18",
+    "ext5_eq_poly_19",
+    "ext5_eq_poly_2",
+    "ext5_eq_poly_20",
+    "ext5_eq_poly_21",
+    "ext5_eq_poly_22",
+    "ext5_eq_poly_3",
+    "ext5_eq_poly_4",
+    "ext5_eq_poly_5",
+    "ext5_eq_poly_6",
+    "ext5_eq_poly_7",
+    "ext5_eq_poly_8",
+    "ext5_eq_poly_9",
+    "ext5_eq_poly_step",
+    "ext5_extrapolate_012",
+    "ext5_hypercube_dim1",
+    "ext5_hypercube_dim2",
+    "ext5_hypercube_dim3",
+    "ext5_hypercube_dim4",
+    "ext5_hypercube_dim5",
+    "ext5_hypercube_dim6",
+    "ext5_hypercube_dim7",
+    "ext5_hypercube_dim8",
+    "ext5_hypercube_dim9",
+    "ext5_inv",
+    "ext5_mul",
+    "ext5_mul_base",
+    "ext5_square",
+    "ext5_sub",
+    "ext5_validate_packed",
+    "ext8_eq_poly_1",
+    "ext8_eq_poly_10",
+    "ext8_eq_poly_11",
+    "ext8_eq_poly_12",
+    "ext8_eq_poly_13",
+    "ext8_eq_poly_14",
+    "ext8_eq_poly_15",
+    "ext8_eq_poly_16",
+    "ext8_eq_poly_17",
+    "ext8_eq_poly_18",
+    "ext8_eq_poly_19",
+    "ext8_eq_poly_2",
+    "ext8_eq_poly_20",
+    "ext8_eq_poly_21",
+    "ext8_eq_poly_22",
+    "ext8_eq_poly_3",
+    "ext8_eq_poly_4",
+    "ext8_eq_poly_5",
+    "ext8_eq_poly_6",
+    "ext8_eq_poly_7",
+    "ext8_eq_poly_8",
+    "ext8_eq_poly_9",
+    "ext8_eq_poly_step",
+    "ext8_extrapolate_012",
+    "ext8_hypercube_dim1",
+    "ext8_hypercube_dim2",
+    "ext8_hypercube_dim3",
+    "ext8_hypercube_dim4",
+    "ext8_hypercube_dim5",
+    "ext8_hypercube_dim6",
+    "ext8_hypercube_dim7",
+    "ext8_hypercube_dim8",
+    "ext8_hypercube_dim9",
+    "ext8_inv",
+    "ext8_mul",
+    "ext8_square",
+    "ext8_validate_packed",
+    "hash_leaf_base_row_len_1",
+    "hash_leaf_base_row_len_128",
+    "hash_leaf_base_row_len_16",
+    "hash_leaf_base_row_len_2",
+    "hash_leaf_base_row_len_256",
+    "hash_leaf_base_row_len_32",
+    "hash_leaf_base_row_len_4",
+    "hash_leaf_base_row_len_512",
+    "hash_leaf_base_row_len_64",
+    "hash_leaf_base_row_len_8",
+    "hash_leaf_ext4_row_len_1",
+    "hash_leaf_ext4_row_len_128",
+    "hash_leaf_ext4_row_len_16",
+    "hash_leaf_ext4_row_len_2",
+    "hash_leaf_ext4_row_len_256",
+    "hash_leaf_ext4_row_len_32",
+    "hash_leaf_ext4_row_len_4",
+    "hash_leaf_ext4_row_len_512",
+    "hash_leaf_ext4_row_len_64",
+    "hash_leaf_ext4_row_len_8",
+    "hash_leaf_ext5_row_len_1",
+    "hash_leaf_ext5_row_len_128",
+    "hash_leaf_ext5_row_len_16",
+    "hash_leaf_ext5_row_len_2",
+    "hash_leaf_ext5_row_len_256",
+    "hash_leaf_ext5_row_len_32",
+    "hash_leaf_ext5_row_len_4",
+    "hash_leaf_ext5_row_len_512",
+    "hash_leaf_ext5_row_len_64",
+    "hash_leaf_ext5_row_len_8",
+    "hash_leaf_ext8_row_len_1",
+    "hash_leaf_ext8_row_len_128",
+    "hash_leaf_ext8_row_len_16",
+    "hash_leaf_ext8_row_len_2",
+    "hash_leaf_ext8_row_len_256",
+    "hash_leaf_ext8_row_len_32",
+    "hash_leaf_ext8_row_len_4",
+    "hash_leaf_ext8_row_len_512",
+    "hash_leaf_ext8_row_len_64",
+    "hash_leaf_ext8_row_len_8",
+    "merkle_compress_node",
+    "observe_base_batch_1",
+    "observe_base_batch_16",
+    "observe_base_batch_2",
+    "observe_base_batch_4",
+    "observe_base_batch_8",
+    "observe_ext4_batch_1",
+    "observe_ext4_batch_16",
+    "observe_ext5_batch_1",
+    "observe_ext5_batch_16",
+    "observe_ext5_batch_2",
+    "observe_ext5_batch_4",
+    "observe_ext5_batch_8",
+    "observe_ext8_batch_1",
+    "observe_ext8_batch_16",
+    "observe_hash_u64_batch_1",
+    "observe_hash_u64_batch_16",
+    "observe_hash_u64_batch_2",
+    "observe_hash_u64_batch_4",
+    "observe_hash_u64_batch_8",
+    "sample_base",
+    "sample_bits_16",
+    "sample_bits_24",
+    "sample_bits_8",
+    "sample_ext5",
+    "sample_stir_queries_bits_16",
+    "sample_stir_queries_bits_24",
+    "sample_stir_queries_bits_8",
+    "verify_pow_bits_16",
+    "verify_pow_bits_24",
+    "verify_pow_bits_8"
+  ],
+  "gas_source": "testdata/quintic_calibration_koalabear_promoted/microbench.log",
+  "method": "quintic Pareto score calibrated to optimized native quintic tx gas; legacy quartic/octic references retained as diagnostics",
+  "phase_source": "testdata/quintic_calibration_koalabear_promoted/phases.log",
+  "reference_schedule_source": "testdata/calibration_reference_schedules.json",
+  "references": [
+    {
+      "bucket_score_ratios": {
+        "calldata": 1.0,
+        "folding": 2.832521348959722,
+        "merkle": 1.6056805246066859,
+        "sumcheck": 0.98709065176665,
+        "transcript": 1.0970605062547356
+      },
+      "bucket_scores": {
+        "calldata": 753800,
+        "folding": 6077945,
+        "merkle": 4613870,
+        "sumcheck": 241318,
+        "transcript": 141896
+      },
+      "fixture": "octic_whir_k22_jb100_lir6_ff4_rsv1_success",
+      "label": "WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1",
+      "largest_weighted_terms": {
+        "calldata": 750240,
+        "folding": 5607000,
+        "merkle": 1585944,
+        "sumcheck": 160292,
+        "transcript": 136627
+      },
+      "measured_buckets": {
+        "calldata": 753800,
+        "folding": 2145772,
+        "merkle": 2873467,
+        "sumcheck": 244474,
+        "transcript": 129342,
+        "transcript_observe_final_poly": 90190,
+        "transcript_round_parse": 11406,
+        "transcript_setup": 27746
+      },
+      "measured_native_execution_gas": 5509073,
+      "measured_total_tx_gas": 6197424,
+      "measured_transcript_subphase": {
+        "observe_final_poly": 90190,
+        "round_parse": 11406,
+        "setup": 27746
+      },
+      "metrics_used": [
+        "base_to_ext8_hypercube_dim4",
+        "ext8_eq_poly_step",
+        "ext8_extrapolate_012",
+        "ext8_hypercube_dim4",
+        "ext8_validate_packed",
+        "hash_leaf_base_row_len_16",
+        "hash_leaf_ext8_row_len_1",
+        "hash_leaf_ext8_row_len_16",
+        "merkle_compress_node",
+        "observe_base_batch_1",
+        "observe_base_batch_16",
+        "observe_ext8_batch_1",
+        "observe_ext8_batch_16",
+        "observe_hash_u64_batch_1",
+        "observe_hash_u64_batch_16",
+        "sample_stir_queries_bits_24",
+        "verify_pow_bits_24"
+      ],
+      "ordinal_gate_participant": true,
+      "phase_breakdown_available": true,
+      "phase_sum": 5393055,
+      "reference": "octic_k22_jb100_lir6_ff4_rsv1",
+      "reference_counts": {
+        "commitment_ood_samples": 1,
+        "encoding_counts": {
+          "abi_uint256_slots": 0,
+          "abi_zero_padding_bytes": 0,
+          "base_elements": 384,
+          "ext5_elements": 719,
+          "merkle_hashes": 1124,
+          "native_blob_nonzero_bytes": 46890,
+          "native_blob_zero_bytes": 890,
+          "transcript_base_elements": 1,
+          "transcript_ext5_elements": 111,
+          "transcript_hashes": 4
+        },
+        "eq_poly_count": 66,
+        "eq_poly_depth_counts": [
+          {
+            "count": 10,
+            "depth": 6
+          },
+          {
+            "count": 13,
+            "depth": 10
+          },
+          {
+            "count": 17,
+            "depth": 14
+          },
+          {
+            "count": 25,
+            "depth": 18
+          },
+          {
+            "count": 1,
+            "depth": 22
+          }
+        ],
+        "extension_degree": 8,
+        "extrapolate_count": 22,
+        "field_bits": 248,
+        "final_round": {
+          "depth": 21,
+          "domain_size": 33554432,
+          "folding_factor": 4,
+          "folding_pow_bits": 0,
+          "log_inv_rate": 15,
+          "merkle_geometry": {
+            "compressions": 182,
+            "decommitments": 173,
+            "dedup_events": 0,
+            "depth": 21,
+            "frontier_init_nodes": 10,
+            "in_frontier_merges": 9,
+            "query_count": 10,
+            "seed": 13767160829431645693
+          },
+          "next_log_inv_rate": null,
+          "num_queries_requested": 10,
+          "num_queries_sampled": 10,
+          "num_variables": 6,
+          "ood_samples": 0,
+          "phase": "final",
+          "pow_bits": 25,
+          "round_index": null,
+          "row_kind": "ext",
+          "row_len": 16
+        },
+        "final_sumcheck_rounds": 6,
+        "folding_schedule": {
+          "first_round": 4,
+          "rest": 4,
+          "variant": "Constant"
+        },
+        "inverse_count": 0,
+        "label": "octic_k22_jb100_lir6_ff4_rsv1",
+        "packing_validation_count": 719,
+        "rounds": [
+          {
+            "depth": 24,
+            "domain_size": 268435456,
+            "folding_factor": 4,
+            "folding_pow_bits": 0,
+            "log_inv_rate": 6,
+            "merkle_geometry": {
+              "compressions": 467,
+              "decommitments": 444,
+              "dedup_events": 0,
+              "depth": 24,
+              "frontier_init_nodes": 24,
+              "in_frontier_merges": 23,
+              "query_count": 24,
+              "seed": 8388854329819136893
+            },
+            "next_log_inv_rate": 9,
+            "num_queries_requested": 24,
+            "num_queries_sampled": 24,
+            "num_variables": 18,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 29,
+            "round_index": 0,
+            "row_kind": "base",
+            "row_len": 16
+          },
+          {
+            "depth": 23,
+            "domain_size": 134217728,
+            "folding_factor": 4,
+            "folding_pow_bits": 0,
+            "log_inv_rate": 9,
+            "merkle_geometry": {
+              "compressions": 301,
+              "decommitments": 286,
+              "dedup_events": 0,
+              "depth": 23,
+              "frontier_init_nodes": 16,
+              "in_frontier_merges": 15,
+              "query_count": 16,
+              "seed": 6156538922851547484
+            },
+            "next_log_inv_rate": 12,
+            "num_queries_requested": 16,
+            "num_queries_sampled": 16,
+            "num_variables": 14,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 29,
+            "round_index": 1,
+            "row_kind": "ext",
+            "row_len": 16
+          },
+          {
+            "depth": 22,
+            "domain_size": 67108864,
+            "folding_factor": 4,
+            "folding_pow_bits": 0,
+            "log_inv_rate": 12,
+            "merkle_geometry": {
+              "compressions": 228,
+              "decommitments": 217,
+              "dedup_events": 0,
+              "depth": 22,
+              "frontier_init_nodes": 12,
+              "in_frontier_merges": 11,
+              "query_count": 12,
+              "seed": 12853485143754315711
+            },
+            "next_log_inv_rate": 15,
+            "num_queries_requested": 12,
+            "num_queries_sampled": 12,
+            "num_variables": 10,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 28,
+            "round_index": 2,
+            "row_kind": "ext",
+            "row_len": 16
+          }
+        ],
+        "rs_domain_initial_reduction_factor": 1,
+        "starting_log_inv_rate": 6,
+        "total_query_rows": 62,
+        "total_row_values": 992
+      },
+      "tx_artifact": "testdata/calibration_octic_after_merkle_tx_snapshot/run.json",
+      "tx_execution_remainder": 5422624,
+      "verifier_score": 11828829
+    },
+    {
+      "bucket_score_ratios": {
+        "calldata": 1.0,
+        "folding": null,
+        "merkle": null,
+        "sumcheck": null,
+        "transcript": null
+      },
+      "bucket_scores": {
+        "calldata": 124396,
+        "folding": 601776,
+        "merkle": 439975,
+        "sumcheck": 75296,
+        "transcript": 75318
+      },
+      "fixture": "quartic_whir_lir11_ff5_rsv3_success",
+      "label": "WhirBlobVerifierNative4_lir11_ff5_rsv3",
+      "largest_weighted_terms": {
+        "calldata": 122832,
+        "folding": 491036,
+        "merkle": 179920,
+        "sumcheck": 39504,
+        "transcript": 71160
+      },
+      "measured_buckets": {
+        "calldata": 124396,
+        "folding": 0,
+        "merkle": 0,
+        "sumcheck": 0,
+        "transcript": 0
+      },
+      "measured_native_execution_gas": 830354,
+      "measured_total_tx_gas": 969728,
+      "measured_transcript_subphase": null,
+      "metrics_used": [
+        "base_to_ext4_hypercube_dim5",
+        "ext4_eq_poly_step",
+        "ext4_extrapolate_012",
+        "ext4_hypercube_dim5",
+        "ext4_validate_packed",
+        "hash_leaf_base_row_len_32",
+        "hash_leaf_ext4_row_len_1",
+        "hash_leaf_ext4_row_len_32",
+        "merkle_compress_node",
+        "observe_base_batch_1",
+        "observe_base_batch_16",
+        "observe_ext4_batch_1",
+        "observe_ext4_batch_16",
+        "observe_hash_u64_batch_1",
+        "observe_hash_u64_batch_16",
+        "sample_stir_queries_bits_24",
+        "verify_pow_bits_24"
+      ],
+      "ordinal_gate_participant": true,
+      "phase_breakdown_available": false,
+      "phase_sum": 0,
+      "reference": "quartic_lir11_ff5_rsv3",
+      "reference_counts": {
+        "commitment_ood_samples": 2,
+        "encoding_counts": {
+          "abi_uint256_slots": 0,
+          "abi_zero_padding_bytes": 0,
+          "base_elements": 160,
+          "ext5_elements": 226,
+          "merkle_hashes": 164,
+          "native_blob_nonzero_bytes": 7677,
+          "native_blob_zero_bytes": 391,
+          "transcript_base_elements": 2,
+          "transcript_ext5_elements": 98,
+          "transcript_hashes": 2
+        },
+        "eq_poly_count": 13,
+        "eq_poly_depth_counts": [
+          {
+            "count": 4,
+            "depth": 6
+          },
+          {
+            "count": 7,
+            "depth": 11
+          },
+          {
+            "count": 2,
+            "depth": 16
+          }
+        ],
+        "extension_degree": 4,
+        "extrapolate_count": 16,
+        "field_bits": 124,
+        "final_round": {
+          "depth": 19,
+          "domain_size": 16777216,
+          "folding_factor": 5,
+          "folding_pow_bits": 0,
+          "log_inv_rate": 13,
+          "merkle_geometry": {
+            "compressions": 67,
+            "decommitments": 64,
+            "dedup_events": 0,
+            "depth": 19,
+            "frontier_init_nodes": 4,
+            "in_frontier_merges": 3,
+            "query_count": 4,
+            "seed": 1736646359530129105
+          },
+          "next_log_inv_rate": null,
+          "num_queries_requested": 4,
+          "num_queries_sampled": 4,
+          "num_variables": 6,
+          "ood_samples": 0,
+          "phase": "final",
+          "pow_bits": 28,
+          "round_index": null,
+          "row_kind": "ext",
+          "row_len": 32
+        },
+        "final_sumcheck_rounds": 6,
+        "folding_schedule": {
+          "first_round": 5,
+          "rest": 5,
+          "variant": "Constant"
+        },
+        "inverse_count": 0,
+        "label": "quartic_lir11_ff5_rsv3",
+        "packing_validation_count": 226,
+        "rounds": [
+          {
+            "depth": 22,
+            "domain_size": 134217728,
+            "folding_factor": 5,
+            "folding_pow_bits": 10,
+            "log_inv_rate": 11,
+            "merkle_geometry": {
+              "compressions": 102,
+              "decommitments": 98,
+              "dedup_events": 0,
+              "depth": 22,
+              "frontier_init_nodes": 5,
+              "in_frontier_merges": 4,
+              "query_count": 5,
+              "seed": 17600608254490756985
+            },
+            "next_log_inv_rate": 13,
+            "num_queries_requested": 5,
+            "num_queries_sampled": 5,
+            "num_variables": 11,
+            "ood_samples": 2,
+            "phase": "round",
+            "pow_bits": 25,
+            "round_index": 0,
+            "row_kind": "base",
+            "row_len": 32
+          }
+        ],
+        "rs_domain_initial_reduction_factor": 3,
+        "starting_log_inv_rate": 11,
+        "total_query_rows": 9,
+        "total_row_values": 288
+      },
+      "tx_artifact": "testdata/calibration_quartic_lir11_tx_snapshot/run.json",
+      "tx_execution_remainder": 824332,
+      "verifier_score": 1316761
+    },
+    {
+      "bucket_score_ratios": {
+        "calldata": 1.0,
+        "folding": 5.433167976476312,
+        "merkle": 0.9787595733621268,
+        "sumcheck": 1.0125737954035046,
+        "transcript": 0.5236335437593147
+      },
+      "bucket_scores": {
+        "calldata": 159640,
+        "folding": 1027336,
+        "merkle": 438728,
+        "sumcheck": 75296,
+        "transcript": 43216
+      },
+      "fixture": "quartic_whir_lir6_ff5_rsv1_success",
+      "label": "WhirBlobVerifierNative4_lir6_ff5_rsv1",
+      "largest_weighted_terms": {
+        "calldata": 158048,
+        "folding": 915616,
+        "merkle": 122814,
+        "sumcheck": 39504,
+        "transcript": 38246
+      },
+      "measured_buckets": {
+        "calldata": 159640,
+        "folding": 189086,
+        "merkle": 448249,
+        "sumcheck": 74361,
+        "transcript": 82531,
+        "transcript_observe_final_poly": 18622,
+        "transcript_round_parse": 30308,
+        "transcript_setup": 33601
+      },
+      "measured_native_execution_gas": 820868,
+      "measured_total_tx_gas": 975202,
+      "measured_transcript_subphase": {
+        "observe_final_poly": 18622,
+        "round_parse": 30308,
+        "setup": 33601
+      },
+      "metrics_used": [
+        "base_to_ext4_hypercube_dim4",
+        "ext4_eq_poly_step",
+        "ext4_extrapolate_012",
+        "ext4_hypercube_dim4",
+        "ext4_validate_packed",
+        "hash_leaf_base_row_len_16",
+        "hash_leaf_ext4_row_len_1",
+        "hash_leaf_ext4_row_len_16",
+        "merkle_compress_node",
+        "observe_base_batch_1",
+        "observe_base_batch_16",
+        "observe_ext4_batch_1",
+        "observe_ext4_batch_16",
+        "observe_hash_u64_batch_1",
+        "observe_hash_u64_batch_16",
+        "sample_stir_queries_bits_16",
+        "sample_stir_queries_bits_24",
+        "verify_pow_bits_24"
+      ],
+      "ordinal_gate_participant": true,
+      "phase_breakdown_available": true,
+      "phase_sum": 794227,
+      "reference": "quartic_lir6_ff5_rsv1",
+      "reference_counts": {
+        "commitment_ood_samples": 2,
+        "encoding_counts": {
+          "abi_uint256_slots": 0,
+          "abi_zero_padding_bytes": 0,
+          "base_elements": 144,
+          "ext5_elements": 228,
+          "merkle_hashes": 276,
+          "native_blob_nonzero_bytes": 9878,
+          "native_blob_zero_bytes": 398,
+          "transcript_base_elements": 2,
+          "transcript_ext5_elements": 52,
+          "transcript_hashes": 3
+        },
+        "eq_poly_count": 26,
+        "eq_poly_depth_counts": [
+          {
+            "count": 5,
+            "depth": 4
+          },
+          {
+            "count": 8,
+            "depth": 8
+          },
+          {
+            "count": 11,
+            "depth": 12
+          },
+          {
+            "count": 2,
+            "depth": 16
+          }
+        ],
+        "extension_degree": 4,
+        "extrapolate_count": 16,
+        "field_bits": 124,
+        "final_round": {
+          "depth": 16,
+          "domain_size": 1048576,
+          "folding_factor": 4,
+          "folding_pow_bits": 0,
+          "log_inv_rate": 12,
+          "merkle_geometry": {
+            "compressions": 71,
+            "decommitments": 67,
+            "dedup_events": 0,
+            "depth": 16,
+            "frontier_init_nodes": 5,
+            "in_frontier_merges": 4,
+            "query_count": 5,
+            "seed": 13876409799358644935
+          },
+          "next_log_inv_rate": null,
+          "num_queries_requested": 5,
+          "num_queries_sampled": 5,
+          "num_variables": 4,
+          "ood_samples": 0,
+          "phase": "final",
+          "pow_bits": 20,
+          "round_index": null,
+          "row_kind": "ext",
+          "row_len": 16
+        },
+        "final_sumcheck_rounds": 4,
+        "folding_schedule": {
+          "first_round": 4,
+          "rest": 4,
+          "variant": "Constant"
+        },
+        "inverse_count": 0,
+        "label": "quartic_lir6_ff5_rsv1",
+        "packing_validation_count": 228,
+        "rounds": [
+          {
+            "depth": 18,
+            "domain_size": 4194304,
+            "folding_factor": 4,
+            "folding_pow_bits": 0,
+            "log_inv_rate": 6,
+            "merkle_geometry": {
+              "compressions": 138,
+              "decommitments": 130,
+              "dedup_events": 0,
+              "depth": 18,
+              "frontier_init_nodes": 9,
+              "in_frontier_merges": 8,
+              "query_count": 9,
+              "seed": 14521051583061305379
+            },
+            "next_log_inv_rate": 9,
+            "num_queries_requested": 9,
+            "num_queries_sampled": 9,
+            "num_variables": 12,
+            "ood_samples": 2,
+            "phase": "round",
+            "pow_bits": 26,
+            "round_index": 0,
+            "row_kind": "base",
+            "row_len": 16
+          },
+          {
+            "depth": 17,
+            "domain_size": 2097152,
+            "folding_factor": 4,
+            "folding_pow_bits": 4,
+            "log_inv_rate": 9,
+            "merkle_geometry": {
+              "compressions": 81,
+              "decommitments": 76,
+              "dedup_events": 0,
+              "depth": 17,
+              "frontier_init_nodes": 6,
+              "in_frontier_merges": 5,
+              "query_count": 6,
+              "seed": 12288736176093715970
+            },
+            "next_log_inv_rate": 12,
+            "num_queries_requested": 6,
+            "num_queries_sampled": 6,
+            "num_variables": 8,
+            "ood_samples": 2,
+            "phase": "round",
+            "pow_bits": 26,
+            "round_index": 1,
+            "row_kind": "ext",
+            "row_len": 16
+          }
+        ],
+        "rs_domain_initial_reduction_factor": 1,
+        "starting_log_inv_rate": 6,
+        "total_query_rows": 20,
+        "total_row_values": 320
+      },
+      "tx_artifact": "testdata/calibration_quartic_lir6_tx_snapshot/run.json",
+      "tx_execution_remainder": 794562,
+      "verifier_score": 1744216
+    },
+    {
+      "bucket_score_ratios": {
+        "calldata": 1.0
+      },
+      "bucket_scores": {
+        "calldata": 856336,
+        "folding": 3588091,
+        "merkle": 2129490,
+        "sumcheck": 115764,
+        "transcript": 77176
+      },
+      "fixture": "quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+      "label": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+      "largest_weighted_terms": {
+        "calldata": 851456,
+        "folding": 3219216,
+        "merkle": 631129,
+        "sumcheck": 65186,
+        "transcript": 71907
+      },
+      "measured_buckets": {
+        "calldata": 856336
+      },
+      "measured_native_execution_gas": 2936328,
+      "measured_total_tx_gas": 3813664,
+      "measured_transcript_subphase": null,
+      "metrics_used": [
+        "base_to_ext5_hypercube_dim4",
+        "ext5_eq_poly_step",
+        "ext5_extrapolate_012",
+        "ext5_hypercube_dim4",
+        "ext5_validate_packed",
+        "hash_leaf_base_row_len_16",
+        "hash_leaf_ext5_row_len_1",
+        "hash_leaf_ext5_row_len_16",
+        "merkle_compress_node",
+        "observe_base_batch_1",
+        "observe_base_batch_16",
+        "observe_ext5_batch_1",
+        "observe_ext5_batch_16",
+        "observe_hash_u64_batch_1",
+        "observe_hash_u64_batch_16",
+        "sample_stir_queries_bits_24",
+        "verify_pow_bits_24"
+      ],
+      "ordinal_gate_participant": false,
+      "ordinal_gate_skip_reason": "optimized ext5 native reference calibrates quintic score scale; cross-degree ordinal ordering is not a quintic Pareto requirement",
+      "phase_breakdown_available": false,
+      "phase_sum": 0,
+      "reference": "quintic_constant_pow28_ff4_lir4_rsv3",
+      "reference_counts": {
+        "commitment_ood_samples": 1,
+        "encoding_counts": {
+          "abi_uint256_slots": 3176,
+          "abi_zero_padding_bytes": 13620,
+          "base_elements": 608,
+          "ext5_elements": 1135,
+          "merkle_hashes": 1433,
+          "native_blob_nonzero_bytes": 53216,
+          "native_blob_zero_bytes": 1220,
+          "transcript_base_elements": 1,
+          "transcript_ext5_elements": 111,
+          "transcript_hashes": 4
+        },
+        "eq_poly_count": 106,
+        "eq_poly_depth_counts": [
+          {
+            "count": 14,
+            "depth": 6
+          },
+          {
+            "count": 20,
+            "depth": 10
+          },
+          {
+            "count": 32,
+            "depth": 14
+          },
+          {
+            "count": 39,
+            "depth": 18
+          },
+          {
+            "count": 1,
+            "depth": 22
+          }
+        ],
+        "extension_degree": 5,
+        "extrapolate_count": 22,
+        "field_bits": 155,
+        "final_folding_pow_bits": 0,
+        "final_pow_bits": 24,
+        "final_round": {
+          "depth": 17,
+          "domain_size": 2097152,
+          "folding_factor": 4,
+          "folding_pow_bits": 0,
+          "log_inv_rate": 11,
+          "merkle_geometry": {
+            "compressions": 185,
+            "decommitments": 172,
+            "dedup_events": 0,
+            "depth": 17,
+            "frontier_init_nodes": 14,
+            "in_frontier_merges": 13,
+            "query_count": 14,
+            "seed": 8263553216103485696
+          },
+          "next_log_inv_rate": null,
+          "num_queries_requested": 14,
+          "num_queries_sampled": 14,
+          "num_variables": 6,
+          "ood_samples": 0,
+          "phase": "final",
+          "pow_bits": 24,
+          "round_index": null,
+          "row_kind": "ext5",
+          "row_len": 16
+        },
+        "final_sumcheck_rounds": 6,
+        "folding_schedule": {
+          "first_round": 4,
+          "rest": 4,
+          "variant": "Constant"
+        },
+        "inverse_count": 0,
+        "label": "constant_pow28_ff4_lir4_rsv3",
+        "max_derived_pow_bits": 27,
+        "merkle_security_bits_achieved": 160,
+        "not_selectable_reason": null,
+        "packing_validation_count": 1135,
+        "pow_bits_schedule": [
+          27,
+          27,
+          22,
+          25,
+          25,
+          26,
+          27,
+          24
+        ],
+        "pow_work_units": 557842432,
+        "rejection_reason": "achieved security 100.015 below requested 101",
+        "requested_pow_bits": 28,
+        "rounds": [
+          {
+            "depth": 22,
+            "domain_size": 67108864,
+            "folding_factor": 4,
+            "folding_pow_bits": 22,
+            "log_inv_rate": 4,
+            "merkle_geometry": {
+              "compressions": 648,
+              "decommitments": 611,
+              "dedup_events": 0,
+              "depth": 22,
+              "frontier_init_nodes": 38,
+              "in_frontier_merges": 37,
+              "query_count": 38,
+              "seed": 18272578283689750744
+            },
+            "next_log_inv_rate": 5,
+            "num_queries_requested": 38,
+            "num_queries_sampled": 38,
+            "num_variables": 18,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 27,
+            "round_index": 0,
+            "row_kind": "base",
+            "row_len": 16
+          },
+          {
+            "depth": 19,
+            "domain_size": 8388608,
+            "folding_factor": 4,
+            "folding_pow_bits": 25,
+            "log_inv_rate": 5,
+            "merkle_geometry": {
+              "compressions": 435,
+              "decommitments": 405,
+              "dedup_events": 0,
+              "depth": 19,
+              "frontier_init_nodes": 31,
+              "in_frontier_merges": 30,
+              "query_count": 31,
+              "seed": 7450831938724002553
+            },
+            "next_log_inv_rate": 8,
+            "num_queries_requested": 31,
+            "num_queries_sampled": 31,
+            "num_variables": 14,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 25,
+            "round_index": 1,
+            "row_kind": "ext5",
+            "row_len": 16
+          },
+          {
+            "depth": 18,
+            "domain_size": 4194304,
+            "folding_factor": 4,
+            "folding_pow_bits": 27,
+            "log_inv_rate": 8,
+            "merkle_geometry": {
+              "compressions": 259,
+              "decommitments": 241,
+              "dedup_events": 0,
+              "depth": 18,
+              "frontier_init_nodes": 19,
+              "in_frontier_merges": 18,
+              "query_count": 19,
+              "seed": 15075829667467805978
+            },
+            "next_log_inv_rate": 11,
+            "num_queries_requested": 19,
+            "num_queries_sampled": 19,
+            "num_variables": 10,
+            "ood_samples": 1,
+            "phase": "round",
+            "pow_bits": 26,
+            "round_index": 2,
+            "row_kind": "ext5",
+            "row_len": 16
+          }
+        ],
+        "rs_domain_initial_reduction_factor": 3,
+        "security_bits_achieved": 100.01454940952041,
+        "selectable": true,
+        "starting_folding_pow_bits": 27,
+        "starting_log_inv_rate": 4,
+        "structural_score": 4915,
+        "target_evaluation": {
+          "passes_merkle_security": true,
+          "passes_pow": true,
+          "passes_security": true,
+          "passes_target_thresholds": true,
+          "target_eligible": true,
+          "target_max_derived_pow_bits": 30,
+          "target_merkle_security_bits": 80,
+          "target_security_bits": 100.0
+        },
+        "total_query_rows": 102,
+        "total_row_values": 1632,
+        "transcript_elements": 225,
+        "valid": false
+      },
+      "tx_artifact": "testdata/koalabear_promoted_optimizations_tx_snapshot_verified/run.json",
+      "tx_execution_remainder": 2936328,
+      "verifier_score": 6766857
+    }
+  ],
+  "schema_version": 2,
+  "source_fingerprints": {
+    "algorithm": "sha256",
+    "combined_sha256": "a62315c0818ba5d7988fd72b7c6781865afced751d9b3b180f8385d7ce35a607",
+    "entries": [
+      {
+        "bytes": 13954,
+        "path": "build_quintic_calibration.py",
+        "sha256": "56466e9a22aa6e6e9dccbdb07d29729e416f1acce6adc94dfb114665dc9eb294"
+      },
+      {
+        "bytes": 504,
+        "path": "foundry.toml",
+        "sha256": "1b6b80bbc631aa82adcd8ba38b8e2504e72a1f847d0d57af8148c667542bd9eb"
+      },
+      {
+        "bytes": 35913,
+        "path": "lib/solady/src/utils/LibSort.sol",
+        "sha256": "3fac4e0959486161e4e6692e8e6915adb5004ef8035cb41cb29af8fc96bcd049"
+      },
+      {
+        "bytes": 91724,
+        "path": "quintic_schedule_scorer.py",
+        "sha256": "980ab101d3312eb7db1ed7b92b5887c3a8ab2ac3da2275f50e9b1730c847ac9c"
+      },
+      {
+        "bytes": 2654,
+        "path": "script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol",
+        "sha256": "ca0a4b5d9a514fb4e196003844783fc13e0c1b1e78b327d4d4e5bd71e0ec1597"
+      },
+      {
+        "bytes": 2548,
+        "path": "script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol",
+        "sha256": "f688c0e416a950f962b930873aec2254dd64a853211a1256628462a403120e2c"
+      },
+      {
+        "bytes": 2476,
+        "path": "script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol",
+        "sha256": "a6bc67b05973de6737a60f3874734ef68c05995414df22b94091d2d3907521e7"
+      },
+      {
+        "bytes": 2441,
+        "path": "script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol",
+        "sha256": "5cad40c029539234291c07d29372f73aee9ebf3dd766eec8ae6e298139078a99"
+      },
+      {
+        "bytes": 1504,
+        "path": "src/field/KoalaBear.sol",
+        "sha256": "600c6bf96cd7c4ef730130df387f12c5b534811f2da4f34c286f7690d180c9e1"
+      },
+      {
+        "bytes": 14812,
+        "path": "src/field/KoalaBearExt4.sol",
+        "sha256": "da1731a6e69bc8ee11fbc18b437b560b0df15488719c200ab75786a46f590e0f"
+      },
+      {
+        "bytes": 17976,
+        "path": "src/field/KoalaBearExt5.sol",
+        "sha256": "6e9bc93c17793f7328ad3ecef7fe451ab4e7a0e6f04f909d80bb661a4a9a14b5"
+      },
+      {
+        "bytes": 34794,
+        "path": "src/field/KoalaBearExt8.sol",
+        "sha256": "be7b84c498c9be23250eb23e1aeebf539e29395358f42e7e825833733dd27e3a"
+      },
+      {
+        "bytes": 6450,
+        "path": "src/field/KoalaBearPackedField.sol",
+        "sha256": "25931892c503beab0ffc5e5c4fb0977051b644b7c96661a4e27db70fa3661e5c"
+      },
+      {
+        "bytes": 3641,
+        "path": "src/generated/OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "3f8c88acbf17cbb158ef2739d53270bebcacd6d404f9f5cb6403ed6200c76232"
+      },
+      {
+        "bytes": 2754,
+        "path": "src/generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol",
+        "sha256": "3a5cbd18494d307e6a1c6b5ea249aaf0b2d6c858a96f896e44f8dc3e36f55e8a"
+      },
+      {
+        "bytes": 3087,
+        "path": "src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol",
+        "sha256": "25f34acde8654f2109e26161b9633f5b7f764b2ce0c936d7313a1c6fafdac9b6"
+      },
+      {
+        "bytes": 3905,
+        "path": "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "00ee6dafee0e372e9accbc053b9ba00f1d302128436b4859589620f6be5541fa"
+      },
+      {
+        "bytes": 3901,
+        "path": "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "a79c32189a7f204c201d17a3cbb4f2cf0da3ebab78dad2eddd899f6733841c99"
+      },
+      {
+        "bytes": 64981,
+        "path": "src/merkle/MerkleVerifier.sol",
+        "sha256": "8b133e4998d7109406c7a4ec8bff10e896862fa8ecd0e2c0ec3835ef3c58e9f3"
+      },
+      {
+        "bytes": 40959,
+        "path": "src/transcript/KeccakChallenger.sol",
+        "sha256": "5812455b88a49e23248fd07673243363ead5c6382e541a0a6366e1bf398e384a"
+      },
+      {
+        "bytes": 1829,
+        "path": "src/whir/WhirStructs.sol",
+        "sha256": "3711913174dac3d5333b0d0ddd449842ee3296d901c25b06b97b1718db8cea3d"
+      },
+      {
+        "bytes": 75664,
+        "path": "src/whir/WhirVerifierCore4.sol",
+        "sha256": "71b225edc2ed581012830c9b064865e8213732f4c24d5de82c205fb4b25bec30"
+      },
+      {
+        "bytes": 45757,
+        "path": "src/whir/WhirVerifierUtils4.sol",
+        "sha256": "c97f842bcd2a4a5fe8287ad320e2052e98c78e439421b37059c6ce423a7720e1"
+      },
+      {
+        "bytes": 12286,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "4f960ae2dadcd14f7afcaeff96d45f7d02bb616287eee07ac73a9ba3098c1a01"
+      },
+      {
+        "bytes": 843,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "a8cf4e800c343fc02aa192154b4160a8aabb5ca2e0437a0f82be7b29ccf83d50"
+      },
+      {
+        "bytes": 13571,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "85e6063e8aea6c6c98b815a069a24dd189df3a302018a19926a300b4931394a6"
+      },
+      {
+        "bytes": 9819,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "3b6759be429678f75510bb28fb5bf1fe167e0315c04a5fee459ffb663e31a4e6"
+      },
+      {
+        "bytes": 85336,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol",
+        "sha256": "d093af9024c17201a5027a503fe06936aca5dad3dd726e4c9730c729a1803790"
+      },
+      {
+        "bytes": 74701,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol",
+        "sha256": "466d670ed87cbf825ed496332ccc047bc83e46e2ad68a8fc658eea1cfa3577dc"
+      },
+      {
+        "bytes": 12286,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "1a0a5760ed6516707cd43d10f3de64925d461631f62a655d69c2e73411670ddc"
+      },
+      {
+        "bytes": 819,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "9b57b9c5b6c7cd2c6837b8582bcdd82c6744c889e0522d5459ae6f6cf2c8f3c6"
+      },
+      {
+        "bytes": 10516,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "f83246e2a12941352bdebd20c13e25e3a7154460283dc65e1b1b5b2a90de93d1"
+      },
+      {
+        "bytes": 9801,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "4c02cd3d4c4e7db0d9ab8e7c606a62babdc820da17671727edde0c3214fb6a75"
+      },
+      {
+        "bytes": 82975,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifierCore5.sol",
+        "sha256": "65fc2dfe87a8d7f52ecdc7fbe8564b1d79462f8d5f107ae64ad5d083de52dac3"
+      },
+      {
+        "bytes": 110696,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifierUtils5.sol",
+        "sha256": "ecd16bc89dc581da9a53bdff48b9070f065f188aed1fd1a8e628b672dcb0dfbc"
+      },
+      {
+        "bytes": 11702,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "6c50a251d73e9e11ae26535097ac5d21553d71423746a380a865da99c9969925"
+      },
+      {
+        "bytes": 799,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifier8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "5136a8892c6d414604ea0f1939e6f0965cb9c05bc24906e830577133e8c1b3e2"
+      },
+      {
+        "bytes": 10470,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "b51cae3a3ba72d29798bb166671e87d5603d327f406ba3bea4919590ae5d8e4d"
+      },
+      {
+        "bytes": 9716,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifier8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "78d431add597e2a62cb81f02eee69e1a9983df9c40d0eea3569bf43e577e20ca"
+      },
+      {
+        "bytes": 107740,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierCore8.sol",
+        "sha256": "0363c422c9a71401d7862d6c61c141040846d747db2d05ff24e15da877749b5f"
+      },
+      {
+        "bytes": 98561,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol",
+        "sha256": "077607bfc2368396ac67d6f76cf3e52611d79a1fabcc0c36f36ff7a6b83ac77f"
+      },
+      {
+        "bytes": 11510,
+        "path": "src/whir/lir11/WhirBlobCodec4_lir11_ff5_rsv3.sol",
+        "sha256": "d82a08385ae94d9e126163783eef9f162adbac139b37627f4f984b494f5cfd50"
+      },
+      {
+        "bytes": 736,
+        "path": "src/whir/lir11/WhirBlobVerifier4_lir11_ff5_rsv3.sol",
+        "sha256": "4a171374812cd24379c3878c60dd37c736f59abf13df24d0fd1e4e0be82d950c"
+      },
+      {
+        "bytes": 10235,
+        "path": "src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol",
+        "sha256": "c820adb9e381d619081357d4dbb52cc70954bf4f6ab9257c4538fb188eaceebd"
+      },
+      {
+        "bytes": 19154,
+        "path": "src/whir/lir11/WhirVerifier4_lir11_ff5_rsv3.sol",
+        "sha256": "c38e2ff95ee9ed3c1551cde798c9474b1d0a66931b97117993edef39772a864b"
+      },
+      {
+        "bytes": 83397,
+        "path": "src/whir/lir11/WhirVerifierCore4Lir11.sol",
+        "sha256": "9bf83e3a417dbe9e5c4f07055b83fda8c37ab364335079721db24402595d3c2e"
+      },
+      {
+        "bytes": 76848,
+        "path": "src/whir/lir11/WhirVerifierUtils4Lir11.sol",
+        "sha256": "17952b6e52eca728dde4c81dc4c84a8b7a835e33530388cce25945b5d9e8a42d"
+      },
+      {
+        "bytes": 12743,
+        "path": "src/whir/lir6/WhirBlobCodec4_lir6_ff5_rsv1.sol",
+        "sha256": "3edff0f6b0a22f9794bc3271052a504031ba31f434443361c61dcaace0205ff3"
+      },
+      {
+        "bytes": 710,
+        "path": "src/whir/lir6/WhirBlobVerifier4_lir6_ff5_rsv1.sol",
+        "sha256": "aa8e9e57a201668288466cade759a35d3807eb673774abba2c14ddfefe809fbd"
+      },
+      {
+        "bytes": 11138,
+        "path": "src/whir/lir6/WhirBlobVerifierNative4_lir6_ff5_rsv1.sol",
+        "sha256": "d4aeab6f3a88abc8315d4e473fb886d4d5d399c812af500a36eb8e9cc8ffcbda"
+      },
+      {
+        "bytes": 20325,
+        "path": "src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol",
+        "sha256": "1a45081781941c60b2c6b9591ab4064e6d055897553881543c77a13c36610e15"
+      },
+      {
+        "bytes": 35551,
+        "path": "test/GasCalibration_native_compare.t.sol",
+        "sha256": "479fe616335e91e66c608ce360d579005ad7a1694fe24c7b80cbee996a937dd6"
+      },
+      {
+        "bytes": 38955,
+        "path": "test/QuinticMicroBenchmarks.t.sol",
+        "sha256": "f7afe528d38fd721a9a97156ecd071caae18021160be7724ec08f5e689c5eba5"
+      }
+    ],
+    "schema_version": 1
+  },
+  "whir_p3_dirty": false,
+  "whir_p3_revision": "6fe32d9b97caa6cfb9ce4cc4956afa6d2460fd94"
+}

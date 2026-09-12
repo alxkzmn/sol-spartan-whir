@@ -1,0 +1,470 @@
+{
+  "created_at": "2026-09-07T09:56:31.754039+00:00",
+  "files": [
+    {
+      "bytes": 622,
+      "path": "foundry.toml",
+      "scope": "project",
+      "sha256": "e12e5602d8ef6da4e5d164ca56092f045faa90fc04b252921bbdc2ee94c49234"
+    },
+    {
+      "bytes": 528,
+      "path": "testdata/calibration_quartic_lir11_tx_snapshot/metrics.json",
+      "scope": "project",
+      "sha256": "40b623d7a54e28a7f757272343c744ddc84e0e5c8fa035225813c412deac80f6"
+    },
+    {
+      "bytes": 96467,
+      "path": "testdata/calibration_quartic_lir11_tx_snapshot/run.json",
+      "scope": "project",
+      "sha256": "f8e6d052fa3276767639087e42b08d6a120fa0d25f011c3facab5f8d743e8edf"
+    },
+    {
+      "bytes": 525,
+      "path": "testdata/calibration_quartic_lir6_tx_snapshot/metrics.json",
+      "scope": "project",
+      "sha256": "d85d3a92414836a22e4953103ce9b2d7e2b58b51e1c8545c82402922d3370ee5"
+    },
+    {
+      "bytes": 88591,
+      "path": "testdata/calibration_quartic_lir6_tx_snapshot/run.json",
+      "scope": "project",
+      "sha256": "f57f4906c9a9d25f902594356132b91d99778e46a770c8285a002c3444360304"
+    },
+    {
+      "bytes": 11831,
+      "path": "testdata/calibration_reference_schedules.json",
+      "scope": "project",
+      "sha256": "b509ee46e29a8c28009512bf503c98c2fefab912b9ee690c1feb89df2e7ea65f"
+    },
+    {
+      "bytes": 69799,
+      "path": "testdata/koalabear_review_fixes_compiler_snapshot/runtime.hex",
+      "scope": "project",
+      "sha256": "c338ad28048ab10d7ee9bed84f9e4967aa3255abff002ebe948220f31fa4d5a7"
+    },
+    {
+      "bytes": 5481,
+      "path": "testdata/koalabear_review_fixes_compiler_snapshot/summary.json",
+      "scope": "project",
+      "sha256": "eb5d4ca7b0e5876b0518e7b8c676314c2460c3035a998ca7d2fb527387e98fa0"
+    },
+    {
+      "bytes": 69799,
+      "path": "testdata/koalabear_review_fixes_compiler_snapshot_final/runtime.hex",
+      "scope": "project",
+      "sha256": "772332064c5de5da5092f7f67a3952cb91fce7e02531af0cba469a26b30a2960"
+    },
+    {
+      "bytes": 5481,
+      "path": "testdata/koalabear_review_fixes_compiler_snapshot_final/summary.json",
+      "scope": "project",
+      "sha256": "dd274dad07932382243eb0eb2631e8f1f0af32a03a8deaad74485c829b5d742b"
+    },
+    {
+      "bytes": 1080,
+      "path": "testdata/koalabear_review_fixes_phase_profile.log",
+      "scope": "project",
+      "sha256": "6bf68b1c1adc5143a163d6e876423ad9b2f9c20768660d85c13b2a70c077cb2d"
+    },
+    {
+      "bytes": 564,
+      "path": "testdata/koalabear_review_fixes_tx_snapshot/metrics.json",
+      "scope": "project",
+      "sha256": "c7153ec51d1f2bc210e5533d94b6027e6eb14e2e5fdbc23915848c04636f690f"
+    },
+    {
+      "bytes": 263,
+      "path": "testdata/koalabear_review_fixes_tx_snapshot/run-info.json",
+      "scope": "project",
+      "sha256": "3bda58c4cb09877d0406a4ad198a2f7e6a966de0466cbf686c6775ec790918a4"
+    },
+    {
+      "bytes": 291383,
+      "path": "testdata/koalabear_review_fixes_tx_snapshot/run.json",
+      "scope": "project",
+      "sha256": "ccc17442f08efcd753c98e5fdd36edb727bd0befccb2f963a9203eb9fc735769"
+    },
+    {
+      "bytes": 73423,
+      "path": "testdata/octic_optimized_final_compiler_snapshot/runtime.hex",
+      "scope": "project",
+      "sha256": "c924d554227eae0896f8ca2e19a06ecdbe9851f8bcd98513c1bdcc2c8ab608f3"
+    },
+    {
+      "bytes": 552,
+      "path": "testdata/octic_optimized_final_tx_snapshot/metrics.json",
+      "scope": "project",
+      "sha256": "ee374ba8c6df497a68228fb1dacca0f434731a9639c6118dad1f39dd8546d052"
+    },
+    {
+      "bytes": 268345,
+      "path": "testdata/octic_optimized_final_tx_snapshot/run.json",
+      "scope": "project",
+      "sha256": "a871bb2df68e35d794a67ad3e2973db4c75c3547320d3a136ec26a2eb56a8ecd"
+    },
+    {
+      "bytes": 73423,
+      "path": "testdata/octic_review_fixes_compiler_snapshot_final/runtime.hex",
+      "scope": "project",
+      "sha256": "bf26d810ff1f51b293fd5d22def1f840ed42dc3f445d9e97cb7d0f4a4edc30ee"
+    },
+    {
+      "bytes": 42847,
+      "path": "testdata/quintic_calibration.json",
+      "scope": "project",
+      "sha256": "ea8a996c208a8e446cfa7a55cdea6a7abea0ac86bf5542f29d32bd429dc7cd3d"
+    },
+    {
+      "bytes": 42847,
+      "path": "testdata/quintic_calibration_review_fixes/calibration.json",
+      "scope": "project",
+      "sha256": "ea8a996c208a8e446cfa7a55cdea6a7abea0ac86bf5542f29d32bd429dc7cd3d"
+    },
+    {
+      "bytes": 5560,
+      "path": "testdata/quintic_calibration_review_fixes/forge-config.json",
+      "scope": "project",
+      "sha256": "d60049ff4caea1edec8a9782ad160eba291076be75f5e7af676ddb3a718b816f"
+    },
+    {
+      "bytes": 25809,
+      "path": "testdata/quintic_calibration_review_fixes/microbench.log",
+      "scope": "project",
+      "sha256": "a391a34a7438ebbf4fc0ccce4188cc4af264662cbde838a621643a5fc51feafb"
+    },
+    {
+      "bytes": 4722,
+      "path": "testdata/quintic_calibration_review_fixes/phases.log",
+      "scope": "project",
+      "sha256": "d03112243ecad338ccac97666978e254c08adfc7ddb4f213e9196e4f482dcd1c"
+    },
+    {
+      "bytes": 3776,
+      "path": "testdata/quintic_pow_calibration.json",
+      "scope": "project",
+      "sha256": "262b574e4bef712829fb91b9d5b97ef9e99b346b209b564f0f9fb385e610192d"
+    },
+    {
+      "bytes": 57385,
+      "path": "testdata/quintic_prover_microbench.json",
+      "scope": "project",
+      "sha256": "50979d86f051230aac25b783cdb5c9c59b760ad423dbf2d4228b12dff3edf8a2"
+    },
+    {
+      "bytes": 750753,
+      "path": "testdata/quintic_schedule_microbench_pow24.json",
+      "scope": "project",
+      "sha256": "3cb331bdaf29cb0b20b8098d8681cd1b2e2f940f547012ad1ae6c1989b404f4d"
+    },
+    {
+      "bytes": 690070,
+      "path": "testdata/quintic_schedule_microbench_pow25.json",
+      "scope": "project",
+      "sha256": "ec71781c7660ac3ab624beed403b16e3e26b9ce51a294674509b341c6b42acf0"
+    },
+    {
+      "bytes": 727128,
+      "path": "testdata/quintic_schedule_microbench_pow26.json",
+      "scope": "project",
+      "sha256": "a9ff74a439bea6aa119cff59348dde3a9d04dc9eebf09677c458710f6c6aa48c"
+    },
+    {
+      "bytes": 51056717,
+      "path": "testdata/quintic_schedule_microbench_pow27_30_full.json",
+      "scope": "project",
+      "sha256": "d0d79b8e74fbaee2476c6b2e291b208b131185bf6d6f500c99dca35a9ed9beb7"
+    },
+    {
+      "bytes": 29319356,
+      "path": "testdata/quintic_scores/schedule_scores.json",
+      "scope": "project",
+      "sha256": "ef93be44602fc9c15059eaa8c4457da58b1d5c3131dfe1276591b467415d5f38"
+    },
+    {
+      "bytes": 54330,
+      "path": "testdata/quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success.blob",
+      "scope": "project",
+      "sha256": "60804321d0481caf7204204689df667928b2d106db0b0434baf72d88e2a87595"
+    },
+    {
+      "bytes": 104640,
+      "path": "testdata/quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success_proof.abi",
+      "scope": "project",
+      "sha256": "bdb69392921e9e0422bde8aa27315b0d8f01208ecceadbfc78ffab5b4d9684e0"
+    }
+  ],
+  "schema_version": 1,
+  "source_fingerprints": {
+    "algorithm": "sha256",
+    "combined_sha256": "0d13416cb1b41414fb41f25deb815763d7f098328bb20350b1c42e65580c5cfc",
+    "entries": [
+      {
+        "bytes": 13954,
+        "path": "build_quintic_calibration.py",
+        "sha256": "56466e9a22aa6e6e9dccbdb07d29729e416f1acce6adc94dfb114665dc9eb294"
+      },
+      {
+        "bytes": 622,
+        "path": "foundry.toml",
+        "sha256": "e12e5602d8ef6da4e5d164ca56092f045faa90fc04b252921bbdc2ee94c49234"
+      },
+      {
+        "bytes": 35913,
+        "path": "lib/solady/src/utils/LibSort.sol",
+        "sha256": "3fac4e0959486161e4e6692e8e6915adb5004ef8035cb41cb29af8fc96bcd049"
+      },
+      {
+        "bytes": 93096,
+        "path": "quintic_schedule_scorer.py",
+        "sha256": "597d121f83990641e6f1c830fa8642eeb1a0f762e304f2ed967419f53c05ccce"
+      },
+      {
+        "bytes": 2654,
+        "path": "script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol",
+        "sha256": "ca0a4b5d9a514fb4e196003844783fc13e0c1b1e78b327d4d4e5bd71e0ec1597"
+      },
+      {
+        "bytes": 2548,
+        "path": "script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol",
+        "sha256": "f688c0e416a950f962b930873aec2254dd64a853211a1256628462a403120e2c"
+      },
+      {
+        "bytes": 2476,
+        "path": "script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol",
+        "sha256": "a6bc67b05973de6737a60f3874734ef68c05995414df22b94091d2d3907521e7"
+      },
+      {
+        "bytes": 2441,
+        "path": "script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol",
+        "sha256": "5cad40c029539234291c07d29372f73aee9ebf3dd766eec8ae6e298139078a99"
+      },
+      {
+        "bytes": 1504,
+        "path": "src/field/KoalaBear.sol",
+        "sha256": "600c6bf96cd7c4ef730130df387f12c5b534811f2da4f34c286f7690d180c9e1"
+      },
+      {
+        "bytes": 14812,
+        "path": "src/field/KoalaBearExt4.sol",
+        "sha256": "da1731a6e69bc8ee11fbc18b437b560b0df15488719c200ab75786a46f590e0f"
+      },
+      {
+        "bytes": 17976,
+        "path": "src/field/KoalaBearExt5.sol",
+        "sha256": "6e9bc93c17793f7328ad3ecef7fe451ab4e7a0e6f04f909d80bb661a4a9a14b5"
+      },
+      {
+        "bytes": 34794,
+        "path": "src/field/KoalaBearExt8.sol",
+        "sha256": "be7b84c498c9be23250eb23e1aeebf539e29395358f42e7e825833733dd27e3a"
+      },
+      {
+        "bytes": 6450,
+        "path": "src/field/KoalaBearPackedField.sol",
+        "sha256": "25931892c503beab0ffc5e5c4fb0977051b644b7c96661a4e27db70fa3661e5c"
+      },
+      {
+        "bytes": 3641,
+        "path": "src/generated/OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "3f8c88acbf17cbb158ef2739d53270bebcacd6d404f9f5cb6403ed6200c76232"
+      },
+      {
+        "bytes": 2754,
+        "path": "src/generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol",
+        "sha256": "3a5cbd18494d307e6a1c6b5ea249aaf0b2d6c858a96f896e44f8dc3e36f55e8a"
+      },
+      {
+        "bytes": 3087,
+        "path": "src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol",
+        "sha256": "25f34acde8654f2109e26161b9633f5b7f764b2ce0c936d7313a1c6fafdac9b6"
+      },
+      {
+        "bytes": 3905,
+        "path": "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "00ee6dafee0e372e9accbc053b9ba00f1d302128436b4859589620f6be5541fa"
+      },
+      {
+        "bytes": 3901,
+        "path": "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "a79c32189a7f204c201d17a3cbb4f2cf0da3ebab78dad2eddd899f6733841c99"
+      },
+      {
+        "bytes": 65217,
+        "path": "src/merkle/MerkleVerifier.sol",
+        "sha256": "34430338f77644b04d0e4dd4143e53cfc64f8051b875503ddb1255cda7cbf1e1"
+      },
+      {
+        "bytes": 40405,
+        "path": "src/transcript/KeccakChallenger.sol",
+        "sha256": "77ce9d1e72359d169910625bfa97de8d01e7d71e96fa5b220337c57ba81220ac"
+      },
+      {
+        "bytes": 1829,
+        "path": "src/whir/WhirStructs.sol",
+        "sha256": "3711913174dac3d5333b0d0ddd449842ee3296d901c25b06b97b1718db8cea3d"
+      },
+      {
+        "bytes": 75664,
+        "path": "src/whir/WhirVerifierCore4.sol",
+        "sha256": "71b225edc2ed581012830c9b064865e8213732f4c24d5de82c205fb4b25bec30"
+      },
+      {
+        "bytes": 45757,
+        "path": "src/whir/WhirVerifierUtils4.sol",
+        "sha256": "c97f842bcd2a4a5fe8287ad320e2052e98c78e439421b37059c6ce423a7720e1"
+      },
+      {
+        "bytes": 12286,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "4f960ae2dadcd14f7afcaeff96d45f7d02bb616287eee07ac73a9ba3098c1a01"
+      },
+      {
+        "bytes": 843,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "a8cf4e800c343fc02aa192154b4160a8aabb5ca2e0437a0f82be7b29ccf83d50"
+      },
+      {
+        "bytes": 13588,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "f710b42f774755b25c52a8cf58f2c3f0cf5297df4e7ea1fa9b1bf4d16a538c5f"
+      },
+      {
+        "bytes": 9819,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+        "sha256": "3b6759be429678f75510bb28fb5bf1fe167e0315c04a5fee459ffb663e31a4e6"
+      },
+      {
+        "bytes": 77657,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol",
+        "sha256": "d554a2ea221ec9bc339206cfad992b2ee1760ca75fdea6829b594b028f497338"
+      },
+      {
+        "bytes": 78660,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol",
+        "sha256": "c2f4af73755438719e3ce12176ed6815a51fce184533703ddb30d4777140939c"
+      },
+      {
+        "bytes": 12286,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "1a0a5760ed6516707cd43d10f3de64925d461631f62a655d69c2e73411670ddc"
+      },
+      {
+        "bytes": 819,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "9b57b9c5b6c7cd2c6837b8582bcdd82c6744c889e0522d5459ae6f6cf2c8f3c6"
+      },
+      {
+        "bytes": 10516,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "f83246e2a12941352bdebd20c13e25e3a7154460283dc65e1b1b5b2a90de93d1"
+      },
+      {
+        "bytes": 9801,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+        "sha256": "4c02cd3d4c4e7db0d9ab8e7c606a62babdc820da17671727edde0c3214fb6a75"
+      },
+      {
+        "bytes": 82975,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifierCore5.sol",
+        "sha256": "65fc2dfe87a8d7f52ecdc7fbe8564b1d79462f8d5f107ae64ad5d083de52dac3"
+      },
+      {
+        "bytes": 110696,
+        "path": "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/WhirVerifierUtils5.sol",
+        "sha256": "ecd16bc89dc581da9a53bdff48b9070f065f188aed1fd1a8e628b672dcb0dfbc"
+      },
+      {
+        "bytes": 11702,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "6c50a251d73e9e11ae26535097ac5d21553d71423746a380a865da99c9969925"
+      },
+      {
+        "bytes": 799,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifier8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "5136a8892c6d414604ea0f1939e6f0965cb9c05bc24906e830577133e8c1b3e2"
+      },
+      {
+        "bytes": 10470,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "b51cae3a3ba72d29798bb166671e87d5603d327f406ba3bea4919590ae5d8e4d"
+      },
+      {
+        "bytes": 9716,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifier8_k22_jb100_lir6_ff4_rsv1.sol",
+        "sha256": "78d431add597e2a62cb81f02eee69e1a9983df9c40d0eea3569bf43e577e20ca"
+      },
+      {
+        "bytes": 112493,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierCore8.sol",
+        "sha256": "df97177d6d872b230b70b2659cb31d35343ead36138c5ff91349acfc29fd6b3f"
+      },
+      {
+        "bytes": 104784,
+        "path": "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol",
+        "sha256": "993c2605050af990f15b97f11d2e0cfb9e69c7488155e2c917189f76f3fcd2b9"
+      },
+      {
+        "bytes": 11510,
+        "path": "src/whir/lir11/WhirBlobCodec4_lir11_ff5_rsv3.sol",
+        "sha256": "d82a08385ae94d9e126163783eef9f162adbac139b37627f4f984b494f5cfd50"
+      },
+      {
+        "bytes": 736,
+        "path": "src/whir/lir11/WhirBlobVerifier4_lir11_ff5_rsv3.sol",
+        "sha256": "4a171374812cd24379c3878c60dd37c736f59abf13df24d0fd1e4e0be82d950c"
+      },
+      {
+        "bytes": 10235,
+        "path": "src/whir/lir11/WhirBlobVerifierNative4_lir11_ff5_rsv3.sol",
+        "sha256": "c820adb9e381d619081357d4dbb52cc70954bf4f6ab9257c4538fb188eaceebd"
+      },
+      {
+        "bytes": 19154,
+        "path": "src/whir/lir11/WhirVerifier4_lir11_ff5_rsv3.sol",
+        "sha256": "c38e2ff95ee9ed3c1551cde798c9474b1d0a66931b97117993edef39772a864b"
+      },
+      {
+        "bytes": 83397,
+        "path": "src/whir/lir11/WhirVerifierCore4Lir11.sol",
+        "sha256": "9bf83e3a417dbe9e5c4f07055b83fda8c37ab364335079721db24402595d3c2e"
+      },
+      {
+        "bytes": 76848,
+        "path": "src/whir/lir11/WhirVerifierUtils4Lir11.sol",
+        "sha256": "17952b6e52eca728dde4c81dc4c84a8b7a835e33530388cce25945b5d9e8a42d"
+      },
+      {
+        "bytes": 12743,
+        "path": "src/whir/lir6/WhirBlobCodec4_lir6_ff5_rsv1.sol",
+        "sha256": "3edff0f6b0a22f9794bc3271052a504031ba31f434443361c61dcaace0205ff3"
+      },
+      {
+        "bytes": 710,
+        "path": "src/whir/lir6/WhirBlobVerifier4_lir6_ff5_rsv1.sol",
+        "sha256": "aa8e9e57a201668288466cade759a35d3807eb673774abba2c14ddfefe809fbd"
+      },
+      {
+        "bytes": 11138,
+        "path": "src/whir/lir6/WhirBlobVerifierNative4_lir6_ff5_rsv1.sol",
+        "sha256": "d4aeab6f3a88abc8315d4e473fb886d4d5d399c812af500a36eb8e9cc8ffcbda"
+      },
+      {
+        "bytes": 20325,
+        "path": "src/whir/lir6/WhirVerifier4_lir6_ff5_rsv1.sol",
+        "sha256": "1a45081781941c60b2c6b9591ab4064e6d055897553881543c77a13c36610e15"
+      },
+      {
+        "bytes": 35551,
+        "path": "test/GasCalibration_native_compare.t.sol",
+        "sha256": "479fe616335e91e66c608ce360d579005ad7a1694fe24c7b80cbee996a937dd6"
+      },
+      {
+        "bytes": 38915,
+        "path": "test/QuinticMicroBenchmarks.t.sol",
+        "sha256": "1321302a09f86d65f6940f3b050ab9a25835dc5ebd8022649fdbac17961640ff"
+      }
+    ],
+    "schema_version": 1
+  }
+}
