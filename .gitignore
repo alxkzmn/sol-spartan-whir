@@ -10,3 +10,45 @@ lib/
 .DS_Store
 
 broadcast/
+
+# CI-regenerable benchmark and compiler evidence. Keep compact manifests and
+# runtime fixtures checked in.
+testdata/**/*_compiler_snapshot*/
+testdata/**/*_tx_snapshot*/
+testdata/**/*.log
+testdata/**/*.svg
+testdata/**/*.asm
+testdata/**/*.yul
+testdata/**/*.hex
+testdata/**/*.ir
+testdata/**/*.txt
+
+# BabyBear experiment sources and reproduction scripts are retained; their
+# generated workspaces and result payloads are CI artifacts.
+testdata/babybear/**/workspace/
+testdata/babybear/**/intermediate-sources/
+testdata/babybear/**/results.json
+testdata/babybear/**/*receipts.json
+testdata/babybear/**/*metrics.json
+testdata/babybear/**/*metadata.json
+testdata/babybear/**/compiler*.json
+testdata/babybear/**/generation*.json
+testdata/babybear/**/replay*.json
+testdata/babybear/**/transactions.json
+testdata/babybear/**/validation.json
+testdata/babybear/native-controls.json
+testdata/babybear/select-round1.json
+
+# CI-regenerable schedule calibration and report outputs.
+testdata/quintic_calibration_*/scores/
+testdata/quintic_scores/
+testdata/calibration_reference_schedules.json
+testdata/quintic_pow_calibration.json
+testdata/quintic_prover_microbench.json
+testdata/quintic_schedule_microbench*.json
+testdata/*_tmp.json
+
+# Shortlist proofs remain checked in for offline tests. Measurements and
+# transaction receipts can be recreated by benchmark CI.
+testdata/quintic_shortlist/measurement.json
+testdata/quintic_shortlist/tx_*_receipt/
