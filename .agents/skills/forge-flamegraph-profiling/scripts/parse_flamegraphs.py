@@ -5,15 +5,17 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
-TITLE_RE = re.compile(r"<title>([^<]+)\(([0-9,]+) gas, ([0-9.]+)%\)</title>")
+TITLE_RE = re.compile(r"(.+)\(([0-9,]+) gas, ([0-9.]+)%\)\s*$", re.DOTALL)
 
 
 def _find_project_root() -> Path:
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "foundry.toml").exists() and (parent / "cache").exists():
+        if (parent / "foundry.toml").exists():
             return parent
     raise RuntimeError(
         "Could not find sol-spartan-whir project root above parse_flamegraphs.py"
@@ -24,12 +26,17 @@ PROJECT_ROOT = _find_project_root()
 
 
 def parse_svg(path: Path):
-    content = path.read_text()
-    entries = TITLE_RE.findall(content)
-    parsed = [
-        (name.strip(), int(gas.replace(",", "")), float(pct))
-        for name, gas, pct in entries
-    ]
+    root = ET.parse(path).getroot()
+    parsed = []
+    for element in root.iter():
+        if element.tag.rsplit("}", 1)[-1] != "title":
+            continue
+        match = TITLE_RE.fullmatch("".join(element.itertext()))
+        if match:
+            name, gas, pct = match.groups()
+            parsed.append((name.strip(), int(gas.replace(",", "")), float(pct)))
+    if not parsed:
+        raise ValueError(f"No Foundry gas title entries in {path}")
     parsed.sort(key=lambda item: -item[1])
     return parsed
 
@@ -78,17 +85,26 @@ def main() -> None:
 
     cache_dir = Path(args.cache_dir)
     any_found = False
+    failed = False
     for path in resolve_paths(args.paths, cache_dir):
         if not path.exists():
-            print(f"MISSING: {path}")
+            print(f"MISSING: {path}", file=sys.stderr)
+            failed = True
             continue
         any_found = True
-        parsed = parse_svg(path)
+        try:
+            parsed = parse_svg(path)
+        except (OSError, ET.ParseError, ValueError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            failed = True
+            continue
         print(f"\n=== {label_for(path)} (top {args.limit}) ===")
         for name, gas, pct in parsed[: args.limit]:
             print(f"{gas:>10,}  {pct:>5.1f}%  {name}")
 
     if not any_found:
+        print("No flamegraph SVGs found; pass the exact generated artifact path.", file=sys.stderr)
+    if failed or not any_found:
         raise SystemExit(1)
 
 

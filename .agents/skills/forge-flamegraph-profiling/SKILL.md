@@ -1,109 +1,81 @@
 ---
 name: forge-flamegraph-profiling
-description: Profile Solidity gas with Foundry flamegraphs and harness tests.
+description: Profile Solidity execution gas with Foundry harnesses, headless flamegraph parsing, and targeted optimized IR builds.
 ---
 
 # Forge Flamegraph Profiling
 
-## Overview
+Measure the exact verifier path and fixture family being optimized. Use the `gasleft()` harness to locate the expensive phase, the flamegraph to attribute calls inside it, and optimized IR to check which operations survive compilation. Use `tx-gas-benchmarking` for transaction receipts and calldata accounting.
 
-Use this skill to profile **execution gas inside the EVM** with Foundry in a way that is fast, reproducible, and useful for optimization work. This is not total transaction gas — use the tx-gas benchmarking skill for that.
+## Profile the target
 
-Start with the `gasleft()` harness tests to identify the expensive phase, then generate a focused flamegraph for that phase and parse the SVG titles programmatically.
+Run from the Foundry project directory. Qualify tests with `--match-path` or `--match-contract` when several schedules expose the same test name.
 
-## Workflow
-
-1. Run the canonical gas number for the path you are profiling.
-
-For the typed verifier path:
-
-```bash
-forge test --match-test testGasWhirVerifyFixed -vv
+```sh
+forge test --match-path test/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol --match-test testGasWhirVerifyBlobNativeFixed -vv --offline
+forge test --match-path test/WhirGasProfile5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol --match-test testProfileNativeBlobBreakdown5Pow28Rsv3 -vv --offline
 ```
 
-If the branch contains multiple suites with that test name, qualify it further with `--match-contract` or `--match-path`.
+For other schedules, locate the corresponding `test/WhirGasProfile*.t.sol` harness. Typed paths commonly use `testGasWhirVerifyFixed`, `testProfileFullBreakdown`, `testProfileStirBreakdown`, and `testProfileStirMicro`. Treat a different verifier path's phase measurements as directional evidence.
 
-For the native blob verifier path:
+Prefer `--flamegraph` for aggregated call costs. Use `--flamechart` when call ordering matters. Exactly one test must match:
 
-```bash
-forge test --match-test testGasWhirVerifyBlobNativeFixed -vv
+```sh
+forge test --match-path test/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol --match-test testGasWhirVerifyBlobNativeFixed --flamegraph --offline
 ```
 
-2. Run the harness breakdown before generating a flamegraph.
+Foundry can fail while decoding deep traces. Inspect the error, and use a focused phase test when it identifies trace decoding as the failure. Fixture loading contributes to test gas; use the verifier's call frame for execution attribution.
 
-```bash
-forge test --match-test testProfileFullBreakdown -vv
-forge test --match-test testProfileStirBreakdown -vv
-forge test --match-test testProfileStirMicro -vv
+## Read SVGs without opening a browser
+
+Read the exact SVG path reported by the current run:
+
+```sh
+python3 .agents/skills/forge-flamegraph-profiling/scripts/parse_flamegraphs.py cache/flamegraph_WhirBlobVerifierNative5K22Jb100Ext5Pow28Rsv3Test_testGasWhirVerifyBlobNativeFixed.svg --limit 20
 ```
 
-3. Choose the visualization mode.
+The parser reads XML titles, decodes escaped symbols, and exits nonzero for missing, malformed, or empty gas artifacts. An explicit SVG can live outside `cache/`; the parser only needs the project's `foundry.toml`. With no paths, it scans `cache/flamegraph_*.svg`.
 
-- Prefer `--flamegraph` first. It is aggregated by function and answers "where does total gas go?"
-- Use `--flamechart` only after the hotspot is known and you need call ordering or sequencing.
-- Foundry can crash on deep call trees when generating either artifact. Treat that as a Foundry trace-decoding bug, not as an OOM signal. If a test crashes, switch to a smaller or more focused test.
+Foundry may report a desktop `open` failure after successfully saving the SVG. Accept that artifact only when all three checks hold: the selected test passed, the log reports the saved SVG and its modification time confirms this run produced it, and the parser returns gas entries. Preserve the log and describe the viewer failure separately. Compilation failures, test failures, and trace failures require their own resolution; do not suppress all command errors.
 
-4. Generate the artifact from the Foundry project directory.
+Copy each accepted SVG and its log to a separate baseline or candidate directory before another run overwrites the cache filename. Do not use an image viewer to extract SVG gas data.
 
-For this repo, run from `sol-spartan-whir/`. Prefer focused harness tests or synthetic tests over a full-path verifier test, because fixture loading adds noise.
+Gas in a parent frame includes its children. Repeated function names may belong to different stacks; the title list is a hotspot map, not a table whose rows can be summed. Treat `gasleft()` phase measurements, flamegraph frame costs, and total Foundry test gas as distinct boundaries.
 
-Example:
+## Inspect optimized IR without clearing project artifacts
 
-```bash
-forge test --match-test testFlameFinalStir --flamegraph
+For a known hotspot, inspect `irOptimized` or `assemblyOptimized` for the exact native contract. `forge inspect` can report that IR is missing from a cached artifact. Recover with a targeted build into fresh output and cache directories. This also preserves the original build artifacts for comparison.
+
+```sh
+profile_run=$(mktemp -d "${TMPDIR:-/tmp}/whir-ir.XXXXXX")
+target_source=src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
+target_contract=WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28
+forge build "$target_source" --extra-output irOptimized \
+  --out "$profile_run/out" --cache-path "$profile_run/cache" --offline
+python3 - "$profile_run" "$target_source" "$target_contract" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+run, source, contract = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
+artifact = run / "out" / source.name / f"{contract}.json"
+data = json.loads(artifact.read_text())
+ir = data.get("irOptimized")
+if not ir:
+    raise SystemExit(f"Optimized IR missing: {artifact}")
+(run / f"{contract}.ir").write_text(ir)
+runtime = data["deployedBytecode"]["object"].removeprefix("0x")
+if len(runtime) % 2:
+    raise SystemExit("Invalid deployed bytecode hex length")
+print(f"Runtime bytes: {len(runtime) // 2}")
+print(f"IR and build artifacts: {run}")
+PY
 ```
 
-`--flamegraph` requires exactly one matching test. If the filter matches more than one suite, add `--match-contract` or `--match-path`.
+Keep compiler version, `via_ir`, optimizer runs, and EVM target unchanged for a comparison. Use a fresh directory for each source version; retain its IR, deployed artifact, and measurement logs. Prefer this recovery to `forge clean`, which discards other builds and cached evidence.
 
-5. Read the SVG programmatically.
+Look for repeated scans, repeated packed expressions, memory spills, and disposable buffers. A mathematically cheaper expression can be recomputed several times by the optimizer. Static IR operation counts explain code shape; the same-fixture gas measurement establishes the runtime result.
 
-- Do not use `view_image` on SVG flamegraphs.
-- Foundry writes useful `<title>` tags into both flamegraphs and flamecharts.
-- Use the script bundled with this skill.
+## Validate an optimization
 
-To parse every `cache/flamegraph_*.svg` artifact:
-
-```bash
-python3 .agents/skills/forge-flamegraph-profiling/scripts/parse_flamegraphs.py
-```
-
-To parse a specific SVG:
-
-```bash
-python3 .agents/skills/forge-flamegraph-profiling/scripts/parse_flamegraphs.py \
-  cache/flamegraph_WhirGasProfileTest_testProfileStirBreakdown.svg
-```
-
-Use `--limit N` to change the number of rows printed per SVG.
-
-6. Interpret the results correctly.
-
-- The `gasleft()` harness is the canonical phase-level breakdown.
-- The flamegraph is for finding hidden internal costs inside that phase.
-- The same function can appear multiple times in different call stacks in the SVG output. Treat the raw title list as a hotspot map, not as a de-duplicated accounting table.
-- Compare changes only on the same verifier path and the same fixture family.
-
-## Spartan-WHIR Profiling Surface
-
-The main profiling surface lives in the `test/WhirGasProfile*.t.sol` harness family.
-
-Use these tests as the standard entrypoints:
-
-- `testGasWhirVerifyFixed`: single canonical gas number
-- `testProfileFullBreakdown`: setup, sumchecks, STIR, constraints, final check
-- `testProfileStirBreakdown`: per-round STIR internals
-- `testProfileStirMicro`: micro-benchmarks for leaf hashing, node compression, `KoalaBear.pow`, and query sampling
-
-Prefer focused flamegraphs for one phase at a time. Tests that call `_loadSuccessFixture()` include measurable harness noise.
-
-## Validation Order
-
-Use this order when profiling an optimization candidate:
-
-1. Run `forge test`.
-2. Measure the canonical gas number.
-3. Measure the harness breakdown.
-4. Flamegraph the hottest phase.
-5. Re-measure after the code change on the same path.
-
-Do not hardcode gas numbers into the skill. Always measure the current branch.
+Measure the canonical target first, make a narrow change, then check gas and deployed runtime bytes immediately. Follow the project's size and acceptance rules. For a promising candidate, remeasure the affected phase, inspect the resulting IR, and run the required correctness suite. Preserve baseline and candidate evidence before updating documentation. Always measure the current source; do not bake gas baselines into this skill.

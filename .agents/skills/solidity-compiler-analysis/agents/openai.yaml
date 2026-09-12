@@ -1,0 +1,4 @@
+interface:
+  display_name: "Solidity Compiler Analysis"
+  short_description: "Analyze optimized IR, gas, and deployed bytecode"
+  default_prompt: "Use $solidity-compiler-analysis to explain this gas regression from optimized IR and deployed bytecode."

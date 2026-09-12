@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gas Calibration Maintenance"
+  short_description: "Refresh calibration with verified measurement provenance"
+  default_prompt: "Use $gas-calibration-maintenance to refresh gas calibration and schedule scores with preserved measurement provenance."

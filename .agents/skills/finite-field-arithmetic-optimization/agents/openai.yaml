@@ -1,0 +1,4 @@
+interface:
+  display_name: "Finite-Field Arithmetic Optimization"
+  short_description: "Derive and validate faster field arithmetic"
+  default_prompt: "Use $finite-field-arithmetic-optimization to derive and validate an optimization for the measured arithmetic hotspot."
