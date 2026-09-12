@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "field": "BabyBear",
+  "modulus": 2013265921,
+  "extension_degree": 5,
+  "extension_polynomial": "X^5 - 2",
+  "num_variables": 22,
+  "folding_factor": {
+    "kind": "Constant",
+    "value": 4
+  },
+  "starting_log_inv_rate": 4,
+  "rs_domain_initial_reduction_factor": 3,
+  "security_model": "JohnsonBound",
+  "derivation_guard_bits": 101,
+  "target_bits": 100,
+  "exact_cardinality_achieved_bits": 100.01454940952041,
+  "max_pow_bits": 28,
+  "starting_folding_pow_bits": 27,
+  "rounds": [
+    {
+      "queries": 38,
+      "query_pow_bits": 27,
+      "folding_pow_bits": 23
+    },
+    {
+      "queries": 31,
+      "query_pow_bits": 25,
+      "folding_pow_bits": 25
+    },
+    {
+      "queries": 19,
+      "query_pow_bits": 26,
+      "folding_pow_bits": 28
+    }
+  ],
+  "final_queries": 14,
+  "final_pow_bits": 24,
+  "final_folding_pow_bits": 0,
+  "security_adjustment": {
+    "decision": "retain",
+    "original_round_folding_pow_bits": [
+      22,
+      25,
+      27
+    ],
+    "adjusted_round_folding_pow_bits": [
+      23,
+      25,
+      28
+    ],
+    "comparison": "two isolated checkWitness operations; 16 transcript states",
+    "original_check_gas": 1795,
+    "adjusted_check_gas": 1795,
+    "max_measured_increase_gas": 0,
+    "allowed_verifier_gas_increase_percent": 5,
+    "scope": "arithmetic benchmark configuration; no full BabyBear proof or transaction generated",
+    "prover_effect": "Expected grinding work doubles at each of the two affected stages."
+  }
+}

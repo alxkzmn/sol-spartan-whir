@@ -1,0 +1,11 @@
+{
+  "foundry.toml": "1b6b80bbc631aa82adcd8ba38b8e2504e72a1f847d0d57af8148c667542bd9eb",
+  "src/field/KoalaBear.sol": "600c6bf96cd7c4ef730130df387f12c5b534811f2da4f34c286f7690d180c9e1",
+  "src/field/KoalaBearExt5.sol": "6e9bc93c17793f7328ad3ecef7fe451ab4e7a0e6f04f909d80bb661a4a9a14b5",
+  "test/BabyBearEqFollowup.t.sol": "70c799544d1fd13a4308c13e1db3b8bd134e0a96fc7f6b691576a9f3270e23dd",
+  "test/helpers/BabyBearEqFollowup.sol": "0007b2130e4d3217ec79b1b6918043ae51407cc45c95668fe2e623714ae73215",
+  "test/helpers/BabyBearEqVariants.sol": "eca3d64d41b6768fb4b14606cf7df39fca86f738f01765e45623ee52c95f3d96",
+  "test/helpers/BabyBearPackedFields.sol": "5bebbb5f57111f5a21f8cb4f9e9797cbb1042ec39857513a4a37ad8fce546a67",
+  "test/helpers/BabyBearReference.sol": "79b75018dd1e752bf424aacdbcdea073790dfe9c9852ca43a76f10d21e2044ff",
+  "test/helpers/BabyBearSelectVariants.sol": "87dea2fe7b7eacc2af9e8303cfabfe2392efc55bcb97bcea779f8ae3dd7182a9"
+}

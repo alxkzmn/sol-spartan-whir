@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+// Copied into an isolated workspace by run_native_followup.py.
+import {Test} from "forge-std/Test.sol";
+import {KoalaBearExt5 as F} from "../src/field/KoalaBearExt5.sol";
+import {WhirVerifierUtils5 as U} from "../src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol";
+
+contract NativeFollowupHarness {
+    function base(bytes calldata blob, uint256[16] memory weights) external pure returns (uint256) {
+        uint256 ptr; uint256 a; uint256 b;
+        assembly ("memory-safe") { ptr := weights a := calldataload(blob.offset) b := calldataload(add(blob.offset,32)) }
+        return U._dotBaseRadix80(U._prepareBaseRadix80(ptr),a,b);
+    }
+    function horner(bytes calldata blob, uint256 offset, uint256 x) external pure returns (uint256) {
+        return U._hornerRadix64(blob,U._prepareHornerRadix64(blob,offset),x);
+    }
+    function finalValue(bytes calldata blob, uint256 offset, uint256[] memory q) external pure returns (uint256) {
+        return U.evaluateFinalValueBlob64Dim6(blob,offset,q,0);
+    }
+}
+contract NativeFollowupTest is Test {
+    uint256 constant M=0x7f000001;
+    NativeFollowupHarness h;
+    function setUp() external {h=new NativeFollowupHarness();}
+    function element(bytes32 seed, uint256 index) private pure returns (uint256 v) {
+        for(uint256 j;j<5;++j) v|=(uint256(keccak256(abi.encode(seed,index,j)))%M)<<(224-32*j);
+    }
+    function packedMax() private pure returns (uint256 v) {
+        for(uint256 j;j<5;++j) v|=(M-1)<<(224-32*j);
+    }
+    function data(bytes32 seed, bool maximal) private pure returns(bytes memory blob,uint256[] memory values,uint256[] memory q) {
+        blob=hex"123456"; values=new uint256[](64);q=new uint256[](6);
+        for(uint256 i;i<64;++i){values[i]=maximal?packedMax():element(seed,i);blob=bytes.concat(blob,bytes20(bytes32(values[i])));}
+        for(uint256 i;i<6;++i)q[i]=maximal?packedMax():element(seed,64+i);
+    }
+    function referenceHorner(uint256[] memory v,uint256 x) private pure returns(uint256 result) {
+        for(uint256 j;j<5;++j){uint256 a;for(uint256 i=v.length;i>0;--i)a=addmod(mulmod(a,x,M),(v[i-1]>>(224-32*j))&0xffffffff,M);result|=a<<(224-32*j);}
+    }
+    function referenceFinal(uint256[] memory v,uint256[] memory q) private pure returns(uint256) {
+        for(uint256 d;d<6;++d){uint256 half=32>>d;for(uint256 i;i<half;++i)v[i]=F.add(v[i],F.mulReference(F.sub(v[i+half],v[i]),q[d]));}
+        return v[0];
+    }
+    function checkBase(bytes32 seed,bool maximal) private view {
+        uint256[16] memory weights;bytes memory blob;uint256[5] memory sums;
+        for(uint256 i;i<16;++i){weights[i]=maximal?packedMax():element(seed,i);uint256 scalar=maximal?M-1:uint256(keccak256(abi.encode(seed,i)))%M;blob=bytes.concat(blob,bytes4(uint32(scalar)));for(uint256 j;j<5;++j)sums[j]=addmod(sums[j],mulmod(scalar,(weights[i]>>(224-32*j))&0xffffffff,M),M);}
+        uint256 expected;for(uint256 j;j<5;++j)expected|=sums[j]<<(224-32*j);
+        assertEq(h.base(blob,weights),expected);
+    }
+    function testFuzzBaseDot(bytes32 seed) external view {checkBase(seed,false);}
+    function testBaseMaximum() external view {checkBase(bytes32(0),true);}
+    function testFuzzHorner(bytes32 seed,uint256 x) external view {
+        (bytes memory blob,uint256[] memory v,)=data(seed,false);x%=M;assertEq(h.horner(blob,3,x),referenceHorner(v,x));
+    }
+    function testHornerMaximumAndScalarBoundaries() external view {
+        (bytes memory blob,uint256[] memory v,)=data(bytes32(0),true);
+        assertEq(h.horner(blob,3,M-1),referenceHorner(v,M-1));assertEq(h.horner(blob,3,0),v[0]);assertEq(h.horner(blob,3,1),referenceHorner(v,1));
+    }
+    function testFuzzFinalValue(bytes32 seed) external view {
+        (bytes memory blob,uint256[] memory v,uint256[] memory q)=data(seed,false);assertEq(h.finalValue(blob,3,q),referenceFinal(v,q));
+    }
+    function testFinalValueMaximumAndZero() external view {
+        (bytes memory blob,uint256[] memory v,uint256[] memory q)=data(bytes32(0),true);assertEq(h.finalValue(blob,3,q),referenceFinal(v,q));
+        blob=new bytes(1283);assertEq(h.finalValue(blob,3,q),0);
+    }
+}

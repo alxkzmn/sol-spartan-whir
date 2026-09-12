@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "command": "forge test --offline --isolate --threads 1",
+  "output": "babybear_full_verifier_full_suite.log",
+  "output_timestamp": "2026-09-05T21:05:45+0800",
+  "forge": {
+    "version": "1.5.1-stable",
+    "commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+    "build_profile": "maxperf"
+  },
+  "result": {
+    "suites": 42,
+    "tests": 398,
+    "failures": 0,
+    "skipped": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "BabyBear": {
+    "factor_lane_max": 12159718995913605120,
+    "four_term_convolution_max": 16212958658533785600,
+    "lane_bits": 64,
+    "independent_cases": 10078
+  },
+  "KoalaBear": {
+    "factor_lane_max": 13619729700229218304,
+    "four_term_convolution_max": 18159639597464682496,
+    "lane_bits": 64,
+    "independent_cases": 10078
+  }
+}

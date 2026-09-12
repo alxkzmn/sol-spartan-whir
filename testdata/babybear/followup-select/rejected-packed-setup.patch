@@ -1,0 +1,11 @@
+--- BabyBearSelectCubics
++++ BabyBearSelectCubicsPackedSetup
+@@ -215,7 +215,7 @@
+         for (uint256 i; i < 9; ++i) {
+             uint256 r = point[2 * i + 5];
+             uint256 s = point[2 * i + 4];
+-            uint256 d = BabyBearBenchField.mul(r, s);
++            uint256 d = BabyBearPackedField.mul(r, s);
+             uint256 b = BabyBearBenchField.sub(r, d);
+             uint256 cc = BabyBearBenchField.sub(s, d);
+             uint256 a = BabyBearBenchField.add(

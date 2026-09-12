@@ -1,0 +1,23 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc = "0.8.28"
+via_ir = true
+optimizer = true
+# Keep optimizer settings fixed for comparable gas measurements.
+# Experimental EIP-7954 runtime target; network activation is separate.
+code_size_limit = 65536
+optimizer_runs = 833
+fs_permissions = [
+  { access = "read", path = "./testdata" }
+]
+
+[fmt]
+line_length = 100
+bracket_spacing = true
+int_types = "long"
+quote_style = "double"
+number_underscore = "thousands"

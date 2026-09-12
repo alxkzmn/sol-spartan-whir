@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "cases": 10064,
+  "four_product_lane_max": 16212958658533785600,
+  "fused_output_max": 72958313963402035200,
+  "scratch_bytes": 224
+}

@@ -1,0 +1,193 @@
+diff --git a/src/keccak_challenger.rs b/src/keccak_challenger.rs
+index b025948..15de953 100644
+--- a/src/keccak_challenger.rs
++++ b/src/keccak_challenger.rs
+@@ -168,3 +168,16 @@ impl<F: PrimeField32> GrindingChallenger for CanonicalKeccakChallenger32<F> {
+ }
+ 
+ impl<F: PrimeField32> FieldChallenger<F> for CanonicalKeccakChallenger32<F> {}
++
++#[cfg(test)]
++mod tests {
++    use super::KeccakByteChallenger;
++
++    #[test]
++    fn grinding_witness_uses_little_endian_bytes() {
++        let challenger = KeccakByteChallenger::new(b"Spartan".to_vec());
++
++        assert!(challenger.check_witness_u32(8, 64));
++        assert!(!challenger.check_witness_u32(8, 63));
++    }
++}
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -32,7 +32,7 @@
+ p3-dft = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+ p3-field = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+ p3-keccak = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+-p3-koala-bear = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
++p3-baby-bear = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+ p3-matrix = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+ p3-maybe-rayon = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+ p3-merkle-tree = { git = "https://github.com/Plonky3/Plonky3.git", rev = "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391" }
+@@ -41,4 +41,4 @@
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ tracing = "0.1"
+-whir-p3 = { path = "../whir-p3", default-features = false }
++whir-p3 = { path = "whir-p3", default-features = false }
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -1829,12 +1829,12 @@
+  "alloy-sol-types",
+  "anyhow",
+  "hex",
++ "p3-baby-bear",
+  "p3-challenger",
+  "p3-commit",
+  "p3-dft",
+  "p3-field",
+  "p3-keccak",
+- "p3-koala-bear",
+  "p3-matrix",
+  "p3-maybe-rayon",
+  "p3-merkle-tree",
+--- a/src/engine.rs
++++ b/src/engine.rs
+@@ -1,15 +1,15 @@
+ use p3_field::{
+-    extension::{BinomialExtensionField, QuinticTrinomialExtensionField},
++    extension::BinomialExtensionField,
+     BasedVectorSpace, ExtensionField, TwoAdicField,
+ };
+-use p3_koala_bear::KoalaBear;
++use p3_baby_bear::BabyBear;
+ 
+ use crate::{CanonicalKeccakChallenger32, KeccakByteChallenger};
+ 
+-pub type F = KoalaBear;
++pub type F = BabyBear;
+ pub type QuarticBinExtension = BinomialExtensionField<F, 4>;
+ pub type OcticBinExtension = BinomialExtensionField<F, 8>;
+-pub type QuinticExtension = QuinticTrinomialExtensionField<F>;
++pub type QuinticExtension = BinomialExtensionField<F, 5>;
+ pub type KeccakFieldHash = crate::KeccakFieldLeafHasher;
+ pub type KeccakNodeCompress = crate::Keccak256NodeCompress;
+ pub type KeccakChallenger = CanonicalKeccakChallenger32<F>;
+--- a/src/fixture_export.rs
++++ b/src/fixture_export.rs
+@@ -45,7 +45,7 @@
+     },
+     ChallengerTranscriptTrace, MerkleLeafHashFixture, MerkleMultiproofFixture,
+     MerkleNodeCompressionFixture, MerkleVectorFixture, SpartanTranscriptContextFixture,
+-    FIXTURE_WHIR_PARAMS, FIXTURE_WHIR_PARAMS_LIR11, KOALABEAR_MODULUS,
++    FIXTURE_WHIR_PARAMS, FIXTURE_WHIR_PARAMS_LIR11, BABYBEAR_MODULUS,
+ };
+ 
+ type QuarticBlobEncoder = fn(&[Vec<EF4>], &[EF4], &RawWhirProof4, usize) -> anyhow::Result<Vec<u8>>;
+@@ -56,7 +56,7 @@
+ #[derive(Debug, Serialize)]
+ struct Metadata {
+     schema_version: &'static str,
+-    koalabear_modulus: u32,
++    babybear_modulus: u32,
+     whir_fs_pattern_length: usize,
+     fixture_family: &'static str,
+     notes: Vec<&'static str>,
+@@ -265,7 +265,7 @@
+ 
+     let metadata = Metadata {
+         schema_version: "fixtures-v1",
+-        koalabear_modulus: KOALABEAR_MODULUS,
++        babybear_modulus: BABYBEAR_MODULUS,
+         whir_fs_pattern_length: quartic.whir_fs_pattern.len(),
+         fixture_family: "quartic-standalone-whir",
+         notes: vec![
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -159,4 +159,4 @@
+     }
+ }
+ 
+-pub const KOALABEAR_MODULUS: u32 = 0x7f00_0001;
++pub const BABYBEAR_MODULUS: u32 = 0x7800_0001;
+--- a/src/quartic_fixture.rs
++++ b/src/quartic_fixture.rs
+@@ -138,7 +138,13 @@
+         whir_params.clone(),
+         folding_factor,
+     );
+-    let config = build_checked_whir_config::<EF>(num_variables, &protocol_params)?;
++    let mut config = build_checked_whir_config::<EF>(num_variables, &protocol_params)?;
++    config.round_parameters[0].folding_pow_bits = 23;
++    config.round_parameters[2].folding_pow_bits = 28;
++    ensure!(
++        config.check_pow_bits(),
++        "adjusted BabyBear folding PoW exceeds the configured maximum"
++    );
+ 
+     let polynomial: Vec<F> = (0..(1 << num_variables))
+         .map(|i| F::from_u32((i + 1) as u32))
+--- a/src/quintic_schedule_dump.rs
++++ b/src/quintic_schedule_dump.rs
+@@ -723,7 +723,7 @@
+     let folded_domain_bits = num_variables + starting_log_inv_rate - first;
+     if folded_domain_bits > F::TWO_ADICITY {
+         return Some(format!(
+-            "log_folded_domain_size {folded_domain_bits} exceeds KoalaBear TWO_ADICITY {}",
++            "log_folded_domain_size {folded_domain_bits} exceeds BabyBear TWO_ADICITY {}",
+             F::TWO_ADICITY
+         ));
+     }
+@@ -779,7 +779,7 @@
+         let folded_bits = log_domain_size - folding_factor;
+         if folded_bits > F::TWO_ADICITY {
+             return Some(format!(
+-                "round {round} folded domain bits {folded_bits} exceed KoalaBear TWO_ADICITY {}",
++                "round {round} folded domain bits {folded_bits} exceed BabyBear TWO_ADICITY {}",
+                 F::TWO_ADICITY
+             ));
+         }
+@@ -798,7 +798,7 @@
+     let final_folded_bits = log_domain_size - final_folding_factor;
+     (final_folded_bits > F::TWO_ADICITY).then(|| {
+         format!(
+-            "final folded domain bits {final_folded_bits} exceed KoalaBear TWO_ADICITY {}",
++            "final folded domain bits {final_folded_bits} exceed BabyBear TWO_ADICITY {}",
+             F::TWO_ADICITY
+         )
+     })
+--- a/src/vectors.rs
++++ b/src/vectors.rs
+@@ -19,14 +19,14 @@
+ 
+ use crate::{
+     utils::{digest_hex, extension_coeffs_u32, pack_extension_u256, u256_hex},
+-    DIGEST_ELEMS, KOALABEAR_MODULUS,
++    DIGEST_ELEMS, BABYBEAR_MODULUS,
+ };
+ 
+ const FIELD_VECTOR_COUNT: usize = 16;
+ const EQ_POLY_DIMENSIONS: [usize; 6] = [0, 1, 2, 3, 4, 6];
+ const HYPERCUBE_NUM_VARIABLES: [usize; 6] = [0, 1, 2, 3, 4, 5];
+ 
+-/// One KoalaBear base-field arithmetic test vector: two operands and expected results.
++/// One BabyBear base-field arithmetic test vector: two operands and expected results.
+ #[derive(Debug, Serialize)]
+ pub struct BaseFieldVector {
+     pub a: u32,
+@@ -158,12 +158,12 @@
+     }
+ 
+     fn next_base_field(&mut self) -> F {
+-        let raw = (self.next_u64() as u32) % KOALABEAR_MODULUS;
++        let raw = (self.next_u64() as u32) % BABYBEAR_MODULUS;
+         F::from_u32(raw)
+     }
+ 
+     fn next_nonzero_base_field(&mut self) -> F {
+-        let raw = ((self.next_u64() as u32) % (KOALABEAR_MODULUS - 1)) + 1;
++        let raw = ((self.next_u64() as u32) % (BABYBEAR_MODULUS - 1)) + 1;
+         F::from_u32(raw)
+     }
+ }

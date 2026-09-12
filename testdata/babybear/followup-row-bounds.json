@@ -1,0 +1,32 @@
+{
+  "canonicality_proof": "A set input lane high bit remains set in the OR. If no input lane high bit is set, adding 2^31-p per lane creates no inter-lane carry and sets that high bit exactly when the coefficient is at least p. OR over all sixteen elements therefore rejects exactly the original noncanonical rows. The original checker runs in input order only after a failure and preserves the exact first-element error data.",
+  "weight_identity": "For each prefix A and next coordinate r, the two weights are A-Ar and Ar. For dimensions 0 and 1, compute t=p0*p1 once and obtain p0-t, p1-t, and 1-p0-p1+t by field subtraction. This gives 1+4+8=13 extension multiplications, versus 4+8+16=28. Every intermediate uses canonical field operations.",
+  "memory_and_rejection": "Valid-row arithmetic retains the original canonical inputs and bounds. Malformed-row arithmetic may wrap before the deferred check, but accesses only fixed bounded calldata and the same prepared weights; the result is discarded by the original error path. No external calls, output writes, or hash result escapes before the check.",
+  "packed_sum_trial": "Rejected on gas. The five BabyBear output sums fit in two 80-bit-lane words (3 plus 2), but extra per-element shifts and packing outweighed the reduced live accumulator state.",
+  "checks": [
+    {
+      "prime": "0x7f000001",
+      "predicate_cases": 10120,
+      "baby_binomial_row_sum_bounds": [
+        "653747025508728569856",
+        "581108467118869839872",
+        "508469908729011109888",
+        "435831350339152379904",
+        "363192791949293649920"
+      ],
+      "max_bound_bits": 70
+    },
+    {
+      "prime": "0x78000001",
+      "predicate_cases": 10120,
+      "baby_binomial_row_sum_bounds": [
+        "583666511707216281600",
+        "518814677073081139200",
+        "453962842438945996800",
+        "389111007804810854400",
+        "324259173170675712000"
+      ],
+      "max_bound_bits": 69
+    }
+  ]
+}

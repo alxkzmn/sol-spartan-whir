@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "scope": "active_babybear_quintic_native_verifier_after_review_cleanup",
+  "measured_at": "2026-09-07",
+  "field": {
+    "name": "BabyBear",
+    "modulus": 2013265921,
+    "extension_degree": 5,
+    "extension_polynomial": "X^5 - 2"
+  },
+  "schedule": {
+    "label": "k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+    "num_variables": 22,
+    "folding_factor": 4,
+    "starting_log_inverse_rate": 4,
+    "rs_domain_initial_reduction_factor": 3,
+    "initial_folding_pow_bits": 27,
+    "round_folding_pow_bits": [23, 25, 28],
+    "round_query_pow_bits": [27, 25, 26],
+    "final_query_pow_bits": 24,
+    "exact_cardinality_achieved_bits": 100.01454940952041
+  },
+  "optimization_context": {
+    "strict_loop_manifest": "babybear_full_verifier_measurement.json",
+    "strict_loop_final_foundry_gas": 3267073,
+    "review_cleanup_foundry_gas": 3240976,
+    "review_cleanup_reduction_gas": 26097,
+    "review_cleanup_reduction_percent": 0.7988,
+    "classification": "requested_correctness_and_dead_code_cleanup_outside_the_strict_one_percent_loop"
+  },
+  "fixture": {
+    "whir_p3_commit": "06dded8025f1a125fcbc720ef6f97e14ed31c2a9",
+    "rust_checkpoint_match": true,
+    "success_blob": "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success.blob",
+    "success_blob_bytes": 53970,
+    "success_blob_sha256": "2834dcbad9cd3c01b23b902696ca2f30e67a12164fd72853c9d01de329f083c2",
+    "success_proof_abi_sha256": "bb45072632768a1076b785adaa98cbbcb4760677364c97543b739163b5cb9890",
+    "success_statement_abi_sha256": "45ce6440dbcd4cc41971bb06e6c996982edc18c0f9a2fcf88fc91e5b058fe919",
+    "calldata_sha256": "499b76b62f0ec65b10953331260cd65941bb5c08ea3de57f8846d75c11e4d606"
+  },
+  "foundry": {
+    "solidity": "0.8.28",
+    "via_ir": true,
+    "optimizer_runs": 833,
+    "evm_version": "prague",
+    "canonical_native_gas_test": 3240976,
+    "valid_native_call_gas": 3240910,
+    "valid_typed_call_gas": 6510122,
+    "valid_decode_and_delegate_call_gas": 7587255,
+    "full_suite_command": "forge test --offline --isolate --threads 1 --fuzz-runs 256 --force",
+    "full_suite_suites": 47,
+    "full_suite_tests": 429,
+    "full_suite_failures": 0,
+    "full_suite_skipped": 0,
+    "babybear_suites_tests": 100,
+    "production_kernel_fuzz_tests": 4
+  },
+  "transaction": {
+    "transaction_hash": "0xe70f0c53e3b3b5e3adc3a153ef8e83ce569cace77404b299a5817f34337c937a",
+    "total_gas": 3364794,
+    "intrinsic_gas": 21000,
+    "calldata_gas": 854448,
+    "execution_gas": 2489346,
+    "calldata_bytes": 54084,
+    "zero_bytes": 908,
+    "nonzero_bytes": 53176,
+    "snapshot": "babybear_review_fixes_tx_snapshot",
+    "metrics": "babybear_review_fixes_tx_snapshot/metrics.json",
+    "receipts": "babybear_review_fixes_tx_snapshot/run.json"
+  },
+  "compiler": {
+    "solc": "0.8.28+commit.7893614a",
+    "via_ir": true,
+    "optimizer_runs": 833,
+    "evm_version": "prague",
+    "deployed_runtime_bytes": 33780,
+    "initcode_bytes": 33806,
+    "deployed_runtime_sha256": "78486a2c1f5b564f9ef43d31c393172abf53d05265782f6551c1f39b66a4a0cc",
+    "optimized_ir_sha256": "47e885c73d1c28d84332398ffc40b7cb9f8ab844bb9fb5799de0f39d137f3228",
+    "snapshot": "babybear_review_fixes_compiler_snapshot"
+  },
+  "source_sha256": {
+    "src/field/BabyBear.sol": "1db7f0edf24c6f1c245561dd7082b065962caf483ca3e64a59678f455f269c87",
+    "src/field/BabyBearExt5.sol": "ed83fe324fb243b74872c02c9d028fe04d5223007e62524fd0ce1d0865fae46d",
+    "src/generated/BabyBearQuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "e0d2eeb424c376f28540d76599b86272825185a57cb960654e888d57ade7c477",
+    "src/merkle/BabyBearMerkleVerifier.sol": "73790967b19a87b3d416c276b3f5145ca02fc37e9e404dfe98565abed89f7f36",
+    "src/transcript/BabyBearKeccakChallenger.sol": "4654b03907519eb270ecb68849d47a89735f0a31f8f8a31de70bd54c4347b894",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "5caa380ac3048a15113ebdf2c73d5b04e978db989a02acd51c0d14a5788e5304",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "c2084c9f5dd0b2881f891c88d84bd8b895fedb15998285b292dae1cecf39723f",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "81aa7e91b8ab6d0cc8113a8f6bd0cd9da15ea42738013dd7dfc3c0dcf479d85b",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "4d6f58142090d7ea69c2be00f42605f37d05db2a69d2cb139630e2781313c085",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifierCore5.sol": "2540967767ad10f822cec983f38c45f69197fdd03acfc3561665a6fdf6a48cf3",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifierUtils5.sol": "176b4f31daa8fab8016a0e65f11924cdec5230a642a4d9423d75dd70806702f0",
+    "script/WhirBlobNativeTxBenchmark_babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol": "8b0271e2777173defef617254663d5523204498b377e0b4686a121aa23001ed9",
+    "script/verify_fixed_base_pow_tables.py": "d7a093ece365522e6dd105cd3a1b3eb33704a4962f17f4a727a9441f9446bf2e",
+    "test/BabyBearQuinticProductionKernels.t.sol": "0a4d6f8113ae707be7bf7889eea685e120a38b5d6540ca84f8329bcc359fe452",
+    "test/BabyBearTranscriptParity_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol": "da776b54652926c417d06fd39f5f7473ff7a9618cdf701ad14a7f7ec4a983099",
+    "test/BabyBearWhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol": "a72555a50966c6335c4e06da7fcc3e1ba29f52dc6e751a79711eedcf7a4614db"
+  },
+  "evidence_sha256": {
+    "babybear_review_fixes_compiler_snapshot/artifact.json": "c2721cae3c32aea9cd94c912b7c30eeba6b6d80d2042468942445d375201f0cb",
+    "babybear_review_fixes_compiler_snapshot/optimized.yul": "47e885c73d1c28d84332398ffc40b7cb9f8ab844bb9fb5799de0f39d137f3228",
+    "babybear_review_fixes_compiler_snapshot/runtime.hex": "64b0d5464253e2198828814640b67e2f5c32e758979adb8bd0cff71f40a8ded1",
+    "babybear_review_fixes_compiler_snapshot/summary.json": "2db9ec191617994a92432184c8b08cbccf05afada210dfa6d194f42531fa789e",
+    "babybear_review_fixes_tx_snapshot/forge.log": "8eee8b36aa50aba2b9dbfc440425db275e2b8ab45c366ee4e93a7bd2b0a50fc4",
+    "babybear_review_fixes_tx_snapshot/metrics.json": "d26071d4e5f8b7c0013b5a2c96a694ff69653a655ccec2a988e7143aa0c626c9",
+    "babybear_review_fixes_tx_snapshot/run-info.json": "68e060ac4560a0b9def2766af747338bb744c6ac48069a9a1f06e9d8d46b9270",
+    "babybear_review_fixes_tx_snapshot/run.json": "4767c34bf0df4bceae7c1205b646515f7d9431588634f5bcca377c4ea48edfda"
+  }
+}

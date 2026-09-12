@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "seed": 20260905,
+  "results": [
+    {
+      "field": "BabyBear",
+      "cases": 10770,
+      "random_17_term_cases": 10000,
+      "bounds": {
+        "prime": 2013265921,
+        "low_limb_max": 65535,
+        "high_limb_max": 30720,
+        "sum_limb_max": 96255,
+        "per_product_coefficient_abs_bound": 83385225225,
+        "batch_coefficient_abs_bound": 1417548828825,
+        "reconstructed_coefficient_abs_bound": 620145668688917299200,
+        "radix_bits": 51,
+        "integer_modulus": "0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
+      }
+    },
+    {
+      "field": "KoalaBear",
+      "cases": 10770,
+      "random_17_term_cases": 10000,
+      "bounds": {
+        "prime": 2130706433,
+        "low_limb_max": 65535,
+        "high_limb_max": 32512,
+        "sum_limb_max": 98047,
+        "per_product_coefficient_abs_bound": 57679285254,
+        "batch_coefficient_abs_bound": 980547849318,
+        "reconstructed_coefficient_abs_bound": 463070809735349403648,
+        "radix_bits": 51,
+        "integer_modulus": "0x800000000000000000000000000000000000003fffffffffffffffffffffffff"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "reports": [
+    {
+      "field": "KoalaBear",
+      "kernel_cases": 10027,
+      "ood_chain_cases": 100,
+      "four_product_lane_max": 18159639597464682496,
+      "middle_coefficient_max": 22699549496830853120,
+      "largest_memory_offset": 544,
+      "allocated_state_bytes": 576
+    },
+    {
+      "field": "BabyBear",
+      "kernel_cases": 10027,
+      "ood_chain_cases": 100,
+      "four_product_lane_max": 16212958658533785600,
+      "middle_coefficient_max": 20266198323167232000,
+      "largest_memory_offset": 544,
+      "allocated_state_bytes": 576
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+--- a/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol
++++ b/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol
+@@ -1651,9 +1651,16 @@
+         uint256 current = var_;
+ 
+         unchecked {
+-            for (uint256 i = numVariables; i > 0; --i) {
+-                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+-                acc = _mulBySelectTermExt5(acc, fullPoint[pointOffset + i - 1], scalar);
++            uint256 i = numVariables;
++            if (i != 0) {
++                --i;
++                uint256 scalar = current + (0x7f000001 - 1);
++                acc = _initialCached(_cachedAddress(fullPoint, pointOffset + i), scalar);
++                current = mulmod(current, current, 0x7f000001);
++            }
++            for (; i > 0; --i) {
++                uint256 scalar = current + (0x7f000001 - 1);
++                acc = _mulBySelectTermCached(acc, _cachedAddress(fullPoint, pointOffset + i - 1), scalar);
+                 current = KoalaBear.mul(current, current);
+             }
+         }
+@@ -1672,12 +1679,23 @@
+         uint256 current1 = var1;
+ 
+         unchecked {
+-            for (uint256 i = numVariables; i > 0; --i) {
+-                uint256 pointValue = fullPoint[pointOffset + i - 1];
+-                uint256 scalar0 = current0 == 0 ? KoalaBear.MODULUS - 1 : current0 - 1;
+-                uint256 scalar1 = current1 == 0 ? KoalaBear.MODULUS - 1 : current1 - 1;
+-                acc0 = _mulBySelectTermExt5(acc0, pointValue, scalar0);
+-                acc1 = _mulBySelectTermExt5(acc1, pointValue, scalar1);
++            uint256 i = numVariables;
++            if (i != 0) {
++                --i;
++                uint256 pointValue = _cachedAddress(fullPoint, pointOffset + i);
++                uint256 scalar0 = current0 + (0x7f000001 - 1);
++                uint256 scalar1 = current1 + (0x7f000001 - 1);
++                acc0 = _initialCached(pointValue, scalar0);
++                acc1 = _initialCached(pointValue, scalar1);
++                current0 = mulmod(current0, current0, 0x7f000001);
++                current1 = mulmod(current1, current1, 0x7f000001);
++            }
++            for (; i > 0; --i) {
++                uint256 pointValue = _cachedAddress(fullPoint, pointOffset + i - 1);
++                uint256 scalar0 = current0 + (0x7f000001 - 1);
++                uint256 scalar1 = current1 + (0x7f000001 - 1);
++                acc0 = _mulBySelectTermCached(acc0, pointValue, scalar0);
++                acc1 = _mulBySelectTermCached(acc1, pointValue, scalar1);
+                 current0 = KoalaBear.mul(current0, current0);
+                 current1 = KoalaBear.mul(current1, current1);
+             }
+@@ -1829,4 +1847,116 @@
+         }
+         return out;
+     }
++
++    function _initialSelect(uint256 point, uint256 scalar) private pure returns (uint256 out) {
++        assembly ("memory-safe") { let M := 0x7f000001 out := or(or(or(shl(224, mod(add(1, mul(shr(224, point), scalar)), M)), shl(192, mulmod(and(shr(192, point), 0xffffffff), scalar, M))), or(shl(160, mulmod(and(shr(160, point), 0xffffffff), scalar, M)), shl(128, mulmod(and(shr(128, point), 0xffffffff), scalar, M)))), shl(96, mulmod(and(shr(96, point), 0xffffffff), scalar, M))) }
++    }
++
++    function _loadPoint(uint256[] memory point, uint256 i) private pure returns (uint256 v) {
++        assembly ("memory-safe") { v := mload(add(add(point, 32), shl(5, i))) }
++    }
++
++    function _mulBySelectTermCached(uint256 acc, uint256 pointValue, uint256 scalar)
++        internal
++        pure
++        returns (uint256 out)
++    {
++        assembly ("memory-safe") {
++            let M := 0x7f000001
++            let mask := 0xffffffff
++
++            let low
++            let high
++            let c4
++            {
++                let a0 := shr(224, acc)
++                let a1 := and(shr(192, acc), mask)
++                let a2 := and(shr(160, acc), mask)
++                let a3 := and(shr(128, acc), mask)
++                let a4 := and(shr(96, acc), mask)
++                let bLow := mload(pointValue)
++                let aLow := or(or(a0, shl(64, a1)), or(shl(128, a2), shl(192, a3)))
++                c4 := add(shr(192, mul(aLow, mload(add(pointValue, 32)))), mul(a4, and(bLow, 0xffffffff)))
++                low := mul(aLow, bLow)
++                high := mul(or(or(a4, shl(64, a3)), or(shl(128, a2), shl(192, a1))), mload(add(pointValue, 64)))
++            }
++            let laneMask := 0xffffffffffffffff
++            let c0 := and(low, laneMask)
++            let c1 := and(shr(64, low), laneMask)
++            let c2 := and(shr(128, low), laneMask)
++            let c3 := shr(192, low)
++            let c5 := shr(192, high)
++            let c6 := and(shr(128, high), laneMask)
++            let c7 := and(shr(64, high), laneMask)
++            let c8 := and(high, laneMask)
++            // acc * (1 + scalar * pointValue), reduced by X^5 = 1 - X^2.
++            // The bias is a multiple of M larger than every subtracted coefficient;
++            // even after multiplication by scalar, all intermediates fit in 256 bits.
++            let bias := shl(40, M)
++
++            out := or(
++                or(
++                    or(
++                        shl(
++                            224,
++                            mod(add(shr(224, acc), mul(scalar, add(add(c0, c5), sub(bias, c8)))), M)
++                        ),
++                        shl(192, mod(add(and(shr(192, acc), mask), mul(scalar, add(c1, c6))), M))
++                    ),
++                    or(
++                        shl(
++                            160,
++                            mod(
++                                add(
++                                    and(shr(160, acc), mask),
++                                    mul(scalar, add(add(add(c2, sub(bias, c5)), c7), c8))
++                                ),
++                                M
++                            )
++                        ),
++                        shl(
++                            128,
++                            mod(
++                                add(
++                                    and(shr(128, acc), mask),
++                                    mul(scalar, add(add(c3, sub(bias, c6)), c8))
++                                ),
++                                M
++                            )
++                        )
++                    )
++                ),
++                shl(96, mod(add(and(shr(96, acc), mask), mul(scalar, add(c4, sub(bias, c7)))), M))
++            )
++        }
++    }
++
++    function _cachedAddress(uint256[] memory cache, uint256 index) private pure returns (uint256 ptr) {
++        assembly ("memory-safe") { ptr := add(add(cache, 32), mul(sub(index, 4), 96)) }
++    }
++
++    function prepare(uint256[] memory point) internal pure returns (uint256[] memory cache) {
++        assembly ("memory-safe") {
++            cache := mload(0x40)
++            mstore(cache, 54)
++            mstore(0x40, add(cache, 1760))
++            let dst := add(cache, 32)
++            for { let src := add(point, 160) } lt(src, add(point, 736)) { src := add(src, 32) dst := add(dst, 96) } {
++                let b := mload(src)
++                let b0 := shr(224, b)
++                let b1 := and(shr(192, b), 0xffffffff)
++                let b2 := and(shr(160, b), 0xffffffff)
++                let b3 := and(shr(128, b), 0xffffffff)
++                let b4 := and(shr(96, b), 0xffffffff)
++                let low := or(or(b0, shl(64, b1)), or(shl(128, b2), shl(192, b3)))
++                mstore(dst, low)
++                mstore(add(dst, 32), or(shr(64, low), shl(192, b4)))
++                mstore(add(dst, 64), or(or(b4, shl(64, b3)), or(shl(128, b2), shl(192, b1))))
++            }
++        }
++    }
++
++    function _initialCached(uint256 ptr, uint256 scalar) private pure returns (uint256 out) {
++        assembly ("memory-safe") { let M := 0x7f000001 let low := mload(ptr) out := or(or(or(shl(224, mod(add(1, mul(and(low, 0xffffffff), scalar)), M)), shl(192, mulmod(and(shr(64, low), 0xffffffff), scalar, M))), or(shl(160, mulmod(and(shr(128, low), 0xffffffff), scalar, M)), shl(128, mulmod(shr(192, low), scalar, M)))), shl(96, mulmod(shr(192, mload(add(ptr, 32))), scalar, M))) }
++    }
+ }
+--- a/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
++++ b/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
+@@ -317,25 +317,26 @@
+             round2OodPoint,
+             allRandomness
+         );
++        uint256[] memory packedPoint = WhirVerifierCore5.prepare(allRandomness);
+         uint256 evaluationOfWeights = WhirVerifierCore5._combineInitialConstraintEvalsSingleRaw(
+             initialConstraintChallenge, statementEq, initialEq
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw18WithPrecomputedEq(
+-                round0ConstraintChallenge, round0Eq, round0SelVars, allRandomness
++                round0ConstraintChallenge, round0Eq, round0SelVars, packedPoint
+             )
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw14WithPrecomputedEq(
+-                round1ConstraintChallenge, round1Eq, round1SelVars, allRandomness
++                round1ConstraintChallenge, round1Eq, round1SelVars, packedPoint
+             )
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw10WithPrecomputedEq(
+-                round2ConstraintChallenge, round2Eq, round2SelVars, allRandomness
++                round2ConstraintChallenge, round2Eq, round2SelVars, packedPoint
+             )
+         );
+         uint256 finalValue = WhirVerifierCore5._evaluateFinalValueBlob(

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "purpose": "Records the exporter source and commands used for the checked-in BabyBear WHIR fixtures.",
+  "exporter": {
+    "repository": "spartan-whir-export",
+    "base_commit": "ec7c24f451f208debf86144d45bb3441e9d85cc4",
+    "snapshot_patch": "babybear_full_verifier_exporter_snapshot.patch",
+    "snapshot_patch_sha256": "e76c195a4c5ecc5103acbb16ea6a6d809b0a1c97af408b512d97573ffc3a1fea",
+    "patch_applies_to_base_commit": true,
+    "source_sha256": {
+      "Cargo.toml": "b470f88d06296120786343c5ef0aadcb9a6ff736880630ce999424f85d9cd65d",
+      "Cargo.lock": "f41e2915121b23bbcdc5a7d2d2813e3f815f4084d33e81d303714d8cb2b57c67",
+      "src/engine.rs": "c07a5b8b98a128a23ea8f8ac21e0c4005e92e196b0da0fdda77f957cd15e7cff",
+      "src/fixture_export.rs": "6733358483c17f7484d28831dc8ad4a8572b2ea2260e97f1033411535d7466c2",
+      "src/keccak_challenger.rs": "65e05b4a56b832240ef5a2732c8966d5e220f46a9d680db1b46debbe8b7292ca",
+      "src/lib.rs": "d2833447658cd85ace46de76bd41d1e0c42510adba55242eeaf0899a6c0d1055",
+      "src/quartic_fixture.rs": "be30ebd7204d295aa5bbb56cfc7127665146131ab5cc9ddcef5ee0848e2ebad6",
+      "src/quintic_schedule_dump.rs": "a7829e5d53d70d14465c5e8dc961061fdf37e7bde50c64f3370c9374196c5d7c",
+      "src/vectors.rs": "dd43ade252774519206c740a489fcbacbb25ff4a8498766f476cec85bcb7696b"
+    }
+  },
+  "dependencies": {
+    "whir_p3_commit": "06dded8025f1a125fcbc720ef6f97e14ed31c2a9",
+    "plonky3_commit": "fc7d591e6ec54b9220ed120e1ba0f8978a9c2391"
+  },
+  "export": {
+    "command": "cargo run --offline --release --bin export_fixtures_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28 -- <output-dir>",
+    "exit_code": 0,
+    "generated_prefix": "quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+    "installed_prefix": "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+    "generated_config_sha256": "6dbfc791541cea81a14caccd196a007caf1b1661444d8a6288e6f0ef2dc9d32f",
+    "installed_config_changes": [
+      "Use BabyBearKeccakChallenger",
+      "Prefix the library and file name with BabyBear",
+      "Apply forge formatting"
+    ]
+  },
+  "verification": {
+    "rust_checkpoint_match": true,
+    "rerun_after_babybear_modulus_correction_and_pow_check": true,
+    "installed_artifacts_byte_equal_to_rerun": true,
+    "compared_artifact_count": 11
+  },
+  "limitation": "The snapshot patch changes the companion exporter field globally. A committed exporter route that emits KoalaBear and BabyBear fixtures side by side is still required."
+}

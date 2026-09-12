@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "command": "forge test --offline --isolate --threads 1",
+  "successful_output": "babybear_optimized_full_suite_final_retry.log",
+  "successful_output_timestamp": "2026-09-06T17:00:23+0800",
+  "first_attempt_output": "babybear_optimized_full_suite_final.log",
+  "first_attempt_result": "FieldArithmeticTest.setUp reverted before that suite ran; every other executed suite passed",
+  "forge": {
+    "version": "1.5.1-stable",
+    "commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+    "build_profile": "maxperf"
+  },
+  "result": {
+    "suites": 43,
+    "tests": 404,
+    "failures": 0,
+    "skipped": 0
+  }
+}

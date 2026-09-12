@@ -1,0 +1,72 @@
+--- BabyBearSelectCubics
++++ BabyBearSelectCubicsFused
+@@ -73,10 +73,7 @@
+         unchecked {
+             for (uint256 i = n / 2 - 1; i > 0; --i) {
+                 ptr -= 160;
+-                uint256 bLow;
+-                uint256 bRev;
+-                (bLow, bRev, next) = _factor(ptr, next);
+-                (low, rev) = _multiply(low, rev, bLow, bRev);
++                (low, rev, next) = _step(low, rev, ptr, next);
+             }
+         }
+         return _pack(low, rev);
+@@ -256,5 +253,56 @@
+             )
+         }
+     }
++    function _step(uint256 aLow,uint256 aRev,uint256 ptr,uint256 x) private pure returns(uint256 lowOut,uint256 revOut,uint256 next){assembly("memory-safe"){let bLow let bRev
++{
++
++            let M := 0x78000001
++            let x2 := mulmod(x, x, M)
++            let x3 := mulmod(x2, x, M)
++            next := mulmod(x2, x2, M)
++            let low :=
++                add(
++                    add(mload(ptr), mul(mload(add(ptr, 32)), x)),
++                    add(mul(mload(add(ptr, 64)), x2), mul(mload(add(ptr, 96)), x3))
++                )
++            let last :=
++                shr(
++                    192,
++                    mul(mload(add(ptr, 128)), or(or(x3, shl(64, x2)), or(shl(128, x), shl(192, 1))))
++                )
++            let o0 := mod(and(low, 0xffffffffffffffff), M)
++            let o1 := mod(and(shr(64, low), 0xffffffffffffffff), M)
++            let o2 := mod(and(shr(128, low), 0xffffffffffffffff), M)
++            let o3 := mod(shr(192, low), M)
++            let o4 := mod(last, M)
++            bLow := or(or(o0, shl(64, o1)), or(shl(128, o2), shl(192, o3)))
++            bRev := or(or(o4, shl(64, o3)), or(shl(128, o2), shl(192, o1)))
+ }
+-
++{
++
++            let M := 0x78000001
++            let c4 :=
++                add(
++                    shr(192, mul(aLow, or(shr(64, bLow), shl(192, and(bRev, 0xffffffff))))),
++                    mul(and(aRev, 0xffffffff), and(bLow, 0xffffffff))
++                )
++            let low := mul(aLow, bLow)
++            let high := mul(aRev, bRev)
++            let c0 := and(low, 0xffffffffffffffff)
++            let c1 := and(shr(64, low), 0xffffffffffffffff)
++            let c2 := and(shr(128, low), 0xffffffffffffffff)
++            let c3 := shr(192, low)
++            let c5 := shr(192, high)
++            let c6 := and(shr(128, high), 0xffffffffffffffff)
++            let c7 := and(shr(64, high), 0xffffffffffffffff)
++            let c8 := and(high, 0xffffffffffffffff)
++            let o0 := mod(add(c0, shl(1, c5)), M)
++            let o1 := mod(add(c1, shl(1, c6)), M)
++            let o2 := mod(add(c2, shl(1, c7)), M)
++            let o3 := mod(add(c3, shl(1, c8)), M)
++            let o4 := mod(c4, M)
++            lowOut := or(or(o0, shl(64, o1)), or(shl(128, o2), shl(192, o3)))
++            revOut := or(or(o4, shl(64, o3)), or(shl(128, o2), shl(192, o1)))
++}
++}}
++}

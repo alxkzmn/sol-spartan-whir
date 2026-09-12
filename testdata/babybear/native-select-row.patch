@@ -1,0 +1,394 @@
+--- a/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol
++++ b/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol
+@@ -1651,9 +1651,16 @@
+         uint256 current = var_;
+ 
+         unchecked {
+-            for (uint256 i = numVariables; i > 0; --i) {
+-                uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+-                acc = _mulBySelectTermExt5(acc, fullPoint[pointOffset + i - 1], scalar);
++            uint256 i = numVariables;
++            if (i != 0) {
++                --i;
++                uint256 scalar = current + (0x7f000001 - 1);
++                acc = _initialCached(_cachedAddress(fullPoint, pointOffset + i), scalar);
++                current = mulmod(current, current, 0x7f000001);
++            }
++            for (; i > 0; --i) {
++                uint256 scalar = current + (0x7f000001 - 1);
++                acc = _mulBySelectTermCached(acc, _cachedAddress(fullPoint, pointOffset + i - 1), scalar);
+                 current = KoalaBear.mul(current, current);
+             }
+         }
+@@ -1672,12 +1679,23 @@
+         uint256 current1 = var1;
+ 
+         unchecked {
+-            for (uint256 i = numVariables; i > 0; --i) {
+-                uint256 pointValue = fullPoint[pointOffset + i - 1];
+-                uint256 scalar0 = current0 == 0 ? KoalaBear.MODULUS - 1 : current0 - 1;
+-                uint256 scalar1 = current1 == 0 ? KoalaBear.MODULUS - 1 : current1 - 1;
+-                acc0 = _mulBySelectTermExt5(acc0, pointValue, scalar0);
+-                acc1 = _mulBySelectTermExt5(acc1, pointValue, scalar1);
++            uint256 i = numVariables;
++            if (i != 0) {
++                --i;
++                uint256 pointValue = _cachedAddress(fullPoint, pointOffset + i);
++                uint256 scalar0 = current0 + (0x7f000001 - 1);
++                uint256 scalar1 = current1 + (0x7f000001 - 1);
++                acc0 = _initialCached(pointValue, scalar0);
++                acc1 = _initialCached(pointValue, scalar1);
++                current0 = mulmod(current0, current0, 0x7f000001);
++                current1 = mulmod(current1, current1, 0x7f000001);
++            }
++            for (; i > 0; --i) {
++                uint256 pointValue = _cachedAddress(fullPoint, pointOffset + i - 1);
++                uint256 scalar0 = current0 + (0x7f000001 - 1);
++                uint256 scalar1 = current1 + (0x7f000001 - 1);
++                acc0 = _mulBySelectTermCached(acc0, pointValue, scalar0);
++                acc1 = _mulBySelectTermCached(acc1, pointValue, scalar1);
+                 current0 = KoalaBear.mul(current0, current0);
+                 current1 = KoalaBear.mul(current1, current1);
+             }
+@@ -1829,4 +1847,116 @@
+         }
+         return out;
+     }
++
++    function _initialSelect(uint256 point, uint256 scalar) private pure returns (uint256 out) {
++        assembly ("memory-safe") { let M := 0x7f000001 out := or(or(or(shl(224, mod(add(1, mul(shr(224, point), scalar)), M)), shl(192, mulmod(and(shr(192, point), 0xffffffff), scalar, M))), or(shl(160, mulmod(and(shr(160, point), 0xffffffff), scalar, M)), shl(128, mulmod(and(shr(128, point), 0xffffffff), scalar, M)))), shl(96, mulmod(and(shr(96, point), 0xffffffff), scalar, M))) }
++    }
++
++    function _loadPoint(uint256[] memory point, uint256 i) private pure returns (uint256 v) {
++        assembly ("memory-safe") { v := mload(add(add(point, 32), shl(5, i))) }
++    }
++
++    function _mulBySelectTermCached(uint256 acc, uint256 pointValue, uint256 scalar)
++        internal
++        pure
++        returns (uint256 out)
++    {
++        assembly ("memory-safe") {
++            let M := 0x7f000001
++            let mask := 0xffffffff
++
++            let low
++            let high
++            let c4
++            {
++                let a0 := shr(224, acc)
++                let a1 := and(shr(192, acc), mask)
++                let a2 := and(shr(160, acc), mask)
++                let a3 := and(shr(128, acc), mask)
++                let a4 := and(shr(96, acc), mask)
++                let bLow := mload(pointValue)
++                let aLow := or(or(a0, shl(64, a1)), or(shl(128, a2), shl(192, a3)))
++                c4 := add(shr(192, mul(aLow, mload(add(pointValue, 32)))), mul(a4, and(bLow, 0xffffffff)))
++                low := mul(aLow, bLow)
++                high := mul(or(or(a4, shl(64, a3)), or(shl(128, a2), shl(192, a1))), mload(add(pointValue, 64)))
++            }
++            let laneMask := 0xffffffffffffffff
++            let c0 := and(low, laneMask)
++            let c1 := and(shr(64, low), laneMask)
++            let c2 := and(shr(128, low), laneMask)
++            let c3 := shr(192, low)
++            let c5 := shr(192, high)
++            let c6 := and(shr(128, high), laneMask)
++            let c7 := and(shr(64, high), laneMask)
++            let c8 := and(high, laneMask)
++            // acc * (1 + scalar * pointValue), reduced by X^5 = 1 - X^2.
++            // The bias is a multiple of M larger than every subtracted coefficient;
++            // even after multiplication by scalar, all intermediates fit in 256 bits.
++            let bias := shl(40, M)
++
++            out := or(
++                or(
++                    or(
++                        shl(
++                            224,
++                            mod(add(shr(224, acc), mul(scalar, add(add(c0, c5), sub(bias, c8)))), M)
++                        ),
++                        shl(192, mod(add(and(shr(192, acc), mask), mul(scalar, add(c1, c6))), M))
++                    ),
++                    or(
++                        shl(
++                            160,
++                            mod(
++                                add(
++                                    and(shr(160, acc), mask),
++                                    mul(scalar, add(add(add(c2, sub(bias, c5)), c7), c8))
++                                ),
++                                M
++                            )
++                        ),
++                        shl(
++                            128,
++                            mod(
++                                add(
++                                    and(shr(128, acc), mask),
++                                    mul(scalar, add(add(c3, sub(bias, c6)), c8))
++                                ),
++                                M
++                            )
++                        )
++                    )
++                ),
++                shl(96, mod(add(and(shr(96, acc), mask), mul(scalar, add(c4, sub(bias, c7)))), M))
++            )
++        }
++    }
++
++    function _cachedAddress(uint256[] memory cache, uint256 index) private pure returns (uint256 ptr) {
++        assembly ("memory-safe") { ptr := add(add(cache, 32), mul(sub(index, 4), 96)) }
++    }
++
++    function prepare(uint256[] memory point) internal pure returns (uint256[] memory cache) {
++        assembly ("memory-safe") {
++            cache := mload(0x40)
++            mstore(cache, 54)
++            mstore(0x40, add(cache, 1760))
++            let dst := add(cache, 32)
++            for { let src := add(point, 160) } lt(src, add(point, 736)) { src := add(src, 32) dst := add(dst, 96) } {
++                let b := mload(src)
++                let b0 := shr(224, b)
++                let b1 := and(shr(192, b), 0xffffffff)
++                let b2 := and(shr(160, b), 0xffffffff)
++                let b3 := and(shr(128, b), 0xffffffff)
++                let b4 := and(shr(96, b), 0xffffffff)
++                let low := or(or(b0, shl(64, b1)), or(shl(128, b2), shl(192, b3)))
++                mstore(dst, low)
++                mstore(add(dst, 32), or(shr(64, low), shl(192, b4)))
++                mstore(add(dst, 64), or(or(b4, shl(64, b3)), or(shl(128, b2), shl(192, b1))))
++            }
++        }
++    }
++
++    function _initialCached(uint256 ptr, uint256 scalar) private pure returns (uint256 out) {
++        assembly ("memory-safe") { let M := 0x7f000001 let low := mload(ptr) out := or(or(or(shl(224, mod(add(1, mul(and(low, 0xffffffff), scalar)), M)), shl(192, mulmod(and(shr(64, low), 0xffffffff), scalar, M))), or(shl(160, mulmod(and(shr(128, low), 0xffffffff), scalar, M)), shl(128, mulmod(shr(192, low), scalar, M)))), shl(96, mulmod(shr(192, mload(add(ptr, 32))), scalar, M))) }
++    }
+ }
+--- a/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
++++ b/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol
+@@ -317,25 +317,26 @@
+             round2OodPoint,
+             allRandomness
+         );
++        uint256[] memory packedPoint = WhirVerifierCore5.prepare(allRandomness);
+         uint256 evaluationOfWeights = WhirVerifierCore5._combineInitialConstraintEvalsSingleRaw(
+             initialConstraintChallenge, statementEq, initialEq
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw18WithPrecomputedEq(
+-                round0ConstraintChallenge, round0Eq, round0SelVars, allRandomness
++                round0ConstraintChallenge, round0Eq, round0SelVars, packedPoint
+             )
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw14WithPrecomputedEq(
+-                round1ConstraintChallenge, round1Eq, round1SelVars, allRandomness
++                round1ConstraintChallenge, round1Eq, round1SelVars, packedPoint
+             )
+         );
+         evaluationOfWeights = KoalaBearExt5.add(
+             evaluationOfWeights,
+             WhirVerifierCore5._evaluateConstraintSelectRaw10WithPrecomputedEq(
+-                round2ConstraintChallenge, round2Eq, round2SelVars, allRandomness
++                round2ConstraintChallenge, round2Eq, round2SelVars, packedPoint
+             )
+         );
+         uint256 finalValue = WhirVerifierCore5._evaluateFinalValueBlob(
+--- a/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol
++++ b/src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol
+@@ -83,31 +83,9 @@
+         }
+     }
+ 
+-    function _computeDim4EqWeightsUnpacked(uint256 p0, uint256 p1, uint256 p2, uint256 p3)
+-        internal
+-        pure
+-        returns (uint256 unpackedPtr)
+-    {
+-        uint256 packedPtr = _computeDim4EqWeights(p0, p1, p2, p3);
+-        assembly ("memory-safe") {
+-            unpackedPtr := mload(0x40)
+-            mstore(0x40, add(unpackedPtr, 0xa00))
+-
+-            for {
+-                let src := packedPtr
+-                let dst := unpackedPtr
+-            } lt(src, add(packedPtr, 0x200)) {
+-                src := add(src, 0x20)
+-                dst := add(dst, 0xa0)
+-            } {
+-                let packed := mload(src)
+-                mstore(dst, shr(224, packed))
+-                mstore(add(dst, 0x20), and(shr(192, packed), 0xffffffff))
+-                mstore(add(dst, 0x40), and(shr(160, packed), 0xffffffff))
+-                mstore(add(dst, 0x60), and(shr(128, packed), 0xffffffff))
+-                mstore(add(dst, 0x80), and(shr(96, packed), 0xffffffff))
+-            }
+-        }
++    function _computeDim4EqWeightsUnpacked(uint256 p0,uint256 p1,uint256 p2,uint256 p3)
++        internal pure returns (uint256) {
++        return _prepareRowWeights(_computeDim4EqWeights(p0,p1,p2,p3));
+     }
+ 
+     function validateBase(uint256 value) internal pure {
+@@ -1314,11 +1292,9 @@
+         uint256 v13,
+         uint256 v14,
+         uint256 v15
+-    ) private pure returns (uint256 out) {
++    ) internal pure returns (uint256 out) {
+         assembly ("memory-safe") {
+             let M := 0x7f000001
+-            let mask := 0xffffffff
+-
+             let c0 := 0
+             let c1 := 0
+             let c2 := 0
+@@ -1328,80 +1304,43 @@
+             let c6 := 0
+             let c7 := 0
+             let c8 := 0
+-
+-            function accumulate(a, w, d0, d1, d2, d3, d4, d5, d6, d7, d8) ->
+-                e0,
+-                e1,
+-                e2,
+-                e3,
+-                e4,
+-                e5,
+-                e6,
+-                e7,
+-                e8
+-            {
+-                let a0 := shr(224, a)
+-                let a1 := and(shr(192, a), 0xffffffff)
+-                let a2 := and(shr(160, a), 0xffffffff)
+-                let a3 := and(shr(128, a), 0xffffffff)
+-                let a4 := and(shr(96, a), 0xffffffff)
+-
+-                let b0 := mload(w)
+-                let b1 := mload(add(w, 0x20))
+-                let b2 := mload(add(w, 0x40))
+-                let b3 := mload(add(w, 0x60))
+-                let b4 := mload(add(w, 0x80))
+-
+-                e0 := add(d0, mul(a0, b0))
+-                e1 := add(d1, add(mul(a0, b1), mul(a1, b0)))
+-                e2 := add(d2, add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)))
+-                e3 := add(d3, add(add(add(mul(a0, b3), mul(a1, b2)), mul(a2, b1)), mul(a3, b0)))
+-                e4 := add(
+-                    d4,
+-                    add(
+-                        add(add(add(mul(a0, b4), mul(a1, b3)), mul(a2, b2)), mul(a3, b1)),
+-                        mul(a4, b0)
+-                    )
+-                )
+-                e5 := add(d5, add(add(add(mul(a1, b4), mul(a2, b3)), mul(a3, b2)), mul(a4, b1)))
+-                e6 := add(d6, add(add(mul(a2, b4), mul(a3, b3)), mul(a4, b2)))
+-                e7 := add(d7, add(mul(a3, b4), mul(a4, b3)))
+-                e8 := add(d8, mul(a4, b4))
+-            }
+-
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v0, weightsPtr, c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v1, add(weightsPtr, 0x0a0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v2, add(weightsPtr, 0x140), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v3, add(weightsPtr, 0x1e0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v4, add(weightsPtr, 0x280), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v5, add(weightsPtr, 0x320), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v6, add(weightsPtr, 0x3c0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v7, add(weightsPtr, 0x460), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v8, add(weightsPtr, 0x500), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v9, add(weightsPtr, 0x5a0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v10, add(weightsPtr, 0x640), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v11, add(weightsPtr, 0x6e0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v12, add(weightsPtr, 0x780), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v13, add(weightsPtr, 0x820), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v14, add(weightsPtr, 0x8c0), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-            c0, c1, c2, c3, c4, c5, c6, c7, c8 :=
+-                accumulate(v15, add(weightsPtr, 0x960), c0, c1, c2, c3, c4, c5, c6, c7, c8)
+-
++            function accumulate(a,w,d0,d1,d2,d3,d4,d5,d6,d7,d8) -> e0,e1,e2,e3,e4,e5,e6,e7,e8 {
++                let a0 := shr(224,a)
++                let a1 := and(shr(192,a),0xffffffff)
++                let a2 := and(shr(160,a),0xffffffff)
++                let a3 := and(shr(128,a),0xffffffff)
++                let a4 := and(shr(96,a),0xffffffff)
++                let lowA := or(or(a0,shl(64,a1)),or(shl(128,a2),shl(192,a3)))
++                let lowB := mload(w)
++                let low := mul(lowA,lowB)
++                let high := mul(or(or(a4,shl(64,a3)),or(shl(128,a2),shl(192,a1))),mload(add(w,64)))
++                let mid := add(shr(192,mul(lowA,mload(add(w,32)))),mul(a4,and(lowB,0xffffffff)))
++                e0 := add(d0,and(low,0xffffffffffffffff))
++                e1 := add(d1,and(shr(64,low),0xffffffffffffffff))
++                e2 := add(d2,and(shr(128,low),0xffffffffffffffff))
++                e3 := add(d3,shr(192,low))
++                e4 := add(d4,mid)
++                e5 := add(d5,shr(192,high))
++                e6 := add(d6,and(shr(128,high),0xffffffffffffffff))
++                e7 := add(d7,and(shr(64,high),0xffffffffffffffff))
++                e8 := add(d8,and(high,0xffffffffffffffff))
++            }
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v0,add(weightsPtr,0),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v1,add(weightsPtr,96),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v2,add(weightsPtr,192),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v3,add(weightsPtr,288),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v4,add(weightsPtr,384),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v5,add(weightsPtr,480),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v6,add(weightsPtr,576),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v7,add(weightsPtr,672),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v8,add(weightsPtr,768),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v9,add(weightsPtr,864),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v10,add(weightsPtr,960),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v11,add(weightsPtr,1056),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v12,add(weightsPtr,1152),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v13,add(weightsPtr,1248),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v14,add(weightsPtr,1344),c0,c1,c2,c3,c4,c5,c6,c7,c8)
++            c0,c1,c2,c3,c4,c5,c6,c7,c8 := accumulate(v15,add(weightsPtr,1440),c0,c1,c2,c3,c4,c5,c6,c7,c8)
+             let bias := shl(80, M)
+             out := or(
+                 or(
+@@ -1654,4 +1593,24 @@
+         c3 = (packed >> 128) & 0xffffffff;
+         c4 = (packed >> 96) & 0xffffffff;
+     }
++
++    function _prepareRowWeights(uint256 packedPtr) internal pure returns (uint256 ptr) {
++        assembly ("memory-safe") {
++            ptr := mload(0x40)
++            mstore(0x40, add(ptr, 1536))
++            for { let i := 0 } lt(i, 16) { i := add(i, 1) } {
++                let a := mload(add(packedPtr, shl(5, i)))
++                let dst := add(ptr, mul(i, 96))
++                let b0 := shr(224, a)
++                let b1 := and(shr(192, a), 0xffffffff)
++                let b2 := and(shr(160, a), 0xffffffff)
++                let b3 := and(shr(128, a), 0xffffffff)
++                let b4 := and(shr(96, a), 0xffffffff)
++                let low := or(or(b0, shl(64, b1)), or(shl(128, b2), shl(192, b3)))
++                mstore(dst, low)
++                mstore(add(dst,32), or(shr(64,low),shl(192,b4)))
++                mstore(add(dst,64), or(or(b4,shl(64,b3)),or(shl(128,b2),shl(192,b1))))
++            }
++        }
++    }
+ }

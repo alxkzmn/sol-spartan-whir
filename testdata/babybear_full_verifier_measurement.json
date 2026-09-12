@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "field": {
+    "name": "BabyBear",
+    "modulus": 2013265921,
+    "modulus_hex": "0x78000001",
+    "extension_degree": 5,
+    "extension_polynomial": "X^5 - 2"
+  },
+  "schedule": {
+    "label": "k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+    "num_variables": 22,
+    "folding_factor": 4,
+    "starting_log_inverse_rate": 4,
+    "rs_domain_initial_reduction_factor": 3,
+    "initial_folding_pow_bits": 27,
+    "round_folding_pow_bits": [
+      23,
+      25,
+      28
+    ],
+    "round_query_pow_bits": [
+      27,
+      25,
+      26
+    ],
+    "round_query_counts": [
+      38,
+      31,
+      19
+    ],
+    "final_query_pow_bits": 24,
+    "final_query_count": 14,
+    "exact_cardinality_achieved_bits": 100.01454940952041,
+    "derivation": "babybear/config.json"
+  },
+  "optimization_loop": {
+    "retention_rule": "strictly_more_than_1_percent_of_round_start_foundry_gas",
+    "starting_foundry_gas": 3680545,
+    "final_foundry_gas": 3267073,
+    "total_foundry_gas_reduction": 413472,
+    "total_foundry_gas_reduction_percent": 11.234,
+    "rounds": [
+      {
+        "change": "fixed_base_four_bit_exponent_tables",
+        "round_start_gas": 3680545,
+        "result_gas": 3580867,
+        "reduction_gas": 99678,
+        "reduction_percent": 2.7082,
+        "retained": true
+      },
+      {
+        "change": "strict_merkle_parent_emission",
+        "round_start_gas": 3580867,
+        "result_gas": 3487766,
+        "reduction_gas": 93101,
+        "reduction_percent": 2.6000,
+        "retained": true
+      },
+      {
+        "change": "final_merkle_decommitment_length_check",
+        "round_start_gas": 3487766,
+        "result_gas": 3441505,
+        "reduction_gas": 46261,
+        "reduction_percent": 1.3264,
+        "retained": true
+      },
+      {
+        "change": "merkle_hashing_split_by_node_parity",
+        "round_start_gas": 3441505,
+        "result_gas": 3311425,
+        "reduction_gas": 130080,
+        "reduction_percent": 3.7797,
+        "retained": true
+      },
+      {
+        "change": "packed_extension_endian_conversion",
+        "round_start_gas": 3311425,
+        "result_gas": 3267073,
+        "reduction_gas": 44352,
+        "reduction_percent": 1.3394,
+        "retained": true
+      }
+    ],
+    "excluded_candidates": [
+      {
+        "change": "exponent_gap_batching",
+        "reduction_gas": 6347,
+        "reduction_percent": 0.1725,
+        "reason": "below_threshold"
+      },
+      {
+        "change": "five_way_exponent_batching",
+        "reduction_gas": 15822,
+        "reduction_percent": 0.4299,
+        "reason": "below_threshold"
+      },
+      {
+        "change": "one_pass_row_hashing_and_folding",
+        "gas_regression": 97515,
+        "reason": "regression"
+      },
+      {
+        "change": "query_insertion_sort",
+        "gas_regression": 8781,
+        "reason": "regression"
+      },
+      {
+        "change": "in_place_merkle_frontier",
+        "reduction_gas": 609,
+        "reduction_percent": 0.0175,
+        "reason": "below_threshold"
+      }
+    ],
+    "final_round_gate_gas": 32671,
+    "stop_reason": "no_remaining_candidate_had_a_credible_saving_above_the_strict_gate",
+    "report": "../docs/babybear-verifier-optimization-loop.md",
+    "koalabear": {
+      "scope": "end_of_babybear_only_optimization_loop_before_koalabear_production_promotion",
+      "starting_foundry_gas": 5426216,
+      "final_foundry_gas": 5089788,
+      "total_foundry_gas_reduction": 336428,
+      "total_foundry_gas_reduction_percent": 6.2001,
+      "starting_transaction_gas": 5545363,
+      "final_transaction_gas": 5208935,
+      "retained_changes": [
+        "fixed_base_four_bit_exponent_tables",
+        "strict_merkle_parent_emission",
+        "merkle_hashing_split_by_node_parity"
+      ],
+      "excluded_changes": [
+        {
+          "change": "final_merkle_decommitment_length_check",
+          "reduction_percent": 0.8954
+        },
+        {
+          "change": "packed_extension_endian_conversion",
+          "reduction_percent": 0.8714
+        }
+      ]
+    }
+  },
+  "fixture": {
+    "whir_p3_commit": "06dded8025f1a125fcbc720ef6f97e14ed31c2a9",
+    "rust_checkpoint_match": true,
+    "provenance": "babybear_full_verifier_fixture_provenance.json",
+    "success_blob_bytes": 53970,
+    "success_blob": "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success.blob",
+    "success_blob_sha256": "2834dcbad9cd3c01b23b902696ca2f30e67a12164fd72853c9d01de329f083c2",
+    "success_proof_abi_bytes": 104064,
+    "success_proof_abi": "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success_proof.abi",
+    "success_proof_abi_sha256": "bb45072632768a1076b785adaa98cbbcb4760677364c97543b739163b5cb9890",
+    "success_statement_abi_bytes": 960,
+    "success_statement_abi": "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success_statement.abi",
+    "success_statement_abi_sha256": "45ce6440dbcd4cc41971bb06e6c996982edc18c0f9a2fcf88fc91e5b058fe919",
+    "artifact_sha256": {
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_commitment_proof.abi": "92e457f62fc5ed93b142eb4ebb161782ceff7449978ce8805885d5699e8ac793",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_commitment.blob": "b2eadcc54c5be223a4e5c14ec987e0b6d60cc624a59e751688824fdbf3f0a017",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_ood_or_transcript_mismatch_proof.abi": "526fab96e330e82a04fac74a60eae7e3ca35f2e2c3318e2e9eac6fcd197ad849",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_ood_or_transcript_mismatch.blob": "153be27af7f504d54b2e3496f9d208d632bd7375a52184e1422632f1a6b8fbb2",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_stir_query_proof.abi": "47cdf7bd2aa1607fb4d1098fc50690f2d744e3b561acd7324c87634a4182cc8d",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_failure_bad_stir_query.blob": "4a7e0ce85776da98f02d2d1a18892e6f51d286be7bd352241b531fb765248590",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success_proof.abi": "bb45072632768a1076b785adaa98cbbcb4760677364c97543b739163b5cb9890",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success_statement.abi": "45ce6440dbcd4cc41971bb06e6c996982edc18c0f9a2fcf88fc91e5b058fe919",
+      "babybear_quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success.blob": "2834dcbad9cd3c01b23b902696ca2f30e67a12164fd72853c9d01de329f083c2",
+      "transcript_trace_babybear_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28.abi": "098f69bb97421a9b5b0497fcc069bf2b709218f5088d8b9b4b76784897d40a3f",
+      "transcript_trace_babybear_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28.json": "3208f7fe6bc7f2f4e6f988bdf5a5a06f19cb7ef7caf241f06aa3a4a01971387c"
+    }
+  },
+  "foundry": {
+    "full_suite_command": "forge test --offline --isolate --threads 1",
+    "full_suite_log": "babybear_optimized_full_suite_final_retry.log",
+    "provenance": "babybear_optimized_validation_provenance_final.json",
+    "native_gas_test": 3267073,
+    "valid_native_call_gas": 3267007,
+    "valid_typed_call_gas": 6510122,
+    "valid_decode_and_delegate_call_gas": 7587255,
+    "full_suite_suites": 43,
+    "full_suite_tests": 404,
+    "full_suite_failures": 0,
+    "full_suite_skipped": 0
+  },
+  "transaction": {
+    "transaction_hash": "0x2a1fe13c8fa90662d6281037d65b3efebf324ab914afb96e469734d128fae482",
+    "total_gas": 3390891,
+    "intrinsic_gas": 21000,
+    "calldata_gas": 854448,
+    "execution_gas": 2515443,
+    "calldata_bytes": 54084,
+    "calldata_sha256": "499b76b62f0ec65b10953331260cd65941bb5c08ea3de57f8846d75c11e4d606",
+    "snapshot": "babybear_optimized_tx_snapshot_final",
+    "run_info": "babybear_optimized_tx_snapshot_final/run-info.json",
+    "receipts": "babybear_optimized_tx_snapshot_final/run.json",
+    "parsed_metrics": "babybear_optimized_tx_snapshot_final/metrics.json"
+  },
+  "compiler": {
+    "solc": "0.8.28+commit.7893614a",
+    "via_ir": true,
+    "optimizer_runs": 833,
+    "evm_version": "prague",
+    "deployed_runtime_bytes": 34397,
+    "initcode_bytes": 34423,
+    "deployed_runtime_sha256": "744e20e5b4e159a332b27408a055b9d18f333c340ab9bc03c81df39da828471b",
+    "optimized_ir_sha256": "57ac9f9145dbe73027b655b55a268c3ef4db9d82e20094bca642b3f6bcd52616",
+    "snapshot": "babybear_optimized_compiler_snapshot_final",
+    "artifact": "babybear_optimized_compiler_snapshot_final/artifact.json",
+    "optimized_ir": "babybear_optimized_compiler_snapshot_final/optimized.yul",
+    "deployed_runtime": "babybear_optimized_compiler_snapshot_final/runtime.hex",
+    "summary": "babybear_optimized_compiler_snapshot_final/summary.json"
+  },
+  "source_sha256": {
+    "src/field/BabyBear.sol": "1db7f0edf24c6f1c245561dd7082b065962caf483ca3e64a59678f455f269c87",
+    "src/field/BabyBearExt5.sol": "ed83fe324fb243b74872c02c9d028fe04d5223007e62524fd0ce1d0865fae46d",
+    "src/generated/BabyBearQuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "e0d2eeb424c376f28540d76599b86272825185a57cb960654e888d57ade7c477",
+    "src/merkle/BabyBearMerkleVerifier.sol": "8213de082908e41329913e70ab0066c25f3106b274595dafc001d291d294a3d8",
+    "src/transcript/BabyBearKeccakChallenger.sol": "4654b03907519eb270ecb68849d47a89735f0a31f8f8a31de70bd54c4347b894",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "5caa380ac3048a15113ebdf2c73d5b04e978db989a02acd51c0d14a5788e5304",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "c2084c9f5dd0b2881f891c88d84bd8b895fedb15998285b292dae1cecf39723f",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifierCore5.sol": "49dfc5bf87e98e16eea1c6f8b93db92a29ce11a1c149668d9df1a2cbb51e7bf0",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifierUtils5.sol": "793718aa7633ab62ebbd1ed1c9cdbdd6f0178f685e8b6a757cbfac8c3ffad877",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "83ab578c6ea2be2afc98e01a065c4c70660e33a7c07245ee519c80c6ba580d67",
+    "src/whir/babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28/BabyBearWhirVerifier5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "4d6f58142090d7ea69c2be00f42605f37d05db2a69d2cb139630e2781313c085",
+    "script/WhirBlobNativeTxBenchmark_babybear_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol": "8b0271e2777173defef617254663d5523204498b377e0b4686a121aa23001ed9",
+    "script/verify_fixed_base_pow_tables.py": "c796a1fd4e6fe8838e3a763a54afe41a0b4ff9afaa289795ba8ccae9d55130ea",
+    "test/BabyBearCrossFieldSeparation.t.sol": "e18c28e38ccd766188339c526436e23ee4a20372563541df672948697a687c54",
+    "test/BabyBearFieldArithmetic.t.sol": "a949979ed3bcc7322d1f19db9e89e41f22365c5b0d53c97e78bf12aef5654481",
+    "test/BabyBearKeccakChallengerExt5Swar.t.sol": "7be2294ac362c809efd9aaeaf47810360861edf570cab20199b6a32cbdf14222",
+    "test/BabyBearTranscriptParity_quintic_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol": "da776b54652926c417d06fd39f5f7473ff7a9618cdf701ad14a7f7ec4a983099",
+    "test/BabyBearWhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.t.sol": "a72555a50966c6335c4e06da7fcc3e1ba29f52dc6e751a79711eedcf7a4614db"
+  },
+  "profile": {
+    "native_verify_frame_gas": 2515443,
+    "flamegraph": "babybear_optimized_native_flamegraph_final.svg",
+    "flamegraph_sha256": "433ad5c20e6cd1aea39501782cf1f8a5711103ce2d59f073c443fb07f108387e",
+    "log": "babybear_optimized_native_flamegraph_final.log"
+  },
+  "evidence_sha256": {
+    "babybear_optimized_compiler_snapshot_final/artifact.json": "c2af50c165bf9ae2eb81a22ab976a9ecaed7e5a58db5ac34becfd76e08239370",
+    "babybear_optimized_compiler_snapshot_final/optimized.yul": "57ac9f9145dbe73027b655b55a268c3ef4db9d82e20094bca642b3f6bcd52616",
+    "babybear_optimized_compiler_snapshot_final/runtime.hex": "89e219c328d9520957966e6a246fb88aea8375be20153f28745e57a3996ee4eb",
+    "babybear_optimized_compiler_snapshot_final/summary.json": "5147ed1d3b3f7f76408b1496146e3bcc82e61cd7014dc0084188649f7272f7a9",
+    "babybear_optimized_tx_snapshot_final/anvil.log": "777a814eae07908230dec7c525e0e8f0338c2b2999c34bdba5007484e951892e",
+    "babybear_optimized_tx_snapshot_final/forge-version.txt": "1d3c37da35d686f115ce0766dd41b62f52266e211a25812fd578db153573a48c",
+    "babybear_optimized_tx_snapshot_final/forge.log": "0746d7fb23273d7525936090cd2f3d605dd38565dcd06ba2dccfa903d5a2e826",
+    "babybear_optimized_tx_snapshot_final/metrics.json": "2811e58feeb63a06846ce478963f3eba64ddd514f5fd7c98f76ece9a4aaa8051",
+    "babybear_optimized_tx_snapshot_final/previous-run.json": "ea28a5976897402bd6b925238545a13f570ee969d4eb080d5d4351b50ac0a161",
+    "babybear_optimized_tx_snapshot_final/run-info.json": "ffa228525af93f4ed37418156d315e66b6c185e2f60ecd5176d5fc7a7dfd1713",
+    "babybear_optimized_tx_snapshot_final/run.json": "603f40eca8f091944abfc16d704bcd7dd518622d23ee5a17a7accbf2fd0bebda",
+    "babybear/config.json": "9113f627ca72fd2c0f0734adf239aa167e89b5905f7f6f10386c3663627587d8",
+    "babybear_full_verifier_exporter_snapshot.patch": "e76c195a4c5ecc5103acbb16ea6a6d809b0a1c97af408b512d97573ffc3a1fea",
+    "babybear_full_verifier_fixture_provenance.json": "320d843bb3bd9920ee035c60fbb6663256e4a8b0d51a903b6eccc18e10ab80fe",
+    "babybear_optimized_full_suite_final.log": "b0c295c956344ef8984dba0d72b4e8842d70e778ac39c7f3d2a46a8a22a2ab52",
+    "babybear_optimized_full_suite_final_retry.log": "6dc21452a825e04a944adc5ceb05107932d21624fb723e4cd8224217ec62fca3",
+    "babybear_optimized_native_flamegraph_final.svg": "433ad5c20e6cd1aea39501782cf1f8a5711103ce2d59f073c443fb07f108387e",
+    "babybear_optimized_native_flamegraph_final.log": "c1c1648d6042068b228f2076bd4802ea5e9b017e86cf73a1ad8380e811d19ae1",
+    "babybear_optimized_validation_provenance_final.json": "890bdaacc2bcc502658dd93907279f02a999e0391c7c575286e1d4bbecbea4d2"
+  }
+}

@@ -1,0 +1,229 @@
+{
+  "measurement_boundary": "gasleft execution after ABI decoding and shape checks; 31+19+14 rows, 16 extension elements per row, three complete weight/cache preparations, canonical validation and prefixed original-byte leaf hashes included. Both fields receive identical canonical inputs below BabyBear modulus.",
+  "compiler": {
+    "version": "0.8.28+commit.7893614a"
+  },
+  "settings": {
+    "viaIR": true,
+    "optimizer": {
+      "enabled": true,
+      "runs": 833
+    },
+    "evmVersion": "prague"
+  },
+  "measurements": {
+    "KoalaBaseline": {
+      "field": "KoalaBear",
+      "harness": "KoalaBearRowKroneckerHarness",
+      "source": "test/helpers/BabyBearRowVariants.sol",
+      "total": 791529,
+      "setup": {
+        "31": 27081,
+        "19": 27081,
+        "14": 27081
+      },
+      "rows": {
+        "31": 344004,
+        "19": 210876,
+        "14": 155406
+      },
+      "runtime_bytes": 4461,
+      "runtime_sha256": "f92b9b1b3b6cde079ae6dc7132f65039a1befe6f0e0215a6a3052686d86ac18d"
+    },
+    "KoalaFactored": {
+      "field": "KoalaBear",
+      "harness": "KoalaBearRowFactoredFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 760974,
+      "setup": {
+        "31": 16896,
+        "19": 16896,
+        "14": 16896
+      },
+      "rows": {
+        "31": 344004,
+        "19": 210876,
+        "14": 155406
+      },
+      "runtime_bytes": 4275,
+      "runtime_sha256": "2e5980fb3a338d53712f0ed39670ef4227a047c25ff325dde10093461d514836"
+    },
+    "KoalaCombined": {
+      "field": "KoalaBear",
+      "harness": "KoalaBearRowCombinedFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 672014,
+      "setup": {
+        "31": 16896,
+        "19": 16896,
+        "14": 16896
+      },
+      "rows": {
+        "31": 300914,
+        "19": 184466,
+        "14": 135946
+      },
+      "runtime_bytes": 4563,
+      "runtime_sha256": "1f2914811caf612dca1d6baea9a344b28f5c0676366685c546b7d112fdd7f39a"
+    },
+    "KoalaStreamFactored": {
+      "field": "KoalaBear",
+      "harness": "KoalaBearRowStreamFactoredFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 746226,
+      "setup": {
+        "31": 16716,
+        "19": 16716,
+        "14": 16716
+      },
+      "rows": {
+        "31": 337122,
+        "19": 206658,
+        "14": 152298
+      },
+      "runtime_bytes": 3651,
+      "runtime_sha256": "60478344030a0c8ef87f621ddd3f1f18f06eeab9d364cb1dffff01c469071263"
+    },
+    "KoalaStreamCombined": {
+      "field": "KoalaBear",
+      "harness": "KoalaBearRowStreamCombinedFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 692387,
+      "setup": {
+        "31": 16716,
+        "19": 16716,
+        "14": 16716
+      },
+      "rows": {
+        "31": 311046,
+        "19": 190674,
+        "14": 140519
+      },
+      "runtime_bytes": 3843,
+      "runtime_sha256": "597164e51c49d898d957906f2db9f7dfd65771f25b657f04c709aac93e59fa19"
+    },
+    "BabyBaseline": {
+      "field": "BabyBear",
+      "harness": "BabyBearRowKroneckerStreamHarness",
+      "source": "test/helpers/BabyBearRowVariants.sol",
+      "total": 704649,
+      "setup": {
+        "31": 23273,
+        "19": 23273,
+        "14": 23273
+      },
+      "rows": {
+        "31": 307455,
+        "19": 188475,
+        "14": 138900
+      },
+      "runtime_bytes": 3628,
+      "runtime_sha256": "278800cb7f0bcf8d8f8f22b507441a42909022c6d26a6786b8ac42a169c04928"
+    },
+    "BabyFactored": {
+      "field": "BabyBear",
+      "harness": "BabyBearRowStreamFactoredFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 679674,
+      "setup": {
+        "31": 14948,
+        "19": 14948,
+        "14": 14948
+      },
+      "rows": {
+        "31": 307455,
+        "19": 188475,
+        "14": 138900
+      },
+      "runtime_bytes": 3447,
+      "runtime_sha256": "f941fa26b7db7f268311eba2208ba3043cb85cd500846a1d82f171ed4f5c0dbc"
+    },
+    "BabyCombined": {
+      "field": "BabyBear",
+      "harness": "BabyBearRowStreamCombinedFollowupHarness",
+      "source": "test/helpers/BabyBearRowFollowup.sol",
+      "total": 625835,
+      "setup": {
+        "31": 14948,
+        "19": 14948,
+        "14": 14948
+      },
+      "rows": {
+        "31": 281379,
+        "19": 172491,
+        "14": 127121
+      },
+      "runtime_bytes": 3640,
+      "runtime_sha256": "9b9d9523c8cb88b352b5791e5c05c5aaa71c720eeab63c4798c2c4385d3a5fec",
+      "accumulate_ir_builtins": {
+        "mload": 3,
+        "mstore": 0,
+        "mul": 4,
+        "mod": 0,
+        "add": 12,
+        "and": 14,
+        "or": 6,
+        "shl": 2,
+        "shr": 12
+      }
+    }
+  },
+  "baby_rounds": [
+    {
+      "variant": "selected_previous",
+      "gas": 704649
+    },
+    {
+      "variant": "factored_weights",
+      "gas": 679674,
+      "saving": 24975,
+      "saving_percent": 3.5443178092922865
+    },
+    {
+      "variant": "combined_validation",
+      "gas": 625835,
+      "saving": 53839,
+      "saving_percent": 7.921297563243555
+    },
+    {
+      "variant": "packed_two_word_sums",
+      "gas": 683243,
+      "saving": -57408,
+      "saving_percent": -9.173024838815342,
+      "retained": false
+    }
+  ],
+  "other_rejected_trial": {
+    "variant": "extra_10_word_validation_scan",
+    "baseline_factored_gas": 679674,
+    "gas": 689780,
+    "saving": -10106
+  },
+  "selected_baby_total_saving": 78814,
+  "selected_baby_total_saving_percent": 11.184859412274765,
+  "validation": {
+    "tests_passed": 6,
+    "fuzz_runs": 256,
+    "full_row_reference": "Independent schoolbook convolution and descending polynomial reduction, with independent multilinear weights.",
+    "malformed_cases": "Every one of 80 coefficients at p, p+1, 0x80000000 and 0xffffffff for both fields; first malformed element error order; maximal/zero/one input points and maximal row values.",
+    "generator_idempotent": true
+  },
+  "profile": {
+    "batch_31_inclusive_gas": 297359,
+    "weight_mul_inclusive_gas": 7982,
+    "prepare_inclusive_gas": 4946,
+    "sub_inclusive_gas": 1230,
+    "artifact": "testdata/babybear/followup-row-profile.svg",
+    "viewer_issue": "SVG generation and headless parse succeeded; desktop open failed."
+  },
+  "source_sha256": {
+    "script/babybear/row_followup.py": "100eb522589021fa5d1f0ab9ed8610051acb97a8987ced2a3410dedd05732367",
+    "script/babybear/row_followup_bounds.py": "21eda140957dd0672afbf40dda7d62070be7b3882a682f0be07219f71e275bb4",
+    "test/helpers/BabyBearRowFollowup.sol": "e0d791470b6f504fb1f3ebe8290a2ffcdff1ba258113cef48f5965643803170e",
+    "test/BabyBearRowFollowup.t.sol": "f6d0b569ee448b30ff1a29e951489a1967d1cc8afe31ffddf83b2d97e7a21ddc",
+    "test/helpers/BabyBearRowVariants.sol": "29448a93cce740c5326ce4ca9bd08c2d0a7f6bef07f9d57a7e031db53d3019d6",
+    "test/helpers/BabyBearReference.sol": "79b75018dd1e752bf424aacdbcdea073790dfe9c9852ca43a76f10d21e2044ff",
+    "test/helpers/BabyBearSelectVariants.sol": "87dea2fe7b7eacc2af9e8303cfabfe2392efc55bcb97bcea779f8ae3dd7182a9",
+    "test/helpers/BabyBearPackedFields.sol": "5bebbb5f57111f5a21f8cb4f9e9797cbb1042ec39857513a4a37ad8fce546a67"
+  }
+}
