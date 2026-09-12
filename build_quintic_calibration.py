@@ -134,12 +134,13 @@ def main() -> None:
         )
 
     out = {
-        "schema_version": 1,
+        "schema_version": 2,
         "method": "quintic Pareto score calibrated to optimized native quintic tx gas; legacy quartic/octic references retained as diagnostics",
         "phase_source": display_path(Path(args.phase_log)),
         "gas_source": display_path(Path(args.gas_log)),
         "gas_metrics_available": sorted(gas.keys()),
         "reference_schedule_source": display_path(Path(args.reference_schedule)),
+        "source_fingerprints": scorer.build_calibration_source_fingerprints(),
         "whir_p3_revision": reference_schedule["whir_p3_revision"],
         "whir_p3_dirty": reference_schedule["whir_p3_dirty"],
         "references": references,

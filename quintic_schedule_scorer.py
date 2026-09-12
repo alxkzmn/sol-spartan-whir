@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import math
 from pathlib import Path
 from typing import Any
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 REQUIRED_SOLC_VERSION = "0.8.28"
 REQUIRED_VIA_IR = True
 REQUIRED_OPTIMIZER_RUNS = 833
@@ -29,6 +31,7 @@ PLOT_TIMEOUT = "#D55E00"
 PLOT_CFSR_STROKE = "#CC79A7"
 PLOT_IMPLEMENTED = "#000000"
 PLOT_MODELED_FRONTIER = "#666666"
+MAX_AXIS_TICKS = 12
 
 CALIBRATION_BUCKETS = ("merkle", "folding", "transcript", "sumcheck", "calldata")
 # Folding is known to overestimate until we have an end-to-end WHIR-round
@@ -62,6 +65,38 @@ PROVER_ESTIMATE_MIN_POW_FACTOR = 1.0
 PROVER_ESTIMATE_MAX_MEASURED_ERROR = 0.10
 PROVER_ESTIMATE_HOLDOUT_COUNT = 5
 PROVER_ESTIMATE_EXTRAPOLATION_PERCENTILE = 0.95
+CALIBRATION_SOURCE_PATTERNS = (
+    "foundry.toml",
+    "build_quintic_calibration.py",
+    "quintic_schedule_scorer.py",
+    "test/QuinticMicroBenchmarks.t.sol",
+    "test/GasCalibration_native_compare.t.sol",
+    "script/WhirBlobNativeTxBenchmark_lir6_ff5_rsv1.s.sol",
+    "script/WhirBlobNativeTxBenchmark_lir11_ff5_rsv3.s.sol",
+    "script/WhirBlobNativeTxBenchmark_k22_jb100_lir6_ff4_rsv1.s.sol",
+    "script/WhirBlobNativeTxBenchmark_k22_jb100_ext5_lir4_ff4_rsv3_pow28.s.sol",
+    "src/field/KoalaBear.sol",
+    "src/field/KoalaBearExt4.sol",
+    "src/field/KoalaBearExt5.sol",
+    "src/field/KoalaBearExt8.sol",
+    "src/field/KoalaBearPackedField.sol",
+    "lib/solady/src/utils/LibSort.sol",
+    "src/merkle/MerkleVerifier.sol",
+    "src/transcript/KeccakChallenger.sol",
+    "src/generated/QuarticWhirFixedConfig_lir6_ff5_rsv1.sol",
+    "src/generated/QuarticWhirFixedConfig_lir11_ff5_rsv3.sol",
+    "src/generated/OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1.sol",
+    "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol",
+    "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv4.sol",
+    "src/whir/WhirStructs.sol",
+    "src/whir/WhirVerifierCore4.sol",
+    "src/whir/WhirVerifierUtils4.sol",
+    "src/whir/lir6/*.sol",
+    "src/whir/lir11/*.sol",
+    "src/whir/k22_jb100_lir6_ff4_rsv1/*.sol",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/*.sol",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv4/*.sol",
+)
 
 
 class MissingGasMetric(Exception):
@@ -205,6 +240,7 @@ def main() -> None:
     for extra_schedule in prover_calibration_schedules:
         check_schedule_revision(extra_schedule)
     check_calibration_revision(schedule, calibration)
+    check_calibration_source_fingerprints(calibration)
     check_rust_timings(rust_timings)
     pow_seconds_per_unit = calibrated_pow_seconds_per_unit(pow_calibration)
     gas = gas_map(benches)
@@ -378,9 +414,91 @@ def write_json(path: Path, value: Any) -> None:
 
 def display_path(path: Path) -> str:
     try:
-        return str(path.resolve().relative_to(Path.cwd().resolve()))
+        return str(path.resolve().relative_to(PROJECT_ROOT))
     except ValueError:
         return path.name
+
+
+def calibration_source_paths() -> list[Path]:
+    paths: list[Path] = []
+    for pattern in CALIBRATION_SOURCE_PATTERNS:
+        matches = sorted(path for path in PROJECT_ROOT.glob(pattern) if path.is_file())
+        if not matches:
+            raise SystemExit(f"calibration source pattern matched no files: {pattern}")
+        paths.extend(matches)
+    return sorted(set(paths), key=lambda path: path.relative_to(PROJECT_ROOT).as_posix())
+
+
+def build_calibration_source_fingerprints() -> dict[str, Any]:
+    entries = []
+    combined = hashlib.sha256()
+    for path in calibration_source_paths():
+        rel = path.relative_to(PROJECT_ROOT).as_posix()
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        combined.update(rel.encode("utf-8"))
+        combined.update(b"\0")
+        combined.update(digest.encode("ascii"))
+        combined.update(b"\0")
+        entries.append(
+            {
+                "path": rel,
+                "sha256": digest,
+                "bytes": len(data),
+            }
+        )
+    return {
+        "schema_version": 1,
+        "algorithm": "sha256",
+        "combined_sha256": combined.hexdigest(),
+        "entries": entries,
+    }
+
+
+def check_calibration_source_fingerprints(
+    calibration: dict[str, Any] | None,
+) -> None:
+    if calibration is None:
+        return
+    recorded = calibration.get("source_fingerprints")
+    if not isinstance(recorded, dict):
+        raise SystemExit(
+            "calibration JSON is missing source_fingerprints; rerun build_quintic_calibration.py"
+        )
+    current = build_calibration_source_fingerprints()
+    if recorded.get("algorithm") != current["algorithm"]:
+        raise SystemExit(
+            "calibration source_fingerprints algorithm mismatch; rerun build_quintic_calibration.py"
+        )
+    if recorded.get("combined_sha256") == current["combined_sha256"]:
+        return
+
+    recorded_entries = {
+        entry.get("path"): entry
+        for entry in recorded.get("entries", [])
+        if isinstance(entry, dict)
+    }
+    current_entries = {entry["path"]: entry for entry in current["entries"]}
+    changed = []
+    for path in sorted(set(recorded_entries) | set(current_entries)):
+        recorded_entry = recorded_entries.get(path)
+        current_entry = current_entries.get(path)
+        if recorded_entry is None:
+            changed.append(f"{path} added")
+        elif current_entry is None:
+            changed.append(f"{path} removed")
+        elif recorded_entry.get("sha256") != current_entry.get("sha256"):
+            changed.append(f"{path} changed")
+
+    if not changed:
+        changed.append("combined digest changed")
+    shown = "; ".join(changed[:8])
+    if len(changed) > 8:
+        shown += f"; ... {len(changed) - 8} more"
+    raise SystemExit(
+        "calibration source fingerprints are stale: "
+        f"{shown}. Rerun build_quintic_calibration.py and then quintic_schedule_scorer.py."
+    )
 
 
 def read_bench_lines(path: Path) -> list[dict[str, Any]]:
@@ -1010,6 +1128,12 @@ def evaluate_calibration(calibration: dict[str, Any] | None) -> dict[str, Any]:
         "accepted": ordinal_accepted,
         "ordinal_accepted": ordinal_accepted,
         "bucket_validation_accepted": bucket_validation_accepted,
+        "source_fingerprints": {
+            "accepted": True,
+            "combined_sha256": (calibration.get("source_fingerprints") or {}).get(
+                "combined_sha256"
+            ),
+        },
         "reason": "; ".join(failures) if failures else "passed",
         "bucket_validation_reason": (
             "; ".join(bucket_failures) if bucket_failures else "passed"
@@ -1616,8 +1740,6 @@ def write_plots(
     scores: list[dict[str, Any]],
     axis_limits: dict[str, Any] | None = None,
 ) -> None:
-    for stale_plot in out_dir.glob("pareto_*.svg"):
-        stale_plot.unlink()
     plot_specs = [
         (
             "pareto_verifier_vs_prover.svg",
@@ -2018,16 +2140,50 @@ def axis_tick_values(min_value: float, max_value: float, key: str) -> list[float
 
 
 def regular_ticks(min_value: float, max_value: float, step: float) -> list[float]:
-    start = math.ceil(min_value / step) * step
-    end = math.floor(max_value / step) * step
+    if not math.isfinite(min_value) or not math.isfinite(max_value):
+        raise ValueError("axis bounds must be finite")
+    if min_value > max_value:
+        raise ValueError("axis minimum exceeds maximum")
+    if not math.isfinite(step) or step <= 0:
+        raise ValueError("axis tick step must be finite and positive")
+
+    span = max_value - min_value
+    if span == 0:
+        return [min_value]
+    minimum_bounded_step = span / (MAX_AXIS_TICKS - 1)
+    effective_step = max(step, nice_tick_step(minimum_bounded_step))
+    start = math.ceil(min_value / effective_step) * effective_step
+    end = math.floor(max_value / effective_step) * effective_step
+    raw_count = max(0, math.floor((end - start) / effective_step + 1e-9) + 1)
+    count = min(MAX_AXIS_TICKS, raw_count)
+    tolerance = max(
+        abs(effective_step) * 1e-9,
+        2 * math.ulp(max(abs(min_value), abs(max_value), 1.0)),
+    )
     values = []
-    value = start
-    while value <= end + 1e-9:
+    for index in range(count):
+        value = start + index * effective_step
+        if value < min_value - tolerance or value > max_value + tolerance:
+            continue
+        if values and value == values[-1]:
+            continue
         values.append(value)
-        value += step
     if values:
         return values
     return [min_value, max_value]
+
+
+def nice_tick_step(minimum_step: float) -> float:
+    """Round a required tick interval up to a readable decimal step."""
+    if minimum_step <= 0:
+        return 0.0
+    exponent = math.floor(math.log10(minimum_step))
+    magnitude = 10.0**exponent
+    fraction = minimum_step / magnitude
+    for multiplier in (1.0, 2.0, 2.5, 5.0, 10.0):
+        if fraction <= multiplier:
+            return multiplier * magnitude
+    return 10.0 * magnitude
 
 
 def format_axis_tick(value: float, key: str) -> str:

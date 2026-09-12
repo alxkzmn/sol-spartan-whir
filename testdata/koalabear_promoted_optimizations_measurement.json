@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "target": {
+    "field": "KoalaBear",
+    "extension_degree": 5,
+    "extension_polynomial": "X^5 + X^2 - 1",
+    "schedule": "k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+    "entrypoint": "verify(bytes32,bytes)",
+    "fixture": "testdata/quintic_whir_k22_jb100_ext5_lir4_ff4_rsv3_pow28_success.blob",
+    "fixture_sha256": "60804321d0481caf7204204689df667928b2d106db0b0434baf72d88e2a87595"
+  },
+  "selection": {
+    "retention_rule": "strictly_more_than_1_percent",
+    "active_components": [
+      "fixed_base_four_bit_exponent_tables",
+      "strict_merkle_parent_emission",
+      "merkle_hashing_split_by_node_parity",
+      "cached_cubic_select_evaluation",
+      "factored_equality_accumulation",
+      "radix_80_base_rows",
+      "packed_mulmod_extension_rows",
+      "specialized_final_multilinear_evaluation",
+      "radix_64_final_polynomial_evaluation"
+    ],
+    "qualifying_packed_rows_experiment": {
+      "round_start_transaction_gas": 4314727,
+      "result_transaction_gas": 3980692,
+      "reduction_gas": 334035,
+      "reduction_percent": 7.74174
+    },
+    "qualifying_radix_64_horner_experiment": {
+      "round_start_transaction_gas": 3813088,
+      "result_transaction_gas": 3641381,
+      "reduction_gas": 171707,
+      "reduction_percent": 4.503096,
+      "calldata_sha256": "73ced3d949b11d13f8bd81372abfc01deb4949d99456f50b99cba14770aaf8fd"
+    },
+    "excluded_historical_candidates": [
+      {
+        "change": "four_coefficient_final_polynomial_horner_historical_composition",
+        "round_start_transaction_gas": 4358127,
+        "result_transaction_gas": 4314727,
+        "reduction_gas": 43400,
+        "reduction_percent": 0.995841,
+        "reason": "below_threshold_in_historical_composition"
+      },
+      {
+        "change": "extension_row_and_claim_horner_fusion",
+        "round_start_transaction_gas": 3980692,
+        "result_transaction_gas": 3952037,
+        "reduction_gas": 28655,
+        "reduction_percent": 0.719849,
+        "reason": "below_threshold"
+      }
+    ],
+    "rejected_during_promotion": [
+      {
+        "change": "remove_unused_q3_parameter",
+        "baseline_foundry_gas": 3691176,
+        "result_foundry_gas": 3693190,
+        "gas_regression": 2014,
+        "reason": "via_ir_layout_regression"
+      }
+    ]
+  },
+  "gas": {
+    "end_of_babybear_loop": {
+      "foundry": 5089788,
+      "transaction": 5208935,
+      "execution": 4331599,
+      "phase_sum": 4331108
+    },
+    "active": {
+      "foundry": 3522637,
+      "transaction": 3641381,
+      "execution": 2764045,
+      "phase_sum": 2850827
+    },
+    "reduction_from_end_of_babybear_loop": {
+      "foundry_gas": 1567151,
+      "foundry_percent": 30.790104,
+      "transaction_gas": 1567554,
+      "transaction_percent": 30.09356,
+      "execution_gas": 1567554,
+      "execution_percent": 36.188807,
+      "phase_gas": 1480281,
+      "phase_percent": 34.177882
+    }
+  },
+  "transaction": {
+    "snapshot": "testdata/koalabear_cross_field_final_tx_snapshot",
+    "chain_id": 31337,
+    "verify_transaction_hash": "0xdfd3cd9f3e6fe8b37fbad956ca3905aa93102ed55e865a41bcb8c72a79645bf8",
+    "transaction_gas": 3641381,
+    "intrinsic_gas": 21000,
+    "calldata_gas": 856336,
+    "execution_gas": 2764045,
+    "calldata_bytes": 54436,
+    "zero_bytes": 1220,
+    "nonzero_bytes": 53216,
+    "calldata_sha256": "73ced3d949b11d13f8bd81372abfc01deb4949d99456f50b99cba14770aaf8fd",
+    "contract_annotation": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28"
+  },
+  "bytecode": {
+    "targeted_compiler_build": {
+      "snapshot": "testdata/koalabear_cross_field_final_compiler_snapshot",
+      "runtime_bytes": 35559,
+      "runtime_sha256": "4d5d1ac592080191a07273a0f883e8109d717f63fb67303973b99f04b7bccaff",
+      "initcode_bytes": 35585,
+      "initcode_sha256": "a806463ff827ccab7cac42e8f50379744c08820b233deea72455f74be16672c4"
+    },
+    "transaction_deployment": {
+      "creation_transaction_hash": "0x9ef5f26ab3f330b1cbb1bd2dedcb9a9c8857f2f2fe7862e2b232dbfcc18444fc",
+      "runtime_bytes": 34959,
+      "runtime_sha256": "56b4c7fb80c1e791ffd2005509305b65ec5dba3dde1c533b56d36fde3a9b9c02",
+      "initcode_bytes": 34985,
+      "initcode_sha256": "1a0af191187c5c6ee05105d99a1054ccc08cffaa6e340f33b336252cff70b1b9"
+    },
+    "runtime_target_bytes": 65536,
+    "initcode_target_bytes": 131072
+  },
+  "compiler": {
+    "version": "0.8.28+commit.7893614a",
+    "via_ir": true,
+    "optimizer_enabled": true,
+    "optimizer_runs": 833,
+    "evm_version": "prague"
+  },
+  "phase_profile": {
+    "setup": 16145,
+    "initial_sumcheck": 26611,
+    "round_0_parse": 2790,
+    "round_0_stir": 481908,
+    "round_0_sumcheck": 26434,
+    "round_1_parse": 2784,
+    "round_1_stir": 520359,
+    "round_1_sumcheck": 26286,
+    "round_2_parse": 2793,
+    "round_2_stir": 324044,
+    "round_2_sumcheck": 26360,
+    "observe_final_poly": 56703,
+    "final_stir": 347337,
+    "final_sumcheck": 35786,
+    "constraint_evaluation": 907277,
+    "final_value_check": 47210,
+    "phase_sum": 2850827,
+    "harness_total": 2852519,
+    "unattributed_overhead": 1692
+  },
+  "flamegraph": {
+    "all_gas": 3522637,
+    "verifier_frame_gas": 2764448,
+    "largest_named_frames": {
+      "WhirBlobVerifierNative5K22Jb100Ext5Pow28Rsv3Test::_loadSuccessFixture": 471266
+    }
+  },
+  "source_sha256": {
+    "src/field/KoalaBear.sol": "600c6bf96cd7c4ef730130df387f12c5b534811f2da4f34c286f7690d180c9e1",
+    "src/field/KoalaBearExt5.sol": "6e9bc93c17793f7328ad3ecef7fe451ab4e7a0e6f04f909d80bb661a4a9a14b5",
+    "src/field/KoalaBearPackedField.sol": "25931892c503beab0ffc5e5c4fb0977051b644b7c96661a4e27db70fa3661e5c",
+    "src/generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "00ee6dafee0e372e9accbc053b9ba00f1d302128436b4859589620f6be5541fa",
+    "src/merkle/MerkleVerifier.sol": "8b133e4998d7109406c7a4ec8bff10e896862fa8ecd0e2c0ec3835ef3c58e9f3",
+    "src/transcript/KeccakChallenger.sol": "77ce9d1e72359d169910625bfa97de8d01e7d71e96fa5b220337c57ba81220ac",
+    "src/whir/WhirStructs.sol": "3711913174dac3d5333b0d0ddd449842ee3296d901c25b06b97b1718db8cea3d",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "4f960ae2dadcd14f7afcaeff96d45f7d02bb616287eee07ac73a9ba3098c1a01",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol": "85e6063e8aea6c6c98b815a069a24dd189df3a302018a19926a300b4931394a6",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol": "52f00bf0e49f7e04976711339cf775d1d68f8ff68f8815267440554ccac4d052",
+    "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierUtils5.sol": "7b8e0137a6c564aec645096a3eeb5c8f9b3042c2daf40447861dd6e14020f7b7"
+  },
+  "validation": {
+    "forge_build": "passed",
+    "full_suite": {
+      "command": "forge test --offline --isolate --threads 1 --fuzz-runs 256",
+      "suites": 45,
+      "tests": 423,
+      "failures": 0,
+      "skipped": 0,
+      "log": "testdata/cross_verifier_optimized_full_suite.log"
+    },
+    "native_verifier_tests": 19,
+    "optimized_arithmetic_tests": 10,
+    "transcript_parity_tests": 3,
+    "fixed_base_table_entries_checked_per_field": 336,
+    "packed_row_bounds": "passed",
+    "independent_arithmetic_oracles": "passed"
+  },
+  "calibration": {
+    "source_fingerprint": "825fad090dceb013e25d739a0970b0c36fdfe85c9144c7a013aecf6cdb614096",
+    "ordinal_gate_accepted": true,
+    "bucket_diagnostics_accepted": false,
+    "bucket_diagnostic_failures": [
+      "octic_merkle_ratio",
+      "octic_transcript_ratio",
+      "quartic_transcript_ratio"
+    ],
+    "raw_verifier_score": 6766857,
+    "measured_transaction_gas": 3641381,
+    "scale": 0.5381199868713052,
+    "inputs_manifest": "testdata/quintic_calibration_cross_verifier_final/inputs.json"
+  },
+  "evidence_sha256": {
+    "testdata/koalabear_cross_field_final_compiler_snapshot/artifact.json": "31cc729592eb59008776ee3ffb9526b70bcfa529d8551e0bdb551199997a4bff",
+    "testdata/koalabear_cross_field_final_compiler_snapshot/optimized.yul": "16992d80bb773ea8363564cb4978507ebd330ef1240223543a02745f4502d065",
+    "testdata/koalabear_cross_field_final_compiler_snapshot/summary.json": "b7d34554822ab88562bdeed53d1dd15de2e9155f851053bdff3fc90ac7755a88",
+    "testdata/koalabear_cross_field_final_tx_snapshot/run.json": "6ae18eb5ae472880d2ddbbef2c4d82fc48ce989624280b03e7b8900999312d06",
+    "testdata/koalabear_cross_field_final_tx_snapshot/metrics.json": "162327bb0df75aabab684099c11e01c7683d4767386bb35035cb8e98c3494687",
+    "testdata/cross_verifier_optimized_full_suite.log": "a53b54a8468c80c2222ce6397e7a6b78dcb81340f44326310d6ec935ea653a4f",
+    "testdata/koalabear_cross_field_final_phase_profile.log": "95d87bc1f929a26ee19f03a373b2fbf67dac279593ae43c5a8e12a577c372df9",
+    "testdata/koalabear_cross_field_final_native_flamegraph.svg": "b506d30eb6f0c16d8a635db72252544fedcb3ccab8a8138d04b0e3f68011a52e",
+    "testdata/koalabear_cross_field_final_native_flamegraph_parsed.log": "d8a49d1ca6836ab2a45103b1c1f173c9ecfd6be4d300094328f0d1061d4999aa",
+    "testdata/quintic_calibration.json": "09d5055c0bf574999f2d21282bb74096bc7cb6c4966163317ac352158e9d83ff",
+    "testdata/quintic_scores/schedule_scores.json": "7b785d7e3d91f3c017da140cddc457a82d9e6018c701fff7cbf2c25b79bf6640",
+    "testdata/quintic_calibration_cross_verifier_final/inputs.json": "f4b7adb0aecf2fc95ba85ddd945109577a1ba8c5436a056fb78cfbd3d114582d"
+  }
+}

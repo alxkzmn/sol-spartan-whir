@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "target": {
+    "field": "KoalaBear",
+    "extension_degree": 8,
+    "schedule": "k22_jb100_lir6_ff4_rsv1",
+    "entrypoint": "verify(bytes32,bytes)",
+    "fixture": "testdata/octic_whir_k22_jb100_lir6_ff4_rsv1_success.blob",
+    "fixture_sha256": "7d92db416e64e1d5f38444fff2e062856b4089ea8abd127abe090fd8ebc68d84"
+  },
+  "selection": {
+    "retention_rule": "strictly_more_than_1_percent",
+    "rounds": [
+      {
+        "change": "factored_dim4_equality_weights",
+        "round_start_foundry_gas": 5915732,
+        "result_foundry_gas": 5782064,
+        "reduction_gas": 133668,
+        "reduction_percent": 2.259534
+      },
+      {
+        "change": "fixed_base_four_bit_exponent_tables",
+        "round_start_foundry_gas": 5782064,
+        "result_foundry_gas": 5684533,
+        "reduction_gas": 97531,
+        "reduction_percent": 1.686785
+      },
+      {
+        "change": "radix_80_base_rows",
+        "round_start_foundry_gas": 5684533,
+        "result_foundry_gas": 5618882,
+        "reduction_gas": 65651,
+        "reduction_percent": 1.154906
+      },
+      {
+        "change": "packed_ext8_transcript_validation_and_byte_conversion",
+        "round_start_foundry_gas": 5618882,
+        "result_foundry_gas": 5514794,
+        "reduction_gas": 104088,
+        "reduction_percent": 1.852468
+      },
+      {
+        "change": "packed_ext8_row_validation",
+        "round_start_foundry_gas": 5514794,
+        "result_foundry_gas": 5412650,
+        "reduction_gas": 102144,
+        "reduction_percent": 1.852182
+      },
+      {
+        "change": "four_row_final_multilinear_evaluation",
+        "round_start_foundry_gas": 5412650,
+        "result_foundry_gas": 5356053,
+        "reduction_gas": 56597,
+        "reduction_percent": 1.045643
+      }
+    ],
+    "rejected": [
+      {
+        "change": "shared_merkle_bound_hoist",
+        "reduction_gas": 28062,
+        "reduction_percent": 0.499,
+        "reason": "below_threshold"
+      },
+      {
+        "change": "shared_statement_ext8_packed_validator",
+        "reduction_gas": 8855,
+        "reduction_percent": 0.164,
+        "reason": "below_threshold"
+      },
+      {
+        "change": "final_multilinear_evaluation_with_hashing_row_helper",
+        "reduction_gas": 50305,
+        "reduction_percent": 0.929,
+        "reason": "below_threshold"
+      }
+    ]
+  },
+  "gas": {
+    "baseline_foundry": 5915732,
+    "active_foundry": 5356053,
+    "foundry_reduction": 559679,
+    "foundry_reduction_percent": 9.460858,
+    "baseline_transaction": 6197424,
+    "active_transaction": 5637745,
+    "transaction_reduction": 559679,
+    "transaction_reduction_percent": 9.030833,
+    "baseline_execution": 5422624,
+    "active_execution": 4862945,
+    "execution_reduction": 559679,
+    "execution_reduction_percent": 10.321184
+  },
+  "transaction": {
+    "snapshot": "testdata/octic_optimized_final_tx_snapshot",
+    "chain_id": 31337,
+    "verify_transaction_hash": "0x242e9e15f0d4dbc2de97db1804fb6c2f1b3c76382d424b7596e1d2dc5438cefe",
+    "creation_transaction_hash": "0x5fc7f95ba238236c7e6ae196ae902c324e30b984abf0cf19da29fade0665f6ba",
+    "transaction_gas": 5637745,
+    "execution_gas": 4862945,
+    "intrinsic_gas": 21000,
+    "calldata_gas": 753800,
+    "calldata_bytes": 47780,
+    "zero_bytes": 890,
+    "nonzero_bytes": 46890,
+    "calldata_sha256": "dac13185b622810edff632c9bf43aeadf3e2386db50e40574c654acbd005617e"
+  },
+  "bytecode": {
+    "snapshot": "testdata/octic_optimized_final_compiler_snapshot",
+    "runtime_bytes": 36710,
+    "runtime_sha256": "1ae6cca3b124c983b883a267e3509c1727a7094cbe2215c4b878b2e2cf233218",
+    "initcode_bytes": 36736,
+    "initcode_sha256": "87c72227fa8061e243aac2df2ed724ff92fabea4207f164a49fa7049053278ed",
+    "runtime_target_bytes": 65536,
+    "initcode_target_bytes": 131072
+  },
+  "arithmetic_bounds": {
+    "radix_80_base_row": "16 * (p - 1)^2 < 2^66",
+    "packed_validation_lane": "0x7fffffff + 0x00ffffff = 0x80fffffe < 2^32",
+    "final_mle_tower_dot": "352 * (p - 1)^2 < 2^71"
+  },
+  "phase_profile": {
+    "profile": "testdata/octic_optimized_final_phase_profile.log",
+    "subtotal": 4855835,
+    "harness_total": 4857933,
+    "unattributed_harness_overhead": 2098,
+    "final_value_blob_eval": 162990
+  },
+  "flamegraph": {
+    "svg": "testdata/octic_optimized_final_native_flamegraph.svg",
+    "parsed": "testdata/octic_optimized_final_native_flamegraph_parsed.log",
+    "all_gas": 5356053,
+    "verifier_frame_gas": 4862945
+  },
+  "compiler": {
+    "version": "0.8.28+commit.7893614a",
+    "via_ir": true,
+    "optimizer_enabled": true,
+    "optimizer_runs": 833,
+    "evm_version": "prague"
+  },
+  "source_sha256": {
+    "src/field/KoalaBear.sol": "600c6bf96cd7c4ef730130df387f12c5b534811f2da4f34c286f7690d180c9e1",
+    "src/field/KoalaBearExt8.sol": "be7b84c498c9be23250eb23e1aeebf539e29395358f42e7e825833733dd27e3a",
+    "src/generated/OcticWhirFixedConfig_k22_jb100_lir6_ff4_rsv1.sol": "3f8c88acbf17cbb158ef2739d53270bebcacd6d404f9f5cb6403ed6200c76232",
+    "src/merkle/MerkleVerifier.sol": "8b133e4998d7109406c7a4ec8bff10e896862fa8ecd0e2c0ec3835ef3c58e9f3",
+    "src/transcript/KeccakChallenger.sol": "77ce9d1e72359d169910625bfa97de8d01e7d71e96fa5b220337c57ba81220ac",
+    "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobCodec8_k22_jb100_lir6_ff4_rsv1.sol": "6c50a251d73e9e11ae26535097ac5d21553d71423746a380a865da99c9969925",
+    "src/whir/k22_jb100_lir6_ff4_rsv1/WhirBlobVerifierNative8_k22_jb100_lir6_ff4_rsv1.sol": "b51cae3a3ba72d29798bb166671e87d5603d327f406ba3bea4919590ae5d8e4d",
+    "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierCore8.sol": "df97177d6d872b230b70b2659cb31d35343ead36138c5ff91349acfc29fd6b3f",
+    "src/whir/k22_jb100_lir6_ff4_rsv1/WhirVerifierUtils8.sol": "974a88cbeab63b2f594cef1e359c683381ab0864f3a3263138dde15bb251a860"
+  },
+  "validation": {
+    "full_suite": {
+      "command": "forge test --offline --isolate --threads 1 --fuzz-runs 256",
+      "suites": 45,
+      "tests": 423,
+      "failures": 0,
+      "skipped": 0,
+      "log": "testdata/cross_verifier_optimized_full_suite.log"
+    },
+    "native_verifier_tests": 18,
+    "tower_arithmetic_tests": 10,
+    "packed_transcript_tests": 3,
+    "transcript_parity_tests": 4,
+    "fixed_base_tables": "passed",
+    "independent_arithmetic_oracles": "passed"
+  },
+  "calibration": {
+    "source_fingerprint": "825fad090dceb013e25d739a0970b0c36fdfe85c9144c7a013aecf6cdb614096",
+    "ordinal_gate_accepted": true,
+    "bucket_diagnostics_accepted": false
+  },
+  "evidence_sha256": {
+    "testdata/octic_optimized_final_compiler_snapshot/artifact.json": "9f7fa9e2bd7bf27c53d7f3f59340b12fc363d05e5d44881020c2965cab99dde3",
+    "testdata/octic_optimized_final_compiler_snapshot/optimized.yul": "b53af61865de1d2e970380bee18f2c70b35cfe262b3ee6f8d52176b5374f686c",
+    "testdata/octic_optimized_final_compiler_snapshot/summary.json": "aea459ad3e15ac5ccdd8259885349723167ed0e267b0bb82715374cfce1ae06d",
+    "testdata/octic_optimized_final_tx_snapshot/run.json": "a871bb2df68e35d794a67ad3e2973db4c75c3547320d3a136ec26a2eb56a8ecd",
+    "testdata/octic_optimized_final_tx_snapshot/metrics.json": "ee374ba8c6df497a68228fb1dacca0f434731a9639c6118dad1f39dd8546d052",
+    "testdata/octic_optimized_final_phase_profile.log": "424069a7198d1b1a621df5966c5cf6b5eaf1349988bafafd51a13b1c7c0a0d9e",
+    "testdata/octic_optimized_final_native_flamegraph.svg": "1cd34e057acace675e4ce65edc648a9b9331c99597f8478c033f38f37af5ed24",
+    "testdata/octic_optimized_final_native_flamegraph_parsed.log": "13085dce69a59c65e0bde48b307d84bb0f8619d767539361385c923d64d829d3",
+    "testdata/cross_verifier_optimized_full_suite.log": "a53b54a8468c80c2222ce6397e7a6b78dcb81340f44326310d6ec935ea653a4f",
+    "testdata/quintic_calibration.json": "09d5055c0bf574999f2d21282bb74096bc7cb6c4966163317ac352158e9d83ff",
+    "testdata/quintic_scores/schedule_scores.json": "7b785d7e3d91f3c017da140cddc457a82d9e6018c701fff7cbf2c25b79bf6640",
+    "testdata/quintic_calibration_cross_verifier_final/inputs.json": "f4b7adb0aecf2fc95ba85ddd945109577a1ba8c5436a056fb78cfbd3d114582d"
+  }
+}

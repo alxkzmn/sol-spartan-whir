@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-04",
+  "contract": "WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28",
+  "source": "src/whir/k22_jb100_ext5_lir4_ff4_rsv3_pow28/WhirVerifierCore5.sol",
+  "solc": "0.8.28",
+  "via_ir": true,
+  "optimizer_runs": 833,
+  "foundry_version": "1.5.1-stable",
+  "foundry_commit": "b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2",
+  "anvil_chain_id": 31337,
+  "anvil_code_size_limit": 50000,
+  "baseline": {
+    "transaction_gas": 5574139,
+    "execution_gas": 4696803,
+    "calldata_gas": 856336,
+    "calldata_bytes": 54436,
+    "calldata_sha256": "73ced3d949b11d13f8bd81372abfc01deb4949d99456f50b99cba14770aaf8fd",
+    "transaction_hash": "0x54825428fb39f07c5cf274fcfad9ae7fc6df03c8835ad93ade2ad8db3a981e1f",
+    "receipt_status": "0x1",
+    "foundry_test_gas": 5454992,
+    "phase_sum_gas": 4696506,
+    "constraint_evaluation_gas": 1508824,
+    "select_term_flamegraph_gas": 1037244,
+    "runtime_bytes": 31856,
+    "core_sha256": "0f9dadcfc127e31da60ccacdfcae1502a4c8b47a753e69bde6eee959bc62ed3d"
+  },
+  "candidate": {
+    "transaction_gas": 5545363,
+    "execution_gas": 4668027,
+    "calldata_gas": 856336,
+    "calldata_bytes": 54436,
+    "calldata_sha256": "73ced3d949b11d13f8bd81372abfc01deb4949d99456f50b99cba14770aaf8fd",
+    "transaction_hash": "0x85c1bee772de2dcee8c74fae18944faf0457946a8d680b9cef01a720ae2a0e28",
+    "receipt_status": "0x1",
+    "foundry_test_gas": 5426216,
+    "phase_sum_gas": 4667730,
+    "constraint_evaluation_gas": 1480048,
+    "select_term_flamegraph_gas": 1008468,
+    "runtime_bytes": 31963,
+    "core_sha256": "221d61a7a31eb32af199eaeabb7187e49309d229d91b1ca9733e28855ea79d78"
+  },
+  "gas_saved": 28776,
+  "runtime_bytes_added": 107,
+  "validation": {
+    "full_suite_passed": 308,
+    "full_suite_failed": 0,
+    "focused_fuzz_runs_per_test": 512,
+    "focused_fuzz_tests": 2,
+    "focused_edge_case_tests": 3
+  },
+  "calibration_status": "stale: quintic verifier source changed; schedule calibration and scores were not regenerated"
+}

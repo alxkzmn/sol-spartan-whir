@@ -22,7 +22,7 @@ Calibration:
   Point B: quartic Constant(4)/lir=6/rs_v=1 native blob verifier
     measured=899,906  model=899,906  error=+0.0%
   Point C: octic k22/jb100/lir=6/ff=4/rs_v=1 on the current native verifier family
-    measured=7,383,992  model=7,383,992  error=+0.0%
+    measured=5,356,053  model=5,356,053  error=+0.0%
   Historical octic generic-native points:
     - k22/jb100/lir=6/ff=4/rs_v=1: measured=8,249,508
     - k22/jb100/lir=6/CFSR(4,3)/rs_v=1: measured=8,797,836
@@ -78,7 +78,10 @@ from typing import List, Tuple
 
 # === WHIR PARAMETER DERIVATION ===
 
-FIELD_BITS_BY_EXTENSION = {4: 124, 8: 248}
+SUPPORTED_EXTENSION_DEGREES = (4, 5, 8)
+FIELD_BITS_BY_EXTENSION = {degree: 31 * degree for degree in SUPPORTED_EXTENSION_DEGREES}
+assert FIELD_BITS_BY_EXTENSION[5] == 155
+EXTENSION_BYTES_BY_EXTENSION = {degree: 4 * degree for degree in SUPPORTED_EXTENSION_DEGREES}
 DEFAULT_EXTENSION_DEGREE = 4
 DEFAULT_FIELD_SIZE_BITS = FIELD_BITS_BY_EXTENSION[DEFAULT_EXTENSION_DEGREE]
 DEFAULT_SOUNDNESS = "CapacityBound"
@@ -579,9 +582,12 @@ OCTIC_GENERIC_NATIVE_REBATE = 816_068
 OCTIC_FALLBACK_STIR_PENALTY_PER_QUERY = 34_738
 OCTIC_CURRENT_REFERENCE_SPECIALIZATION_REBATE = 384_383
 # Fixed native-path rebate needed after anchoring the shared quartic overhead to
-# the latest lir11 native verifier and after the smaller ext8 transcript cleanup.
-OCTIC_NATIVE_FIXED_REBATE = 23_791
-# Latest ext8 ff=4 row-evaluation rewrite:
+# the current octic verifier. The retained verifier changes include factored
+# dim4 equality weights, fixed-base powers, radix-80 base rows, packed ext8
+# validation and transcript encoding, and the specialized 64-value final MLE.
+OCTIC_NATIVE_FIXED_REBATE = 2_051_730
+# Ext8 ff=4 row-evaluation rebate, measured before the fixed native-path
+# optimizations represented by OCTIC_NATIVE_FIXED_REBATE:
 #   octic native blob: 7,861,397 -> 7,383,992 (-477,405) on 62 ff=4 queries.
 # Treat this as a per-query rebate so higher-PoW ff=4 schedules inherit the same
 # row kernel shape instead of only the exact checked-in reference schedule.
@@ -790,14 +796,23 @@ def final_value_eval_gas(fsr: int, extension_degree: int) -> int:
         return GENERIC_EVAL_WRAPPER + n_values * copy_per_value + n_folds * fold_per_op
 
 
-def octic_blob_header_gas(round_count: int, decommitment_counts: List[float]) -> int:
+def native_blob_header_gas(
+    extension_degree: int, round_count: int, decommitment_counts: List[float]
+) -> int:
     header = bytearray()
     header.extend(b"WHRB")
     header.extend((1).to_bytes(2, "big"))
-    header.extend(bytes([20, 8, round_count, 0x03]))
+    header.extend(bytes([20, extension_degree, round_count, 0x03]))
     for count in decommitment_counts:
         header.extend(int(round(count)).to_bytes(2, "big"))
     return sum(4 if b == 0 else 16 for b in header)
+
+
+def extension_blob_value_cd(extension_degree: int) -> float:
+    if extension_degree == 8:
+        return OCTIC_BLOB_EXT8_CD
+    # Measurement-only estimate for native blob encoding: raw 4-byte lanes, no ABI padding.
+    return 16.0 * EXTENSION_BYTES_BY_EXTENSION[extension_degree]
 
 
 def estimate_execution_gas(
@@ -909,51 +924,51 @@ def estimate_calldata_gas(
     cfg: WhirConfig, extension_degree: int = DEFAULT_EXTENSION_DEGREE
 ) -> int:
     """Estimate calldata cost in gas (16 gas/nonzero byte, 4 gas/zero byte)."""
-    if extension_degree == 8:
+    if extension_degree in (5, 8):
         decommitment_counts = [
             expected_merkle_decommitments(r.num_queries, r.depth)
             for r in cfg.round_parameters
         ]
 
-        ext8_count = cfg.num_vars + 1  # statement point + statement eval
-        ext8_count += cfg.commitment_ood_samples
-        ext8_count += cfg.ff_0 * 2  # initial sumcheck [c0, c2] per round
+        ext_count = cfg.num_vars + 1  # statement point + statement eval
+        ext_count += cfg.commitment_ood_samples
+        ext_count += cfg.ff_0 * 2  # initial sumcheck [c0, c2] per round
 
         base4_count = 0.0
         digest20_count = 1.0  # initial commitment
 
         for i, r in enumerate(cfg.round_parameters[:-1]):
             digest20_count += 1 + decommitment_counts[i]
-            ext8_count += r.ood_samples
+            ext_count += r.ood_samples
 
             next_sumcheck_rounds = (
                 cfg.round_parameters[i + 1].folding_factor
                 if i + 1 < len(cfg.round_parameters) - 1
                 else cfg.round_parameters[-1].folding_factor
             )
-            ext8_count += next_sumcheck_rounds * 2
+            ext_count += next_sumcheck_rounds * 2
 
             base4_count += 1  # round pow witness
             row_values = r.num_queries * (2**r.folding_factor)
-            if i == 0:
+            if r.is_base:
                 base4_count += row_values
             else:
-                ext8_count += row_values
+                ext_count += row_values
 
         final_round = cfg.round_parameters[-1]
         digest20_count += decommitment_counts[-1]
         base4_count += 1  # final pow witness
-        ext8_count += 2**cfg.final_sumcheck_rounds  # final polynomial
-        ext8_count += final_round.num_queries * (2**final_round.folding_factor)
-        ext8_count += cfg.final_sumcheck_rounds * 2  # final sumcheck [c0, c2]
+        ext_count += 2**cfg.final_sumcheck_rounds  # final polynomial
+        ext_count += final_round.num_queries * (2**final_round.folding_factor)
+        ext_count += cfg.final_sumcheck_rounds * 2  # final sumcheck [c0, c2]
 
-        header_gas = octic_blob_header_gas(
-            len(cfg.round_parameters) - 1, decommitment_counts
+        header_gas = native_blob_header_gas(
+            extension_degree, len(cfg.round_parameters) - 1, decommitment_counts
         )
 
         total = (
             header_gas
-            + ext8_count * OCTIC_BLOB_EXT8_CD
+            + ext_count * extension_blob_value_cd(extension_degree)
             + base4_count * OCTIC_BLOB_BASE4_CD
             + digest20_count * OCTIC_BLOB_DIGEST20_CD
         )
@@ -1141,7 +1156,10 @@ def print_sweep(
         "benchmarks retained only for fallback-shape estimates. "
         "Treat the current octic reference row as exact for the current deployable "
         "verifier; treat other octic rows as generic-native estimates that include "
-        "a penalty when rounds miss the optimized rowLen=16, ff=4 STIR kernels."
+        "a penalty when rounds miss the optimized rowLen=16, ff=4 STIR kernels. "
+        "Ext5 rows use mechanical field-bit and native-blob byte sizing; "
+        "their execution-gas totals are feasibility estimates until scorer "
+        "microbenchmarks are supplied."
     )
 
     # --- Sweep parameter ranges ---
