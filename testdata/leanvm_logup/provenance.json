@@ -1,0 +1,22 @@
+{
+  "leanvm": {
+    "branch": "codex/leanvm-spartan-whir",
+    "head": "98cb2ad4bdc52618674c0f8f91f715a75349ff6f",
+    "upstream_base": "98cb2ad4bdc52618674c0f8f91f715a75349ff6f",
+    "working_tree_changes": true
+  },
+  "sha256": {
+    "leanVM/crates/spartan_whir_guest/tests/terminal_logup.rs": "ae4ba005b3bd2a64c85df1c1dc1fb8b7befa80b596de974efbd2780532d59ac6",
+    "leanVM/crates/sub_protocols/src/logup.rs": "1242e3f58c8ca77893167112848c01c120d09f51f19b8c941d613135b68bf41b",
+    "leanVM/crates/sub_protocols/src/quotient_gkr/mod.rs": "d9ad336903601decb1ad6574f15f957d4c6ccfd236361a8894e288ca2fc49450",
+    "leanVM/crates/lean_prover/python-verifier/verifier.py": "dfc4f64a97c8c007f4aee3077de5b064d609bf20a249897efe444426c5b5b4c0",
+    "research/2026-09-09-withdrawal-chain/terminal/verify_root_fixture.py": "1fd372a2ce45493efa0e36a8fa8b300569ccafaddc72b781f02affcd12334f6d",
+    "sol-spartan-whir/src/leanvm/LeanVmLogUp.sol": "cd1d72781c44296bafeb70c1f5c911df694e50f83ea7aabd008b5f75d0c52ac7",
+    "sol-spartan-whir/src/leanvm/LeanVmTranscript.sol": "f88b006bd88150afa18b0ed3b15802bfc9c600a58491dc4cdfe4626463838162",
+    "sol-spartan-whir/src/leanvm/LeanVmPolynomial.sol": "4a97cf058bf4d8934dee811fb474022dc4c4728bd23cb6afec512cf067614b3d",
+    "sol-spartan-whir/src/field/KoalaBearExt5.sol": "6e9bc93c17793f7328ad3ecef7fe451ab4e7a0e6f04f909d80bb661a4a9a14b5",
+    "sol-spartan-whir/test/LeanVmLogUp.t.sol": "f3de680ee828eee09d25d305441f028bacecd14823dc124d2cce0296983d8384",
+    "sol-spartan-whir/script/check_leanvm_logup_vectors.py": "77b423056e9b4b9432cf71d95bf8ef8b38cc9b9241cbb03d2765d945c8a10ac8",
+    "sol-spartan-whir/testdata/leanvm_logup/vectors.json": "e46e43402e6e2f81a77e3cd851e7c629e97e54b93a33d60696e192a21bcda451"
+  }
+}
