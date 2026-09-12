@@ -37,49 +37,40 @@ library WhirVerifierUtils8 {
         pure
         returns (uint256 weightsPtr)
     {
+        uint256 a11 = KoalaBearExt8.mul(p0, p1);
+        uint256 a10 = KoalaBearExt8.sub(p0, a11);
+        uint256 a01 = KoalaBearExt8.sub(p1, a11);
+        uint256 a00 = KoalaBearExt8.sub(KoalaBearExt8.sub(KoalaBearExt8.ONE, p0), a01);
+        uint256 b001 = KoalaBearExt8.mul(a00, p2);
+        uint256 b000 = KoalaBearExt8.sub(a00, b001);
+        uint256 b011 = KoalaBearExt8.mul(a01, p2);
+        uint256 b010 = KoalaBearExt8.sub(a01, b011);
+        uint256 b101 = KoalaBearExt8.mul(a10, p2);
+        uint256 b100 = KoalaBearExt8.sub(a10, b101);
+        uint256 b111 = KoalaBearExt8.mul(a11, p2);
+        uint256 b110 = KoalaBearExt8.sub(a11, b111);
+
         assembly ("memory-safe") {
             weightsPtr := mload(0x40)
             mstore(0x40, add(weightsPtr, 0x200))
         }
 
-        uint256 q0 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p0);
-        uint256 q1 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p1);
-        uint256 q2 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p2);
-        uint256 q3 = KoalaBearExt8.sub(KoalaBearExt8.ONE, p3);
-
-        uint256 q0q1 = KoalaBearExt8.mul(q0, q1);
-        uint256 q0p1 = KoalaBearExt8.mul(q0, p1);
-        uint256 p0q1 = KoalaBearExt8.mul(p0, q1);
-        uint256 p0p1 = KoalaBearExt8.mul(p0, p1);
-
-        uint256 c000 = KoalaBearExt8.mul(q0q1, q2);
-        uint256 c001 = KoalaBearExt8.mul(q0q1, p2);
-        uint256 c010 = KoalaBearExt8.mul(q0p1, q2);
-        uint256 c011 = KoalaBearExt8.mul(q0p1, p2);
-        uint256 c100 = KoalaBearExt8.mul(p0q1, q2);
-        uint256 c101 = KoalaBearExt8.mul(p0q1, p2);
-        uint256 c110 = KoalaBearExt8.mul(p0p1, q2);
-        uint256 c111 = KoalaBearExt8.mul(p0p1, p2);
-
-        _storeDim4EqWeightPair(weightsPtr, 0x000, c000, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x040, c001, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x080, c010, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x0c0, c011, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x100, c100, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x140, c101, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x180, c110, q3, p3);
-        _storeDim4EqWeightPair(weightsPtr, 0x1c0, c111, q3, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x000, b000, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x040, b001, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x080, b010, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x0c0, b011, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x100, b100, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x140, b101, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x180, b110, p3);
+        _storeDim4EqWeightPair(weightsPtr, 0x1c0, b111, p3);
     }
 
-    function _storeDim4EqWeightPair(
-        uint256 weightsPtr,
-        uint256 offset,
-        uint256 prefix,
-        uint256 q3,
-        uint256 p3
-    ) private pure {
-        uint256 w0 = KoalaBearExt8.mul(prefix, q3);
+    function _storeDim4EqWeightPair(uint256 weightsPtr, uint256 offset, uint256 prefix, uint256 p3)
+        private
+        pure
+    {
         uint256 w1 = KoalaBearExt8.mul(prefix, p3);
+        uint256 w0 = KoalaBearExt8.sub(prefix, w1);
         assembly ("memory-safe") {
             mstore(add(weightsPtr, offset), w0)
             mstore(add(weightsPtr, add(offset, 0x20)), w1)
@@ -349,6 +340,79 @@ library WhirVerifierUtils8 {
                 or(
                     or(shl(96, mod(c4, M)), shl(64, mod(c5, M))),
                     or(shl(32, mod(c6, M)), mod(c7, M))
+                )
+            )
+        }
+    }
+
+    /// @dev A channel accumulates at most `16 * (p - 1)^2 < 2^66`, so the
+    /// 80-bit spacing prevents carries between adjacent channels.
+    function _prepareBaseRadix80(uint256 packedPtr) internal pure returns (uint256 ptr) {
+        assembly ("memory-safe") {
+            ptr := mload(0x40)
+            mstore(0x40, add(ptr, 0x600))
+            for { let i := 0 } lt(i, 16) { i := add(i, 1) } {
+                let w := mload(add(packedPtr, shl(5, i)))
+                let dst := add(ptr, mul(i, 96))
+                mstore(
+                    dst,
+                    or(
+                        or(shr(224, w), shl(80, and(shr(192, w), 0xffffffff))),
+                        shl(160, and(shr(160, w), 0xffffffff))
+                    )
+                )
+                mstore(
+                    add(dst, 32),
+                    or(
+                        or(and(shr(128, w), 0xffffffff), shl(80, and(shr(96, w), 0xffffffff))),
+                        shl(160, and(shr(64, w), 0xffffffff))
+                    )
+                )
+                mstore(add(dst, 64), or(and(shr(32, w), 0xffffffff), shl(80, and(w, 0xffffffff))))
+            }
+        }
+    }
+
+    function _dotBaseRadix80(uint256 weightsPtr, uint256 w0, uint256 w1)
+        private
+        pure
+        returns (uint256 out)
+    {
+        assembly ("memory-safe") {
+            let a := 0
+            let b := 0
+            let c := 0
+            function accumulate(s, w, ca, cb, cc) -> aa, bb, dd {
+                aa := add(ca, mul(s, mload(w)))
+                bb := add(cb, mul(s, mload(add(w, 32))))
+                dd := add(cc, mul(s, mload(add(w, 64))))
+            }
+            a, b, c := accumulate(and(shr(224, w0), 0xffffffff), add(weightsPtr, 0), a, b, c)
+            a, b, c := accumulate(and(shr(192, w0), 0xffffffff), add(weightsPtr, 96), a, b, c)
+            a, b, c := accumulate(and(shr(160, w0), 0xffffffff), add(weightsPtr, 192), a, b, c)
+            a, b, c := accumulate(and(shr(128, w0), 0xffffffff), add(weightsPtr, 288), a, b, c)
+            a, b, c := accumulate(and(shr(96, w0), 0xffffffff), add(weightsPtr, 384), a, b, c)
+            a, b, c := accumulate(and(shr(64, w0), 0xffffffff), add(weightsPtr, 480), a, b, c)
+            a, b, c := accumulate(and(shr(32, w0), 0xffffffff), add(weightsPtr, 576), a, b, c)
+            a, b, c := accumulate(and(w0, 0xffffffff), add(weightsPtr, 672), a, b, c)
+            a, b, c := accumulate(and(shr(224, w1), 0xffffffff), add(weightsPtr, 768), a, b, c)
+            a, b, c := accumulate(and(shr(192, w1), 0xffffffff), add(weightsPtr, 864), a, b, c)
+            a, b, c := accumulate(and(shr(160, w1), 0xffffffff), add(weightsPtr, 960), a, b, c)
+            a, b, c := accumulate(and(shr(128, w1), 0xffffffff), add(weightsPtr, 1056), a, b, c)
+            a, b, c := accumulate(and(shr(96, w1), 0xffffffff), add(weightsPtr, 1152), a, b, c)
+            a, b, c := accumulate(and(shr(64, w1), 0xffffffff), add(weightsPtr, 1248), a, b, c)
+            a, b, c := accumulate(and(shr(32, w1), 0xffffffff), add(weightsPtr, 1344), a, b, c)
+            a, b, c := accumulate(and(w1, 0xffffffff), add(weightsPtr, 1440), a, b, c)
+            let M := 0x7f000001
+            let mask := sub(shl(80, 1), 1)
+            out := or(
+                or(
+                    or(shl(224, mod(and(a, mask), M)), shl(192, mod(and(shr(80, a), mask), M))),
+                    or(shl(160, mod(shr(160, a), M)), shl(128, mod(and(b, mask), M)))
+                ),
+                or(
+                    or(shl(96, mod(and(shr(80, b), mask), M)), shl(64, mod(shr(160, b), M))),
+                    or(shl(32, mod(and(c, mask), M)), mod(shr(80, c), M))
                 )
             )
         }
@@ -985,16 +1049,12 @@ library WhirVerifierUtils8 {
             p5 := mload(add(pointBase, 0xa0))
         }
 
-        (
-            uint256 r00,
-            uint256 r01,
-            uint256 r02,
-            uint256 r03,
-            uint256 r04,
-            uint256 r05,
-            uint256 r06,
-            uint256 r07
-        ) = _unpackCoeffs(p0);
+        uint256 weightsPtr = _computeDim4EqWeights(p2, p3, p4, p5);
+        uint256 row00 = _evaluateExtensionRowDim4BlobTowerDot(blob, offset, weightsPtr);
+        uint256 row01 = _evaluateExtensionRowDim4BlobTowerDot(blob, offset + 0x200, weightsPtr);
+        uint256 row10 = _evaluateExtensionRowDim4BlobTowerDot(blob, offset + 0x400, weightsPtr);
+        uint256 row11 = _evaluateExtensionRowDim4BlobTowerDot(blob, offset + 0x600, weightsPtr);
+
         (
             uint256 r10,
             uint256 r11,
@@ -1005,127 +1065,20 @@ library WhirVerifierUtils8 {
             uint256 r16,
             uint256 r17
         ) = _unpackCoeffs(p1);
-        (
-            uint256 r20,
-            uint256 r21,
-            uint256 r22,
-            uint256 r23,
-            uint256 r24,
-            uint256 r25,
-            uint256 r26,
-            uint256 r27
-        ) = _unpackCoeffs(p2);
-        (
-            uint256 r30,
-            uint256 r31,
-            uint256 r32,
-            uint256 r33,
-            uint256 r34,
-            uint256 r35,
-            uint256 r36,
-            uint256 r37
-        ) = _unpackCoeffs(p3);
-        (
-            uint256 r40,
-            uint256 r41,
-            uint256 r42,
-            uint256 r43,
-            uint256 r44,
-            uint256 r45,
-            uint256 r46,
-            uint256 r47
-        ) = _unpackCoeffs(p4);
-        (
-            uint256 r50,
-            uint256 r51,
-            uint256 r52,
-            uint256 r53,
-            uint256 r54,
-            uint256 r55,
-            uint256 r56,
-            uint256 r57
-        ) = _unpackCoeffs(p5);
+        uint256 row0 = _foldOnceWithCoeffs(row00, row01, r10, r11, r12, r13, r14, r15, r16, r17);
+        uint256 row1 = _foldOnceWithCoeffs(row10, row11, r10, r11, r12, r13, r14, r15, r16, r17);
 
-        uint256 evalsBase;
-        uint256 src;
-        assembly ("memory-safe") {
-            evalsBase := mload(0x40)
-            mstore(0x40, add(evalsBase, 0x100))
-            src := add(blob.offset, offset)
-        }
-
-        unchecked {
-            for (uint256 i = 0; i < 8; ++i) {
-                uint256 v0;
-                uint256 v8;
-                uint256 v16;
-                uint256 v24;
-                uint256 v32;
-                uint256 v40;
-                uint256 v48;
-                uint256 v56;
-                assembly ("memory-safe") {
-                    v0 := calldataload(add(src, shl(5, i)))
-                    v8 := calldataload(add(src, shl(5, add(i, 8))))
-                    v16 := calldataload(add(src, shl(5, add(i, 16))))
-                    v24 := calldataload(add(src, shl(5, add(i, 24))))
-                    v32 := calldataload(add(src, shl(5, add(i, 32))))
-                    v40 := calldataload(add(src, shl(5, add(i, 40))))
-                    v48 := calldataload(add(src, shl(5, add(i, 48))))
-                    v56 := calldataload(add(src, shl(5, add(i, 56))))
-                }
-
-                uint256 a0 = _foldOnceWithCoeffs(v0, v32, r00, r01, r02, r03, r04, r05, r06, r07);
-                uint256 a1 = _foldOnceWithCoeffs(v16, v48, r00, r01, r02, r03, r04, r05, r06, r07);
-                uint256 b0 = _foldOnceWithCoeffs(a0, a1, r10, r11, r12, r13, r14, r15, r16, r17);
-                uint256 a2 = _foldOnceWithCoeffs(v8, v40, r00, r01, r02, r03, r04, r05, r06, r07);
-                uint256 a3 = _foldOnceWithCoeffs(v24, v56, r00, r01, r02, r03, r04, r05, r06, r07);
-                uint256 b1 = _foldOnceWithCoeffs(a2, a3, r10, r11, r12, r13, r14, r15, r16, r17);
-                uint256 evalValue =
-                    _foldOnceWithCoeffs(b0, b1, r20, r21, r22, r23, r24, r25, r26, r27);
-                assembly ("memory-safe") {
-                    mstore(add(evalsBase, shl(5, i)), evalValue)
-                }
-            }
-            for (uint256 i = 0; i < 4; ++i) {
-                uint256 base;
-                uint256 left;
-                uint256 right;
-                assembly ("memory-safe") {
-                    base := add(evalsBase, shl(5, i))
-                    left := mload(base)
-                    right := mload(add(base, 0x80))
-                }
-                uint256 evalValue =
-                    _foldOnceWithCoeffs(left, right, r30, r31, r32, r33, r34, r35, r36, r37);
-                assembly ("memory-safe") {
-                    mstore(base, evalValue)
-                }
-            }
-            for (uint256 i = 0; i < 2; ++i) {
-                uint256 base;
-                uint256 left;
-                uint256 right;
-                assembly ("memory-safe") {
-                    base := add(evalsBase, shl(5, i))
-                    left := mload(base)
-                    right := mload(add(base, 0x40))
-                }
-                uint256 evalValue =
-                    _foldOnceWithCoeffs(left, right, r40, r41, r42, r43, r44, r45, r46, r47);
-                assembly ("memory-safe") {
-                    mstore(base, evalValue)
-                }
-            }
-        }
-
-        uint256 eval0;
-        uint256 eval1;
-        assembly ("memory-safe") {
-            eval0 := mload(evalsBase)
-            eval1 := mload(add(evalsBase, 0x20))
-        }
-        return _foldOnceWithCoeffs(eval0, eval1, r50, r51, r52, r53, r54, r55, r56, r57);
+        (
+            uint256 r00,
+            uint256 r01,
+            uint256 r02,
+            uint256 r03,
+            uint256 r04,
+            uint256 r05,
+            uint256 r06,
+            uint256 r07
+        ) = _unpackCoeffs(p0);
+        return _foldOnceWithCoeffs(row0, row1, r00, r01, r02, r03, r04, r05, r06, r07);
     }
 
     function evaluateHypercubeMemory(uint256[] memory evals, uint256[] memory point)
@@ -1883,7 +1836,7 @@ library WhirVerifierUtils8 {
             digest := and(keccak256(ptr, 65), not(sub(shl(96, 1), 1)))
         }
 
-        evalValue = _dotBaseRowWeights16Packed(weightsPtr, w0, w1);
+        evalValue = _dotBaseRadix80(weightsPtr, w0, w1);
     }
 
     function _evaluateExtensionRowDim4BlobWindow(
@@ -2061,6 +2014,151 @@ library WhirVerifierUtils8 {
         return _foldOnceWithCoeffs(n0, n1, r30, r31, r32, r33, r34, r35, r36, r37);
     }
 
+    /// @dev Evaluates 16 already-validated packed ext8 values against 16 packed
+    /// ext8 weights. For canonical coefficients u < p, each output coefficient
+    /// contributes at most 22*u^2 per term, so a 16-term accumulator is below
+    /// 352*(p-1)^2 < 2^71. The Fp4 Karatsuba cross terms are nonnegative before
+    /// the Yul subtractions, and every intermediate is far below 2^256.
+    function _evaluateExtensionRowDim4BlobTowerDot(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 weightsPtr
+    ) internal pure returns (uint256 evalValue) {
+        assembly ("memory-safe") {
+            let M := 0x7f000001
+            let src := add(blob.offset, offset)
+
+            let v0 := calldataload(src)
+            let v1 := calldataload(add(src, 0x20))
+            let v2 := calldataload(add(src, 0x40))
+            let v3 := calldataload(add(src, 0x60))
+            let v4 := calldataload(add(src, 0x80))
+            let v5 := calldataload(add(src, 0xa0))
+            let v6 := calldataload(add(src, 0xc0))
+            let v7 := calldataload(add(src, 0xe0))
+            let v8 := calldataload(add(src, 0x100))
+            let v9 := calldataload(add(src, 0x120))
+            let v10 := calldataload(add(src, 0x140))
+            let v11 := calldataload(add(src, 0x160))
+            let v12 := calldataload(add(src, 0x180))
+            let v13 := calldataload(add(src, 0x1a0))
+            let v14 := calldataload(add(src, 0x1c0))
+            let v15 := calldataload(add(src, 0x1e0))
+
+            function qmul4(a0, a1, a2, a3, b0, b1, b2, b3) -> c0, c1, c2, c3 {
+                c0 := add(mul(a0, b0), mul(3, add(add(mul(a1, b3), mul(a2, b2)), mul(a3, b1))))
+                c1 := add(add(mul(a0, b1), mul(a1, b0)), mul(3, add(mul(a2, b3), mul(a3, b2))))
+                c2 := add(add(add(mul(a0, b2), mul(a1, b1)), mul(a2, b0)), mul(3, mul(a3, b3)))
+                c3 := add(add(mul(a0, b3), mul(a1, b2)), add(mul(a2, b1), mul(a3, b0)))
+            }
+
+            function accumulate(a, b, d0, d1, d2, d3, d4, d5, d6, d7) ->
+                e0,
+                e1,
+                e2,
+                e3,
+                e4,
+                e5,
+                e6,
+                e7
+            {
+                let ae0 := shr(224, a)
+                let ao0 := and(shr(192, a), 0xffffffff)
+                let ae1 := and(shr(160, a), 0xffffffff)
+                let ao1 := and(shr(128, a), 0xffffffff)
+                let ae2 := and(shr(96, a), 0xffffffff)
+                let ao2 := and(shr(64, a), 0xffffffff)
+                let ae3 := and(shr(32, a), 0xffffffff)
+                let ao3 := and(a, 0xffffffff)
+
+                let be0 := shr(224, b)
+                let bo0 := and(shr(192, b), 0xffffffff)
+                let be1 := and(shr(160, b), 0xffffffff)
+                let bo1 := and(shr(128, b), 0xffffffff)
+                let be2 := and(shr(96, b), 0xffffffff)
+                let bo2 := and(shr(64, b), 0xffffffff)
+                let be3 := and(shr(32, b), 0xffffffff)
+                let bo3 := and(b, 0xffffffff)
+
+                let z00, z01, z02, z03 := qmul4(ae0, ae1, ae2, ae3, be0, be1, be2, be3)
+                let z20, z21, z22, z23 := qmul4(ao0, ao1, ao2, ao3, bo0, bo1, bo2, bo3)
+                let s0, s1, s2, s3 :=
+                    qmul4(
+                        add(ae0, ao0),
+                        add(ae1, ao1),
+                        add(ae2, ao2),
+                        add(ae3, ao3),
+                        add(be0, bo0),
+                        add(be1, bo1),
+                        add(be2, bo2),
+                        add(be3, bo3)
+                    )
+
+                e0 := add(d0, add(z00, mul(3, z23)))
+                e1 := add(d1, sub(sub(s0, z00), z20))
+                e2 := add(d2, add(z01, z20))
+                e3 := add(d3, sub(sub(s1, z01), z21))
+                e4 := add(d4, add(z02, z21))
+                e5 := add(d5, sub(sub(s2, z02), z22))
+                e6 := add(d6, add(z03, z22))
+                e7 := add(d7, sub(sub(s3, z03), z23))
+            }
+
+            let c0 := 0
+            let c1 := 0
+            let c2 := 0
+            let c3 := 0
+            let c4 := 0
+            let c5 := 0
+            let c6 := 0
+            let c7 := 0
+
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v0, mload(weightsPtr), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v1, mload(add(weightsPtr, 0x20)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v2, mload(add(weightsPtr, 0x40)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v3, mload(add(weightsPtr, 0x60)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v4, mload(add(weightsPtr, 0x80)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v5, mload(add(weightsPtr, 0xa0)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v6, mload(add(weightsPtr, 0xc0)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v7, mload(add(weightsPtr, 0xe0)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v8, mload(add(weightsPtr, 0x100)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v9, mload(add(weightsPtr, 0x120)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v10, mload(add(weightsPtr, 0x140)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v11, mload(add(weightsPtr, 0x160)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v12, mload(add(weightsPtr, 0x180)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v13, mload(add(weightsPtr, 0x1a0)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v14, mload(add(weightsPtr, 0x1c0)), c0, c1, c2, c3, c4, c5, c6, c7)
+            c0, c1, c2, c3, c4, c5, c6, c7 :=
+                accumulate(v15, mload(add(weightsPtr, 0x1e0)), c0, c1, c2, c3, c4, c5, c6, c7)
+
+            evalValue := or(
+                or(
+                    or(shl(224, mod(c0, M)), shl(192, mod(c1, M))),
+                    or(shl(160, mod(c2, M)), shl(128, mod(c3, M)))
+                ),
+                or(
+                    or(shl(96, mod(c4, M)), shl(64, mod(c5, M))),
+                    or(shl(32, mod(c6, M)), mod(c7, M))
+                )
+            )
+        }
+    }
+
     function _hashAndEvaluateExtensionRowDim4BlobTowerPackedPoints(
         bytes calldata blob,
         uint256 offset,
@@ -2088,29 +2186,15 @@ library WhirVerifierUtils8 {
             let v15 := calldataload(add(src, 0x1e0))
 
             function validateExt8(packed) {
-                let modulus := 0x7f000001
-                let mask := 0xffffffff
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000800000008000000080000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+                // A low-31-bit lane plus the bias is at most 0x80fffffe,
+                // so this packed addition cannot carry across a 32-bit lane.
                 if or(
-                    or(
-                        or(
-                            iszero(lt(shr(224, packed), modulus)),
-                            iszero(lt(and(shr(192, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(160, packed), mask), modulus)),
-                            iszero(lt(and(shr(128, packed), mask), modulus))
-                        )
-                    ),
-                    or(
-                        or(
-                            iszero(lt(and(shr(96, packed), mask), modulus)),
-                            iszero(lt(and(shr(64, packed), mask), modulus))
-                        ),
-                        or(
-                            iszero(lt(and(shr(32, packed), mask), modulus)),
-                            iszero(lt(and(packed, mask), modulus))
-                        )
-                    )
+                    and(packed, highBitMask),
+                    and(add(and(packed, low31Mask), bias), highBitMask)
                 ) {
                     mstore(0x00, 0xd53cfe5c00000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, packed)

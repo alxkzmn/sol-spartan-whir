@@ -299,6 +299,7 @@ contract WhirProfileHarness5Pow28Rsv3 {
         uint256 evaluationOfWeights;
         g = gasleft();
         {
+            uint256[] memory packedPoint = WhirVerifierCore5._prepareSelectCubicPairs(allRandomness);
             (
                 uint256 statementEq,
                 uint256 initialEq,
@@ -319,20 +320,20 @@ contract WhirProfileHarness5Pow28Rsv3 {
             );
             evaluationOfWeights = KoalaBearExt5.add(
                 evaluationOfWeights,
-                WhirVerifierCore5._evaluateConstraintSelectRaw18WithPrecomputedEq(
-                    round0ConstraintChallenge, round0Eq, round0SelVars, allRandomness
+                WhirVerifierCore5._evaluateConstraintCubicRaw18WithPrecomputedEq(
+                    round0ConstraintChallenge, round0Eq, round0SelVars, packedPoint
                 )
             );
             evaluationOfWeights = KoalaBearExt5.add(
                 evaluationOfWeights,
-                WhirVerifierCore5._evaluateConstraintSelectRaw14WithPrecomputedEq(
-                    round1ConstraintChallenge, round1Eq, round1SelVars, allRandomness
+                WhirVerifierCore5._evaluateConstraintCubicRaw14WithPrecomputedEq(
+                    round1ConstraintChallenge, round1Eq, round1SelVars, packedPoint
                 )
             );
             evaluationOfWeights = KoalaBearExt5.add(
                 evaluationOfWeights,
-                WhirVerifierCore5._evaluateConstraintSelectRaw10WithPrecomputedEq(
-                    round2ConstraintChallenge, round2Eq, round2SelVars, allRandomness
+                WhirVerifierCore5._evaluateConstraintCubicRaw10WithPrecomputedEq(
+                    round2ConstraintChallenge, round2Eq, round2SelVars, packedPoint
                 )
             );
         }

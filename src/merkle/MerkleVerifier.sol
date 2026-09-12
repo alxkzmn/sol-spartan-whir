@@ -1215,6 +1215,9 @@ library MerkleVerifier {
         }
     }
 
+    /// @dev `frontierEntries` must encode strictly increasing node indices. Adjacent sibling
+    /// pairs are consumed together, so this ordering makes the emitted parent indices strictly
+    /// increasing without a separate deduplication pass.
     function _computeRootFromPackedFrontier20Blob(
         uint256[] memory frontierEntries,
         uint256 frontierLen,
@@ -1247,7 +1250,6 @@ library MerkleVerifier {
                 let ep := frontier
                 let frontierEnd := add(frontier, mul(frontierLen, entrySize))
                 let nextPtr := nextBuf
-                let lastParentIndex := not(0)
                 for { } lt(ep, frontierEnd) { } {
                     let packed := mload(ep)
                     let node := and(packed, indexMask)
@@ -1256,21 +1258,35 @@ library MerkleVerifier {
                     let nextReadPtr := add(ep, entrySize)
                     let parentHash
 
-                    let merged := 0
-                    if iszero(nodeIsRight) {
-                        if lt(nextReadPtr, frontierEnd) {
-                            let nextPacked := mload(nextReadPtr)
-                            if eq(and(nextPacked, indexMask), add(node, 1)) {
-                                mstore(add(scratch, 1), hash)
-                                mstore(add(scratch, 0x21), and(nextPacked, digestMask))
-                                parentHash := and(keccak256(scratch, 65), digestMask)
-                                nextReadPtr := add(nextReadPtr, entrySize)
-                                merged := 1
+                    switch nodeIsRight
+                    case 0 {
+                        let nextPacked := 0
+                        if lt(nextReadPtr, frontierEnd) { nextPacked := mload(nextReadPtr) }
+                        switch eq(and(nextPacked, indexMask), add(node, 1))
+                        case 1 {
+                            mstore(add(scratch, 1), hash)
+                            mstore(add(scratch, 0x21), and(nextPacked, digestMask))
+                            parentHash := and(keccak256(scratch, 65), digestMask)
+                            nextReadPtr := add(nextReadPtr, entrySize)
+                        }
+                        default {
+                            if iszero(lt(decommPtr, decommEnd)) {
+                                mstore(
+                                    0x00,
+                                    0x90196ee300000000000000000000000000000000000000000000000000000000
+                                )
+                                mstore(0x04, add(div(sub(decommPtr, decommBase), 20), 1))
+                                mstore(0x24, decommLen)
+                                revert(0x00, 0x44)
                             }
+                            let sibling := and(calldataload(decommPtr), digestMask)
+                            decommPtr := add(decommPtr, 20)
+                            mstore(add(scratch, 1), hash)
+                            mstore(add(scratch, 0x21), sibling)
+                            parentHash := and(keccak256(scratch, 65), digestMask)
                         }
                     }
-
-                    if iszero(merged) {
+                    default {
                         if iszero(lt(decommPtr, decommEnd)) {
                             mstore(
                                 0x00,
@@ -1282,32 +1298,17 @@ library MerkleVerifier {
                         }
                         let sibling := and(calldataload(decommPtr), digestMask)
                         decommPtr := add(decommPtr, 20)
-
-                        switch nodeIsRight
-                        case 0 {
-                            mstore(add(scratch, 1), hash)
-                            mstore(add(scratch, 0x21), sibling)
-                        }
-                        default {
-                            mstore(add(scratch, 1), sibling)
-                            mstore(add(scratch, 0x21), hash)
-                        }
+                        mstore(add(scratch, 1), sibling)
+                        mstore(add(scratch, 0x21), hash)
                         parentHash := and(keccak256(scratch, 65), digestMask)
                     }
 
                     ep := nextReadPtr
                     let parentIndex := shr(1, node)
-                    let sameParent := eq(lastParentIndex, parentIndex)
-                    let packedParent := or(parentHash, parentIndex)
-                    if sameParent {
-                        mstore(sub(nextPtr, entrySize), packedParent)
-                    }
-                    if iszero(sameParent) {
-                        mstore(nextPtr, packedParent)
-                        nextPtr := add(nextPtr, entrySize)
-                        nextLen := add(nextLen, 1)
-                        lastParentIndex := parentIndex
-                    }
+                    // The function precondition makes every emitted parent index greater than the last.
+                    mstore(nextPtr, or(parentHash, parentIndex))
+                    nextPtr := add(nextPtr, entrySize)
+                    nextLen := add(nextLen, 1)
                 }
 
                 let tmp := frontier

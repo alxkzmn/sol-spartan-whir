@@ -31,6 +31,83 @@ contract Ext8TowerOptimizationsTest is Test {
         assertEq(evalValue, _referenceRowDot(rowBlob, maxValue));
     }
 
+    function testFuzzTowerBlobRowMatchesReferenceEvaluation(bytes32 seed) external view {
+        bytes memory rowBlob = _makeExt8RowBlobFromSeed(seed);
+        uint256[4] memory point = _makePointFromSeed(seed);
+
+        (bytes32 digest, uint256 evalValue) =
+            this.towerBlobHashAndEvaluate(rowBlob, point[0], point[1], point[2], point[3]);
+
+        assertEq(digest, _maskedLeafDigest(rowBlob));
+        assertEq(evalValue, _referenceRowEval(rowBlob, point));
+    }
+
+    function testTowerBlobRowRejectsModulusInEveryWordAndLane() external {
+        bytes memory rowBlob = _makeExt8RowBlob();
+        unchecked {
+            for (uint256 wordIndex = 0; wordIndex < 16; ++wordIndex) {
+                uint256 original;
+                assembly ("memory-safe") {
+                    original := mload(add(add(rowBlob, 0x20), shl(5, wordIndex)))
+                }
+                for (uint256 lane = 0; lane < 8; ++lane) {
+                    uint256 shift = 224 - 32 * lane;
+                    uint256 malformed =
+                        (original & ~(uint256(0xffffffff) << shift)) | (KoalaBear.MODULUS << shift);
+                    assembly ("memory-safe") {
+                        mstore(add(add(rowBlob, 0x20), shl(5, wordIndex)), malformed)
+                    }
+
+                    vm.expectRevert(
+                        abi.encodeWithSelector(
+                            WhirVerifierUtils8.PackedExtensionElementOutOfRange.selector, malformed
+                        )
+                    );
+                    this.towerBlobHashAndEvaluateWithRepeatedWeight(rowBlob, 1);
+                }
+                assembly ("memory-safe") {
+                    mstore(add(add(rowBlob, 0x20), shl(5, wordIndex)), original)
+                }
+            }
+        }
+    }
+
+    function testBaseRadix80RowMatchesReferenceEvaluation() external view {
+        bytes memory rowBlob = _makeBaseRowBlob(bytes32(uint256(1)));
+        uint256[4] memory point = _makePoint();
+
+        (bytes32 digest, uint256 evalValue) =
+            this.baseBlobHashAndEvaluate(rowBlob, point[0], point[1], point[2], point[3]);
+
+        assertEq(digest, _maskedLeafDigest(rowBlob));
+        assertEq(evalValue, _referenceBaseRowEval(rowBlob, point));
+    }
+
+    function testFuzzBaseRadix80RowMatchesReference(bytes32 seed) external view {
+        bytes memory rowBlob = _makeBaseRowBlob(seed);
+        uint256[4] memory point = _makePointFromSeed(seed);
+
+        (bytes32 digest, uint256 evalValue) =
+            this.baseBlobHashAndEvaluate(rowBlob, point[0], point[1], point[2], point[3]);
+
+        assertEq(digest, _maskedLeafDigest(rowBlob));
+        assertEq(evalValue, _referenceBaseRowEval(rowBlob, point));
+    }
+
+    function testFinalBlob64Dim6MatchesReferenceOrdering() external view {
+        bytes memory blob = _makeExt8Blob64FromSeed(bytes32(uint256(1)));
+        uint256[6] memory point = _makePoint6();
+
+        assertEq(this.finalBlobEvaluate64Dim6(blob, point), _referenceFinalBlob64Dim6(blob, point));
+    }
+
+    function testFuzzFinalBlob64Dim6MatchesReference(bytes32 seed) external view {
+        bytes memory blob = _makeExt8Blob64FromSeed(seed);
+        uint256[6] memory point = _makePoint6FromSeed(seed);
+
+        assertEq(this.finalBlobEvaluate64Dim6(blob, point), _referenceFinalBlob64Dim6(blob, point));
+    }
+
     function testTowerSelectPolyMatchesReferenceHelper() external pure {
         uint256[] memory fullPoint = _makeFullPoint();
         uint256[4] memory vars = [_base(101), _base(202), _base(303), _base(404)];
@@ -101,6 +178,34 @@ contract Ext8TowerOptimizationsTest is Test {
         );
     }
 
+    function baseBlobHashAndEvaluate(
+        bytes calldata rowBlob,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3
+    ) external pure returns (bytes32 digest, uint256 evalValue) {
+        uint256 weightsPtr = WhirVerifierUtils8._prepareBaseRadix80(
+                WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3)
+            );
+        return
+            WhirVerifierUtils8._hashAndEvaluateBaseRowDim4BlobPackedPoints(rowBlob, 0, weightsPtr);
+    }
+
+    function finalBlobEvaluate64Dim6(bytes calldata blob, uint256[6] calldata point)
+        external
+        pure
+        returns (uint256)
+    {
+        uint256[] memory fullPoint = new uint256[](6);
+        unchecked {
+            for (uint256 i = 0; i < 6; ++i) {
+                fullPoint[i] = point[i];
+            }
+        }
+        return WhirVerifierUtils8.evaluateFinalValueBlob64Dim6(blob, 0, fullPoint, 0);
+    }
+
     function _referenceRowEval(bytes memory rowBlob, uint256[4] memory point)
         internal
         pure
@@ -141,6 +246,53 @@ contract Ext8TowerOptimizationsTest is Test {
         }
     }
 
+    function _referenceBaseRowEval(bytes memory rowBlob, uint256[4] memory point)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256[] memory evals = new uint256[](16);
+        unchecked {
+            for (uint256 i = 0; i < 16; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := shr(224, mload(add(add(rowBlob, 0x20), shl(2, i))))
+                }
+                evals[i] = KoalaBearExt8.fromBase(value);
+            }
+        }
+
+        uint256[] memory pointArray = new uint256[](4);
+        pointArray[0] = point[0];
+        pointArray[1] = point[1];
+        pointArray[2] = point[2];
+        pointArray[3] = point[3];
+        return KoalaBearExt8.evaluate_hypercube(evals, pointArray);
+    }
+
+    function _referenceFinalBlob64Dim6(bytes memory blob, uint256[6] memory point)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256[] memory evals = new uint256[](64);
+        unchecked {
+            for (uint256 i = 0; i < 64; ++i) {
+                assembly ("memory-safe") {
+                    mstore(add(add(evals, 0x20), shl(5, i)), mload(add(add(blob, 0x20), shl(5, i))))
+                }
+            }
+        }
+
+        uint256[] memory pointArray = new uint256[](6);
+        unchecked {
+            for (uint256 i = 0; i < 6; ++i) {
+                pointArray[i] = point[i];
+            }
+        }
+        return KoalaBearExt8.evaluate_hypercube(evals, pointArray);
+    }
+
     function _maskedLeafDigest(bytes memory rowBlob) internal pure returns (bytes32) {
         return
             bytes32(uint256(keccak256(bytes.concat(hex"00", rowBlob))) & ~((uint256(1) << 96) - 1));
@@ -164,6 +316,43 @@ contract Ext8TowerOptimizationsTest is Test {
                 uint256[8] memory coeffs;
                 for (uint256 j = 0; j < coeffs.length; ++j) {
                     coeffs[j] = _base(901 + i * 29 + j * 13);
+                }
+                point[i] = KoalaBearExt8.pack(coeffs);
+            }
+        }
+    }
+
+    function _makePointFromSeed(bytes32 seed) internal pure returns (uint256[4] memory point) {
+        unchecked {
+            for (uint256 i = 0; i < point.length; ++i) {
+                uint256[8] memory coeffs;
+                for (uint256 j = 0; j < coeffs.length; ++j) {
+                    coeffs[j] = uint256(keccak256(abi.encode(seed, i, j))) % KoalaBear.MODULUS;
+                }
+                point[i] = KoalaBearExt8.pack(coeffs);
+            }
+        }
+    }
+
+    function _makePoint6() internal pure returns (uint256[6] memory point) {
+        unchecked {
+            for (uint256 i = 0; i < point.length; ++i) {
+                uint256[8] memory coeffs;
+                for (uint256 j = 0; j < coeffs.length; ++j) {
+                    coeffs[j] = _base(1201 + i * 31 + j * 17);
+                }
+                point[i] = KoalaBearExt8.pack(coeffs);
+            }
+        }
+    }
+
+    function _makePoint6FromSeed(bytes32 seed) internal pure returns (uint256[6] memory point) {
+        unchecked {
+            for (uint256 i = 0; i < point.length; ++i) {
+                uint256[8] memory coeffs;
+                for (uint256 j = 0; j < coeffs.length; ++j) {
+                    coeffs[j] =
+                        uint256(keccak256(abi.encode(seed, "point", i, j))) % KoalaBear.MODULUS;
                 }
                 point[i] = KoalaBearExt8.pack(coeffs);
             }
@@ -194,6 +383,51 @@ contract Ext8TowerOptimizationsTest is Test {
                 uint256 value = KoalaBearExt8.pack(coeffs);
                 assembly ("memory-safe") {
                     mstore(add(add(blob, 0x20), shl(5, i)), value)
+                }
+            }
+        }
+    }
+
+    function _makeExt8RowBlobFromSeed(bytes32 seed) internal pure returns (bytes memory blob) {
+        blob = new bytes(0x200);
+        unchecked {
+            for (uint256 i = 0; i < 16; ++i) {
+                uint256[8] memory coeffs;
+                for (uint256 j = 0; j < coeffs.length; ++j) {
+                    coeffs[j] = uint256(keccak256(abi.encode(seed, i, j))) % KoalaBear.MODULUS;
+                }
+                uint256 value = KoalaBearExt8.pack(coeffs);
+                assembly ("memory-safe") {
+                    mstore(add(add(blob, 0x20), shl(5, i)), value)
+                }
+            }
+        }
+    }
+
+    function _makeExt8Blob64FromSeed(bytes32 seed) internal pure returns (bytes memory blob) {
+        blob = new bytes(0x800);
+        unchecked {
+            for (uint256 i = 0; i < 64; ++i) {
+                uint256[8] memory coeffs;
+                for (uint256 j = 0; j < coeffs.length; ++j) {
+                    coeffs[j] =
+                        uint256(keccak256(abi.encode(seed, "value", i, j))) % KoalaBear.MODULUS;
+                }
+                uint256 value = KoalaBearExt8.pack(coeffs);
+                assembly ("memory-safe") {
+                    mstore(add(add(blob, 0x20), shl(5, i)), value)
+                }
+            }
+        }
+    }
+
+    function _makeBaseRowBlob(bytes32 seed) internal pure returns (bytes memory blob) {
+        blob = new bytes(64);
+        unchecked {
+            for (uint256 i = 0; i < 16; ++i) {
+                uint256 value = uint256(keccak256(abi.encode(seed, i))) % KoalaBear.MODULUS;
+                assembly ("memory-safe") {
+                    mstore(add(add(blob, 0x20), shl(2, i)), shl(224, value))
                 }
             }
         }

@@ -7,7 +7,7 @@ import { KoalaBearExt5 } from "../../field/KoalaBearExt5.sol";
 import { MerkleVerifier } from "../../merkle/MerkleVerifier.sol";
 import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
 import { WhirStructs } from "../WhirStructs.sol";
-import { WhirBlobCodec5 } from "./WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+import { WhirBlobCodec5 } from "./WhirBlobCodec5_constant_pow27_ff4_lir4_rsv4.sol";
 import { WhirVerifierUtils5 } from "./WhirVerifierUtils5.sol";
 
 library WhirVerifierCore5 {
@@ -21,6 +21,8 @@ library WhirVerifierCore5 {
         hex"000000016c4a8a45163bd49958ff6e906e2f4d7a65d3aa2e57421f5d71352c4c45a60e616428b7e3665070516566002c4cd7bb26247e1bfa75386aad37c43dd9000000013e687d4d303964b2300ba3ce768fc6fa2cb3f80a3f56e3af3446e3ab7744959c3b725f621e9330746107e94c437ce0a445b5bd2e7e77ea690409289300000001334d48c727ad539b54d7833617668b8a540363e73546ad0e0b4d176329b75a801da1678948d2e0073f9e4a46654a8bad7d598a0369af7ef41ed33131000000015c4a5b990a28f03164a0e08708dbd69c4154af7e5af0e6ec6931c06d6832fe4a4489a82a226210df1d14ebfe27ae21e2309bb4e5433bb7737348d2db000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff";
     bytes private constant POW_TABLE_FINAL =
         hex"00000001163bd4996e2f4d7a57421f5d45a60e61665070514cd7bb2675386aad3e687d4d1908abb42a79b9947e1ad39c4625f2a217aa4b5f2cf219ca03bc565600000001303964b2768fc6fa3f56e3af7744959c1e933074437ce0a47e77ea69334d48c740fe646a100753d77ca12bf875227a3325957b534451b86f52a36f8f0000000127ad539b17668b8a3546ad0e29b75a8048d2e007654a8bad69af7ef45c4a5b995b47c55d3cc6248a171639a5586ff04e04c4aab70a9a56263bbe793a000000010a28f03108dbd69c5af0e6ec6832fe4a226210df27ae21e2433bb7737e0100026d6e568d3a89a0253893800a174e365063861a5027dfce221335b668000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000";
+    bytes private constant POW_TABLE_RSV4_FINAL =
+        hex"000000016e2f4d7a45a60e614cd7bb263e687d4d2a79b9944625f2a22cf219ca303964b27d7ab4647e3a7e880063424d300ba3ce32f3e5cc5f9907a95b51c37800000001768fc6fa7744959c437ce0a4334d48c7100753d775227a334451b86f27ad539b1078181c32313d6e122f94c954d783364ae7845b425d36ed49f18ebe0000000117668b8a29b75a80654a8bad5c4a5b993cc6248a586ff04e0a9a56260a28f0312322d8145599fb2c74247efc64a0e08711e1ba5100d2f0dd4e64f8210000000108dbd69c6832fe4a27ae21e27e0100023a89a025174e365027dfce227f0000007624296516cd01b75751de1f00feffff44765fdc67b1c9b1572031df";
 
     struct EqStatement {
         uint256 numVariables;
@@ -158,6 +160,8 @@ library WhirVerifierCore5 {
             table = POW_TABLE_ROUND2;
         } else if (base == 373_019_801) {
             table = POW_TABLE_FINAL;
+        } else if (base == 1_848_593_786) {
+            table = POW_TABLE_RSV4_FINAL;
         } else {
             unchecked {
                 for (uint256 i = 0; i < count; ++i) {
@@ -422,52 +426,44 @@ library WhirVerifierCore5 {
         }
 
         unchecked {
-            if (finalPolyLength == 64 && numQueries == 14) {
+            if (finalPolyLength == 64) {
                 uint256 packedFinalPtr =
                     WhirVerifierUtils5._prepareHornerRadix64(blob, finalPolyOffset);
                 _fillSelVarsPow(indices, foldedDomainGen, numQueries);
-                uint256 point0;
-                uint256 point1;
-                uint256 point2;
-                uint256 point3;
-                uint256 point4;
-                uint256 point5;
-                uint256 point6;
-                uint256 point7;
-                uint256 point8;
-                uint256 point9;
-                assembly ("memory-safe") {
-                    let indicesBase := add(indices, 0x20)
-                    point0 := mload(indicesBase)
-                    point1 := mload(add(indicesBase, 0x20))
-                    point2 := mload(add(indicesBase, 0x40))
-                    point3 := mload(add(indicesBase, 0x60))
-                    point4 := mload(add(indicesBase, 0x80))
-                    point5 := mload(add(indicesBase, 0xa0))
-                    point6 := mload(add(indicesBase, 0xc0))
-                    point7 := mload(add(indicesBase, 0xe0))
-                    point8 := mload(add(indicesBase, 0x100))
-                    point9 := mload(add(indicesBase, 0x120))
-                }
-
                 uint256 rowEvalsBase;
                 assembly ("memory-safe") {
                     rowEvalsBase := add(rowEvals, 0x20)
                 }
-                uint256 mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
-                    packedFinalPtr, point0, point1, point2, point3, point4, rowEvalsBase, 0
-                );
-                if (mismatchPlusOne != 0) {
-                    revert StirConstraintFailed(mismatchPlusOne - 1);
+                uint256 i;
+                for (; i + 5 <= numQueries; i += 5) {
+                    uint256 point0;
+                    uint256 point1;
+                    uint256 point2;
+                    uint256 point3;
+                    uint256 point4;
+                    assembly ("memory-safe") {
+                        let points := add(add(indices, 0x20), shl(5, i))
+                        point0 := mload(points)
+                        point1 := mload(add(points, 0x20))
+                        point2 := mload(add(points, 0x40))
+                        point3 := mload(add(points, 0x60))
+                        point4 := mload(add(points, 0x80))
+                    }
+                    uint256 mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
+                        packedFinalPtr,
+                        point0,
+                        point1,
+                        point2,
+                        point3,
+                        point4,
+                        rowEvalsBase,
+                        i
+                    );
+                    if (mismatchPlusOne != 0) {
+                        revert StirConstraintFailed(i + mismatchPlusOne - 1);
+                    }
                 }
-                mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
-                    packedFinalPtr, point5, point6, point7, point8, point9, rowEvalsBase, 5
-                );
-                if (mismatchPlusOne != 0) {
-                    revert StirConstraintFailed(mismatchPlusOne + 4);
-                }
-
-                for (uint256 i = 10; i < 14; ++i) {
+                for (; i < numQueries; ++i) {
                     uint256 point = indices[i];
                     if (WhirVerifierUtils5._hornerRadix64(packedFinalPtr, point) != rowEvals[i]) {
                         revert StirConstraintFailed(i);
@@ -722,22 +718,22 @@ library WhirVerifierCore5 {
         uint256 randomnessOffset,
         uint256 finalPolyOffset
     ) internal pure returns (uint256 nextOffset) {
-        _checkWitnessBaseLeBlob(challenger, 24, blob, powWitnessOffset);
+        _checkWitnessBaseLeBlob(challenger, 22, blob, powWitnessOffset);
 
         uint256[] memory indices =
-            WhirVerifierUtils5.sampleStirQueries(challenger, 2_097_152, 4, 14);
-        if (indices.length != 14) {
-            revert QueryBatchCountMismatch(14, indices.length);
+            WhirVerifierUtils5.sampleStirQueries(challenger, 1_048_576, 4, 16);
+        if (indices.length != 16) {
+            revert QueryBatchCountMismatch(16, indices.length);
         }
 
-        uint256 decommOffset = valuesOffset + 14 * 16 * 20;
+        uint256 decommOffset = valuesOffset + 16 * 16 * 20;
         nextOffset = decommOffset + decommLen * 20;
 
         _verifyFinalStirChallengesBlob16(
             expectedRoot,
-            14,
-            17,
-            373_019_801,
+            16,
+            16,
+            1_848_593_786,
             blob,
             valuesOffset,
             decommOffset,

@@ -583,6 +583,69 @@ library WhirVerifierUtils5 {
         return evaluateHypercubeMemory(evals, point);
     }
 
+    function evaluateBaseRowAsExt5Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 pointLen
+    ) internal pure returns (uint256) {
+        uint256[] memory evals = new uint256[](rowLen);
+        uint256[] memory point = _slicePoint(fullPoint, pointOffset, pointLen);
+
+        unchecked {
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := shr(224, calldataload(add(add(blob.offset, offset), shl(2, i))))
+                }
+                validateBase(value);
+                evals[i] = value << 224;
+            }
+        }
+
+        if (point.length == 0) {
+            return evals[0];
+        }
+        return evaluateHypercubeMemory(evals, point);
+    }
+
+    /// @dev The caller must first hash the same row with `hashLeafBaseSlice20Blob`, which
+    /// validates all 32 base-field elements before this allocation-free evaluation.
+    function evaluateBaseRowDim5BlobAfterHash(
+        bytes calldata blob,
+        uint256 offset,
+        uint256[] memory fullPoint,
+        uint256 pointOffset
+    ) internal pure returns (uint256) {
+        uint256 src;
+        assembly ("memory-safe") {
+            src := add(blob.offset, offset)
+        }
+        uint256 w0;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        assembly ("memory-safe") {
+            w0 := calldataload(src)
+            w1 := calldataload(add(src, 0x20))
+            w2 := calldataload(add(src, 0x40))
+            w3 := calldataload(add(src, 0x60))
+        }
+        return _evaluateBaseRowDim5FromBlobWords(
+            w0,
+            w1,
+            w2,
+            w3,
+            fullPoint[pointOffset],
+            fullPoint[pointOffset + 1],
+            fullPoint[pointOffset + 2],
+            fullPoint[pointOffset + 3],
+            fullPoint[pointOffset + 4]
+        );
+    }
+
     function evaluateFinalValueBlob64Dim6(
         bytes calldata blob,
         uint256 offset,
@@ -1719,6 +1782,101 @@ library WhirVerifierUtils5 {
                 shl(96, c4)
             )
         }
+    }
+
+    function _evaluateBaseRowDim5FromBlobWords(
+        uint256 w0,
+        uint256 w1,
+        uint256 w2,
+        uint256 w3,
+        uint256 p0,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (uint256) {
+        uint256 mask = 0xffffffff;
+        (uint256 r00, uint256 r01, uint256 r02, uint256 r03, uint256 r04) =
+            _unpackCoeffs(p0);
+
+        uint256[16] memory layer1;
+        layer1[0] = _foldOnceBase(w0 >> 224, w2 >> 224, r00, r01, r02, r03, r04);
+        layer1[1] = _foldOnceBase(
+            (w0 >> 192) & mask, (w2 >> 192) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[2] = _foldOnceBase(
+            (w0 >> 160) & mask, (w2 >> 160) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[3] = _foldOnceBase(
+            (w0 >> 128) & mask, (w2 >> 128) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[4] = _foldOnceBase(
+            (w0 >> 96) & mask, (w2 >> 96) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[5] = _foldOnceBase(
+            (w0 >> 64) & mask, (w2 >> 64) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[6] = _foldOnceBase(
+            (w0 >> 32) & mask, (w2 >> 32) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[7] = _foldOnceBase(w0 & mask, w2 & mask, r00, r01, r02, r03, r04);
+        layer1[8] = _foldOnceBase(w1 >> 224, w3 >> 224, r00, r01, r02, r03, r04);
+        layer1[9] = _foldOnceBase(
+            (w1 >> 192) & mask, (w3 >> 192) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[10] = _foldOnceBase(
+            (w1 >> 160) & mask, (w3 >> 160) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[11] = _foldOnceBase(
+            (w1 >> 128) & mask, (w3 >> 128) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[12] = _foldOnceBase(
+            (w1 >> 96) & mask, (w3 >> 96) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[13] = _foldOnceBase(
+            (w1 >> 64) & mask, (w3 >> 64) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[14] = _foldOnceBase(
+            (w1 >> 32) & mask, (w3 >> 32) & mask, r00, r01, r02, r03, r04
+        );
+        layer1[15] = _foldOnceBase(w1 & mask, w3 & mask, r00, r01, r02, r03, r04);
+
+        return _collapseBaseRowDim5(layer1, p1, p2, p3, p4);
+    }
+
+    function _collapseBaseRowDim5(
+        uint256[16] memory layer1,
+        uint256 p1,
+        uint256 p2,
+        uint256 p3,
+        uint256 p4
+    ) private pure returns (uint256) {
+        (uint256 r10, uint256 r11, uint256 r12, uint256 r13, uint256 r14) =
+            _unpackCoeffs(p1);
+        (uint256 r20, uint256 r21, uint256 r22, uint256 r23, uint256 r24) =
+            _unpackCoeffs(p2);
+        (uint256 r30, uint256 r31, uint256 r32, uint256 r33, uint256 r34) =
+            _unpackCoeffs(p3);
+        (uint256 r40, uint256 r41, uint256 r42, uint256 r43, uint256 r44) =
+            _unpackCoeffs(p4);
+
+        uint256 m0 = _foldOnceWithCoeffs(layer1[0], layer1[8], r10, r11, r12, r13, r14);
+        uint256 m1 = _foldOnceWithCoeffs(layer1[1], layer1[9], r10, r11, r12, r13, r14);
+        uint256 m2 = _foldOnceWithCoeffs(layer1[2], layer1[10], r10, r11, r12, r13, r14);
+        uint256 m3 = _foldOnceWithCoeffs(layer1[3], layer1[11], r10, r11, r12, r13, r14);
+        uint256 m4 = _foldOnceWithCoeffs(layer1[4], layer1[12], r10, r11, r12, r13, r14);
+        uint256 m5 = _foldOnceWithCoeffs(layer1[5], layer1[13], r10, r11, r12, r13, r14);
+        uint256 m6 = _foldOnceWithCoeffs(layer1[6], layer1[14], r10, r11, r12, r13, r14);
+        uint256 m7 = _foldOnceWithCoeffs(layer1[7], layer1[15], r10, r11, r12, r13, r14);
+
+        uint256 n0 = _foldOnceWithCoeffs(m0, m4, r20, r21, r22, r23, r24);
+        uint256 n1 = _foldOnceWithCoeffs(m1, m5, r20, r21, r22, r23, r24);
+        uint256 n2 = _foldOnceWithCoeffs(m2, m6, r20, r21, r22, r23, r24);
+        uint256 n3 = _foldOnceWithCoeffs(m3, m7, r20, r21, r22, r23, r24);
+
+        uint256 o0 = _foldOnceWithCoeffs(n0, n2, r30, r31, r32, r33, r34);
+        uint256 o1 = _foldOnceWithCoeffs(n1, n3, r30, r31, r32, r33, r34);
+        return _foldOnceWithCoeffs(o0, o1, r40, r41, r42, r43, r44);
     }
 
     function _foldOnceWithCoeffs(

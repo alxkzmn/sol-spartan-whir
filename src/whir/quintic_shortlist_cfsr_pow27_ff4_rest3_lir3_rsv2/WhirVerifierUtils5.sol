@@ -583,6 +583,34 @@ library WhirVerifierUtils5 {
         return evaluateHypercubeMemory(evals, point);
     }
 
+    function evaluateBaseRowAsExt5Blob(
+        bytes calldata blob,
+        uint256 offset,
+        uint256 rowLen,
+        uint256[] memory fullPoint,
+        uint256 pointOffset,
+        uint256 pointLen
+    ) internal pure returns (uint256) {
+        uint256[] memory evals = new uint256[](rowLen);
+        uint256[] memory point = _slicePoint(fullPoint, pointOffset, pointLen);
+
+        unchecked {
+            for (uint256 i = 0; i < rowLen; ++i) {
+                uint256 value;
+                assembly ("memory-safe") {
+                    value := shr(224, calldataload(add(add(blob.offset, offset), shl(2, i))))
+                }
+                validateBase(value);
+                evals[i] = value << 224;
+            }
+        }
+
+        if (point.length == 0) {
+            return evals[0];
+        }
+        return evaluateHypercubeMemory(evals, point);
+    }
+
     function evaluateFinalValueBlob64Dim6(
         bytes calldata blob,
         uint256 offset,

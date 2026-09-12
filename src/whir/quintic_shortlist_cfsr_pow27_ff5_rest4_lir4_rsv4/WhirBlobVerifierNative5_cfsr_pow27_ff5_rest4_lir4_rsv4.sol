@@ -3,14 +3,14 @@ pragma solidity ^0.8.28;
 
 import { KoalaBearExt5 } from "../../field/KoalaBearExt5.sol";
 import {
-    QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28 as QuinticWhirFixedConfig
-} from "../../generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+    QuinticWhirFixedConfig_cfsr_pow27_ff5_rest4_lir4_rsv4 as QuinticWhirFixedConfig
+} from "../../generated/QuinticWhirFixedConfig_cfsr_pow27_ff5_rest4_lir4_rsv4.sol";
 import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
-import { WhirBlobCodec5 } from "./WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+import { WhirBlobCodec5 } from "./WhirBlobCodec5_cfsr_pow27_ff5_rest4_lir4_rsv4.sol";
 import { WhirVerifierCore5 } from "./WhirVerifierCore5.sol";
 import { WhirVerifierUtils5 } from "./WhirVerifierUtils5.sol";
 
-contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
+contract WhirBlobVerifierNative5_cfsr_pow27_ff5_rest4_lir4_rsv4 {
     using KeccakChallenger for KeccakChallenger.State;
 
     function _validateHeaderNative(bytes calldata blob)
@@ -67,10 +67,10 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
             revert WhirBlobCodec5.BlobFlagsMismatch();
         }
 
-        uint256 expectedLen = 18 + 22 * 20 + 20 + 20 + 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 38 * 16
+        uint256 expectedLen = 18 + 22 * 20 + 20 + 20 + 20 + 10 * 20 + 5 * 4 + 20 + 20 + 4 + 39 * 32
             * 4 + round0DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 31 * 16 * 20
             + round1DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 19 * 16 * 20 + round2DecommLen
-            * 20 + 8 * 20 + 4 * 4 + 64 * 20 + 4 + 14 * 16 * 20 + finalDecommLen * 20 + 12 * 20;
+            * 20 + 8 * 20 + 4 * 4 + 32 * 20 + 4 + 14 * 16 * 20 + finalDecommLen * 20 + 10 * 20;
         if (blob.length != expectedLen) {
             revert WhirBlobCodec5.BlobLengthMismatch();
         }
@@ -140,14 +140,14 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
         uint256 finalStirRandomnessOffset;
 
         (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-            blob, offset, challenger, claimedEval, 4, 27, allRandomness, randomnessCursor
+            blob, offset, challenger, claimedEval, 5, 27, allRandomness, randomnessCursor
         );
 
         {
             bytes32 round0Root;
             uint256 round0OodEvaluation;
             (round0Root, round0OodPoint, round0OodEvaluation, offset) =
-                WhirVerifierCore5._parseFixedCommitment18x1Blob(challenger, blob, offset);
+                WhirVerifierCore5._parseFixedCommitment17x1Blob(challenger, blob, offset);
 
             uint256 round0PowWitnessOffset = offset;
             unchecked {
@@ -156,7 +156,7 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
 
             uint256 round0Contribution;
             (round0ConstraintChallenge, round0Contribution, round0SelVars, offset) =
-                WhirVerifierCore5._verifyRoundStirAndCombineConstraintBlob(
+                WhirVerifierCore5._verifyRoundStirAndCombineConstraintBlobBase32(
                     challenger,
                     prevRoot,
                     blob,
@@ -165,20 +165,13 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     round0PowWitnessOffset,
                     allRandomness,
                     round0RandomnessOffset,
-                    round0OodEvaluation,
-                    27,
-                    67_108_864,
-                    38,
-                    22,
-                    542_991_299,
-                    0,
-                    38 * 16 * 4
+                    round0OodEvaluation
                 );
             claimedEval = KoalaBearExt5.add(claimedEval, round0Contribution);
 
             round1RandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 22, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 20, allRandomness, randomnessCursor
             );
             prevRoot = round0Root;
         }
@@ -187,7 +180,7 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
             bytes32 round1Root;
             uint256 round1OodEvaluation;
             (round1Root, round1OodPoint, round1OodEvaluation, offset) =
-                WhirVerifierCore5._parseFixedCommitment14x1Blob(challenger, blob, offset);
+                WhirVerifierCore5._parseFixedCommitment13x1Blob(challenger, blob, offset);
 
             uint256 round1PowWitnessOffset = offset;
             unchecked {
@@ -207,10 +200,11 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     round1RandomnessOffset,
                     round1OodEvaluation,
                     25,
-                    8_388_608,
+                    4_194_304,
+                    4,
                     31,
-                    19,
-                    339_671_193,
+                    18,
+                    1_816_824_389,
                     1,
                     31 * 16 * 20
                 );
@@ -218,7 +212,7 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
 
             round2RandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 25, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 23, allRandomness, randomnessCursor
             );
             prevRoot = round1Root;
         }
@@ -227,7 +221,7 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
             bytes32 round2Root;
             uint256 round2OodEvaluation;
             (round2Root, round2OodPoint, round2OodEvaluation, offset) =
-                WhirVerifierCore5._parseFixedCommitment10x1Blob(challenger, blob, offset);
+                WhirVerifierCore5._parseFixedCommitment9x1Blob(challenger, blob, offset);
 
             uint256 round2PowWitnessOffset = offset;
             unchecked {
@@ -247,10 +241,11 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     round2RandomnessOffset,
                     round2OodEvaluation,
                     26,
-                    4_194_304,
+                    2_097_152,
+                    4,
                     19,
-                    18,
-                    1_816_824_389,
+                    17,
+                    373_019_801,
                     1,
                     19 * 16 * 20
                 );
@@ -258,7 +253,7 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
 
             finalStirRandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 27, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 25, allRandomness, randomnessCursor
             );
             prevRoot = round2Root;
         }
@@ -292,8 +287,8 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
         );
 
         uint256 finalSumcheckStart = randomnessCursor;
-        (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob6NoPow(
-            blob, offset, challenger, claimedEval, allRandomness, randomnessCursor
+        (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
+            blob, offset, challenger, claimedEval, 5, 0, allRandomness, randomnessCursor
         );
 
         if (randomnessCursor != QuinticWhirFixedConfig.NUM_VARIABLES) {
@@ -323,20 +318,38 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
         );
         evaluationOfWeights = KoalaBearExt5.add(
             evaluationOfWeights,
-            WhirVerifierCore5._evaluateConstraintCubicRaw18WithPrecomputedEq(
-                round0ConstraintChallenge, round0Eq, round0SelVars, packedPoint
+            WhirVerifierCore5._evaluateConstraintCubicRawWithPrecomputedEq(
+                round0ConstraintChallenge,
+                round0Eq,
+                round0SelVars,
+                allRandomness,
+                packedPoint,
+                5,
+                17
             )
         );
         evaluationOfWeights = KoalaBearExt5.add(
             evaluationOfWeights,
-            WhirVerifierCore5._evaluateConstraintCubicRaw14WithPrecomputedEq(
-                round1ConstraintChallenge, round1Eq, round1SelVars, packedPoint
+            WhirVerifierCore5._evaluateConstraintCubicRawWithPrecomputedEq(
+                round1ConstraintChallenge,
+                round1Eq,
+                round1SelVars,
+                allRandomness,
+                packedPoint,
+                9,
+                13
             )
         );
         evaluationOfWeights = KoalaBearExt5.add(
             evaluationOfWeights,
-            WhirVerifierCore5._evaluateConstraintCubicRaw10WithPrecomputedEq(
-                round2ConstraintChallenge, round2Eq, round2SelVars, packedPoint
+            WhirVerifierCore5._evaluateConstraintCubicRawWithPrecomputedEq(
+                round2ConstraintChallenge,
+                round2Eq,
+                round2SelVars,
+                allRandomness,
+                packedPoint,
+                13,
+                9
             )
         );
         uint256 finalValue = WhirVerifierCore5._evaluateFinalValueBlob(

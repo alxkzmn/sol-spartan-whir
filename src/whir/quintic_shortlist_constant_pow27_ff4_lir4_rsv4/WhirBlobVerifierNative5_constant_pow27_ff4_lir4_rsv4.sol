@@ -3,14 +3,14 @@ pragma solidity ^0.8.28;
 
 import { KoalaBearExt5 } from "../../field/KoalaBearExt5.sol";
 import {
-    QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28 as QuinticWhirFixedConfig
-} from "../../generated/QuinticWhirFixedConfig_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+    QuinticWhirFixedConfig_constant_pow27_ff4_lir4_rsv4 as QuinticWhirFixedConfig
+} from "../../generated/QuinticWhirFixedConfig_constant_pow27_ff4_lir4_rsv4.sol";
 import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
-import { WhirBlobCodec5 } from "./WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+import { WhirBlobCodec5 } from "./WhirBlobCodec5_constant_pow27_ff4_lir4_rsv4.sol";
 import { WhirVerifierCore5 } from "./WhirVerifierCore5.sol";
 import { WhirVerifierUtils5 } from "./WhirVerifierUtils5.sol";
 
-contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
+contract WhirBlobVerifierNative5_constant_pow27_ff4_lir4_rsv4 {
     using KeccakChallenger for KeccakChallenger.State;
 
     function _validateHeaderNative(bytes calldata blob)
@@ -67,10 +67,10 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
             revert WhirBlobCodec5.BlobFlagsMismatch();
         }
 
-        uint256 expectedLen = 18 + 22 * 20 + 20 + 20 + 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 38 * 16
-            * 4 + round0DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 31 * 16 * 20
-            + round1DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 19 * 16 * 20 + round2DecommLen
-            * 20 + 8 * 20 + 4 * 4 + 64 * 20 + 4 + 14 * 16 * 20 + finalDecommLen * 20 + 12 * 20;
+        uint256 expectedLen = 18 + 22 * 20 + 20 + 20 + 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 39 * 16
+            * 4 + round0DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 39 * 16 * 20
+            + round1DecommLen * 20 + 8 * 20 + 4 * 4 + 20 + 20 + 4 + 22 * 16 * 20 + round2DecommLen
+            * 20 + 8 * 20 + 4 * 4 + 64 * 20 + 4 + 16 * 16 * 20 + finalDecommLen * 20 + 12 * 20;
         if (blob.length != expectedLen) {
             revert WhirBlobCodec5.BlobLengthMismatch();
         }
@@ -166,19 +166,19 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     allRandomness,
                     round0RandomnessOffset,
                     round0OodEvaluation,
-                    27,
+                    25,
                     67_108_864,
-                    38,
+                    39,
                     22,
                     542_991_299,
                     0,
-                    38 * 16 * 4
+                    39 * 16 * 4
                 );
             claimedEval = KoalaBearExt5.add(claimedEval, round0Contribution);
 
             round1RandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 22, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 19, allRandomness, randomnessCursor
             );
             prevRoot = round0Root;
         }
@@ -207,18 +207,18 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     round1RandomnessOffset,
                     round1OodEvaluation,
                     25,
-                    8_388_608,
-                    31,
-                    19,
-                    339_671_193,
+                    4_194_304,
+                    39,
+                    18,
+                    1_816_824_389,
                     1,
-                    31 * 16 * 20
+                    39 * 16 * 20
                 );
             claimedEval = KoalaBearExt5.add(claimedEval, round1Contribution);
 
             round2RandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 25, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 21, allRandomness, randomnessCursor
             );
             prevRoot = round1Root;
         }
@@ -246,19 +246,19 @@ contract WhirBlobVerifierNative5_k22_jb100_ext5_lir4_ff4_rsv3_pow28 {
                     allRandomness,
                     round2RandomnessOffset,
                     round2OodEvaluation,
-                    26,
-                    4_194_304,
-                    19,
-                    18,
-                    1_816_824_389,
+                    25,
+                    2_097_152,
+                    22,
+                    17,
+                    373_019_801,
                     1,
-                    19 * 16 * 20
+                    22 * 16 * 20
                 );
             claimedEval = KoalaBearExt5.add(claimedEval, round2Contribution);
 
             finalStirRandomnessOffset = randomnessCursor;
             (claimedEval, randomnessCursor, offset) = WhirVerifierCore5._verifySumcheckBlob(
-                blob, offset, challenger, claimedEval, 4, 27, allRandomness, randomnessCursor
+                blob, offset, challenger, claimedEval, 4, 24, allRandomness, randomnessCursor
             );
             prevRoot = round2Root;
         }

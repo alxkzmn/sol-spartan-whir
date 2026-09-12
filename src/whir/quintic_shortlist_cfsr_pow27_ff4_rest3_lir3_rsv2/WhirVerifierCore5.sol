@@ -7,7 +7,7 @@ import { KoalaBearExt5 } from "../../field/KoalaBearExt5.sol";
 import { MerkleVerifier } from "../../merkle/MerkleVerifier.sol";
 import { KeccakChallenger } from "../../transcript/KeccakChallenger.sol";
 import { WhirStructs } from "../WhirStructs.sol";
-import { WhirBlobCodec5 } from "./WhirBlobCodec5_k22_jb100_ext5_lir4_ff4_rsv3_pow28.sol";
+import { WhirBlobCodec5 } from "./WhirBlobCodec5_cfsr_pow27_ff4_rest3_lir3_rsv2.sol";
 import { WhirVerifierUtils5 } from "./WhirVerifierUtils5.sol";
 
 library WhirVerifierCore5 {
@@ -21,6 +21,12 @@ library WhirVerifierCore5 {
         hex"000000016c4a8a45163bd49958ff6e906e2f4d7a65d3aa2e57421f5d71352c4c45a60e616428b7e3665070516566002c4cd7bb26247e1bfa75386aad37c43dd9000000013e687d4d303964b2300ba3ce768fc6fa2cb3f80a3f56e3af3446e3ab7744959c3b725f621e9330746107e94c437ce0a445b5bd2e7e77ea690409289300000001334d48c727ad539b54d7833617668b8a540363e73546ad0e0b4d176329b75a801da1678948d2e0073f9e4a46654a8bad7d598a0369af7ef41ed33131000000015c4a5b990a28f03164a0e08708dbd69c4154af7e5af0e6ec6931c06d6832fe4a4489a82a226210df1d14ebfe27ae21e2309bb4e5433bb7737348d2db000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff";
     bytes private constant POW_TABLE_FINAL =
         hex"00000001163bd4996e2f4d7a57421f5d45a60e61665070514cd7bb2675386aad3e687d4d1908abb42a79b9947e1ad39c4625f2a217aa4b5f2cf219ca03bc565600000001303964b2768fc6fa3f56e3af7744959c1e933074437ce0a47e77ea69334d48c740fe646a100753d77ca12bf875227a3325957b534451b86f52a36f8f0000000127ad539b17668b8a3546ad0e29b75a8048d2e007654a8bad69af7ef45c4a5b995b47c55d3cc6248a171639a5586ff04e04c4aab70a9a56263bbe793a000000010a28f03108dbd69c5af0e6ec6832fe4a226210df27ae21e2433bb7737e0100026d6e568d3a89a0253893800a174e365063861a5027dfce221335b668000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000";
+    bytes private constant POW_TABLE_RSV4_FINAL =
+        hex"000000016e2f4d7a45a60e614cd7bb263e687d4d2a79b9944625f2a22cf219ca303964b27d7ab4647e3a7e880063424d300ba3ce32f3e5cc5f9907a95b51c37800000001768fc6fa7744959c437ce0a4334d48c7100753d775227a334451b86f27ad539b1078181c32313d6e122f94c954d783364ae7845b425d36ed49f18ebe0000000117668b8a29b75a80654a8bad5c4a5b993cc6248a586ff04e0a9a56260a28f0312322d8145599fb2c74247efc64a0e08711e1ba5100d2f0dd4e64f8210000000108dbd69c6832fe4a27ae21e27e0100023a89a025174e365027dfce227f0000007624296516cd01b75751de1f00feffff44765fdc67b1c9b1572031df";
+    bytes private constant POW_TABLE_CFSR_LIR3_ROUND0 =
+        hex"00000001484ef19b514ddcad534ef3a9143ef8991e3f974a3440651f4fe176216c4a8a4531aaa51e50a00a34177192ed2af20850144ad026294618a020dfa6a300000001163bd4996e2f4d7a57421f5d45a60e61665070514cd7bb2675386aad3e687d4d1908abb42a79b9947e1ad39c4625f2a217aa4b5f2cf219ca03bc565600000001303964b2768fc6fa3f56e3af7744959c1e933074437ce0a47e77ea69334d48c740fe646a100753d77ca12bf875227a3325957b534451b86f52a36f8f0000000127ad539b17668b8a3546ad0e29b75a8048d2e007654a8bad69af7ef45c4a5b995b47c55d3cc6248a171639a5586ff04e04c4aab70a9a56263bbe793a000000010a28f03108dbd69c5af0e6ec6832fe4a226210df27ae21e2433bb7737e0100026d6e568d3a89a0253893800a174e365063861a5027dfce221335b668000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000";
+    bytes private constant POW_TABLE_CFSR_LIR3_ROUND1 =
+        hex"00000001514ddcad143ef8993440651f6c4a8a4550a00a342af20850294618a0163bd4994deb4cd54e38e7506839521c58ff6e9042f7bccd1974821349ef6cf3000000016e2f4d7a45a60e614cd7bb263e687d4d2a79b9944625f2a22cf219ca303964b27d7ab4647e3a7e880063424d300ba3ce32f3e5cc5f9907a95b51c37800000001768fc6fa7744959c437ce0a4334d48c7100753d775227a334451b86f27ad539b1078181c32313d6e122f94c954d783364ae7845b425d36ed49f18ebe0000000117668b8a29b75a80654a8bad5c4a5b993cc6248a586ff04e0a9a56260a28f0312322d8145599fb2c74247efc64a0e08711e1ba5100d2f0dd4e64f8210000000108dbd69c6832fe4a27ae21e27e0100023a89a025174e365027dfce227f0000007624296516cd01b75751de1f00feffff44765fdc67b1c9b1572031df";
 
     struct EqStatement {
         uint256 numVariables;
@@ -63,6 +69,7 @@ library WhirVerifierCore5 {
     error QueryBatchRowLengthMismatch(uint256 expected, uint256 actual);
     error MerkleRootMismatch(bytes32 expected, bytes32 actual);
     error InvalidPowWitness();
+    error InvalidPowWitnessAt(uint256 bits, uint256 offset);
     error SumcheckPolynomialLengthMismatch(uint256 expected, uint256 actual);
     error SumcheckPowWitnessLengthMismatch(uint256 expected, uint256 actual);
     error StirConstraintFailed(uint256 index);
@@ -158,6 +165,12 @@ library WhirVerifierCore5 {
             table = POW_TABLE_ROUND2;
         } else if (base == 373_019_801) {
             table = POW_TABLE_FINAL;
+        } else if (base == 1_848_593_786) {
+            table = POW_TABLE_RSV4_FINAL;
+        } else if (base == 1_213_133_211) {
+            table = POW_TABLE_CFSR_LIR3_ROUND0;
+        } else if (base == 1_364_057_261) {
+            table = POW_TABLE_CFSR_LIR3_ROUND1;
         } else {
             unchecked {
                 for (uint256 i = 0; i < count; ++i) {
@@ -422,52 +435,44 @@ library WhirVerifierCore5 {
         }
 
         unchecked {
-            if (finalPolyLength == 64 && numQueries == 14) {
+            if (finalPolyLength == 64) {
                 uint256 packedFinalPtr =
                     WhirVerifierUtils5._prepareHornerRadix64(blob, finalPolyOffset);
                 _fillSelVarsPow(indices, foldedDomainGen, numQueries);
-                uint256 point0;
-                uint256 point1;
-                uint256 point2;
-                uint256 point3;
-                uint256 point4;
-                uint256 point5;
-                uint256 point6;
-                uint256 point7;
-                uint256 point8;
-                uint256 point9;
-                assembly ("memory-safe") {
-                    let indicesBase := add(indices, 0x20)
-                    point0 := mload(indicesBase)
-                    point1 := mload(add(indicesBase, 0x20))
-                    point2 := mload(add(indicesBase, 0x40))
-                    point3 := mload(add(indicesBase, 0x60))
-                    point4 := mload(add(indicesBase, 0x80))
-                    point5 := mload(add(indicesBase, 0xa0))
-                    point6 := mload(add(indicesBase, 0xc0))
-                    point7 := mload(add(indicesBase, 0xe0))
-                    point8 := mload(add(indicesBase, 0x100))
-                    point9 := mload(add(indicesBase, 0x120))
-                }
-
                 uint256 rowEvalsBase;
                 assembly ("memory-safe") {
                     rowEvalsBase := add(rowEvals, 0x20)
                 }
-                uint256 mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
-                    packedFinalPtr, point0, point1, point2, point3, point4, rowEvalsBase, 0
-                );
-                if (mismatchPlusOne != 0) {
-                    revert StirConstraintFailed(mismatchPlusOne - 1);
+                uint256 i;
+                for (; i + 5 <= numQueries; i += 5) {
+                    uint256 point0;
+                    uint256 point1;
+                    uint256 point2;
+                    uint256 point3;
+                    uint256 point4;
+                    assembly ("memory-safe") {
+                        let points := add(add(indices, 0x20), shl(5, i))
+                        point0 := mload(points)
+                        point1 := mload(add(points, 0x20))
+                        point2 := mload(add(points, 0x40))
+                        point3 := mload(add(points, 0x60))
+                        point4 := mload(add(points, 0x80))
+                    }
+                    uint256 mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
+                        packedFinalPtr,
+                        point0,
+                        point1,
+                        point2,
+                        point3,
+                        point4,
+                        rowEvalsBase,
+                        i
+                    );
+                    if (mismatchPlusOne != 0) {
+                        revert StirConstraintFailed(i + mismatchPlusOne - 1);
+                    }
                 }
-                mismatchPlusOne = WhirVerifierUtils5._checkHornerRadix64(
-                    packedFinalPtr, point5, point6, point7, point8, point9, rowEvalsBase, 5
-                );
-                if (mismatchPlusOne != 0) {
-                    revert StirConstraintFailed(mismatchPlusOne + 4);
-                }
-
-                for (uint256 i = 10; i < 14; ++i) {
+                for (; i < numQueries; ++i) {
                     uint256 point = indices[i];
                     if (WhirVerifierUtils5._hornerRadix64(packedFinalPtr, point) != rowEvals[i]) {
                         revert StirConstraintFailed(i);
@@ -481,6 +486,78 @@ library WhirVerifierCore5 {
                 if (
                     WhirVerifierUtils5.hornerBaseBlob(blob, finalPolyOffset, finalPolyLength, point)
                         != rowEvals[i]
+                ) {
+                    revert StirConstraintFailed(i);
+                }
+            }
+        }
+    }
+
+    function _verifyFinalStirChallengesBlobGeneric(
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldingFactor,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory indices,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint256 finalPolyOffset,
+        uint256 finalPolyLength
+    ) private pure {
+        uint256 rowLen = uint256(1) << foldingFactor;
+        uint256 rowBytes = rowLen * 20;
+        uint256[] memory frontierEntries = new uint256[](numQueries);
+        uint256[] memory rowEvals = new uint256[](numQueries);
+
+        unchecked {
+            for (uint256 i = 0; i < numQueries; ++i) {
+                uint256 rowOffset = valuesOffset + i * rowBytes;
+                frontierEntries[i] = uint256(
+                    MerkleVerifier.hashLeafExtension5Slice20Blob(blob, rowOffset, rowLen)
+                ) | indices[i];
+                rowEvals[i] = WhirVerifierUtils5.evaluateExtensionRowAsExt5Blob(
+                    blob,
+                    rowOffset,
+                    rowLen,
+                    allRandomness,
+                    randomnessOffset,
+                    foldingFactor
+                );
+            }
+        }
+
+        bytes32 computedRoot = MerkleVerifier.computeRootFromPackedFrontier20Blob(
+            frontierEntries, numQueries, depth, blob, decommOffset, decommLen
+        );
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        _fillSelVarsPow(indices, foldedDomainGen, numQueries);
+        if (finalPolyLength == 64) {
+            uint256 packedFinalPtr =
+                WhirVerifierUtils5._prepareHornerRadix64(blob, finalPolyOffset);
+            unchecked {
+                for (uint256 i = 0; i < numQueries; ++i) {
+                    if (WhirVerifierUtils5._hornerRadix64(packedFinalPtr, indices[i]) != rowEvals[i]) {
+                        revert StirConstraintFailed(i);
+                    }
+                }
+            }
+            return;
+        }
+
+        unchecked {
+            for (uint256 i = 0; i < numQueries; ++i) {
+                if (
+                    WhirVerifierUtils5.hornerBaseBlob(
+                        blob, finalPolyOffset, finalPolyLength, indices[i]
+                    ) != rowEvals[i]
                 ) {
                     revert StirConstraintFailed(i);
                 }
@@ -654,6 +731,85 @@ library WhirVerifierCore5 {
         claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswer);
     }
 
+    function _verifyStirAndCombineConstraintBlobGenericNativeFused(
+        KeccakChallenger.State memory challenger,
+        bytes32 expectedRoot,
+        uint256 numQueries,
+        uint256 depth,
+        uint256 foldingFactor,
+        uint256 foldedDomainGen,
+        bytes calldata blob,
+        uint256 valuesOffset,
+        uint256 decommOffset,
+        uint256 decommLen,
+        uint256[] memory indices,
+        uint256[] memory allRandomness,
+        uint256 randomnessOffset,
+        uint8 expectedKind,
+        uint256 oodAnswer
+    )
+        private
+        pure
+        returns (uint256 challenge, uint256 claimedContribution, uint256[] memory selVars)
+    {
+        challenge = WhirVerifierUtils5.sampleExt5(challenger);
+        selVars = indices;
+
+        uint256 rowLen = uint256(1) << foldingFactor;
+        uint256 rowBytes = rowLen * (expectedKind == 0 ? 4 : 20);
+        uint256[] memory frontierEntries = new uint256[](numQueries);
+
+        unchecked {
+            uint256 rowOffset = valuesOffset + numQueries * rowBytes;
+            uint256 nextHigher;
+            for (uint256 i = numQueries; i > 0; --i) {
+                uint256 pos = i - 1;
+                uint256 idx = indices[pos];
+                if (i != numQueries && idx >= nextHigher) {
+                    revert MerkleVerifier.IndicesNotStrictlyIncreasing(idx, nextHigher);
+                }
+                nextHigher = idx;
+                rowOffset -= rowBytes;
+
+                bytes32 hash;
+                uint256 evalValue;
+                if (expectedKind == 0) {
+                    hash = MerkleVerifier.hashLeafBaseSlice20Blob(blob, rowOffset, rowLen);
+                    evalValue = WhirVerifierUtils5.evaluateBaseRowAsExt5Blob(
+                        blob,
+                        rowOffset,
+                        rowLen,
+                        allRandomness,
+                        randomnessOffset,
+                        foldingFactor
+                    );
+                } else {
+                    hash = MerkleVerifier.hashLeafExtension5Slice20Blob(blob, rowOffset, rowLen);
+                    evalValue = WhirVerifierUtils5.evaluateExtensionRowAsExt5Blob(
+                        blob,
+                        rowOffset,
+                        rowLen,
+                        allRandomness,
+                        randomnessOffset,
+                        foldingFactor
+                    );
+                }
+                claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
+                frontierEntries[pos] = uint256(hash) | idx;
+            }
+        }
+
+        bytes32 computedRoot = MerkleVerifier.computeRootFromPackedFrontier20Blob(
+            frontierEntries, numQueries, depth, blob, decommOffset, decommLen
+        );
+        if (computedRoot != expectedRoot) {
+            revert MerkleRootMismatch(expectedRoot, computedRoot);
+        }
+
+        _fillSelVarsPow(selVars, foldedDomainGen, numQueries);
+        claimedContribution = _hornerStep(claimedContribution, challenge, oodAnswer);
+    }
+
     function _verifyRoundStirAndCombineConstraintBlob(
         KeccakChallenger.State memory challenger,
         bytes32 expectedRoot,
@@ -666,6 +822,7 @@ library WhirVerifierCore5 {
         uint256 oodAnswer,
         uint256 powBits,
         uint256 domainSize,
+        uint256 foldingFactor,
         uint256 numQueries,
         uint256 depth,
         uint256 foldedDomainGen,
@@ -685,7 +842,7 @@ library WhirVerifierCore5 {
         challenger.sampleBase();
 
         uint256[] memory indices =
-            WhirVerifierUtils5.sampleStirQueries(challenger, domainSize, 4, numQueries);
+            WhirVerifierUtils5.sampleStirQueries(challenger, domainSize, foldingFactor, numQueries);
         if (indices.length != numQueries) {
             revert QueryBatchCountMismatch(numQueries, indices.length);
         }
@@ -693,22 +850,44 @@ library WhirVerifierCore5 {
         uint256 decommOffset = valuesOffset + valuesByteLen;
         nextOffset = decommOffset + decommLen * 20;
 
-        (challenge, claimedContribution, selVars) = _verifyStirAndCombineConstraintBlob16NativeFused(
-            challenger,
-            expectedRoot,
-            numQueries,
-            depth,
-            foldedDomainGen,
-            blob,
-            valuesOffset,
-            decommOffset,
-            decommLen,
-            indices,
-            allRandomness,
-            randomnessOffset,
-            expectedKind,
-            oodAnswer
-        );
+        if (foldingFactor == 4) {
+            (challenge, claimedContribution, selVars) =
+                _verifyStirAndCombineConstraintBlob16NativeFused(
+                    challenger,
+                    expectedRoot,
+                    numQueries,
+                    depth,
+                    foldedDomainGen,
+                    blob,
+                    valuesOffset,
+                    decommOffset,
+                    decommLen,
+                    indices,
+                    allRandomness,
+                    randomnessOffset,
+                    expectedKind,
+                    oodAnswer
+                );
+        } else {
+            (challenge, claimedContribution, selVars) =
+                _verifyStirAndCombineConstraintBlobGenericNativeFused(
+                    challenger,
+                    expectedRoot,
+                    numQueries,
+                    depth,
+                    foldingFactor,
+                    foldedDomainGen,
+                    blob,
+                    valuesOffset,
+                    decommOffset,
+                    decommLen,
+                    indices,
+                    allRandomness,
+                    randomnessOffset,
+                    expectedKind,
+                    oodAnswer
+                );
+        }
     }
 
     function _verifyFinalStirChallengesBlobFixed(
@@ -725,18 +904,19 @@ library WhirVerifierCore5 {
         _checkWitnessBaseLeBlob(challenger, 24, blob, powWitnessOffset);
 
         uint256[] memory indices =
-            WhirVerifierUtils5.sampleStirQueries(challenger, 2_097_152, 4, 14);
+            WhirVerifierUtils5.sampleStirQueries(challenger, 1_048_576, 3, 14);
         if (indices.length != 14) {
             revert QueryBatchCountMismatch(14, indices.length);
         }
 
-        uint256 decommOffset = valuesOffset + 14 * 16 * 20;
+        uint256 decommOffset = valuesOffset + 14 * 8 * 20;
         nextOffset = decommOffset + decommLen * 20;
 
-        _verifyFinalStirChallengesBlob16(
+        _verifyFinalStirChallengesBlobGeneric(
             expectedRoot,
             14,
             17,
+            3,
             373_019_801,
             blob,
             valuesOffset,
@@ -819,6 +999,42 @@ library WhirVerifierCore5 {
         return _parseFixedCommitmentPointBlob(challenger, blob, offset);
     }
 
+    function _parseFixedCommitment15x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitment12x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
+    function _parseFixedCommitment9x1Blob(
+        KeccakChallenger.State memory challenger,
+        bytes calldata blob,
+        uint256 offset
+    )
+        internal
+        pure
+        returns (bytes32 root, uint256 oodPoint, uint256 oodEvaluation, uint256 nextOffset)
+    {
+        return _parseFixedCommitmentPointBlob(challenger, blob, offset);
+    }
+
     function _parseFixedCommitment10x1Blob(
         KeccakChallenger.State memory challenger,
         bytes calldata blob,
@@ -859,7 +1075,7 @@ library WhirVerifierCore5 {
 
         challenger.observeBytesCalldata(blob, offset, 4);
         if (challenger.sampleBitsUnchecked(bits) != 0) {
-            revert InvalidPowWitness();
+            revert InvalidPowWitnessAt(bits, offset);
         }
     }
 
@@ -1460,6 +1676,105 @@ library WhirVerifierCore5 {
         round2Eq = _packEqAccumulatorAt(_eqAccumulatorPtr(state, 4));
     }
 
+    function _evaluateFixedEqTermsBlobRaw4(
+        bytes calldata blob,
+        uint256 statementPointOffset,
+        uint256 initialOodPoint,
+        uint256 round0OodPoint,
+        uint256 round1OodPoint,
+        uint256 round2OodPoint,
+        uint256 round3OodPoint,
+        uint256[] memory fullPoint
+    )
+        internal
+        pure
+        returns (
+            uint256 statementEq,
+            uint256 initialEq,
+            uint256 round0Eq,
+            uint256 round1Eq,
+            uint256 round2Eq,
+            uint256 round3Eq
+        )
+    {
+        uint256 initialCurrent = initialOodPoint;
+        uint256 round0Current = round0OodPoint;
+        uint256 round1Current = round1OodPoint;
+        uint256 round2Current = round2OodPoint;
+        uint256 round3Current = round3OodPoint;
+        uint256 pointBase;
+        uint256[12] memory state;
+        uint256[4] memory cache;
+        assembly ("memory-safe") {
+            pointBase := add(fullPoint, 0x20)
+        }
+
+        unchecked {
+            {
+                uint256 q;
+                uint256 statementPointValue;
+                assembly ("memory-safe") {
+                    q := mload(add(pointBase, 672))
+                    statementPointValue := and(
+                        calldataload(add(add(blob.offset, statementPointOffset), 420)),
+                        not(sub(shl(96, 1), 1))
+                    )
+                }
+                _prepareEqTermForms(q, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 0), statementPointValue, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 1), initialCurrent, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 2), round0Current, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 3), round1Current, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 4), round2Current, cache);
+                _initialEqAt(_eqAccumulatorPtr12(state, 5), round3Current, cache);
+                initialCurrent = KoalaBearExt5.square(initialCurrent);
+                round0Current = KoalaBearExt5.square(round0Current);
+                round1Current = KoalaBearExt5.square(round1Current);
+                round2Current = KoalaBearExt5.square(round2Current);
+                round3Current = KoalaBearExt5.square(round3Current);
+            }
+            for (uint256 i = 21; i > 0; --i) {
+                uint256 q;
+                uint256 statementPointValue;
+                assembly ("memory-safe") {
+                    let idx := sub(i, 1)
+                    q := mload(add(pointBase, shl(5, idx)))
+                    statementPointValue := and(
+                        calldataload(add(add(blob.offset, statementPointOffset), mul(20, idx))),
+                        not(sub(shl(96, 1), 1))
+                    )
+                }
+
+                _prepareEqTermForms(q, cache);
+                _accEqAt(_eqAccumulatorPtr12(state, 0), statementPointValue, cache);
+                _accEqAt(_eqAccumulatorPtr12(state, 1), initialCurrent, cache);
+                initialCurrent = KoalaBearExt5.square(initialCurrent);
+                if (i > 4) {
+                    _accEqAt(_eqAccumulatorPtr12(state, 2), round0Current, cache);
+                    round0Current = KoalaBearExt5.square(round0Current);
+                }
+                if (i > 7) {
+                    _accEqAt(_eqAccumulatorPtr12(state, 3), round1Current, cache);
+                    round1Current = KoalaBearExt5.square(round1Current);
+                }
+                if (i > 10) {
+                    _accEqAt(_eqAccumulatorPtr12(state, 4), round2Current, cache);
+                    round2Current = KoalaBearExt5.square(round2Current);
+                }
+                if (i > 13) {
+                    _accEqAt(_eqAccumulatorPtr12(state, 5), round3Current, cache);
+                    round3Current = KoalaBearExt5.square(round3Current);
+                }
+            }
+        }
+        statementEq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 0));
+        initialEq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 1));
+        round0Eq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 2));
+        round1Eq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 3));
+        round2Eq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 4));
+        round3Eq = _packEqAccumulatorAt(_eqAccumulatorPtr12(state, 5));
+    }
+
     function _evaluateInitialConstraintSingleCalldataRaw(
         uint256 challenge,
         uint256[] calldata statementPoint,
@@ -1517,14 +1832,18 @@ library WhirVerifierCore5 {
                 uint256 eval0;
                 uint256 eval1;
                 (eval0, eval1) =
-                    _selectCubicPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 4, 18);
+                    _selectCubicPolyEvalFixedPair(
+                        selVars[i - 1], selVars[i - 2], fullPoint, fullPoint, 4, 18
+                    );
                 total = _hornerStep(total, challenge, eval0);
                 total = _hornerStep(total, challenge, eval1);
                 i -= 2;
             }
             if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectCubicPolyEvalFixed(selVars[0], fullPoint, 4, 18)
+                    total,
+                    challenge,
+                    _selectCubicPolyEvalFixed(selVars[0], fullPoint, fullPoint, 4, 18)
                 );
             }
         }
@@ -1543,14 +1862,18 @@ library WhirVerifierCore5 {
                 uint256 eval0;
                 uint256 eval1;
                 (eval0, eval1) =
-                    _selectCubicPolyEvalFixedPair(selVars[i - 1], selVars[i - 2], fullPoint, 8, 14);
+                    _selectCubicPolyEvalFixedPair(
+                        selVars[i - 1], selVars[i - 2], fullPoint, fullPoint, 8, 14
+                    );
                 total = _hornerStep(total, challenge, eval0);
                 total = _hornerStep(total, challenge, eval1);
                 i -= 2;
             }
             if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectCubicPolyEvalFixed(selVars[0], fullPoint, 8, 14)
+                    total,
+                    challenge,
+                    _selectCubicPolyEvalFixed(selVars[0], fullPoint, fullPoint, 8, 14)
                 );
             }
         }
@@ -1569,7 +1892,7 @@ library WhirVerifierCore5 {
                 uint256 eval0;
                 uint256 eval1;
                 (eval0, eval1) = _selectCubicPolyEvalFixedPair(
-                    selVars[i - 1], selVars[i - 2], fullPoint, 12, 10
+                    selVars[i - 1], selVars[i - 2], fullPoint, fullPoint, 12, 10
                 );
                 total = _hornerStep(total, challenge, eval0);
                 total = _hornerStep(total, challenge, eval1);
@@ -1577,7 +1900,48 @@ library WhirVerifierCore5 {
             }
             if (i != 0) {
                 total = _hornerStep(
-                    total, challenge, _selectCubicPolyEvalFixed(selVars[0], fullPoint, 12, 10)
+                    total,
+                    challenge,
+                    _selectCubicPolyEvalFixed(selVars[0], fullPoint, fullPoint, 12, 10)
+                );
+            }
+        }
+        total = _hornerStep(total, challenge, eqEval);
+    }
+
+    function _evaluateConstraintCubicRawWithPrecomputedEq(
+        uint256 challenge,
+        uint256 eqEval,
+        uint256[] memory selVars,
+        uint256[] memory fullPoint,
+        uint256[] memory cache,
+        uint256 pointOffset,
+        uint256 numVariables
+    ) internal pure returns (uint256 total) {
+        unchecked {
+            uint256 i = selVars.length;
+            for (; i > 1;) {
+                uint256 eval0;
+                uint256 eval1;
+                (eval0, eval1) = _selectCubicPolyEvalFixedPair(
+                    selVars[i - 1],
+                    selVars[i - 2],
+                    fullPoint,
+                    cache,
+                    pointOffset,
+                    numVariables
+                );
+                total = _hornerStep(total, challenge, eval0);
+                total = _hornerStep(total, challenge, eval1);
+                i -= 2;
+            }
+            if (i != 0) {
+                total = _hornerStep(
+                    total,
+                    challenge,
+                    _selectCubicPolyEvalFixed(
+                        selVars[0], fullPoint, cache, pointOffset, numVariables
+                    )
                 );
             }
         }
@@ -1658,11 +2022,18 @@ library WhirVerifierCore5 {
 
     function _selectCubicPolyEvalFixed(
         uint256 current,
+        uint256[] memory fullPoint,
         uint256[] memory cache,
         uint256 pointOffset,
         uint256 n
     ) internal pure returns (uint256) {
         if (n == 0) return uint256(1) << 224;
+        if (n == 1) {
+            uint256 scalar = current == 0 ? KoalaBear.MODULUS - 1 : current - 1;
+            return KoalaBearExt5.add(
+                KoalaBearExt5.ONE, KoalaBearExt5.mulBase(fullPoint[pointOffset], scalar)
+            );
+        }
         unchecked {
             // `_prepareSelectCubicPairs` stores pairs (4,5), (6,7), ... at 160-byte strides.
             // Start from the pair ending at `pointOffset + n - 1` and walk backwards.
@@ -1677,20 +2048,30 @@ library WhirVerifierCore5 {
                 (bLow, bRev, next) = _evaluateSelectCubicPair(ptr, next);
                 (low, rev) = _mulSelectCubicForms(low, rev, bLow, bRev);
             }
-            return _packSelectCubicForms(low, rev);
+            uint256 result = _packSelectCubicForms(low, rev);
+            if (n & 1 != 0) {
+                uint256 scalar = next == 0 ? KoalaBear.MODULUS - 1 : next - 1;
+                uint256 term = KoalaBearExt5.add(
+                    KoalaBearExt5.ONE,
+                    KoalaBearExt5.mulBase(fullPoint[pointOffset], scalar)
+                );
+                result = KoalaBearExt5.mul(result, term);
+            }
+            return result;
         }
     }
 
     function _selectCubicPolyEvalFixedPair(
         uint256 a,
         uint256 b,
+        uint256[] memory fullPoint,
         uint256[] memory cache,
         uint256 offset,
         uint256 n
     ) internal pure returns (uint256, uint256) {
         return (
-            _selectCubicPolyEvalFixed(a, cache, offset, n),
-            _selectCubicPolyEvalFixed(b, cache, offset, n)
+            _selectCubicPolyEvalFixed(a, fullPoint, cache, offset, n),
+            _selectCubicPolyEvalFixed(b, fullPoint, cache, offset, n)
         );
     }
 
@@ -1965,6 +2346,14 @@ library WhirVerifierCore5 {
     }
 
     function _eqAccumulatorPtr(uint256[10] memory state, uint256 index)
+        private
+        pure
+        returns (uint256 ptr)
+    {
+        assembly ("memory-safe") { ptr := add(state, shl(6, index)) }
+    }
+
+    function _eqAccumulatorPtr12(uint256[12] memory state, uint256 index)
         private
         pure
         returns (uint256 ptr)

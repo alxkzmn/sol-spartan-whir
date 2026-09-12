@@ -5,28 +5,29 @@ import { stdJson } from "forge-std/StdJson.sol";
 import { Test } from "forge-std/Test.sol";
 import { FieldHarness } from "./helpers/FieldHarness.sol";
 
+// `vm.parseJson` ABI-encodes object members in alphabetical key order.
 struct BaseFieldVectorFixture {
     uint256 a;
-    uint256 b;
     uint256 add;
-    uint256 sub;
-    uint256 mul;
+    uint256 b;
     uint256 inv;
+    uint256 mul;
+    uint256 sub;
 }
 
 struct ExtensionFieldVectorFixture {
     uint256[] a;
-    uint256[] b;
     uint256[] add;
-    uint256[] sub;
-    uint256[] mul;
+    uint256[] b;
     uint256[] inv;
+    uint256[] mul;
     uint256 packed_a;
-    uint256 packed_b;
     uint256 packed_add;
-    uint256 packed_sub;
-    uint256 packed_mul;
+    uint256 packed_b;
     uint256 packed_inv;
+    uint256 packed_mul;
+    uint256 packed_sub;
+    uint256[] sub;
 }
 
 struct ExtensionExtrapolateVectorFixture {
@@ -49,39 +50,21 @@ struct ExtensionHypercubeVectorFixture {
     uint256 packed_result;
 }
 
-struct FieldVectorFixture {
-    BaseFieldVectorFixture[] base;
-    ExtensionFieldVectorFixture[] quartic;
-    ExtensionFieldVectorFixture[] quintic;
-    ExtensionFieldVectorFixture[] octic;
-    ExtensionExtrapolateVectorFixture[] quartic_extrapolate;
-    ExtensionEqPolyVectorFixture[] quartic_eq_poly;
-    ExtensionHypercubeVectorFixture[] quartic_hypercube;
-    ExtensionExtrapolateVectorFixture[] quintic_extrapolate;
-    ExtensionEqPolyVectorFixture[] quintic_eq_poly;
-    ExtensionHypercubeVectorFixture[] quintic_hypercube;
-    ExtensionExtrapolateVectorFixture[] octic_extrapolate;
-    ExtensionEqPolyVectorFixture[] octic_eq_poly;
-    ExtensionHypercubeVectorFixture[] octic_hypercube;
-}
-
 contract FieldArithmeticTest is Test {
     using stdJson for string;
 
     string internal constant TESTDATA = "testdata/";
 
     FieldHarness internal harness;
-    FieldVectorFixture internal vectors;
 
     function setUp() public {
         harness = new FieldHarness();
-        string memory raw = vm.readFile(string.concat(TESTDATA, "field_vectors.json"));
-        vectors = abi.decode(raw.parseRaw("$"), (FieldVectorFixture));
     }
 
     function testKoalaBearBaseFieldVectors() external view {
-        for (uint256 i = 0; i < vectors.base.length; ++i) {
-            BaseFieldVectorFixture memory vector = vectors.base[i];
+        BaseFieldVectorFixture[] memory vectors = _loadBaseVectors();
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            BaseFieldVectorFixture memory vector = vectors[i];
             assertEq(harness.baseAdd(vector.a, vector.b), vector.add);
             assertEq(harness.baseSub(vector.a, vector.b), vector.sub);
             assertEq(harness.baseMul(vector.a, vector.b), vector.mul);
@@ -109,8 +92,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt4Vectors() external view {
-        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".quartic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(harness.ext4Pack(vector.a), vector.packed_a);
             assertEq(harness.ext4Pack(vector.b), vector.packed_b);
             _assertEqArray(harness.ext4Unpack(vector.packed_a), vector.a);
@@ -127,8 +111,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt4MulMatchesReference() external view {
-        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".quartic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext4Mul(vector.packed_a, vector.packed_b),
                 harness.ext4MulReference(vector.packed_a, vector.packed_b)
@@ -155,8 +140,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt8Vectors() external view {
-        for (uint256 i = 0; i < vectors.octic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".octic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(harness.ext8Pack(vector.a), vector.packed_a);
             assertEq(harness.ext8Pack(vector.b), vector.packed_b);
             _assertEqArray(harness.ext8Unpack(vector.packed_a), vector.a);
@@ -173,8 +159,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt5Vectors() external view {
-        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".quintic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(harness.ext5Pack(vector.a), vector.packed_a);
             assertEq(harness.ext5Pack(vector.b), vector.packed_b);
             _assertEqArray(harness.ext5Unpack(vector.packed_a), vector.a);
@@ -188,8 +175,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt5MulMatchesReference() external view {
-        for (uint256 i = 0; i < vectors.quintic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.quintic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".quintic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext5Mul(vector.packed_a, vector.packed_b),
                 harness.ext5MulReference(vector.packed_a, vector.packed_b)
@@ -212,8 +200,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt8MulMatchesReference() external view {
-        for (uint256 i = 0; i < vectors.octic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".octic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext8Mul(vector.packed_a, vector.packed_b),
                 harness.ext8MulReference(vector.packed_a, vector.packed_b)
@@ -230,8 +219,10 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt4ExtrapolateVectors() external view {
-        for (uint256 i = 0; i < vectors.quartic_extrapolate.length; ++i) {
-            ExtensionExtrapolateVectorFixture memory vector = vectors.quartic_extrapolate[i];
+        ExtensionExtrapolateVectorFixture[] memory vectors =
+            _loadExtrapolateVectors(".quartic_extrapolate");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext4Extrapolate012(
                     vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
@@ -242,8 +233,10 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt8ExtrapolateVectors() external view {
-        for (uint256 i = 0; i < vectors.octic_extrapolate.length; ++i) {
-            ExtensionExtrapolateVectorFixture memory vector = vectors.octic_extrapolate[i];
+        ExtensionExtrapolateVectorFixture[] memory vectors =
+            _loadExtrapolateVectors(".octic_extrapolate");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext8Extrapolate012(
                     vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
@@ -254,8 +247,10 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt5ExtrapolateVectors() external view {
-        for (uint256 i = 0; i < vectors.quintic_extrapolate.length; ++i) {
-            ExtensionExtrapolateVectorFixture memory vector = vectors.quintic_extrapolate[i];
+        ExtensionExtrapolateVectorFixture[] memory vectors =
+            _loadExtrapolateVectors(".quintic_extrapolate");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionExtrapolateVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext5Extrapolate012(
                     vector.packed_e0, vector.packed_e1, vector.packed_e2, vector.packed_r
@@ -266,29 +261,34 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt4EqPolyVectors() external view {
-        for (uint256 i = 0; i < vectors.quartic_eq_poly.length; ++i) {
-            ExtensionEqPolyVectorFixture memory vector = vectors.quartic_eq_poly[i];
+        ExtensionEqPolyVectorFixture[] memory vectors = _loadEqPolyVectors(".quartic_eq_poly");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors[i];
             assertEq(harness.ext4EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
     function testKoalaBearExt8EqPolyVectors() external view {
-        for (uint256 i = 0; i < vectors.octic_eq_poly.length; ++i) {
-            ExtensionEqPolyVectorFixture memory vector = vectors.octic_eq_poly[i];
+        ExtensionEqPolyVectorFixture[] memory vectors = _loadEqPolyVectors(".octic_eq_poly");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors[i];
             assertEq(harness.ext8EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
     function testKoalaBearExt5EqPolyVectors() external view {
-        for (uint256 i = 0; i < vectors.quintic_eq_poly.length; ++i) {
-            ExtensionEqPolyVectorFixture memory vector = vectors.quintic_eq_poly[i];
+        ExtensionEqPolyVectorFixture[] memory vectors = _loadEqPolyVectors(".quintic_eq_poly");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionEqPolyVectorFixture memory vector = vectors[i];
             assertEq(harness.ext5EqPolyEval(vector.packed_p, vector.packed_q), vector.packed_result);
         }
     }
 
     function testKoalaBearExt4HypercubeVectors() external view {
-        for (uint256 i = 0; i < vectors.quartic_hypercube.length; ++i) {
-            ExtensionHypercubeVectorFixture memory vector = vectors.quartic_hypercube[i];
+        ExtensionHypercubeVectorFixture[] memory vectors =
+            _loadHypercubeVectors(".quartic_hypercube");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext4EvaluateHypercube(vector.packed_evals, vector.packed_point),
                 vector.packed_result
@@ -297,8 +297,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt8HypercubeVectors() external view {
-        for (uint256 i = 0; i < vectors.octic_hypercube.length; ++i) {
-            ExtensionHypercubeVectorFixture memory vector = vectors.octic_hypercube[i];
+        ExtensionHypercubeVectorFixture[] memory vectors = _loadHypercubeVectors(".octic_hypercube");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext8EvaluateHypercube(vector.packed_evals, vector.packed_point),
                 vector.packed_result
@@ -307,8 +308,10 @@ contract FieldArithmeticTest is Test {
     }
 
     function testKoalaBearExt5HypercubeVectors() external view {
-        for (uint256 i = 0; i < vectors.quintic_hypercube.length; ++i) {
-            ExtensionHypercubeVectorFixture memory vector = vectors.quintic_hypercube[i];
+        ExtensionHypercubeVectorFixture[] memory vectors =
+            _loadHypercubeVectors(".quintic_hypercube");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionHypercubeVectorFixture memory vector = vectors[i];
             assertEq(
                 harness.ext5EvaluateHypercube(vector.packed_evals, vector.packed_point),
                 vector.packed_result
@@ -327,8 +330,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testExt4Extrapolate012MatchesReference() external view {
-        for (uint256 i = 0; i < vectors.quartic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.quartic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".quartic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
 
             assertEq(
                 harness.ext4Extrapolate012(
@@ -360,8 +364,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testExt8Extrapolate012FromSumcheckMatchesDirectPath() external view {
-        for (uint256 i = 0; i < vectors.octic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".octic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
             uint256 c0 = vector.packed_a;
             uint256 delta = vector.packed_b;
             uint256 claimedEval = harness.ext8Add(c0, delta);
@@ -376,8 +381,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testExt8Extrapolate012MatchesReference() external view {
-        for (uint256 i = 0; i < vectors.octic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".octic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
 
             assertEq(
                 harness.ext8Extrapolate012(
@@ -485,8 +491,9 @@ contract FieldArithmeticTest is Test {
     }
 
     function testExt8FoldOnceMatchesReference() external view {
-        for (uint256 i = 0; i < vectors.octic.length; ++i) {
-            ExtensionFieldVectorFixture memory vector = vectors.octic[i];
+        ExtensionFieldVectorFixture[] memory vectors = _loadExtensionVectors(".octic");
+        for (uint256 i = 0; i < vectors.length; ++i) {
+            ExtensionFieldVectorFixture memory vector = vectors[i];
 
             uint256 fast0 =
                 harness.ext8FoldOnce(vector.packed_a, vector.packed_b, vector.packed_add);
@@ -526,6 +533,126 @@ contract FieldArithmeticTest is Test {
             assertEq(fast, harness.ext8FoldOnceSchoolbook(a0, a1, r));
             assertEq(fast, harness.ext8FoldOnceReference(a0, a1, r));
         }
+    }
+
+    function _loadBaseVectors() internal view returns (BaseFieldVectorFixture[] memory) {
+        return abi.decode(_loadVectorSection(".base"), (BaseFieldVectorFixture[]));
+    }
+
+    function _loadExtensionVectors(string memory key)
+        internal
+        view
+        returns (ExtensionFieldVectorFixture[] memory)
+    {
+        return abi.decode(_loadVectorSection(key), (ExtensionFieldVectorFixture[]));
+    }
+
+    function _loadExtrapolateVectors(string memory key)
+        internal
+        view
+        returns (ExtensionExtrapolateVectorFixture[] memory)
+    {
+        return abi.decode(_loadVectorSection(key), (ExtensionExtrapolateVectorFixture[]));
+    }
+
+    function _loadEqPolyVectors(string memory key)
+        internal
+        view
+        returns (ExtensionEqPolyVectorFixture[] memory)
+    {
+        return abi.decode(_loadVectorSection(key), (ExtensionEqPolyVectorFixture[]));
+    }
+
+    function _loadHypercubeVectors(string memory key)
+        internal
+        view
+        returns (ExtensionHypercubeVectorFixture[] memory)
+    {
+        return abi.decode(_loadVectorSection(key), (ExtensionHypercubeVectorFixture[]));
+    }
+
+    function _loadVectorSection(string memory key) internal view returns (bytes memory) {
+        string memory raw = vm.readFile(string.concat(TESTDATA, "field_vectors.json"));
+        return raw.parseRaw(key);
+    }
+
+    function _scaleCoeffs(uint256[] memory coeffs, uint256 scalar)
+        internal
+        view
+        returns (uint256[] memory out)
+    {
+        out = new uint256[](coeffs.length);
+        for (uint256 i = 0; i < coeffs.length; ++i) {
+            out[i] = harness.baseMul(coeffs[i], scalar);
+        }
+    }
+
+    function _assertEqArray(uint256[] memory lhs, uint256[] memory rhs) internal pure {
+        assertEq(lhs.length, rhs.length);
+        for (uint256 i = 0; i < lhs.length; ++i) {
+            assertEq(lhs[i], rhs[i]);
+        }
+    }
+
+    function _coeffs4(uint256 a0, uint256 a1, uint256 a2, uint256 a3)
+        internal
+        pure
+        returns (uint256[] memory out)
+    {
+        out = new uint256[](4);
+        out[0] = a0;
+        out[1] = a1;
+        out[2] = a2;
+        out[3] = a3;
+    }
+
+    function _coeffs8(
+        uint256 a0,
+        uint256 a1,
+        uint256 a2,
+        uint256 a3,
+        uint256 a4,
+        uint256 a5,
+        uint256 a6,
+        uint256 a7
+    ) internal pure returns (uint256[] memory out) {
+        out = new uint256[](8);
+        out[0] = a0;
+        out[1] = a1;
+        out[2] = a2;
+        out[3] = a3;
+        out[4] = a4;
+        out[5] = a5;
+        out[6] = a6;
+        out[7] = a7;
+    }
+
+    function _pseudoRandomExt8(uint256 seed) internal pure returns (uint256 packed) {
+        uint256 modulus = 0x7f000001;
+        packed = (uint256(keccak256(abi.encodePacked(seed, uint256(0)))) % modulus) << 224
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(1)))) % modulus) << 192
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(2)))) % modulus) << 160
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(3)))) % modulus) << 128
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(4)))) % modulus) << 96
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(5)))) % modulus) << 64
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(6)))) % modulus) << 32
+            | (uint256(keccak256(abi.encodePacked(seed, uint256(7)))) % modulus);
+    }
+
+    function _extConst4(uint256 scalar) internal pure returns (uint256) {
+        return scalar << 224;
+    }
+
+    function _extConst8(uint256 scalar) internal pure returns (uint256) {
+        return scalar << 224;
+    }
+}
+
+contract FieldArithmeticGasTest is Test {
+    FieldHarness internal harness;
+
+    function setUp() public {
+        harness = new FieldHarness();
     }
 
     function testGasExt4PackUnpack() external view {
@@ -658,24 +785,6 @@ contract FieldArithmeticTest is Test {
         point[5] = _extConst8(17);
 
         assertTrue(harness.ext8EvaluateHypercube(evals, point) != 0);
-    }
-
-    function _scaleCoeffs(uint256[] memory coeffs, uint256 scalar)
-        internal
-        view
-        returns (uint256[] memory out)
-    {
-        out = new uint256[](coeffs.length);
-        for (uint256 i = 0; i < coeffs.length; ++i) {
-            out[i] = harness.baseMul(coeffs[i], scalar);
-        }
-    }
-
-    function _assertEqArray(uint256[] memory lhs, uint256[] memory rhs) internal pure {
-        assertEq(lhs.length, rhs.length);
-        for (uint256 i = 0; i < lhs.length; ++i) {
-            assertEq(lhs[i], rhs[i]);
-        }
     }
 
     function _coeffs4(uint256 a0, uint256 a1, uint256 a2, uint256 a3)

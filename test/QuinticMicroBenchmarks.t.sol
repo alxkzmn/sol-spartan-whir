@@ -826,6 +826,15 @@ contract QuinticMicroBenchmarksTest is Test {
     }
 
     function _gasBaseHypercubeAsExt5(uint256 dim) internal view returns (uint256) {
+        if (dim == 4) {
+            uint256[] memory values = _makeBaseArray(600 + dim, 16);
+            uint256[] memory weights = _makeExt5Array(500 + dim, 16);
+            uint256 dotGasStart = gasleft();
+            uint256 dotSink = _dotBaseWeights16AsExt5(values, weights);
+            require(dotSink != 0, "SINK");
+            return dotGasStart - gasleft();
+        }
+
         uint256 len = uint256(1) << dim;
         uint256[] memory evals = new uint256[](len);
         uint256[] memory point = _makeExt5Array(500 + dim, dim);
@@ -838,6 +847,48 @@ contract QuinticMicroBenchmarksTest is Test {
         uint256 sink = KoalaBearExt5.evaluate_hypercube(evals, point);
         require(sink != 0, "SINK");
         return gasStart - gasleft();
+    }
+
+    function _dotBaseWeights16AsExt5(uint256[] memory values, uint256[] memory weights)
+        internal
+        pure
+        returns (uint256 out)
+    {
+        require(values.length >= 16 && weights.length >= 16, "LEN");
+        assembly ("memory-safe") {
+            let mask := 0xffffffff
+            let valuesPtr := add(values, 0x20)
+            let weightsPtr := add(weights, 0x20)
+            let end := add(valuesPtr, 0x200)
+
+            let c0 := 0
+            let c1 := 0
+            let c2 := 0
+            let c3 := 0
+            let c4 := 0
+
+            for { } lt(valuesPtr, end) {
+                valuesPtr := add(valuesPtr, 0x20)
+                weightsPtr := add(weightsPtr, 0x20)
+            } {
+                let scalar := mload(valuesPtr)
+                let weight := mload(weightsPtr)
+                c0 := add(c0, mul(scalar, shr(224, weight)))
+                c1 := add(c1, mul(scalar, and(shr(192, weight), mask)))
+                c2 := add(c2, mul(scalar, and(shr(160, weight), mask)))
+                c3 := add(c3, mul(scalar, and(shr(128, weight), mask)))
+                c4 := add(c4, mul(scalar, and(shr(96, weight), mask)))
+            }
+
+            let M := 0x7f000001
+            out := or(
+                or(
+                    or(shl(224, mod(c0, M)), shl(192, mod(c1, M))),
+                    or(shl(160, mod(c2, M)), shl(128, mod(c3, M)))
+                ),
+                shl(96, mod(c4, M))
+            )
+        }
     }
 
     function _gasBaseHypercubeAsExt4(uint256 dim) internal view returns (uint256) {

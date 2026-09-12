@@ -499,11 +499,49 @@ library KeccakChallenger {
         _ensureCapacity(self, newLen + 32);
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
-            function bswap32(x) -> y {
-                y := or(
-                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
-                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
+            function swap32Lanes(x) -> swapped {
+                swapped := or(
+                    shl(
+                        8,
+                        and(x, 0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff)
+                    ),
+                    shr(
+                        8,
+                        and(x, 0xff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00)
+                    )
                 )
+                swapped := or(
+                    shl(
+                        16,
+                        and(
+                            swapped,
+                            0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff
+                        )
+                    ),
+                    shr(
+                        16,
+                        and(
+                            swapped,
+                            0xffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000
+                        )
+                    )
+                )
+            }
+
+            function validate(x) {
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000800000008000000080000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+                // The largest per-lane sum is 0x80fffffe, below 2^32.
+                if or(and(x, highBitMask), and(add(and(x, low31Mask), bias), highBitMask)) {
+                    revertPacked(x)
+                }
+            }
+
+            function validateAndEncode(x) -> encoded {
+                validate(x)
+                encoded := swap32Lanes(x)
             }
 
             function revertPacked(x) {
@@ -512,55 +550,9 @@ library KeccakChallenger {
                 revert(0x00, 0x24)
             }
 
-            function validateAndEncode(x, modulus, mask) -> encoded {
-                let x0 := shr(224, x)
-                if iszero(lt(x0, modulus)) {
-                    revertPacked(x)
-                }
-                let x1 := and(shr(192, x), mask)
-                if iszero(lt(x1, modulus)) {
-                    revertPacked(x)
-                }
-                let x2 := and(shr(160, x), mask)
-                if iszero(lt(x2, modulus)) {
-                    revertPacked(x)
-                }
-                let x3 := and(shr(128, x), mask)
-                if iszero(lt(x3, modulus)) {
-                    revertPacked(x)
-                }
-                let x4 := and(shr(96, x), mask)
-                if iszero(lt(x4, modulus)) {
-                    revertPacked(x)
-                }
-                let x5 := and(shr(64, x), mask)
-                if iszero(lt(x5, modulus)) {
-                    revertPacked(x)
-                }
-                let x6 := and(shr(32, x), mask)
-                if iszero(lt(x6, modulus)) {
-                    revertPacked(x)
-                }
-                let x7 := and(x, mask)
-                if iszero(lt(x7, modulus)) {
-                    revertPacked(x)
-                }
-
-                encoded := or(
-                    or(
-                        or(shl(224, bswap32(x0)), shl(192, bswap32(x1))),
-                        or(shl(160, bswap32(x2)), shl(128, bswap32(x3)))
-                    ),
-                    or(
-                        or(shl(96, bswap32(x4)), shl(64, bswap32(x5))),
-                        or(shl(32, bswap32(x6)), bswap32(x7))
-                    )
-                )
-            }
-
             let dst := add(add(buffer, 0x20), oldLen)
-            mstore(dst, validateAndEncode(first, 0x7f000001, 0xffffffff))
-            mstore(add(dst, 0x20), validateAndEncode(second, 0x7f000001, 0xffffffff))
+            mstore(dst, validateAndEncode(first))
+            mstore(add(dst, 0x20), validateAndEncode(second))
         }
 
         self.inputLen = newLen;
@@ -774,13 +766,6 @@ library KeccakChallenger {
         _ensureCapacity(self, newLen);
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
-            function bswap32(x) -> y {
-                y := or(
-                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
-                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
-                )
-            }
-
             function revertPacked(x) {
                 mstore(0x00, shl(224, 0xd53cfe5c))
                 mstore(0x04, x)
@@ -788,44 +773,35 @@ library KeccakChallenger {
             }
 
             let raw := calldataload(add(data.offset, offset))
-            let modulus := 0x7f000001
-            let x0 := bswap32(shr(224, raw))
-            if iszero(lt(x0, modulus)) {
-                revertPacked(raw)
-            }
-            let x1 := bswap32(and(shr(192, raw), 0xffffffff))
-            if iszero(lt(x1, modulus)) {
-                revertPacked(raw)
-            }
-            let x2 := bswap32(and(shr(160, raw), 0xffffffff))
-            if iszero(lt(x2, modulus)) {
-                revertPacked(raw)
-            }
-            let x3 := bswap32(and(shr(128, raw), 0xffffffff))
-            if iszero(lt(x3, modulus)) {
-                revertPacked(raw)
-            }
-            let x4 := bswap32(and(shr(96, raw), 0xffffffff))
-            if iszero(lt(x4, modulus)) {
-                revertPacked(raw)
-            }
-            let x5 := bswap32(and(shr(64, raw), 0xffffffff))
-            if iszero(lt(x5, modulus)) {
-                revertPacked(raw)
-            }
-            let x6 := bswap32(and(shr(32, raw), 0xffffffff))
-            if iszero(lt(x6, modulus)) {
-                revertPacked(raw)
-            }
-            let x7 := bswap32(and(raw, 0xffffffff))
-            if iszero(lt(x7, modulus)) {
-                revertPacked(raw)
-            }
-
+            let swapped :=
+                or(
+                    shl(
+                        8,
+                        and(raw, 0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff)
+                    ),
+                    shr(
+                        8,
+                        and(raw, 0xff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00)
+                    )
+                )
             packed := or(
-                or(or(shl(224, x0), shl(192, x1)), or(shl(160, x2), shl(128, x3))),
-                or(or(shl(96, x4), shl(64, x5)), or(shl(32, x6), x7))
+                shl(
+                    16,
+                    and(swapped, 0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff)
+                ),
+                shr(
+                    16,
+                    and(swapped, 0xffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000)
+                )
             )
+
+            let highBitMask := 0x8000000080000000800000008000000080000000800000008000000080000000
+            let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+            let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+            // The largest per-lane sum is 0x80fffffe, below 2^32.
+            if or(and(packed, highBitMask), and(add(and(packed, low31Mask), bias), highBitMask)) {
+                revertPacked(raw)
+            }
 
             mstore(add(add(buffer, 0x20), oldLen), raw)
         }
@@ -844,13 +820,6 @@ library KeccakChallenger {
         _ensureCapacity(self, newLen + 32);
         bytes memory buffer = self.inputBuffer;
         assembly ("memory-safe") {
-            function bswap32(x) -> y {
-                y := or(
-                    or(shl(24, and(x, 0xff)), shl(8, and(x, 0xff00))),
-                    or(shr(8, and(x, 0xff0000)), shr(24, and(x, 0xff000000)))
-                )
-            }
-
             function revertPacked(x) {
                 mstore(0x00, shl(224, 0xd53cfe5c))
                 mstore(0x04, x)
@@ -858,44 +827,51 @@ library KeccakChallenger {
             }
 
             function decodeAndValidate(raw) -> packed {
-                let modulus := 0x7f000001
-                let x0 := bswap32(shr(224, raw))
-                if iszero(lt(x0, modulus)) {
-                    revertPacked(raw)
-                }
-                let x1 := bswap32(and(shr(192, raw), 0xffffffff))
-                if iszero(lt(x1, modulus)) {
-                    revertPacked(raw)
-                }
-                let x2 := bswap32(and(shr(160, raw), 0xffffffff))
-                if iszero(lt(x2, modulus)) {
-                    revertPacked(raw)
-                }
-                let x3 := bswap32(and(shr(128, raw), 0xffffffff))
-                if iszero(lt(x3, modulus)) {
-                    revertPacked(raw)
-                }
-                let x4 := bswap32(and(shr(96, raw), 0xffffffff))
-                if iszero(lt(x4, modulus)) {
-                    revertPacked(raw)
-                }
-                let x5 := bswap32(and(shr(64, raw), 0xffffffff))
-                if iszero(lt(x5, modulus)) {
-                    revertPacked(raw)
-                }
-                let x6 := bswap32(and(shr(32, raw), 0xffffffff))
-                if iszero(lt(x6, modulus)) {
-                    revertPacked(raw)
-                }
-                let x7 := bswap32(and(raw, 0xffffffff))
-                if iszero(lt(x7, modulus)) {
-                    revertPacked(raw)
-                }
-
+                let swapped :=
+                    or(
+                        shl(
+                            8,
+                            and(
+                                raw,
+                                0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff
+                            )
+                        ),
+                        shr(
+                            8,
+                            and(
+                                raw,
+                                0xff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00
+                            )
+                        )
+                    )
                 packed := or(
-                    or(or(shl(224, x0), shl(192, x1)), or(shl(160, x2), shl(128, x3))),
-                    or(or(shl(96, x4), shl(64, x5)), or(shl(32, x6), x7))
+                    shl(
+                        16,
+                        and(
+                            swapped,
+                            0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff
+                        )
+                    ),
+                    shr(
+                        16,
+                        and(
+                            swapped,
+                            0xffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000
+                        )
+                    )
                 )
+
+                let highBitMask :=
+                    0x8000000080000000800000008000000080000000800000008000000080000000
+                let low31Mask := 0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+                let bias := 0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+                // The largest per-lane sum is 0x80fffffe, below 2^32.
+                if or(
+                    and(packed, highBitMask),
+                    and(add(and(packed, low31Mask), bias), highBitMask)
+                ) {
+                    revertPacked(raw)
+                }
             }
 
             let src := add(data.offset, offset)

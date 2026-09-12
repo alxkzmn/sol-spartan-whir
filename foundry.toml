@@ -7,9 +7,11 @@ script = "script"
 solc = "0.8.28"
 via_ir = true
 optimizer = true
-# Max value where WhirVerifier4 bytecode fits EIP-170 (24,576 bytes).
-# At 833 the contract is 24,552 bytes (24-byte margin). At 834 it jumps to 25,052.
+# 833 is the established WhirVerifier4 optimizer threshold: the size sweep that selected it
+# measured 24,552 runtime bytes at 833 runs and 25,052 bytes at 834 runs.
 optimizer_runs = 833
+# This 64 KiB allowance is for the EIP-7954 PoC; current EIP-170 networks retain 24 KiB.
+code_size_limit = 65536
 fs_permissions = [
   { access = "read", path = "./testdata" }
 ]

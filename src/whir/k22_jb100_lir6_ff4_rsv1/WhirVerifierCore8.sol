@@ -12,6 +12,15 @@ import { WhirVerifierUtils8 } from "./WhirVerifierUtils8.sol";
 library WhirVerifierCore8 {
     using KeccakChallenger for KeccakChallenger.State;
 
+    bytes private constant POW_TABLE_ROUND0 =
+        hex"000000016ac49f8868e7dd492d5059a6205d63c31ca9a3b279f9d01d74a13cda484ef19b00e1983574381f4362d2cf1a7c72a14374baf1bf228fa9bf7deda28000000001514ddcad143ef8993440651f6c4a8a4550a00a342af20850294618a0163bd4994deb4cd54e38e7506839521c58ff6e9042f7bccd1974821349ef6cf3000000016e2f4d7a45a60e614cd7bb263e687d4d2a79b9944625f2a22cf219ca303964b27d7ab4647e3a7e880063424d300ba3ce32f3e5cc5f9907a95b51c37800000001768fc6fa7744959c437ce0a4334d48c7100753d775227a334451b86f27ad539b1078181c32313d6e122f94c954d783364ae7845b425d36ed49f18ebe0000000117668b8a29b75a80654a8bad5c4a5b993cc6248a586ff04e0a9a56260a28f0312322d8145599fb2c74247efc64a0e08711e1ba5100d2f0dd4e64f8210000000108dbd69c6832fe4a27ae21e27e0100023a89a025174e365027dfce227f0000007624296516cd01b75751de1f00feffff44765fdc67b1c9b1572031df";
+    bytes private constant POW_TABLE_ROUND1 =
+        hex"0000000168e7dd49205d63c379f9d01d484ef19b74381f437c72a143228fa9bf514ddcad22a76a3e4ec6c539414d1a6c534ef3a9048ab0573787f9900448aa4700000001143ef8996c4a8a452af20850163bd4994e38e75058ff6e90197482136e2f4d7a5f4ec37265d3aa2e4c45a35957421f5d1283c20671352c4c010d00af0000000145a60e613e687d4d4625f2a2303964b27e3a7e88300ba3ce5f9907a9768fc6fa3172b4f92cb3f80a6bb97d963f56e3af6b1d5bd03446e3ab11863e84000000017744959c334d48c775227a3327ad539b32313d6e54d78336425d36ed17668b8a466286e4540363e713ac5cf73546ad0e377a49320b4d17634145eb850000000129b75a805c4a5b99586ff04e0a28f0315599fb2c64a0e08700d2f0dd08dbd69c41f938d84154af7e36a66a455af0e6ec717740f96931c06d0fe3cde7000000016832fe4a7e010002174e36507f00000016cd01b700feffff67b1c9b1000000016832fe4a7e010002174e36507f00000016cd01b700feffff67b1c9b1";
+    bytes private constant POW_TABLE_ROUND2 =
+        hex"00000001205d63c3484ef19b7c72a143514ddcad4ec6c539534ef3a93787f990143ef8990986b2321e3f974a2e1e79003440651f421a291e4fe17621510d61d1000000016c4a8a45163bd49958ff6e906e2f4d7a65d3aa2e57421f5d71352c4c45a60e616428b7e3665070516566002c4cd7bb26247e1bfa75386aad37c43dd9000000013e687d4d303964b2300ba3ce768fc6fa2cb3f80a3f56e3af3446e3ab7744959c3b725f621e9330746107e94c437ce0a445b5bd2e7e77ea690409289300000001334d48c727ad539b54d7833617668b8a540363e73546ad0e0b4d176329b75a801da1678948d2e0073f9e4a46654a8bad7d598a0369af7ef41ed33131000000015c4a5b990a28f03164a0e08708dbd69c4154af7e5af0e6ec6931c06d6832fe4a4489a82a226210df1d14ebfe27ae21e2309bb4e5433bb7737348d2db000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff000000017e0100027f00000000feffff";
+    bytes private constant POW_TABLE_FINAL =
+        hex"00000001484ef19b514ddcad534ef3a9143ef8991e3f974a3440651f4fe176216c4a8a4531aaa51e50a00a34177192ed2af20850144ad026294618a020dfa6a300000001163bd4996e2f4d7a57421f5d45a60e61665070514cd7bb2675386aad3e687d4d1908abb42a79b9947e1ad39c4625f2a217aa4b5f2cf219ca03bc565600000001303964b2768fc6fa3f56e3af7744959c1e933074437ce0a47e77ea69334d48c740fe646a100753d77ca12bf875227a3325957b534451b86f52a36f8f0000000127ad539b17668b8a3546ad0e29b75a8048d2e007654a8bad69af7ef45c4a5b995b47c55d3cc6248a171639a5586ff04e04c4aab70a9a56263bbe793a000000010a28f03108dbd69c5af0e6ec6832fe4a226210df27ae21e2433bb7737e0100026d6e568d3a89a0253893800a174e365063861a5027dfce221335b668000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000000000017f000000";
+
     struct EqStatement {
         uint256 numVariables;
         uint256[] flatPoints;
@@ -130,6 +139,55 @@ library WhirVerifierCore8 {
         }
     }
 
+    function _fillSelVarsPow(uint256[] memory selVars, uint256 base, uint256 count) private pure {
+        uint256 freePtr;
+        assembly ("memory-safe") {
+            freePtr := mload(0x40)
+        }
+
+        bytes memory table;
+        if (base == 1_791_270_792) {
+            table = POW_TABLE_ROUND0;
+        } else if (base == 1_760_025_929) {
+            table = POW_TABLE_ROUND1;
+        } else if (base == 542_991_299) {
+            table = POW_TABLE_ROUND2;
+        } else if (base == 1_213_133_211) {
+            table = POW_TABLE_FINAL;
+        } else {
+            unchecked {
+                for (uint256 i = 0; i < count; ++i) {
+                    selVars[i] = KoalaBear.pow(base, selVars[i]);
+                }
+            }
+            return;
+        }
+
+        assembly ("memory-safe") {
+            let modulus := 0x7f000001
+            let tableStart := add(table, 0x20)
+            let tableEnd := add(tableStart, mload(table))
+            let values := add(selVars, 0x20)
+            let valuesEnd := add(values, shl(5, count))
+            for { let valuePtr := values } lt(valuePtr, valuesEnd) {
+                valuePtr := add(valuePtr, 0x20)
+            } {
+                let exponent := mload(valuePtr)
+                let result := 1
+                for { let windowPtr := tableStart } lt(windowPtr, tableEnd) {
+                    windowPtr := add(windowPtr, 0x40)
+                } {
+                    let digit := and(exponent, 0x0f)
+                    let power := shr(224, mload(add(windowPtr, shl(2, digit))))
+                    result := mulmod(result, power, modulus)
+                    exponent := shr(4, exponent)
+                }
+                mstore(valuePtr, result)
+            }
+            mstore(0x40, freePtr)
+        }
+    }
+
     function _computeBaseRootAndEvalsBlob16(
         uint256[] memory indices,
         bytes calldata blob,
@@ -156,7 +214,9 @@ library WhirVerifierCore8 {
             mstore(0x40, add(add(rowEvals, 0x20), shl(5, count)))
         }
 
-        uint256 eqWeightsPtr = WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3);
+        uint256 eqWeightsPtr = WhirVerifierUtils8._prepareBaseRadix80(
+            WhirVerifierUtils8._computeDim4EqWeights(p0, p1, p2, p3)
+        );
 
         unchecked {
             uint256 prevIdx;
@@ -451,44 +511,31 @@ library WhirVerifierCore8 {
         unchecked {
             if (finalPolyLength == 64) {
                 uint256 rowEvalsBase;
-                uint256 idx0;
-                uint256 idx1;
-                uint256 idx2;
-                uint256 idx3;
-                uint256 idx4;
-                uint256 idx5;
-                uint256 idx6;
-                uint256 idx7;
-                uint256 idx8;
-                uint256 idx9;
+                _fillSelVarsPow(indices, foldedDomainGen, numQueries);
+                uint256 point0;
+                uint256 point1;
+                uint256 point2;
+                uint256 point3;
+                uint256 point4;
+                uint256 point5;
+                uint256 point6;
+                uint256 point7;
+                uint256 point8;
+                uint256 point9;
                 assembly ("memory-safe") {
                     rowEvalsBase := add(rowEvals, 0x20)
                     let indicesBase := add(indices, 0x20)
-                    idx0 := mload(indicesBase)
-                    idx1 := mload(add(indicesBase, 0x20))
-                    idx2 := mload(add(indicesBase, 0x40))
-                    idx3 := mload(add(indicesBase, 0x60))
-                    idx4 := mload(add(indicesBase, 0x80))
-                    idx5 := mload(add(indicesBase, 0xa0))
-                    idx6 := mload(add(indicesBase, 0xc0))
-                    idx7 := mload(add(indicesBase, 0xe0))
-                    idx8 := mload(add(indicesBase, 0x100))
-                    idx9 := mload(add(indicesBase, 0x120))
+                    point0 := mload(indicesBase)
+                    point1 := mload(add(indicesBase, 0x20))
+                    point2 := mload(add(indicesBase, 0x40))
+                    point3 := mload(add(indicesBase, 0x60))
+                    point4 := mload(add(indicesBase, 0x80))
+                    point5 := mload(add(indicesBase, 0xa0))
+                    point6 := mload(add(indicesBase, 0xc0))
+                    point7 := mload(add(indicesBase, 0xe0))
+                    point8 := mload(add(indicesBase, 0x100))
+                    point9 := mload(add(indicesBase, 0x120))
                 }
-                (
-                    uint256 point0,
-                    uint256 point1,
-                    uint256 point2,
-                    uint256 point3,
-                    uint256 point4,
-                    uint256 point5,
-                    uint256 point6,
-                    uint256 point7,
-                    uint256 point8,
-                    uint256 point9
-                ) = _powBatch10(
-                    foldedDomainGen, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9
-                );
 
                 uint256 mismatchPlusOne = WhirVerifierUtils8.checkHornerBaseBlob64Matches5Raw(
                     blob, finalPolyOffset, point0, point1, point2, point3, point4, rowEvalsBase, 0
@@ -572,6 +619,7 @@ library WhirVerifierCore8 {
             }
 
             if (expectedKind == 0) {
+                eqWeightsPtr = WhirVerifierUtils8._prepareBaseRadix80(eqWeightsPtr);
                 rowOffset = valuesOffset + numQueries * 64;
                 uint256 nextHigher;
                 for (uint256 i = numQueries; i > 0; --i) {
@@ -587,8 +635,6 @@ library WhirVerifierCore8 {
                         blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
-                    selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
-
                     assembly ("memory-safe") {
                         frontierPtr := sub(frontierPtr, 0x20)
                         mstore(frontierPtr, or(hash, idx))
@@ -611,8 +657,6 @@ library WhirVerifierCore8 {
                         blob, rowOffset, eqWeightsPtr
                     );
                     claimedContribution = _hornerStep(claimedContribution, challenge, evalValue);
-                    selVars[pos] = KoalaBear.pow(foldedDomainGen, idx);
-
                     assembly ("memory-safe") {
                         frontierPtr := sub(frontierPtr, 0x20)
                         mstore(frontierPtr, or(hash, idx))
@@ -620,6 +664,8 @@ library WhirVerifierCore8 {
                 }
             }
         }
+
+        _fillSelVarsPow(selVars, foldedDomainGen, numQueries);
 
         bytes32 computedRoot = MerkleVerifier.computeRootFromPackedFrontier20Blob(
             frontierEntries, numQueries, depth, blob, decommOffset, decommLen
