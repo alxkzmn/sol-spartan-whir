@@ -50,7 +50,7 @@ After the candidate sweep (`script/run_ext8_precompile_eip_candidate_rpc.py`), t
 
 Round 0 STIR base rows stay on software arithmetic because the first layer is a base-row fold, not a pure ext8/ext5 row fold.
 
-Further precompile work should make `EXT8_MUL` / `EXT8_SQUARE` more EIP-ready (gas rationale, spec, cross-client benchmarks). WHIR-only fused kernels are a different design space (local accelerator), not an EIP-compatible candidate.
+The experiment establishes `EXT8_MUL` and `EXT8_SQUARE` as the generic operations that clear the software transport boundary. Gas rationale, specification work, and cross-client benchmarks are outside this result. WHIR-only fused kernels are local accelerators rather than EIP-compatible candidates.
 
 ## Precompile interface tables
 

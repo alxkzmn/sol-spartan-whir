@@ -1,6 +1,6 @@
 # sol-spartan-whir -- Agent Instructions
 
-This is the Foundry project for the on-chain Solidity verifier of Spartan-WHIR proofs over the KoalaBear field. It contains the standalone WHIR verifier (typed ABI path, blob-native path, and blob decode-and-delegate wrapper), field and extension-field arithmetic libraries, Keccak-based Fiat-Shamir challenger, and Merkle multiproof verification — all targeting EVM execution. External source repositories and cross-crate logic anchors are linked below in [Verifier Source Anchors](#verifier-source-anchors).
+This is the Foundry project for the on-chain standalone WHIR verifiers over the KoalaBear and BabyBear fields and the LeanVM terminal verifier. The direct WHIR paths verify only the PCS portion used by Spartan-WHIR. The LeanVM path verifies a terminal proof whose guest execution covers the complete Spartan-WHIR verifier. External source repositories and cross-crate logic anchors are linked below in [Verifier Source Anchors](#verifier-source-anchors).
 
 ## Skills
 
@@ -8,16 +8,19 @@ Detailed workflow guides live under `.agents/skills/*/SKILL.md`:
 
 - `.agents/skills/forge-flamegraph-profiling/SKILL.md` — execution gas profiling with Foundry flamegraphs and `gasleft()` harness tests
 - `.agents/skills/tx-gas-benchmarking/SKILL.md` — total transaction gas measurement via Anvil broadcast runs
+- `.agents/skills/solidity-compiler-analysis/SKILL.md` — optimized IR, repeated computation, stack spills, and gas versus deployed bytecode
+- `.agents/skills/finite-field-arithmetic-optimization/SKILL.md` — algorithm research, arithmetic bounds, and independent correctness validation
+- `.agents/skills/gas-calibration-maintenance/SKILL.md` — measurement provenance, calibration refresh, source fingerprints, and schedule reports
 
 ## Protocol Compatibility Rules
 
 Transcript byte-level compatibility between Rust and Solidity is the highest correctness risk. If the Solidity challenger produces even one different byte during observe or sample operations, every subsequent challenge diverges and the proof is rejected.
 
-The Rust proof is encoded via `codec_v1.rs` as the full Spartan binary blob format. The standalone-WHIR Solidity verifier has three paths:
+Standalone-WHIR proof data is encoded with the Rust codec/exporter conventions. The standalone-WHIR Solidity verifier has three paths:
 
-- Native blob verifier (`WhirBlobVerifierNative*` schedule-specific variants): production-style path. Reads the fixed-shape blob directly from calldata.
-- Typed ABI verifier (`WhirVerifier4` and schedule-specific variants): parity/test path. Uses `abi.encode`/`abi.decode` for debuggability.
-- Blob decode-and-delegate wrapper (`WhirBlobVerifier4` and schedule-specific variants): decodes the blob into typed structs, then delegates to the typed verifier.
+- Native blob verifier (`*WhirBlobVerifierNative*` schedule-specific variants): production-style path. Reads the fixed-shape blob directly from calldata.
+- Typed ABI verifier (`*WhirVerifier*` schedule-specific variants): parity/test path. Uses `abi.encode`/`abi.decode` for debuggability.
+- Blob decode-and-delegate wrapper (`*WhirBlobVerifier*` schedule-specific variants): decodes the blob into typed structs, then delegates to the typed verifier.
 
 The blob layout mixes encoding conventions on purpose: transcript-native little-endian sections for data fed to the challenger, plus big-endian or packed sections for Merkle/proof data. Do not reorganize it for consistency. The layout is optimized for gas, and any change needs benchmarking plus Rust fixture regeneration.
 
@@ -33,14 +36,16 @@ Use these upstream locations as the logic sources when checking Solidity behavio
 
 | Surface                            | Source                                                                                                                                                                                                                                                                                                             |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Spartan-WHIR verification logic    | [spartan-whir/src/protocol.rs](https://github.com/alxkzmn/spartan-whir/blob/main/src/protocol.rs), [spartan-whir/src/whir_pcs.rs](https://github.com/alxkzmn/spartan-whir/blob/main/src/whir_pcs.rs), and [whir-p3/src/whir/verifier/mod.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/verifier/mod.rs) |
+| WHIR verification inside Spartan-WHIR | [spartan-whir/src/whir_pcs.rs](https://github.com/ethereum/spartan-whir/blob/main/src/whir_pcs.rs), [whir-p3/src/whir/verifier/mod.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/verifier/mod.rs), and [whir-p3/src/whir/verifier/sumcheck.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/verifier/sumcheck.rs) |
+| Full Spartan IOP reference only     | [spartan-whir/src/protocol.rs](https://github.com/ethereum/spartan-whir/blob/main/src/protocol.rs) and [spartan-whir/src/sumcheck.rs](https://github.com/ethereum/spartan-whir/blob/main/src/sumcheck.rs). Use these for full-SNARK or Spartan IOP questions, not for standalone-WHIR Solidity gas work. |
 | KoalaBear field arithmetic         | [Plonky3/koala-bear/src/koala_bear.rs](https://github.com/Plonky3/Plonky3/blob/main/koala-bear/src/koala_bear.rs)                                                                                                                                                                                                  |
+| BabyBear field arithmetic          | [Plonky3/baby-bear/src/baby_bear.rs](https://github.com/Plonky3/Plonky3/blob/main/baby-bear/src/baby_bear.rs)                                                                                                                                                                                                  |
 | Extension-field arithmetic         | [Plonky3/field/src/extension/binomial_extension.rs](https://github.com/Plonky3/Plonky3/blob/main/field/src/extension/binomial_extension.rs)                                                                                                                                                                        |
-| Hashing                            | [spartan-whir/src/hashers.rs](https://github.com/alxkzmn/spartan-whir/blob/main/src/hashers.rs)                                                                                                                                                                                                                    |
+| Hashing                            | [spartan-whir/src/hashers.rs](https://github.com/ethereum/spartan-whir/blob/main/src/hashers.rs)                                                                                                                                                                                                                   |
 | Merkle multiproof                  | [whir-p3/src/whir/merkle_multiproof.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/merkle_multiproof.rs)                                                                                                                                                                                                 |
 | Proof types                        | [whir-p3/src/whir/proof.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/proof.rs)                                                                                                                                                                                                                         |
 | Config derivation                  | [whir-p3/src/whir/parameters.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/whir/parameters.rs)                                                                                                                                                                                                               |
-| Domain separator                   | [spartan-whir/src/domain_separator.rs](https://github.com/alxkzmn/spartan-whir/blob/main/src/domain_separator.rs) and [whir-p3/src/fiat_shamir/domain_separator.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/fiat_shamir/domain_separator.rs)                                                               |
+| Domain separator                   | [spartan-whir/src/domain_separator.rs](https://github.com/ethereum/spartan-whir/blob/main/src/domain_separator.rs) and [whir-p3/src/fiat_shamir/domain_separator.rs](https://github.com/alxkzmn/whir-p3/blob/csp/src/fiat_shamir/domain_separator.rs)                                                              |
 | Structural Solidity reference only | [privacy-ethereum/sol-whir](https://github.com/privacy-ethereum/sol-whir) for project layout, gas harness, Merkle queue pattern, and test patterns. Do not use it as a logic source.                                                                                                                               |
 
 ## Extension Degree and Folding Schedule
@@ -53,11 +58,13 @@ Changing Rust to `ConstantFromSecondRound` is a protocol-surface change: it chan
 
 ## Basic Commands
 
+The installed `forge fmt` can move statements out of compact one-line `while` and `if` bodies, changing semantics or producing invalid syntax. Write compound bodies with braces and one statement per line before formatting, then inspect the formatted control flow. Reproduced cases include `while (value != 0) { ++out; value >>= 1; }` and `if (i == 0) { low = bLow; rev = bRev; } else { ... }`. Keep a verified source snapshot for recovery. Remove this workaround after the formatter preserves both cases.
+
 Use Foundry for the Solidity project:
 
 ```sh
 forge build
-forge test
+forge test --offline --isolate --threads 1
 ```
 
 Regenerate the generic fixture set from the companion exporter in release mode. Set `SPARTAN_WHIR_EXPORT_DIR` to a checkout of [spartan-whir-export](https://github.com/alxkzmn/spartan-whir-export):
@@ -65,6 +72,43 @@ Regenerate the generic fixture set from the companion exporter in release mode. 
 ```sh
 cargo run --release --manifest-path "$SPARTAN_WHIR_EXPORT_DIR/Cargo.toml" --bin export-fixtures -- testdata
 ```
+
+## LeanVM Terminal Workflow
+
+The selected terminal is `LeanVmTwoCommitmentTerminal_KeccakPublicMemoryC1Pow28T6.verifyC1V1`. Keep its generated contract and the intentionally retained experimental `LeanVmGroupedTerminal_KeccakPow28T6` contract in `src/leanvm/generated/`; historical single-commitment and schedule variants belong in the workspace research archive, not in the active Foundry compilation tree.
+
+Validate the native root fixture and its opening layout without changing generated outputs:
+
+```sh
+python3 script/generate_leanvm_two_commitment_terminal_fixture.py \
+  ../leanVM/benchmark-results/terminal-c1-b-threshold6-pow28/native/root-fixture.json \
+  KeccakPublicMemoryC1Pow28T6 \
+  --validate-only
+```
+
+To regenerate, run the same command without `--validate-only` in a tree where the generated contract, test, benchmark script, and fixture directory do not exist. The generator deliberately refuses to overwrite them.
+
+Focused validation:
+
+```sh
+forge test --offline --isolate --threads 1 \
+  --match-contract LeanVmTwoCommitmentTerminal_KeccakPublicMemoryC1Pow28T6Test
+forge test --offline --isolate --threads 1 \
+  --match-contract LeanVmGroupedTerminal_KeccakPow28T6Test
+```
+
+Measure a fresh transaction into a new output directory after `forge build`:
+
+```sh
+python3 script/measure_leanvm_terminal_tx.py \
+  KeccakPublicMemoryC1Pow28T6 \
+  <new-output-directory>
+python3 script/measure_leanvm_terminal_tx.py \
+  GroupedLogupKeccakPow28T6 \
+  <new-output-directory>
+```
+
+Run `forge build --offline --force` before a source-change measurement: the measurement script authenticates source hashes but reads the existing artifact and does not establish artifact freshness. It starts its own Cancun Anvil instance with the local 65,536-byte runtime allowance. The checked-in grouped LogUp terminal is an intentionally retained experimental verifier with runtime fixtures and focused tests; its full protocol-composition security remains under review. Superseded candidates, exact receipts, and other exploratory implementations belong in external research archives rather than this active Foundry project.
 
 ## Gas Profiling with Forge Flamegraphs
 
@@ -87,9 +131,9 @@ Codex tool-side `forge script` failures are not enough evidence that Foundry is 
 
 For the native verifier tx benchmark:
 
-- start Anvil with `--code-size-limit 50000`
+- start Anvil with `--code-size-limit 65536`
 - keep that Anvil process running until the benchmark and receipt parsing are complete
-- remember that `--code-size-limit 50000` must be present on Anvil, not only on `forge script`
+- remember that `--code-size-limit 65536` must be present on Anvil, not only on `forge script`
 - inspect `broadcast/*/31337/run-latest.json` before concluding that the run failed in a meaningful verifier-specific way
 
 If the direct shell run succeeds and the agent-run does not, treat the direct shell result as the source of truth and describe the agent failure as a tool-context issue instead of a machine-wide Foundry issue.
@@ -125,6 +169,7 @@ RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path "$SPARTAN_W
 RUSTFLAGS="-C target-cpu=native" cargo run --release --manifest-path "$SPARTAN_WHIR_EXPORT_DIR/Cargo.toml" --bin profile_quintic_pow -- <candidate-label> --max-bits <N>
 forge test --match-path test/GasCalibration_native_compare.t.sol -vv --offline > <forge-calibration-log>
 python3 build_quintic_calibration.py --phase-log <forge-calibration-log> --gas-log <forge-microbench-log> --reference-schedule testdata/calibration_reference_schedules.json --quintic-schedule testdata/quintic_schedule_microbench_pow27_30_full.json --out testdata/quintic_calibration.json
+python3 check_quintic_calibration_freshness.py --calibration testdata/quintic_calibration.json
 python3 quintic_schedule_scorer.py \
   --schedule testdata/quintic_schedule_microbench_pow27_30_full.json \
   --prover-calibration-schedule testdata/quintic_schedule_microbench_pow24.json \
@@ -234,14 +279,14 @@ Use this workflow to decide which verifier-only optimizations are worth attempti
 7. Only optimize work that is still duplicated or still structurally large in the optimized contract.
 8. Keep the first rewrite narrow and path-specific.
 9. Measure gas and deployed bytecode immediately after the change.
-10. Check deployed runtime bytecode, not creation bytecode, against warning bands.
+10. Check deployed runtime bytecode and initcode against their separate size targets.
     To get deployed bytes from `deployedBytecode`, strip the `0x` prefix and divide the remaining hex length by `2`.
     Use `deployedBytecodeSize` instead if the toolchain exposes it.
 
-- below `22,000` bytes: normal
-- `22,000` to `23,000`: warning
-- `23,000` to `24,000`: require explicit justification
-- `24,000` and above: reject unless it is a temporary experiment
+- Runtime target: at most `65,536` bytes (64 KiB), following [EIP-7954](https://eips.ethereum.org/EIPS/eip-7954).
+- Initcode target: at most `131,072` bytes (128 KiB).
+- Record both sizes. Prioritize gas improvements within these limits.
+- Check the official EIP-7954 status before treating the configured local allowance as active on a deployment network.
 
 11. Revert quickly if the result is not clearly positive.
 12. Run the full suite only after the narrow benchmark is promising.
@@ -290,7 +335,7 @@ Use this order:
 
 1. `forge test --match-test testGasWhirVerifyBlobNativeFixed -vv`
 2. Inspect deployed bytecode for the exact native verifier contract under test.
-   - strip the `0x` prefix and divide the remaining hex length by `2` before comparing against the warning bands
+   - strip the `0x` prefix and divide the remaining hex length by `2` before comparing against the 65,536-byte runtime target
 3. native-path profiling if available; otherwise use typed/shared profiling only as directional evidence
 4. targeted profiling tests if the change should move a known bucket
 5. `forge test`
@@ -298,7 +343,7 @@ Use this order:
 Reject a candidate when any of the following is true:
 
 - gas regression
-- marginal gas win with large bytecode growth
+- runtime or initcode exceeding the configured target
 - no clear explanation for the measured result
 - the optimized IR does not actually reflect the intended structural change
 
@@ -325,7 +370,7 @@ The best candidates are not "places where the source looks redundant." The best 
 The Solidity compiler with `via_ir = true` (used in this project) is aggressive about inlining and eliminating dead code. Many "obvious" optimizations yield much less than estimated because the compiler was already doing something similar. Always benchmark before and after — never trust gas estimates alone. Previous examples of surprises:
 
 - Low-level extension multiplication rewrite: expected a gas win, measured a regression because the compiler was already optimizing the high-level version better
-- Batch sumcheck validation: expected -5k, actual **+4.7k** (extra memory allocation outweighed saved checks)
+- Batch sumcheck validation regressed because the extra memory allocation outweighed the saved checks.
 
 ## Known Gotchas
 
@@ -333,14 +378,13 @@ These are things that have wasted time before. Read before running the relevant 
 
 ### Schedule model (`whir_param_sweep.py`)
 
-- Anchored calibration rows: `Constant(5)` `lir11_ff5_rsv3` model `911,902` vs measured `911,902`; `Constant(4)` `lir6_ff5_rsv1` model `899,906` vs measured `899,906`. These are exact.
-- The octic `k22_jb100_lir6_ff4_rsv1` calibration row still uses the older `7,383,992` value. Measured native gas is `6,908,778`, so the **octic model row is not an exact anchor** — treat octic model predictions as approximate.
+- The `Constant(5)` `lir11_ff5_rsv3`, `Constant(4)` `lir6_ff5_rsv1`, and octic `k22_jb100_lir6_ff4_rsv1` rows are exact anchors. Read their current values from `whir_param_sweep.py` and the measurement artifacts; other octic rows remain model estimates.
 - `estimate_extfield_grinding_quartic.py` is a wrapper that monkey-patches the sweep's grinding cap above 30 bits to model a hypothetical extension-field PoW witness format the verifier does not implement. Its outputs are not deployable schedules. The PoW witness delta it adds is 16 bytes per witness instead of 4.
 - Both scripts are estimation tools, not part of the deployable verifier path.
 
 ### Schedule scorer (`quintic_schedule_scorer.py`)
 
-- The scorer's verifier axis is quintic-calibrated against the anchor `constant_pow28_ff4_lir4_rsv3` (raw score `8,408,842`, measured tx gas `5,646,080`, scale factor `0.67144560451962354`). If you change the anchor, re-record this triple — the scaled score is meaningless without it.
+- The scorer's verifier axis is quintic-calibrated against the `constant_pow28_ff4_lir4_rsv3` anchor. If the anchor changes, regenerate `testdata/quintic_calibration.json` and the score reports so the raw score, measured transaction gas, and derived scale remain matched.
 - `quartic_lir11_ff5_rsv3` phase breakdown **does not compile cleanly under `via_ir`**. It contributes total transaction gas only, and is excluded from per-bucket validation.
 - The `lir6` transcript bucket includes setup and round commitment parsing, while the scorer charges transcript-observe work. The folding bucket is intentionally over-counted as a unit-cost sum; no per-round folding benchmark exists yet. Treat per-bucket ratios as diagnostic, not as ground truth.
 - Real prover timings require release builds with `RUSTFLAGS="-C target-cpu=native"`. The Rust benchmark records `measurement_kind = "actual_whir_commit_prove"` and `target_cpu_native = true`; if either is missing in a timing JSON, the row is not comparable.

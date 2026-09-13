@@ -4,7 +4,7 @@ This directory contains checked-in verifier inputs and the evidence needed to re
 
 #### Runtime fixtures
 
-Foundry tests read the field, Merkle, transcript, WHIR, BabyBear, and LeanVM fixtures directly. These files keep the offline test suite independent of the Rust exporter and LeanVM workspace.
+Foundry tests read the field, Merkle, transcript, WHIR, BabyBear, and LeanVM fixtures directly. These files keep the offline test suite independent of the Rust exporter and LeanVM workspace. The grouped LogUp algebra vectors, three-root Merkle vectors, and `GroupedLogupKeccakPow28T6` proof and calldata are retained because the experimental grouped terminal tests and transaction measurement consume them directly.
 
 #### Schedule inputs
 
