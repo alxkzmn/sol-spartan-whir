@@ -112,6 +112,26 @@ library LeanVmPolynomial {
         out = EF.add(out, product);
     }
 
+    /// @dev The successor recurrence also computes the ordinary equality product.
+    function nextAndEq(uint256[] memory x, uint256[] memory y, uint256 offset)
+        internal
+        pure
+        returns (uint256 out, uint256 equality)
+    {
+        require(offset <= y.length && x.length == y.length - offset, "NEXT_DIM");
+        equality = ONE;
+        uint256 product = ONE;
+        for (uint256 i; i < x.length; ++i) {
+            uint256 xy = Packed.mul(x[i], y[offset + i]);
+            uint256 xOnly = EF.sub(x[i], xy);
+            uint256 yOnly = EF.sub(y[offset + i], xy);
+            out = EF.add(Packed.mul(xOnly, out), Packed.mul(equality, yOnly));
+            equality = Packed.mul(equality, EF.sub(ONE, EF.add(xOnly, yOnly)));
+            product = Packed.mul(product, xy);
+        }
+        out = EF.add(out, product);
+    }
+
     function coefficients(uint256[] memory values, uint256[] memory point)
         internal
         pure

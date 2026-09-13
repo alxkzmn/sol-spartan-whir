@@ -747,6 +747,177 @@ library LeanVmWhir {
         }
     }
 
+    struct SharedCommon {
+        uint256 pointPointer;
+        uint256 equality;
+        uint256 successor;
+        uint256 flags;
+    }
+
+    struct SharedWeights {
+        Weight.Cache selectorCache;
+        uint256[8] gammaSquares;
+        SharedCommon[] common;
+        uint256 commonCount;
+    }
+
+    /// @dev Statement points are immutable. Pointer equality permits reuse without
+    /// relying on a hash or assuming distinct allocations contain equal values.
+    function sharedCommon(
+        Statement memory statement,
+        uint256[] memory point,
+        SharedWeights memory context
+    ) private pure returns (uint256 value) {
+        uint256[] memory claimPoint = statement.point;
+        uint256 pointer;
+        assembly ("memory-safe") { pointer := claimPoint }
+        uint256 index;
+        while (index < context.commonCount && context.common[index].pointPointer != pointer) {
+            ++index;
+        }
+        if (index == context.commonCount) {
+            context.common[index].pointPointer = pointer;
+            ++context.commonCount;
+        }
+        SharedCommon memory entry = context.common[index];
+        if (statement.isNext) {
+            if ((entry.flags & 2) == 0) {
+                (entry.successor, entry.equality) =
+                    Poly.nextAndEq(claimPoint, point, point.length - claimPoint.length);
+                entry.flags = 3;
+            }
+            return entry.successor;
+        }
+        if ((entry.flags & 1) == 0) {
+            entry.equality = statementCommon(statement, point);
+            entry.flags |= 1;
+        }
+        return entry.equality;
+    }
+
+    /// @dev The selector sequence first,first+8,first+1,first+9,... is the
+    /// complete four-bit cube with the high selector bit varying fastest.
+    function interleavedSelectors(uint256[] memory selectors) private pure returns (bool) {
+        if (selectors.length != 16 || (selectors[0] & 15) != 0) return false;
+        for (uint256 i; i < 8; ++i) {
+            if (
+                selectors[2 * i] != selectors[0] + i || selectors[2 * i + 1] != selectors[0] + 8 + i
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function interleavedWeight(
+        SharedWeights memory context,
+        uint256[] memory point,
+        uint256 first,
+        uint256 depth
+    ) private pure returns (uint256 value) {
+        require(depth >= 4, "SELECTOR");
+        value = Weight.selector(context.selectorCache, point, first >> 4, depth - 4);
+        for (uint256 i; i < 4; ++i) {
+            uint256 exponent = i == 0 ? 0 : 4 - i;
+            uint256 factor = EF.add(
+                ONE, Packed.mul(point[depth - 4 + i], EF.sub(context.gammaSquares[exponent], ONE))
+            );
+            value = Packed.mul(value, factor);
+        }
+    }
+
+    function groupWeightShared(
+        Statement[] memory statements,
+        uint256 gamma,
+        uint256[] memory point,
+        SharedWeights memory context
+    ) private pure returns (uint256 contribution) {
+        uint256 runningGamma = ONE;
+        for (uint256 i; i < statements.length; ++i) {
+            Statement memory statement = statements[i];
+            uint256 count = statement.selectors.length;
+            require(count == statement.values.length && count < 256, "STATEMENT_LENGTH");
+            uint256 depth = point.length - statement.point.length;
+            uint256 inner;
+            bool consecutive = count >= 4;
+            for (uint256 j = 1; consecutive && j < count; ++j) {
+                consecutive = statement.selectors[j] == statement.selectors[0] + j;
+            }
+            if (consecutive) {
+                inner = Weight.rangeSum(
+                    context.selectorCache,
+                    point,
+                    statement.selectors[0],
+                    count,
+                    depth,
+                    context.gammaSquares
+                );
+            } else if (interleavedSelectors(statement.selectors)) {
+                inner = interleavedWeight(context, point, statement.selectors[0], depth);
+            } else {
+                for (uint256 j = count; j != 0; --j) {
+                    inner = EF.add(
+                        Packed.mul(inner, gamma),
+                        Weight.selector(
+                            context.selectorCache, point, statement.selectors[j - 1], depth
+                        )
+                    );
+                }
+            }
+            contribution = EF.add(
+                contribution,
+                Packed.mul(runningGamma, Packed.mul(inner, sharedCommon(statement, point, context)))
+            );
+            for (uint256 k; count != 0; ++k) {
+                if ((count & 1) != 0) {
+                    runningGamma = Packed.mul(runningGamma, context.gammaSquares[k]);
+                }
+                count >>= 1;
+            }
+        }
+    }
+
+    /// @dev All three groups use one evaluation point and one gamma. Each group
+    /// restarts gamma powers; theta separates the three complete contributions.
+    function evaluateThreeGroupWeights(
+        Statement[][3] memory groups,
+        uint256 gamma,
+        uint256 theta,
+        uint256 thetaPower,
+        uint256[] memory point
+    ) internal pure returns (uint256 contribution) {
+        uint256 depth;
+        uint256 count;
+        for (uint256 group; group < 3; ++group) {
+            count += groups[group].length;
+            for (uint256 i; i < groups[group].length; ++i) {
+                Statement memory statement = groups[group][i];
+                require(
+                    statement.variables == point.length && statement.point.length <= point.length,
+                    "WEIGHT_DIM"
+                );
+                if (statement.values.length > 1 && point.length - statement.point.length > depth) {
+                    depth = point.length - statement.point.length;
+                }
+            }
+        }
+        SharedWeights memory context;
+        context.selectorCache = Weight.initialize(depth > 10 ? 10 : depth);
+        context.common = new SharedCommon[](count);
+        context.gammaSquares[0] = gamma;
+        for (uint256 k = 1; k < 8; ++k) {
+            context.gammaSquares[k] =
+                Packed.mul(context.gammaSquares[k - 1], context.gammaSquares[k - 1]);
+        }
+        for (uint256 group; group < 3; ++group) {
+            contribution = EF.add(
+                contribution,
+                Packed.mul(thetaPower, groupWeightShared(groups[group], gamma, point, context))
+            );
+            thetaPower = Packed.mul(thetaPower, theta);
+        }
+    }
+
     /// @dev Complete a round after its openings have been consumed. Keeping the
     /// opening cursor and calldata out of this phase limits live compiler state.
     function finishRound(
@@ -976,6 +1147,226 @@ library LeanVmWhir {
                 Packed.mul(
                     thetaPower,
                     evaluateGammaStatementWeights(secondaryStatements, initial.gamma, allPoint)
+                )
+            );
+        }
+        uint256 skipped = folding[0].length;
+        for (uint256 i; i < constraints.length; ++i) {
+            uint256[] memory point = Poly.slice(allPoint, skipped, allPoint.length - skipped);
+            evaluatedWeights =
+                EF.add(evaluatedWeights, evaluateContinuationWeights(constraints[i], point));
+            skipped += folding[i + 1].length;
+        }
+        uint256 finalValue =
+            Poly.coefficients(coefficients, Poly.reverse(folding[folding.length - 1]));
+        require(target == EF.mul(evaluatedWeights, finalValue), "WHIR_FINAL");
+    }
+
+    /// @dev All three statement groups must be bound by the enclosing protocol.
+    function initializeThreeCommitments(
+        Transcript.State memory state,
+        bytes calldata transcript,
+        uint256 variables,
+        uint256 oodCount,
+        uint256 batchingPowBits,
+        Statement[][3] memory groups
+    ) internal pure returns (TwoCommitmentInitial memory initial) {
+        state.duplex();
+        initial.gamma = state.sample();
+        uint256[3] memory diagonal;
+        for (uint256 i; i < 3; ++i) {
+            diagonal[i] = statementValuesGammaSum(groups[i], initial.gamma);
+        }
+        uint256[] memory crossValues = state.readExtension(transcript, 6);
+        state.checkPow(transcript, batchingPowBits);
+        state.duplex();
+        initial.polynomialRandomness = state.sample();
+        uint256[3] memory scalars = [
+            ONE,
+            initial.polynomialRandomness,
+            Packed.mul(initial.polynomialRandomness, initial.polynomialRandomness)
+        ];
+        state.duplex();
+        uint256[] memory oodPoints = state.sampleMany(oodCount);
+        uint256[] memory oodAnswers = state.readExtension(transcript, oodCount);
+        initial.oodStatements = new Statement[](oodCount);
+        for (uint256 i; i < oodCount; ++i) {
+            initial.oodStatements[i] =
+                dense(variables, Poly.expand(oodPoints[i], variables), oodAnswers[i]);
+        }
+        state.duplex();
+        initial.theta = state.sample();
+        uint256 thetaPower = ONE;
+        for (uint256 i; i < oodCount; ++i) {
+            initial.target = EF.add(initial.target, Packed.mul(thetaPower, oodAnswers[i]));
+            thetaPower = Packed.mul(thetaPower, initial.theta);
+        }
+        uint256 at;
+        for (uint256 i; i < 3; ++i) {
+            uint256 combined;
+            for (uint256 j; j < 3; ++j) {
+                uint256 value = i == j ? diagonal[i] : crossValues[at++];
+                combined = EF.add(combined, Packed.mul(scalars[j], value));
+            }
+            initial.target = EF.add(initial.target, Packed.mul(thetaPower, combined));
+            thetaPower = Packed.mul(thetaPower, initial.theta);
+        }
+    }
+
+    function stirThreeCommitments(
+        Transcript.State memory state,
+        bytes calldata transcript,
+        bytes calldata openings,
+        Cursor memory cursor,
+        Round memory params,
+        Commitment[3] memory commitments,
+        uint256[] memory foldPoint,
+        uint256 polynomialRandomness
+    ) internal pure returns (Queries memory queries) {
+        require(cursor.codec == 1 && params.fold == foldPoint.length, "ROUND_DIM");
+        for (uint256 i; i < 3; ++i) {
+            require(params.variables + params.fold == commitments[i].variables, "ROUND_DIM");
+        }
+        uint256 width = uint256(1) << params.fold;
+        uint256 height = Poly.log2(params.domainSize / width);
+        state.checkPow(transcript, params.queryPow);
+        uint256[] memory indices = new uint256[](params.queries);
+        for (uint256 i; i < indices.length; ++i) {
+            indices[i] = state.sampleIndex(height);
+        }
+        uint256 weightsPtr;
+        if (params.fold == 4) weightsPtr = Folding.prepare16(foldPoint, true);
+        else if (params.fold == 5) weightsPtr = Folding.prepare32(foldPoint, true);
+        uint256 primaryOffset = cursor.offset;
+        uint256[] memory rowNumbers;
+        uint256 batchBytes;
+        bytes32[3] memory roots = [commitments[0].root, commitments[1].root, commitments[2].root];
+        (rowNumbers, batchBytes, cursor.offset) =
+            Merkle.openThreeBatches(openings, cursor.offset, width, height, indices, roots);
+        uint256 secondaryOffset = primaryOffset + batchBytes;
+        uint256 helperOffset = secondaryOffset + batchBytes;
+        queries.points = new uint256[](indices.length);
+        queries.values = new uint256[](indices.length);
+        uint256 lambdaSquared = Packed.mul(polynomialRandomness, polynomialRandomness);
+        for (uint256 i; i < indices.length; ++i) {
+            uint256 offset = rowNumbers[i] * width * 4;
+            uint256 primary =
+                foldLeaf(openings, primaryOffset + offset, width, foldPoint, true, weightsPtr);
+            uint256 secondary =
+                foldLeaf(openings, secondaryOffset + offset, width, foldPoint, true, weightsPtr);
+            uint256 helper =
+                foldLeaf(openings, helperOffset + offset, width, foldPoint, true, weightsPtr);
+            queries.points[i] = powBase(params.generator, indices[i]);
+            queries.values[i] = EF.add(
+                EF.add(primary, Packed.mul(polynomialRandomness, secondary)),
+                Packed.mul(lambdaSquared, helper)
+            );
+        }
+    }
+
+    /// @dev Shared continuation for execution, fixed-program and inverse-helper commitments.
+    function verifyThreeCommitments(
+        Transcript.State memory state,
+        bytes calldata transcript,
+        bytes calldata openings,
+        Cursor memory cursor,
+        Config memory config,
+        uint256 batchingPowBits,
+        Commitment[3] memory commitments,
+        Statement[][3] memory groups
+    ) internal pure {
+        require(config.openingsCodec == 1, "OPENINGS_CODEC");
+        require(config.rounds.length != 0 && config.commitmentOod != 0, "THREE_COMMITMENT_CONFIG");
+        for (uint256 i; i < 3; ++i) {
+            require(
+                commitments[i].variables == config.variables && commitments[i].ood.length == 0,
+                "THREE_COMMITMENT_CONFIG"
+            );
+            require(validInitialStatements(groups[i], config.variables), "INITIAL_STATEMENT");
+        }
+        cursor.codec = 1;
+        TwoCommitmentInitial memory initial = initializeThreeCommitments(
+            state, transcript, config.variables, config.commitmentOod, batchingPowBits, groups
+        );
+
+        Constraints[] memory constraints = new Constraints[](config.rounds.length);
+        uint256[][] memory folding = new uint256[][](config.rounds.length + 2);
+        uint256 target = initial.target;
+        (folding[0], target) =
+            Poly.sumcheck(state, transcript, target, config.firstFold, 2, config.firstPow);
+
+        Commitment memory commitment;
+        for (uint256 i; i < config.rounds.length; ++i) {
+            Round memory params = config.rounds[i];
+            Commitment memory nextCommitment =
+                parse(state, transcript, params.variables, params.ood);
+            Queries memory queried;
+            if (i == 0) {
+                queried = stirThreeCommitments(
+                    state,
+                    transcript,
+                    openings,
+                    cursor,
+                    params,
+                    commitments,
+                    folding[0],
+                    initial.polynomialRandomness
+                );
+            } else {
+                queried = stirWithCodec(
+                    state, transcript, openings, cursor, params, commitment, folding[i], false, true
+                );
+            }
+            (constraints[i], target) = combine(state, nextCommitment.ood, target, queried.values);
+            constraints[i].basePoints = queried.points;
+            (folding[i + 1], target) =
+                Poly.sumcheck(state, transcript, target, config.nextFold, 2, params.foldingPow);
+            commitment = nextCommitment;
+        }
+
+        uint256[] memory coefficients =
+            state.readExtension(transcript, uint256(1) << config.finalRounds);
+        Queries memory finalQueries = stirWithCodec(
+            state,
+            transcript,
+            openings,
+            cursor,
+            config.finalRound,
+            commitment,
+            folding[config.rounds.length],
+            false,
+            true
+        );
+        for (uint256 i; i < finalQueries.points.length; ++i) {
+            uint256 answer = Poly.hornerBase(coefficients, finalQueries.points[i]);
+            require(answer == finalQueries.values[i], "FINAL_STIR");
+        }
+        (folding[folding.length - 1], target) =
+            Poly.sumcheck(state, transcript, target, config.finalRounds, 2, 0);
+
+        uint256[] memory allPoint = new uint256[](config.variables);
+        uint256 written;
+        for (uint256 i; i < folding.length; ++i) {
+            for (uint256 j; j < folding[i].length; ++j) {
+                allPoint[written++] = folding[i][j];
+            }
+        }
+        require(written == config.variables, "FOLDING_DIM");
+
+        uint256 evaluatedWeights;
+        {
+            uint256 thetaPower = ONE;
+            for (uint256 i; i < initial.oodStatements.length; ++i) {
+                evaluatedWeights = EF.add(
+                    evaluatedWeights,
+                    Packed.mul(thetaPower, statementCommon(initial.oodStatements[i], allPoint))
+                );
+                thetaPower = Packed.mul(thetaPower, initial.theta);
+            }
+            evaluatedWeights = EF.add(
+                evaluatedWeights,
+                evaluateThreeGroupWeights(
+                    groups, initial.gamma, initial.theta, thetaPower, allPoint
                 )
             );
         }

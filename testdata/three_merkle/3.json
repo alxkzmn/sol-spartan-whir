@@ -1,0 +1,19 @@
+{
+  "proof": "0x55bcd8026153d7cf0cb09b4c",
+  "height": 0,
+  "width": 1,
+  "indices": [
+    0
+  ],
+  "roots": [
+    "0x6ba16ac5ec82d29e000494e8552b89d6fe568c3684c0f030f7961ff3cb0e0000",
+    "0x6bd4967dc66d96371fa4c951d1410619c27eae11d8c4a50e2a0a57d60ad70000",
+    "0x91748cddf0f60ff6a2e13484e15b3db5c8ed8ae8cff97f15b1077d6bce580000"
+  ],
+  "row_numbers": [
+    0
+  ],
+  "batch_bytes": 4,
+  "unique": 1,
+  "sibling_count": 0
+}

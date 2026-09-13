@@ -101,6 +101,230 @@ library LeanVmMerkle {
         assembly ("memory-safe") { mstore(0x40, scratchStart) }
     }
 
+    /// @dev Three roots share one sorted query set and one node frontier.
+    /// Batch bytes preserve the existing bottom-up sibling order exactly.
+    function openThreeBatches(
+        bytes calldata proof,
+        uint256 offset,
+        uint256 leafScalars,
+        uint256 height,
+        uint256[] memory indices,
+        bytes32[3] memory roots
+    ) internal pure returns (uint256[] memory rowNumbers, uint256 batchBytes, uint256 nextOffset) {
+        require(height < 31, "MERKLE_INDEX");
+        require(indices.length != 0, "MERKLE_EMPTY");
+        require(
+            ((uint256(roots[0]) | uint256(roots[1]) | uint256(roots[2])) & 0xffff) == 0,
+            "ROOT_DIGEST"
+        );
+        rowNumbers = new uint256[](indices.length);
+        uint256 scratchStart;
+        assembly ("memory-safe") { scratchStart := mload(0x40) }
+        (uint256[] memory nodes, uint256 unique) = _sortedUnique(height, indices);
+        uint256 internalNodes = height;
+        for (uint256 i = 1; i < unique; ++i) {
+            uint256 x = nodes[i] ^ nodes[i - 1];
+            uint256 highest;
+            assembly ("memory-safe") {
+                if gt(x, 0xffff) {
+                    x := shr(16, x)
+                    highest := 16
+                }
+                if gt(x, 0xff) {
+                    x := shr(8, x)
+                    highest := add(highest, 8)
+                }
+                if gt(x, 0xf) {
+                    x := shr(4, x)
+                    highest := add(highest, 4)
+                }
+                if gt(x, 3) {
+                    x := shr(2, x)
+                    highest := add(highest, 2)
+                }
+                if gt(x, 1) { highest := add(highest, 1) }
+            }
+            internalNodes += highest;
+        }
+        uint256 rowBytes = leafScalars * 4;
+        batchBytes = unique * rowBytes + (internalNodes + 1 - unique) * 30;
+        nextOffset = offset + 3 * batchBytes;
+        require(nextOffset <= proof.length, "MERKLE_END");
+        for (uint256 i; i < indices.length; ++i) {
+            uint256 low;
+            uint256 high = unique;
+            while (low < high) {
+                uint256 middle = (low + high) >> 1;
+                if (nodes[middle] < indices[i]) low = middle + 1;
+                else high = middle;
+            }
+            rowNumbers[i] = low;
+        }
+        _openCanonicalThree(proof, offset, leafScalars, height, nodes, unique, batchBytes, roots);
+        assembly ("memory-safe") { mstore(0x40, scratchStart) }
+    }
+
+    function _openCanonicalThree(
+        bytes calldata proof,
+        uint256 offset,
+        uint256 leafScalars,
+        uint256 height,
+        uint256[] memory nodes,
+        uint256 unique,
+        uint256 batchBytes,
+        bytes32[3] memory roots
+    ) private pure {
+        uint256 rowBytes = leafScalars * 4;
+        uint256 leafBytes = rowBytes + 1;
+        bytes memory scratch = new bytes(leafBytes > 65 ? leafBytes : 65);
+        bytes32[] memory hashes = new bytes32[](3 * unique);
+        uint256 invalidFields;
+        assembly ("memory-safe") {
+            let buffer := add(scratch, 32)
+            let digests := add(hashes, 32)
+            for { let tree := 0 } lt(tree, 3) { tree := add(tree, 1) } {
+                for { let i := 0 } lt(i, unique) { i := add(i, 1) } {
+                    let rowPointer :=
+                        add(add(proof.offset, offset), add(mul(tree, batchBytes), mul(i, rowBytes)))
+                    let j := 0
+                    for { } iszero(gt(add(j, 8), leafScalars)) { j := add(j, 8) } {
+                        let word := calldataload(add(rowPointer, shl(2, j)))
+                        let high :=
+                            0x8000000080000000800000008000000080000000800000008000000080000000
+                        invalidFields := or(
+                            invalidFields,
+                            or(
+                                and(word, high),
+                                and(
+                                    add(
+                                        and(
+                                            word,
+                                            0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+                                        ),
+                                        0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+                                    ),
+                                    high
+                                )
+                            )
+                        )
+                    }
+                    for { } lt(j, leafScalars) { j := add(j, 1) } {
+                        invalidFields := or(
+                            invalidFields,
+                            iszero(
+                                lt(shr(224, calldataload(add(rowPointer, shl(2, j)))), 0x7f000001)
+                            )
+                        )
+                    }
+                    mstore8(buffer, 0)
+                    calldatacopy(add(buffer, 1), rowPointer, rowBytes)
+                    mstore(
+                        add(digests, add(mul(i, 96), shl(5, tree))),
+                        and(keccak256(buffer, leafBytes), not(0xffff))
+                    )
+                }
+            }
+        }
+        require(invalidFields == 0, "LEAF_SCALAR");
+        uint256 live = unique;
+        uint256 proofCursor = offset + unique * rowBytes;
+        assembly ("memory-safe") {
+            let nodeWords := add(nodes, 32)
+            let digests := add(hashes, 32)
+            let buffer := add(scratch, 32)
+            mstore8(buffer, 1)
+            for { let level := 0 } lt(level, height) { level := add(level, 1) } {
+                let read := 0
+                let written := 0
+                for { } lt(read, live) { } {
+                    let position := mul(96, read)
+                    let node := mload(add(nodeWords, shl(5, read)))
+                    let paired := 0
+                    if and(iszero(and(node, 1)), lt(add(read, 1), live)) {
+                        paired := eq(mload(add(nodeWords, shl(5, add(read, 1)))), add(node, 1))
+                    }
+                    let side := shl(5, and(node, 1))
+                    let currentSlot := add(add(buffer, 1), side)
+                    let siblingSlot := sub(add(buffer, 33), side)
+                    let outputPosition := mul(96, written)
+                    // Each input sibling is read before any earlier output slot is overwritten.
+                    {
+                        let sibling
+                        switch paired
+                        case 1 { sibling := mload(add(digests, add(position, 96))) }
+                        default {
+                            sibling := and(
+                                calldataload(
+                                    add(add(proof.offset, proofCursor), mul(0, batchBytes))
+                                ),
+                                not(0xffff)
+                            )
+                        }
+                        mstore(currentSlot, mload(add(digests, add(position, 0))))
+                        mstore(siblingSlot, sibling)
+                        mstore(
+                            add(digests, add(outputPosition, 0)),
+                            and(keccak256(buffer, 65), not(0xffff))
+                        )
+                    }
+                    {
+                        let sibling
+                        switch paired
+                        case 1 { sibling := mload(add(digests, add(position, 128))) }
+                        default {
+                            sibling := and(
+                                calldataload(
+                                    add(add(proof.offset, proofCursor), mul(1, batchBytes))
+                                ),
+                                not(0xffff)
+                            )
+                        }
+                        mstore(currentSlot, mload(add(digests, add(position, 32))))
+                        mstore(siblingSlot, sibling)
+                        mstore(
+                            add(digests, add(outputPosition, 32)),
+                            and(keccak256(buffer, 65), not(0xffff))
+                        )
+                    }
+                    {
+                        let sibling
+                        switch paired
+                        case 1 { sibling := mload(add(digests, add(position, 160))) }
+                        default {
+                            sibling := and(
+                                calldataload(
+                                    add(add(proof.offset, proofCursor), mul(2, batchBytes))
+                                ),
+                                not(0xffff)
+                            )
+                        }
+                        mstore(currentSlot, mload(add(digests, add(position, 64))))
+                        mstore(siblingSlot, sibling)
+                        mstore(
+                            add(digests, add(outputPosition, 64)),
+                            and(keccak256(buffer, 65), not(0xffff))
+                        )
+                    }
+                    switch paired
+                    case 1 { read := add(read, 2) }
+                    default {
+                        read := add(read, 1)
+                        proofCursor := add(proofCursor, 30)
+                    }
+                    mstore(add(nodeWords, shl(5, written)), shr(1, node))
+                    written := add(written, 1)
+                }
+                live := written
+            }
+        }
+        require(proofCursor == offset + batchBytes, "MERKLE_END");
+        require(
+            live == 1 && nodes[0] == 0 && hashes[0] == roots[0] && hashes[1] == roots[1]
+                && hashes[2] == roots[2],
+            "MERKLE_ROOT"
+        );
+    }
+
     function _sortedUnique(uint256 height, uint256[] memory indices)
         private
         pure
@@ -154,10 +378,16 @@ library LeanVmMerkle {
                     // adjacent lane. The bias tests every coefficient against p.
                     invalidFields := or(
                         and(word, high),
-                        and(add(
-                            and(word, 0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff),
-                            0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
-                        ), high)
+                        and(
+                            add(
+                                and(
+                                    word,
+                                    0x7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff7fffffff
+                                ),
+                                0x00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff
+                            ),
+                            high
+                        )
                     )
                 }
                 require(invalidFields == 0, "LEAF_SCALAR");

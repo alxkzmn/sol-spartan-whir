@@ -1,0 +1,35 @@
+{
+  "proof": "0x414ba711062813571efadd8a1cdcaec964ef247e052a360035e63dcf039168c9485891ff47341f9456946a3d109701de60dfe3d54aa0c9bf14cd294327ebf5d03bad671b60678be2538a50f4641a8ab777a8962c531b01cc23f5c9e70a3c374b7342d65b6db853256ca6c6906940c56e432250f37810be1d4a1115f653c5b12277c1403c587892d3385718e24fa729dd2509dced599fb87a66108a5c092f2e7d0cf6220936ca8c84",
+  "height": 1,
+  "width": 7,
+  "indices": [
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1
+  ],
+  "roots": [
+    "0x76afb13e99d2da1807623e9b8d0b3b654d58fd6b16dc80d191afc4b0c8ae0000",
+    "0x8fed54742b517de38cd74c6a78dc367e0387cc89489baab8b10f4a41c16f0000",
+    "0x11b025f5808f45d77076d39576d66b943d79df0cfc569ee506a24e0036430000"
+  ],
+  "row_numbers": [
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1
+  ],
+  "batch_bytes": 56,
+  "unique": 2,
+  "sibling_count": 0
+}
